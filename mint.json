@@ -1,24 +1,24 @@
 {
   "$schema": "https://mintlify.com/schema.json",
-  "name": "Starter Kit",
+  "name": "API Reference",
   "logo": {
     "dark": "/logo/dark.svg",
     "light": "/logo/light.svg"
   },
   "favicon": "/favicon.svg",
   "colors": {
-    "primary": "#0D9373",
+    "primary": "#5F32D9",
     "light": "#07C983",
-    "dark": "#0D9373",
+    "dark": "#483d8b",
     "anchors": {
-      "from": "#0D9373",
+      "from": "#483d8b",
       "to": "#07C983"
     }
   },
   "topbarLinks": [
     {
       "name": "Support",
-      "url": "mailto:hi@mintlify.com"
+      "url": "mailto:support@cocartapi.com"
     }
   ],
   "topbarCtaButton": {
@@ -39,13 +39,13 @@
     },
     {
       "name": "Community",
-      "icon": "slack",
-      "url": "https://mintlify.com/community"
+      "icon": "discord",
+      "url": "https://cocartapi.com/community/"
     },
     {
-      "name": "Blog",
+      "name": "Developer Blog",
       "icon": "newspaper",
-      "url": "https://mintlify.com/blog"
+      "url": "https://cocart.dev/news/"
     }
   ],
   "navigation": [
@@ -71,8 +71,8 @@
     }
   ],
   "footerSocials": {
-    "twitter": "https://twitter.com/mintlify",
-    "github": "https://github.com/mintlify",
-    "linkedin": "https://www.linkedin.com/company/mintsearch"
+    "twitter": "https://twitter.com/cocartapi",
+    "github": "https://github.com/cocart-headless",
+    "linkedin": "https://www.linkedin.com/company/cocart-headless"
   }
 }
