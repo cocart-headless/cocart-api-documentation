@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/schema.json",
-  "name": "API Reference",
+  "name": "CoCart API Reference",
   "logo": {
     "dark": "/logo/dark.svg",
     "light": "/logo/light.svg"
@@ -8,11 +8,11 @@
   "favicon": "/favicon.svg",
   "colors": {
     "primary": "#5F32D9",
-    "light": "#07C983",
+    "light": "#5F32D9",
     "dark": "#483d8b",
     "anchors": {
       "from": "#483d8b",
-      "to": "#07C983"
+      "to": "#5F32D9"
     }
   },
   "topbarLinks": [
@@ -22,8 +22,8 @@
     }
   ],
   "topbarCtaButton": {
-    "name": "Dashboard",
-    "url": "https://dashboard.mintlify.com"
+    "name": "CoCart Plugin",
+    "url": "https://cocartapi.com"
   },
   "tabs": [
     {
@@ -32,11 +32,6 @@
     }
   ],
   "anchors": [
-    {
-      "name": "Documentation",
-      "icon": "book-open-cover",
-      "url": "https://mintlify.com/docs"
-    },
     {
       "name": "Community",
       "icon": "discord",
@@ -54,7 +49,7 @@
       "pages": ["introduction", "quickstart", "development"]
     },
     {
-      "group": "Essentials",
+      "group": "",
       "pages": ["essentials/markdown", "essentials/code", "essentials/images", "essentials/settings", "essentials/navigation"]
     },
     {
