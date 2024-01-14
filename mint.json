@@ -31,6 +31,11 @@
       "url": "api-reference"
     }
   ],
+  "versions": [
+    "experimental",
+    "v2",
+    "v1"
+  ],
   "anchors": [
     {
       "name": "Community",
@@ -46,18 +51,30 @@
   "navigation": [
     {
       "group": "Get Started",
-      "pages": ["introduction", "quickstart", "development"]
-    },
-    {
-      "group": "",
-      "pages": ["essentials/markdown", "essentials/code", "essentials/images", "essentials/settings", "essentials/navigation"]
+      "pages": ["introduction", "quickstart"]
     },
     {
       "group": "API Documentation",
       "pages": ["api-reference/introduction"]
     },
     {
-      "group": "Endpoint Examples",
+      "group": "Cart",
+      "pages": [
+        "api-reference/endpoint/get",
+        "api-reference/endpoint/create",
+        "api-reference/endpoint/delete"
+      ]
+    },
+    {
+      "group": "Products",
+      "pages": [
+        "api-reference/endpoint/get",
+        "api-reference/endpoint/create",
+        "api-reference/endpoint/delete"
+      ]
+    },
+    {
+      "group": "Sessions",
       "pages": [
         "api-reference/endpoint/get",
         "api-reference/endpoint/create",
