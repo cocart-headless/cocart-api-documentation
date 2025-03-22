@@ -1,0 +1,58 @@
+---
+title: Security Policy
+description: 'An overview of CoCart Security Policy'
+icon: "vault"
+---
+
+Full details of the CoCart Security Policy can be found on [cocartapi.com/security-policy/](https://cocartapi.com/security-policy/).
+
+## Supported Versions
+
+The CoCart Headless Security Team believes in Responsible Disclosure by alerting the security team immediately and privately of any potential vulnerabilities. If a critical vulnerability is found in any of the current versions of a CoCart plugin, we may opt to backport any patches to previous versions.
+
+### Core
+
+| Version | Supported |
+|---------| --------- |
+| 4.2.x   | Yes       |
+| 3.x.x   | No        |
+| 2.x.x   | No        |
+| < 1.0.x | No        |
+
+### Plus
+
+| Version | Supported |
+|---------| --------- |
+| 2.0.x   | Yes       |
+| 1.5.x   | Yes       |
+| < 1.4.x | No        |
+
+### JWT Authentication
+
+| Version | Supported |
+|---------| --------- |
+| 2.2.x   | Yes       |
+| 2.1.x   | Yes       |
+| 2.0.x   | Yes       |
+| < 1.0.x | No        |
+
+## Reporting a Vulnerability
+
+**For responsible disclosure of security issues, please submit your report based on instructions found on [cocartapi.com/security-policy/](https://cocartapi.com/security-policy/).**
+
+Our most critical targets are:
+
+* CoCart Core [repository](https://github.com/co-cart/co-cart)
+* CoCart Plus
+* CoCart JWT Authentication [repository](https://raw.githubusercontent.com/cocart-headless/cocart-jwt-authentication)
+* cocartapi.com -- the primary marketplace and marketing site.
+
+## Guidelines
+
+We're committed to working with security researchers to resolve the vulnerabilities they discover. You can help us by following these guidelines:
+
+*   Pen-testing Production:
+    *   Please **setup a local environment** instead whenever possible. Most of our code is open source (see above).
+    *   If that's not possible, **limit any data access/modification** to the bare minimum necessary to reproduce a PoC.
+    *   **Don't automate form submissions!** That's very annoying for us, because it adds extra work for the volunteers who manage those systems, and reduces the signal/noise ratio in our communication channels.
+*   Be Patient - Give us a reasonable time to correct the issue before you disclose the vulnerability.

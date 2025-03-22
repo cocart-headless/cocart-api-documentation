@@ -1,0 +1,116 @@
+---
+title: 'Extending Cart: Creating a Callback'
+sidebarTitle: 'Creating a Callback'
+description: 'Need to extend the cart to apply something unique?'
+---
+
+> Dev Note: Needs improving. Possibly a breakdown.
+
+## Creating a new callback
+
+Copy and paste this example class to get you started. Remember to label the callback class, name and set the parameters you wish to pass in the request.
+
+```php
+<?php
+/**
+ * A custom callback for CoCart triggered when updating the cart.
+ */
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Callback example class.
+ */
+class My_Custom_CoCart_Callback extends CoCart_REST_Callback  {
+
+	/**
+	 * Callback name.
+	 *
+	 * @access protected
+	 *
+	 * @var string
+	 */
+	protected $name = 'my-custom-callback';
+
+	/**
+	 * Callback to update the cart.
+	 *
+	 * @throws CoCart_Data_Exception Exception if invalid data is detected.
+	 *
+	 * @access public
+	 *
+	 * @param WP_REST_Request $request    The request object.
+	 * @param object          $controller The cart controller.
+	 *
+	 * @return bool Returns true.
+	 */
+	public function callback( $request, $controller ) {
+		try {
+			if ( $controller->is_completely_empty() ) {
+				throw new CoCart_Data_Exception( 'cocart_cart_empty', __( 'Cart is empty. Please add items to cart first.', 'cart-rest-api-for-woocommerce' ), 404 );
+			}
+
+			$data = isset( $request['data'] ) ? $request['data'] : array(); // Custom parameter.
+
+			$cart_updated = false;
+
+			if ( ! empty( $data ) ) {
+				// Place your callback here.
+
+				$cart_updated = true;
+			}
+
+			if ( $cart_updated ) {
+				// $controller->calculate_totals( $request, true ); // Uncomment if you need to recalculate the cart totals.
+
+				// Only returns success notice if there are no error notices. - Feel free to change the message response.
+				if ( 0 === wc_notice_count( 'error' ) ) {
+					wc_add_notice( __( 'Cart updated.', 'cart-rest-api-for-woocommerce' ), 'success' );
+				}
+			}
+
+			return true;
+		} catch ( CoCart_Data_Exception $e ) {
+			return CoCart_Response::get_error_response( $e->getErrorCode(), $e->getMessage(), $e->getCode(), $e->getAdditionalData() );
+		}
+	}
+} // END class
+
+return new My_Custom_CoCart_Callback();
+```
+
+## Registering the callback
+
+Simply load the class file created and hook the callback like so.
+
+<Warning>
+	If you registered a callback before with version 4 or lower of CoCart then you will need to register them again. We simplified the callback system to perform better in version 5.
+</Warning>
+
+```php
+add_filter( 'cocart_rest_callbacks', 'register_my_custom_callback' );
+
+function register_my_custom_callback( $callbacks ) {
+	include_once( dirname( __FILE__) . '/callback/my-custom-callback.php' );
+
+	$callbacks[] = new My_Custom_CoCart_Callback();
+
+	return $callbacks;
+}
+```
+
+## Calling the callback.
+
+E.g. Triggering the callback to use 10 points to save on the cart total.
+
+```
+curl --location --request POST 'https://example-store.com/wp-json/cocart/v2/cart/update' \
+--header 'Content-Type: application/json' \
+--data '{
+    "namespace": "my-custom-callback",
+    "data": {
+      "points": "10",
+    }
+}'
+```

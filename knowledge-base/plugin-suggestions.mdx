@@ -1,0 +1,43 @@
+---
+title: 'Plugin Suggestions'
+sidebarTitle: 'Suggestions'
+description: Discover other plugins we suggest
+icon: lightbulb
+---
+
+<Info>
+    FYI: Plugin suggestions only show to those who have CoCart Core v3.0 or above installed.
+</Info>
+
+Plugin Suggestions help you to discover other plugins that may provide features you are looking for from extending or supporting CoCart. These suggestions are added to the WordPress plugin search results page.
+
+The suggestions range from addons developed by CoCart or extensions developed by **WooCommerce** or **Third Party** developers that offer many useful features that users may not even realize are available, offering a functional solution to a particular problem.
+
+Plugin Suggestions works directly on a plugin search page when you’re looking for a feature that matches any specific key phrases. It adds a search result to the bottom of the listing that highlights the plugin matching the keywords you’re searching for with it’s name, author and possibly a link to learn more about it.
+
+Should you wish to just browse all available add-ons or supported extensions, you can just simply go to “CoCart” section under the plugin install page.
+
+Should the plugin be already installed on your site, the action link will be replaced with either “Activate” or “Installed & Active”.
+
+## Using Plugin Suggestions
+
+[![CoCart Suggestion](#)]
+
+1. Start at Plugins → Add New in your WordPress dashboard.
+2. Search for a plugin that CoCart may offer or be supported by.
+3. You should see a plugin card appear among the search results at the bottom.
+4. You will then be given an action link to learn more about it or purchase it.
+
+These suggestions are only shown on the first page as to not spam repetition.
+
+## Disabling Plugin Suggestion
+
+To disable Plugin Suggestion entirely, you can add the following snippet to your theme’s functions.php file or a functionality plugin:
+
+```php
+add_filter( 'cocart_show_plugin_search', function() { return false; });
+```
+
+<Note>
+    We will be adding more plugins to the suggestion list as we continue to develop CoCart. And if you have any suggestions, please let us know.
+</Note>

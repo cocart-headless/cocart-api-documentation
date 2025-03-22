@@ -1,0 +1,82 @@
+---
+title: 'Guiding Principles'
+description: 'The following principles should be considered when extending, creating, or updating endpoints in CoCart'
+---
+
+> Dev Note: Needs completing!!!
+
+## Routes should be designed around resources with a single type of schema
+
+Routes should be designed around resources (nouns) rather than operations (verbs). Routes should also return only one type of data defined by their Schema. For example:
+
+| Route                  | Resource type | Expected data               |
+| ---------------------- | ------------- | --------------------------- |
+| `cocart/v2/cart`       | Cart          | A cart object               |
+| `cocart/v2/cart/items` | Cart Item     | A list of cart item objects |
+| `cocart/v2/products`   | Product       | A list of product objects   |
+| `cocart/v2/products/1` | Product       | A product object            |
+
+There are 2 notable exceptions to this rule in the CoCart API; _Errors_ and _Cart Operations_.
+
+### Error Handling
+
+Errors, including validation errors, should return an error response code (4xx or 5xx) and a [`WP_Error` object](https://developer.wordpress.org/reference/classes/wp_error/). 
+
+Error messages should be localized, but do not need to be written with language aimed at customers (clients should use the given error code to create customer-facing notices as needed).
+
+Error codes should have the prefix `cocart_`.
+
+### Cart Operations
+
+Some endpoints are designed around operations to avoid clients needing to make multiple round trips to the API. This is purely for convenience.
+
+An example would be the `cocart/v2/cart/add-item` endpoint which accepts a quantity and product ID, but returns a full cart object, rather than just an updated list of items.
+
+## Exposed data must belong to the current user or be non-sensitive
+
+Resources, including customer and order data, should reflect only the current session. Do not return data for other customers as this would be a breach of privacy and security issue.
+
+Store data such as settings (for example, store currency) is permitted in responses, but private or sensitive data must be avoided. Allowing more extensive access to data must be authenticated.
+
+Data returned from the API should not be [escaped](https://developer.wordpress.org/themes/theme-security/data-sanitization-escaping/) (this is left to the client rendering it), but it should be sanitized. For example, HTML should be run through [`wp_kses_post`](https://developer.wordpress.org/reference/functions/wp_kses_post/).
+
+It is the client’s responsibility to properly escape data that comes from the API, but we should try to avoid returning data that is potentially unsafe.
+
+## Collections of resources should be paginated
+
+Large volumes of data should be paginated to avoid overwhelming the server. For example, returning a collection of products.
+
+* Use the response Headers `X-WP-Total`, `X-WP-TotalPages`, and `Link` to indicate available resources.
+* Use parameters `page` and `per_page` to retrieve certain pages.
+* The maximum allowed value for `per_page` is 100.
+
+## API Responses should use standard HTTP status codes
+
+When returning content, use a valid HTTP response code such as:
+
+- `200 OK` for successful responses (this is the default response code).
+- `201 Created` when creating a resource, for example, adding a new cart item or applying a new coupon.
+- `204 No Content` for successful deletes.
+- `400 Bad Request` when a required parameter is not set.
+- `403 Forbidden` when a request is not allowed, for example, if the provided security nonce is invalid.
+- `404 Not Found` if a resource does not exist.
+- `409 Conflict` if a resource cannot be updated, for example, if something in the cart is invalid and removed during the request.
+
+A note on `DELETE` requests, a common pattern in the WordPress REST API is to return the deleted object.
+
+[A full list of HTTP status codes can be found here.](https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml)
+
+## Breaking changes should be avoided where possible
+
+The CoCart API establishes a contract between itself and API consumers via the use of Schema. This contract should not be broken unless absolutely necessary. If a breaking change were necessary, a new version of the CoCart API would need to be released.
+
+A breaking change is anything that changes the format of existing Schema, removes a Schema property, removes an existing route, or makes a backwards-incompatible change to anything public that may already be in use by consumers. Breaking changes can be avoided by [deprecating existing properties](http://json-schema.org/draft/2019-09/json-schema-validation.html#rfc.section.9.3) rather than removing them, or [deprecating routes](https://datatracker.ietf.org/doc/html/rfc8594) and replacing them with a different route if major changes are needed.
+
+Non-breaking changes are always permitted without the need to increase the API version. Some examples of these include:
+
+- Adding new properties to schema
+- Adding new routes, endpoints, methods
+- Adding optional request parameters
+- Re-ordering response fields
+
+The version will not increase for bug fixes unless the scope of the bug causes a backwards-incompatible change. Fixes would not be rolled back to past API versions with the exception of security issues that require backporting.

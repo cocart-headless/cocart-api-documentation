@@ -1,0 +1,24 @@
+---
+title: 'Code snippets added the right way'
+sidebarTitle: 'Customize CoCart'
+description: How to apply any CoCart filter or action hook the safe way
+icon: "wand-magic"
+---
+
+The best way to apply changes to your WordPress site is to add them in parts/snippets without touching any files in a plugin or the theme your using.
+
+<Warning>
+    Editing other PHP file carries the risk of breaking the rest of the code in the file and also opens you to the potential that the code will be lost when you update.
+</Warning>
+
+There are several functionality plugins available in the WordPress.org repository. The instructions below explain how to install and use a plugin called **[Code Snippets](https://wordpress.org/plugins/code-snippets/)**.
+
+1. Go to Plugins → Add New, search **Code Snippets** and install and activate the plugin. This will add a Snippets item to your wp-admin dashboard menu.
+2. Navigate to Snippets → Add New.
+3. Enter a title.
+4. Paste or type your code in the Code field.
+5. Click "Save Changes and Activate".
+
+<Note>
+    If you have set a priority on the filter/hook. It is best that you set the **priority** at the same level. You also want to set/leave it on "Run snippet everywhere".
+</Note>

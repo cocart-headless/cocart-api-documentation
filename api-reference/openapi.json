@@ -1,195 +1,644 @@
 {
-  "openapi": "3.0.1",
-  "info": {
-    "title": "OpenAPI Plant Store",
-    "description": "A sample API that uses a plant store as an example to demonstrate features in the OpenAPI specification",
-    "license": {
-      "name": "MIT"
-    },
-    "version": "1.0.0"
-  },
-  "servers": [
-    {
-      "url": "http://sandbox.mintlify.com"
-    }
-  ],
-  "security": [
-    {
-      "bearerAuth": []
-    }
-  ],
-  "paths": {
-    "/plants": {
-      "get": {
-        "description": "Returns all plants from the system that the user has access to",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of results to return",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Plant response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Plant"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "Creates a new plant in the store",
-        "requestBody": {
-          "description": "Plant to add to the store",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NewPlant"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "plant response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Plant"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/plants/{id}": {
-      "delete": {
-        "description": "Deletes a single plant based on the ID supplied",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "ID of plant to delete",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Plant deleted",
-            "content": {}
-          },
-          "400": {
-            "description": "unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "components": {
-    "schemas": {
-      "Plant": {
-        "required": [
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "description": "The name of the plant",
-            "type": "string"
-          },
-          "tag": {
-            "description": "Tag to specify the type",
-            "type": "string"
-          }
-        }
-      },
-      "NewPlant": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Plant"
-          },
-          {
-            "required": [
-              "id"
-            ],
-            "type": "object",
-            "properties": {
-              "id": {
-                "description": "Identification number of the plant",
-                "type": "integer",
-                "format": "int64"
-              }
-            }
-          }
-        ]
-      },
-      "Error": {
-        "required": [
-          "error",
-          "message"
-        ],
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "message": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer"
-      }
-    }
-  }
+	"openapi": "3.0.1",
+	"info": {
+		"title": "OpenAPI CoCart API",
+		"description": "Provides details of the products API in the OpenAPI specification",
+		"license": {
+			"name": "MIT"
+		},
+		"version": "1.0.0"
+	},
+	"servers": [
+		{
+			"url": "https://yourawesome.store"
+		}
+	],
+	"security": [
+		{
+			"basicAuth": []
+		}
+	],
+	"paths": {
+		"/products": {
+			"get": {
+				"parameters": [],
+				"responses": {
+					"200": {
+						"description": "Products response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Products"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/products/{id}": {
+			"get": {
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"format": "int",
+							"description": "ID of product"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Product response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Product"
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"components": {
+		"securitySchemes": {
+			"basicAuth": {
+				"type": "http",
+				"scheme": "basic"
+			}
+		},
+		"schemas": {
+			"Products": {
+				"type": "array",
+				"items": {
+					"$ref": "#/components/schemas/Product"
+				}
+			},
+			"Product": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"description": "Unique identifier for the product.",
+						"type": "integer",
+						"example": "29"
+					},
+					"name": {
+						"description": "Product name.",
+						"type": "string",
+						"example": "Beanie with Logo"
+					},
+					"slug": {
+						"description": "Product slug.",
+						"type": "string",
+						"example": "beanie-with-logo"
+					},
+					"permalink": {
+						"description": "Product permalink.",
+						"type": "string",
+						"example": "https://yourawesome.store/product/beanie-with-logo/"
+					},
+					"date_created": {
+						"description": "The date the product was created, in the site's timezone.",
+						"type": "string",
+						"format": "date-time",
+						"example": "2024-03-06T17:40:17"
+					},
+					"date_created_gmt": {
+						"description": "The date the product was created, as GMT.",
+						"type": "string",
+						"format": "date-time",
+						"example": "2024-03-06T17:40:17"
+					},
+					"date_modified": {
+						"description": "The date the product was last modified, in the site's timezone.",
+						"type": "string",
+						"format": "date-time",
+						"example": "2024-03-06T17:43:14"
+					},
+					"date_modified_gmt": {
+						"description": "The date the product was last modified, as GMT.",
+						"type": "string",
+						"format": "date-time",
+						"example": "2024-03-06T17:43:14"
+					},
+					"type": {
+						"description": "Product type.",
+						"type": "string",
+						"example": "simple"
+					},
+					"featured": {
+						"description": "Featured product.",
+						"type": "boolean",
+						"example": "false"
+					},
+					"catalog_visibility": {
+						"description": "Catalog visibility.",
+						"type": "string",
+						"example": "visible"
+					},
+					"description": {
+						"description": "Product description.",
+						"type": "string",
+						"example": "Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris placerat eleifend leo."
+					},
+					"short_description": {
+						"description": "Product short description.",
+						"type": "string",
+						"example": "This is a simple product."
+					},
+					"sku": {
+						"description": "Unique identifier.",
+						"type": "string",
+						"example": "Woo-beanie-logo"
+					},
+					"price": {
+						"description": "Current product price.",
+						"type": "string",
+						"example": "$18.00"
+					},
+					"regular_price": {
+						"description": "Product regular price.",
+						"type": "string",
+						"example": "$20.00"
+					},
+					"sale_price": {
+						"description": "Product sale price.",
+						"type": "string",
+						"example": "$18.00"
+					},
+					"date_on_sale_from": {
+						"description": "Start date of sale price, in the site's timezone.",
+						"type": "string",
+						"example": "2024-03-07T14:00:00"
+					},
+					"date_on_sale_from_gmt": {
+						"description": "Start date of sale price, as GMT.",
+						"type": "string",
+						"example": "2024-03-07T14:00:00"
+					},
+					"date_on_sale_to": {
+						"description": "End date of sale price, in the site's timezone.",
+						"type": "string",
+						"example": "2024-03-14T23:59:59"
+					},
+					"date_on_sale_to_gmt": {
+						"description": "End date of sale price, as GMT.",
+						"type": "string",
+						"example": "2024-03-14T23:59:59"
+					},
+					"on_sale": {
+						"description": "Shows if the product is on sale.",
+						"type": "boolean",
+						"example": "true"
+					},
+					"purchasable": {
+						"description": "Shows if the product can be bought.",
+						"type": "boolean",
+						"example": "true"
+					},
+					"total_sales": {
+						"description": "Amount of sales.",
+						"type": "integer",
+						"example": "0"
+					},
+					"virtual": {
+						"description": "If the product is virtual.",
+						"type": "boolean",
+						"example": "false"
+					},
+					"downloadable": {
+						"description": "If the product is downloadable.",
+						"type": "boolean",
+						"example": "false"
+					},
+					"external_url": {
+						"description": "Product external URL. Only for external products.",
+						"type": "string",
+						"example": ""
+					},
+					"button_text": {
+						"description": "Product external button text. Only for external products.",
+						"type": "string",
+						"example": ""
+					},
+					"manage_stock": {
+						"description": "Stock management at product level.",
+						"type": "boolean",
+						"example": "false"
+					},
+					"stock_quantity": {
+						"description": "Stock quantity.",
+						"type": "integer",
+						"example": "null"
+					},
+					"has_options": {
+						"description": "Determines whether or not the product has additional options that need selecting before adding to cart.",
+						"type": "boolean",
+						"example": "false"
+					},
+					"in_stock": {
+						"description": "Determines if product is listed as 'in stock' or 'out of stock'.",
+						"type": "boolean",
+						"example": "true"
+					},
+					"backorders": {
+						"description": "If managing stock, this controls if backorders are allowed.",
+						"type": "string",
+						"example": "no"
+					},
+					"backorders_allowed": {
+						"description": "Are backorders allowed?",
+						"type": "boolean",
+						"example": "false"
+					},
+					"backordered": {
+						"description": "Shows if the product is on backordered.",
+						"type": "boolean",
+						"example": "false"
+					},
+					"sold_individually": {
+						"description": "Allow one of the item to be bought in a single order.",
+						"type": "boolean",
+						"example": "false"
+					},
+					"weight": {
+						"description": "Product weight (weight unit)",
+						"type": "object",
+						"properties": {
+							"value": {
+								"description": "Product weight value.",
+								"type": "string",
+								"example": ""
+							},
+							"unit": {
+								"description": "Product weight unit.",
+								"type": "string",
+								"example": "kg"
+							}
+						}
+					},
+					"dimensions": {
+						"description": "Product dimensions.",
+						"type": "object",
+						"properties": {
+							"length": {
+								"description": "Product length (dimension unit)",
+								"type": "string",
+								"example": ""
+							},
+							"width": {
+								"description": "Product width (dimension unit)",
+								"type": "string",
+								"example": ""
+							},
+							"height": {
+								"description": "Product height (dimension unit)",
+								"type": "string",
+								"example": ""
+							}
+						}
+					},
+					"shipping_required": {
+						"description": "Shows if the product need to be shipped.",
+						"type": "boolean",
+						"example": "true"
+					},
+					"reviews_allowed": {
+						"description": "Shows if reviews are allowed.",
+						"type": "boolean",
+						"example": "true"
+					},
+					"reviews": {
+						"description": "Returns a list of product review IDs",
+						"type": "array",
+						"example": "[]"
+					},
+					"average_rating": {
+						"description": "Reviews average rating.",
+						"type": "string",
+						"example": "0"
+					},
+					"rating_count": {
+						"description": "Amount of reviews that the product has.",
+						"type": "integer",
+						"example": "0"
+					},
+					"review_count": {
+						"description": "Amount of reviews that the product have.",
+						"type": "integer",
+						"example": "0"
+					},
+					"rating_html": {
+						"description": "Returns the rating of the product in html.",
+						"type": "string",
+						"example": ""
+					},
+					"related_ids": {
+						"description": "List of related products IDs.",
+						"type": "array",
+						"items": {
+							"type": "integer"
+						},
+						"example": ["83", "84", "79", "96", "94"]
+					},
+					"upsell_ids": {
+						"description": "List of up-sell products IDs.",
+						"type": "array",
+						"items": {
+							"type": "integer"
+						},
+						"example": "[]"
+					},
+					"cross_sell_ids": {
+						"description": "List of cross-sell products IDs.",
+						"type": "array",
+						"items": {
+							"type": "integer"
+						},
+						"example": "[]"
+					},
+					"parent_id": {
+						"description": "Product parent ID.",
+						"type": "integer",
+						"example": "0"
+					},
+					"categories": {
+						"description": "List of product categories.",
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"id": {
+									"description": "Category ID.",
+									"type": "integer",
+									"example": "37"
+								},
+								"name": {
+									"description": "Category name.",
+									"type": "string",
+									"example": "Accessories"
+								},
+								"slug": {
+									"description": "Category slug.",
+									"type": "string",
+									"example": "accessories"
+								}
+							}
+						}
+					},
+					"tags": {
+						"description": "List of product tags.",
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"id": {
+									"description": "Tag ID.",
+									"type": "integer"
+								},
+								"name": {
+									"description": "Tag name.",
+									"type": "string"
+								},
+								"slug": {
+									"description": "Tag slug.",
+									"type": "string"
+								}
+							}
+						}
+					},
+					"images": {
+						"description": "List of product images.",
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"id": {
+									"description": "Image ID.",
+									"type": "integer"
+								},
+								"date_created": {
+									"description": "The date the image was created, in the site's timezone.",
+									"type": "string",
+									"format": "date-time"
+								},
+								"date_created_gmt": {
+									"description": "The date the image was created, as GMT.",
+									"type": "string",
+									"format": "date-time"
+								},
+								"date_modified": {
+									"description": "The date the image was last modified, in the site's timezone.",
+									"type": "string",
+									"format": "date-time"
+								},
+								"date_modified_gmt": {
+									"description": "The date the image was last modified, as GMT.",
+									"type": "string",
+									"format": "date-time"
+								},
+								"src": {
+									"description": "Image URL.",
+									"type": "array",
+									"format": "uri",
+									"items": {
+										"type": "object",
+										"properties": {
+											"thumbnail": {
+												"description": "The product image URL for 'thumbnail'.",
+												"type": "string",
+												"format": "uri",
+												"example": "https://yourawesome.store/wp-content/uploads/2024/03/beanie-with-logo-1-150x150.jpg"
+											},
+											"medium": {
+												"description": "The product image URL for 'medium'.",
+												"type": "string",
+												"format": "uri",
+												"example": "https://yourawesome.store/wp-content/uploads/2024/03/beanie-with-logo-1-300x300.jpg"
+											},
+											"medium_large": {
+												"description": "The product image URL for 'medium_large'.",
+												"type": "string",
+												"format": "uri",
+												"example": "https://yourawesome.store/wp-content/uploads/2024/03/beanie-with-logo-1-768x768.jpg"
+											},
+											"large": {
+												"description": "The product image URL for 'large'.",
+												"type": "string",
+												"format": "uri",
+												"example": "https://yourawesome.store/wp-content/uploads/2024/03/beanie-with-logo-1.jpg"
+											},
+											"woocommerce_thumbnail": {
+												"description": "The product image URL for 'woocommerce_thumbnail'.",
+												"type": "string",
+												"format": "uri",
+												"example": "https://yourawesome.store/wp-content/uploads/2024/03/beanie-with-logo-1-300x300.jpg"
+											},
+											"woocommerce_single": {
+												"description": "The product image URL for 'woocommerce_single'.",
+												"type": "string",
+												"format": "uri",
+												"example": "https://yourawesome.store/wp-content/uploads/2024/03/beanie-with-logo-1-600x600.jpg"
+											},
+											"woocommerce_gallery_thumbnail": {
+												"description": "The product image URL for 'woocommerce_gallery_thumbnail'.",
+												"type": "string",
+												"format": "uri",
+												"example": "https://yourawesome.store/wp-content/uploads/2024/03/beanie-with-logo-1-100x100.jpg"
+											},
+											"full": {
+												"description": "The product image URL for 'full'.",
+												"type": "string",
+												"format": "uri",
+												"example": "https://yourawesome.store/wp-content/uploads/2024/03/beanie-with-logo-1.jpg"
+											},
+											"custom": {
+												"description": "The product image URL for 'custom'.",
+												"type": "string",
+												"format": "uri",
+												"example": "https://yourawesome.store/wp-content/uploads/2024/03/beanie-with-logo-1.jpg"
+											}
+										}
+									}
+								},
+								"name": {
+									"description": "Image name.",
+									"type": "string",
+									"example": "beanie-with-logo-1.jpg"
+								},
+								"alt": {
+									"description": "Image alternative text.",
+									"type": "string",
+									"example": ""
+								},
+								"position": {
+									"description": "Image position. 0 means that the image is featured.",
+									"type": "integer",
+									"example": "0"
+								}
+							}
+						}
+					},
+					"attributes": {
+						"description": "List of attributes.",
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"id": {
+									"description": "Attribute ID.",
+									"type": "integer"
+								},
+								"name": {
+									"description": "Attribute name.",
+									"type": "string"
+								},
+								"position": {
+									"description": "Attribute position.",
+									"type": "integer"
+								},
+								"is_attribute_visible": {
+									"description": "Is the attribute visible on the \"Additional information\" tab in the product's page.",
+									"type": "boolean",
+									"default": false
+								},
+								"used_for_variation": {
+									"description": "Can the attribute be used as variation?",
+									"type": "boolean",
+									"default": false
+								},
+								"options": {
+									"description": "List of available term names of the attribute.",
+									"type": "array",
+									"items": {
+										"type": "string"
+									}
+								}
+							}
+						}
+					},
+					"default_attributes": {
+						"description": "Defaults variation attributes.",
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"id": {
+									"description": "Attribute ID.",
+									"type": "integer"
+								},
+								"name": {
+									"description": "Attribute name.",
+									"type": "string"
+								},
+								"option": {
+									"description": "Selected attribute term name.",
+									"type": "string"
+								}
+							}
+						}
+					},
+					"variations": {
+						"description": "List of all variations and data.",
+						"type": "array",
+						"items": {
+							"type": "object"
+						}
+					},
+					"grouped_products": {
+						"description": "List of grouped products ID.",
+						"type": "array",
+						"items": {
+							"type": "integer"
+						}
+					},
+					"menu_order": {
+						"description": "Menu order, used to custom sort products.",
+						"type": "integer"
+					},
+					"meta_data": {
+						"description": "Meta data.",
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"id": {
+									"description": "Meta ID.",
+									"type": "integer"
+								},
+								"key": {
+									"description": "Meta key.",
+									"type": "string"
+								},
+								"value": {
+									"description": "Meta value.",
+									"type": "mixed"
+								}
+							}
+						}
+					},
+					"add_to_cart": {
+						"description": "Add to Cart button.",
+						"type": "object",
+						"properties": {
+							"text": {
+								"description": "Text",
+								"type": "string",
+								"default": "Add to Cart"
+							},
+							"description": {
+								"description": "Description",
+								"type": "string"
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }

@@ -1,33 +1,85 @@
 ---
 title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+description: 'Understand general concepts, response codes, and authentication strategies.'
+icon: hand
 ---
 
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
+<Warning>While the API reference for version 1 remains documented, it will soon no longer be supported. We highly recommend that you use API v2. Please contact support if you need help.</Warning>
 
-## Welcome
+Welcome to the API reference site for CoCart. Whether you're looking to build powerful headless stores, add support to CoCart for a WooCommerce extension, or directly contributing to enhancing CoCart itself, you've come to the right place.
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
+Begin your journey by joining our thriving [community on Discord](https://cocartapi.com/community/?utm_medium=ogdocs.cocartapi.com&utm_source=docs&utm_content=cocart-docs) for support and networking.
 
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+We make the assumption that you are comfortable with REST API's and understand the basics of WordPress and WooCommerce. Since CoCart is built in PHP, we recommend having some knowledge of it as well.
 
-## Authentication
+Have a question, [contact support](mailto:support@cocartapi.com).
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+## Base url
+
+The base URL is where your WordPress is installed. All requests made to CoCart API is via your WordPress site url `https://example-store.com/wp-json/cocart/`
+
+## Request/Response Format ##
+
+The default response format is in JSON. Requests with a message-body use plain JSON to set or update resource attributes. Successful requests will return a `200 OK` HTTP status.
+
+Some general information about response:
+
+* Resource IDs are returned as integers.
+* Other number values, such as price, item counts, are returned as integers or strings.
+* Blank fields may return as `null` instead of being returned as blank strings or omitted.
+
+## Body Types ##
+
+There are different types of body types when making a request. Make sure when using either of these body types that you have the correct `Content-Type` for the header.
+
+| Body Type             | Content-Type                      |
+| --------------------- | --------------------------------- |
+| form-data             | application/json                  |
+| raw                   | application/json                  |
+| x-www-form-urlencoded | application/x-www-form-urlencoded |
+
+<aside class="notice">
+    Body data must be passed correctly for the CoCart REST API to succeed.
+</aside>
+
+Using **raw** works best if you are passing an object of data for a `variation` or `cart_item_data`. Use [any of the tools available](/documentation/tools) to help test the API with if you are unsure.
+
+## Errors ##
+
+Occasionally you might encounter errors when accessing the REST API. Here are the possible types:
+
+| Error Code                  | Error Type                                                    |
+| --------------------------- |-------------------------------------------------------------- |
+| `400 Bad Request`           | Invalid request, e.g. using an unsupported HTTP method.       |
+| `401 Unauthorized`          | Authentication or permission error, e.g. incorrect login.     |
+| `403 Forbidden`             | Not allowed to process this action or have permission.        |
+| `404 Not Found`             | Requests to resources that don't exist or are missing.        |
+| `405 Method Not Allowed`    | A request method is not supported for the requested resource. |
+| `406 Not Acceptable`        | Indicates that the server could not produce a response.       |
+| `500 Internal Server Error` | Server error                                                  |
+
+> WP REST API error example
 
 ```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
+{
+    "code": "rest_no_route",
+    "message": "No route was found matching the URL and request method",
+    "data": {
+        "status": 404
+    }
+}
 ```
+
+> CoCart error example
+
+```json
+{
+    "code": "cocart_clear_cart_failed",
+    "message": "Clearing the cart failed!",
+    "data": {
+        "status": 406
+    }
+}
+```
+
+Errors return both an appropriate HTTP status code and response object which contains a `code`, `message` and `data` attribute.

@@ -1,0 +1,90 @@
+---
+title: Functions available in the core of CoCart
+sidebarTitle: 'In Core'
+description: 'Extend support for CoCart with these useful functions in your projects'
+---
+
+## `cocart_maybe_show_results()`
+Checks if the session table exists before returning results. Helps prevents any fatal errors or crashes should debug mode be enabled.
+
+**Returns**: `boolean Returns true or false if the session table exists.`
+
+- **Since**: 4.2.0 Introduced.
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php#L90)
+
+---
+
+## `cocart_count_carts_expiring()`
+Counts how many carts are going to expire within the next 6 hours.
+
+**Returns**: `int Number of carts expiring.`
+
+- **Since**: 4.2.0 Introduced.
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php#L146)
+
+---
+
+## `cocart_count_carts_active()`
+Counts how many carts are active.
+
+**Returns**: `int Number of carts active.`
+
+- **Since**: 4.2.0 Introduced.
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php#L177)
+
+---
+
+## `cocart_count_carts_expired()`
+Counts how many carts have expired.
+
+**Returns**: `int Number of carts expired.`
+
+- **Since**: 4.2.0 Introduced.
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php#L207)
+
+---
+
+## `cocart_carts_source_web()`
+Counts how many carts were created via the web.
+
+**Returns**: `int Number of carts created via the web.`
+
+- **Since**: 4.2.0 Introduced.
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php#L237)
+
+---
+
+## `cocart_carts_source_headless()`
+Counts how many carts were created via CoCart API.
+
+**Returns**: `int Number of carts created via CoCart API.`
+
+- **Since**: 4.2.0 Introduced.
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php#L267)
+
+---
+
+## `cocart_carts_source_other()`
+Counts how many carts were the source is other or unknown.
+
+**Returns**: `int Number of carts created via other or unknown.`
+
+- **Since**: 4.2.0 Introduced.
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php#L297)
+
+---
+
+## `cocart_get_min_max_price_meta_query()`
+Get min/max price meta query args.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$args` | `array` | Min price and max price arguments. |
+
+**Returns**: `array`
+
+- **Since**: 3.4.1 Introduced.
+- **Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-rest-functions.php#L520)
+
+---
+

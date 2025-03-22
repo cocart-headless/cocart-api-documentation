@@ -1,0 +1,282 @@
+---
+title: Authentication
+description: 'Learn how to authenticate with the CoCart API for secure access.'
+icon: lock
+---
+
+The CoCart API provides multiple authentication methods to suit different needs. While the Products API and Cart API are publicly accessible without authentication, authenticating users enables personalized shopping experiences.
+
+## Public vs. Authenticated Access
+
+- **Public Access**: Products API and Cart API
+- **Authenticated Access**: Required for registered customers to access their personal carts
+
+<Warning>
+  All authenticated API requests must be made over HTTPS. Requests made over plain HTTP will fail. Authentication establishes a secure customer session.
+</Warning>
+
+## Customer Authentication Methods
+
+CoCart supports Basic Authentication with multiple identifier options:
+
+<Tabs>
+  <Tab title="Username + Password">
+    <CodeGroup>
+      ```bash cURL
+      curl -X GET 'https://your-store.com/wp-json/cocart/v2/cart' \
+        -H 'Authorization: Basic base64_encode(customer_username:password123)'
+      ```
+
+      ```php PHP
+      <?php
+      $username = 'customer_username';
+      $password = 'password123';
+      
+      $ch = curl_init();
+      
+      curl_setopt_array($ch, [
+          CURLOPT_URL => 'https://your-store.com/wp-json/cocart/v2/cart',
+          CURLOPT_RETURNTRANSFER => true,
+          CURLOPT_HTTPHEADER => [
+              'Authorization: Basic ' . base64_encode($username . ':' . $password)
+          ]
+      ]);
+      
+      $response = curl_exec($ch);
+      $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+      
+      curl_close($ch);
+      ```
+
+      ```javascript Javascript
+      const auth = btoa('customer_username:password123');
+      fetch('https://your-store.com/wp-json/cocart/v2/cart', {
+        headers: { 'Authorization': `Basic ${auth}` }
+      });
+      ```
+    </CodeGroup>
+  </Tab>
+  <Tab title="Email + Password">
+    <CodeGroup>
+      ```bash cURL
+      curl -X GET 'https://your-store.com/wp-json/cocart/v2/cart' \
+        -H 'Authorization: Basic base64_encode(customer@example.com:password123)'
+      ```
+
+      ```php PHP
+      <?php
+      $email = 'customer@example.com';
+      $password = 'password123';
+      
+      $ch = curl_init();
+      
+      curl_setopt_array($ch, [
+          CURLOPT_URL => 'https://your-store.com/wp-json/cocart/v2/cart',
+          CURLOPT_RETURNTRANSFER => true,
+          CURLOPT_HTTPHEADER => [
+              'Authorization: Basic ' . base64_encode($email . ':' . $password)
+          ]
+      ]);
+      
+      $response = curl_exec($ch);
+      $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+      
+      curl_close($ch);
+      ```
+
+      ```javascript Javascript
+      const auth = btoa('customer@example.com:password123');
+      fetch('https://your-store.com/wp-json/cocart/v2/cart', {
+        headers: { 'Authorization': `Basic ${auth}` }
+      });
+      ```
+    </CodeGroup>
+  </Tab>
+  <Tab title="Phone Number + Password">
+    <CodeGroup>
+      ```bash cURL
+      curl -X GET 'https://your-store.com/wp-json/cocart/v2/cart' \
+        -H 'Authorization: Basic base64_encode(+1234567890:password123)'
+      ```
+
+      ```php PHP
+      <?php
+      $phone = '+1234567890';
+      $password = 'password123';
+      
+      $ch = curl_init();
+      
+      curl_setopt_array($ch, [
+          CURLOPT_URL => 'https://your-store.com/wp-json/cocart/v2/cart',
+          CURLOPT_RETURNTRANSFER => true,
+          CURLOPT_HTTPHEADER => [
+              'Authorization: Basic ' . base64_encode($phone . ':' . $password)
+          ]
+      ]);
+      
+      $response = curl_exec($ch);
+      $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+      
+      curl_close($ch);
+      ```
+
+      ```javascript Javascript
+      const auth = btoa('+1234567890:password123');
+      fetch('https://your-store.com/wp-json/cocart/v2/cart', {
+        headers: { 'Authorization': `Basic ${auth}` }
+      });
+      ```
+    </CodeGroup>
+  </Tab>
+</Tabs>
+
+## Storing Authentication Credentials
+
+After successful authentication, securely store the credentials using one of these recommended methods:
+
+- **Browser Storage**
+  - LocalStorage (with encryption)
+  - SessionStorage (for temporary sessions)
+- **Storage Libraries**
+  - [localForage](https://www.npmjs.com/package/localforage) - Offline storage with fallbacks
+  - [PouchDB](https://pouchdb.com/) - Offline-first database
+- **Native Storage**
+  - [SQLite](https://www.sqlite.org/) - For mobile applications
+  - [Hive](https://docs.hivedb.dev/) - For Flutter applications
+  - Secure Keychain/Keystore for mobile platforms
+
+## JWT Authentication (Recommended)
+
+For enhanced security, we strongly recommend using JWT authentication when available. JWT provides:
+
+- Stateless authentication
+- Better security
+- Reduced server load
+- Easier mobile/desktop integration
+
+If JWT authentication is enabled, use the token received after login for subsequent requests:
+
+<CodeGroup>
+  ```bash cURL
+  curl -X GET 'https://your-store.com/wp-json/cocart/v2/cart' \
+    -H 'Authorization: Bearer jwt_token'
+  ```
+
+  ```php PHP
+  <?php
+  $token = 'jwt_token';
+  $ch = curl_init();
+  curl_setopt_array($ch, [
+      CURLOPT_URL => 'https://your-store.com/wp-json/cocart/v2/cart',
+      CURLOPT_RETURNTRANSFER => true,
+      CURLOPT_HTTPHEADER => [
+          'Authorization: Bearer ' . $token
+      ]
+  ]);
+  
+  $cart = curl_exec($ch);
+  curl_close($ch);
+  ```
+
+  ```javascript JavaScript
+  const token = await getToken();
+  const cart = await fetch('https://your-store.com/wp-json/cocart/v2/cart', {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  ```
+</CodeGroup>
+
+## Cart Session Management
+
+### Authenticating with Existing Cart
+
+If a customer begins shopping while unauthenticated, you can transfer their cart items during authentication. See [Authenticating a customer with an existing cart](/api-reference/authentication/authenticate-customer-with-existing-cart) for the process.
+
+<Warning>
+  Maintain consistent authentication across all routes after customer login to preserve the cart session. Failing to do so will create new sessions and lose cart data.
+</Warning>
+
+## Administrator Authentication
+
+The Sessions API requires [WooCommerce REST API Key](https://woocommerce.github.io/woocommerce-rest-api-docs/#rest-api-keys) authentication.
+
+1. Navigate to WooCommerce → Settings → Advanced → REST API
+2. Generate new keys with `READ/WRITE` permissions
+3. Use the keys for Sessions API authentication:
+
+<CodeGroup>
+  ```bash cURL
+  curl -X GET 'https://your-store.com/wp-json/cocart/v2/sessions' \
+    -H 'Authorization: Basic base64_encode(ck_XXXX:cs_XXXX)'
+  ```
+
+  ```php PHP
+  <?php
+  $consumer_key = 'ck_XXXXXXXXXXXXXXXXXXXXXX';
+  $consumer_secret = 'cs_XXXXXXXXXXXXXXXXXXXXXX';
+  
+  $ch = curl_init();
+  curl_setopt_array($ch, [
+      CURLOPT_URL => 'https://your-store.com/wp-json/cocart/v2/sessions',
+      CURLOPT_RETURNTRANSFER => true,
+      CURLOPT_HTTPHEADER => [
+          'Authorization: Basic ' . base64_encode($consumer_key . ':' . $consumer_secret)
+      ]
+  ]);
+  
+  $response = curl_exec($ch);
+  curl_close($ch);
+  ```
+
+  ```javascript Javascript
+  const consumerKey = 'ck_XXXXXXXXXXXXXXXXXXXXXX';
+  const consumerSecret = 'cs_XXXXXXXXXXXXXXXXXXXXXX';
+  const auth = btoa(`${consumerKey}:${consumerSecret}`);
+
+  fetch('https://your-store.com/wp-json/cocart/v2/sessions', {
+    headers: { 'Authorization': `Basic ${auth}` }
+  });
+  ```
+</CodeGroup>
+
+## About Base64 Encoding
+
+- `base64_encode()` is a PHP function
+- `btoa()` is a JavaScript function
+- Both perform Base64 encoding, but are used in different environments
+- For Node.js, use `Buffer.from(str).toString('base64')`
+- For React Native, use `import { encode } from 'base-64'`
+
+<CodeGroup>
+    ```php PHP
+    $auth = base64_encode("username:password");
+    ```
+
+    ```javascript JavaScript
+    const auth = btoa("username:password");
+    ```
+
+    ```javascript Node.js
+    const auth = Buffer.from("username:password").toString('base64');
+    ```
+</CodeGroup>
+
+## Trouble with Authentication?
+
+If your server configuration doesn't properly handle the Authorization header, you can pass credentials as query parameters:
+
+<CodeGroup>
+  ```http Customer Authentication
+  /wp-json/cocart/v2/cart?username=customer&password=secret
+  ```
+
+  ```http WooCommerce REST API Keys
+  /wp-json/cocart/v2/sessions?consumer_key=123&consumer_secret=abc
+  ```
+</CodeGroup>
+
+However, these methods are less secure and should be used only as a fallback.
+
+[**Troubleshoot Authentication Issues →**](../knowledge-base/troubleshoot/authentication)

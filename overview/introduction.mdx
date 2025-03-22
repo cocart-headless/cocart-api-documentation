@@ -1,0 +1,42 @@
+---
+title: Welcome to CoCart API
+sidebarTitle: 'Introduction'
+description: 'CoCart is the headless API for developers.'
+icon: "hand-spock"
+---
+
+Transform your WooCommerce store into a powerful, decoupled commerce platform with CoCart — an open-source REST API that liberates your store from WordPress's traditional constraints. Build modern storefronts using frameworks like Astro, React, Vue, or Next.js, gaining complete control over your customer experience.
+
+## Who is this for?
+
+CoCart empowers developers with a robust REST API that significantly reduces development time, enabling you to build modern and scalable storefronts independent of WordPress. Our intuitive API handles presentation, management, calculations, and processing, delivering optimal performance across any configuration.
+
+## How does CoCart work?
+
+CoCart seamlessly integrates with WooCommerce's Data Stores API and preserves WooCommerce hook compatibility, ensuring broad support for existing extensions out of the box.
+
+To enable headless cart functionality in WooCommerce, CoCart implements a custom session handler that generates unique keys for each user session in the WordPress database. This approach manages session-related metadata client-side without exposing sensitive customer data or requiring cookies.
+
+## What is a REST API?
+
+REST (Representational State Transfer) is an architectural style for building web services that communicate over HTTP, similar to how web browsers interact with servers. It provides a standardized way for applications to exchange data and perform operations.
+
+Recommend reading the [REST API handbook](https://developer.wordpress.org/rest-api/) for more information.
+
+## Prerequisites
+
+Before using CoCart, ensure your WordPress permalinks are configured to any setting except "Plain". This configuration is essential for accessing the REST API using standard endpoint URIs (e.g., cocart/v2/products). Configure this under Settings > Permalinks.
+
+<Card title="Upload Plugin" img="https://cocartapi.com/wp-content/uploads/2023/11/image-3.png">
+</Card>
+
+With these settings in place, you're ready to begin using CoCart.
+
+## WooCommerce Dependency
+
+CoCart requires an active WooCommerce installation to function. If WooCommerce is not installed or is deactivated, CoCart will automatically disable itself during activation to prevent technical issues.
+
+You'll see a prompt to install or activate WooCommerce if needed.
+
+<Card title="Upload Plugin" img="https://cocartapi.com/wp-content/uploads/2023/11/image-2.png">
+</Card>

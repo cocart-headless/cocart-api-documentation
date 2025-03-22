@@ -1,0 +1,45 @@
+---
+title: 'Force Permissions'
+sidebarTitle: 'Restrict access'
+description: Learn how to restrict access to certain CoCart routes
+icon: "user-lock"
+---
+
+When using a REST-API, sometimes you don’t want all the routes to be accessible to everyone. Restricting access to certain routes can help you maintain better control over your operations.
+
+This guide, we help enforce permissions and restrict access to specific CoCart API routes.
+
+One clear example is that you maybe don’t want to support guest customers on your store, so you need to restrict all the public routes.
+
+<Info>
+    Forcing API permissions doesn’t mean that only administrators or shop managers can access them.
+</Info>
+
+This means that the routes cannot be used unless the API is requested while being authenticated.
+
+<Note>
+    Authentication is not forced by user role.
+</Note>
+
+## How do you force API permission?
+
+It’s actually pretty easy. All you need to do is apply a filter based on the method of the routes you want to force permission on.
+
+There are no parameters required. Just return an array of the API routes you wish to force permission on.
+
+Filter name: `cocart_api_permission_check_{method}`
+
+Replace `{method}` with get, post, put, delete or options.
+
+```php
+add_filter( 'cocart_api_permission_check_get', function() {
+  return array(
+  	'v1/count-items',
+    'v2/cart/items/count',
+    'v2/cart/totals',
+    'v2/store'
+  );
+} );
+```
+
+That’s it.

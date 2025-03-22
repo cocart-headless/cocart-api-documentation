@@ -1,0 +1,1879 @@
+---
+title: Filters available in the core of CoCart
+sidebarTitle: 'In Core'
+description: 'These filters let you control how CoCart operates for your store'
+---
+
+## `cocart_is_rest_api_request`
+
+Filters the REST API requested.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$is_rest_api_request` | `bool` | True if CoCart REST API is requested. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/class-cocart.php`](https://github.com/co-cart/co-cart/blob/development/includes/class-cocart.php#L602)
+
+---
+
+## `cocart_wp_accessible_page_ids`
+
+Filter controls which pages are accessible when WordPress is denied access. Both the cart and checkout pages are accessible by default.
+
+- **Since**: 5.0.0 Introduced.
+- **Returns**: `array Page ID's that are accessible.`
+
+**Defined in**: [`includes/class-cocart.php`](https://github.com/co-cart/co-cart/blob/development/includes/class-cocart.php#L665)
+
+---
+
+## `cocart_register_submenu_page`
+
+Hook to register submenu_pages class handlers The array element should be 'submenu_page_slug' => array( 'class_name' => array(), 'data' => array() )
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$submenus` | `array` | Array of submenu pages. |
+
+- **Since**: 3.10.0 Introduced.
+
+**Defined in**: [`includes/classes/admin/class-cocart-admin-menus.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/admin/class-cocart-admin-menus.php#L95)
+
+---
+
+## `cocart_in_plugin_update_message`
+
+Filter allows you to change the upgrade notice.
+
+- **Since**: 4.3.0 Introduced.
+
+**Defined in**: [`includes/classes/admin/plugin-updates/class-cocart-admin-plugin-screen-update.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/admin/plugin-updates/class-cocart-admin-plugin-screen-update.php#L98)
+
+---
+
+## `cocart_get_plugins_with_header`
+
+Filter allows you to get the plugins that have a valid value for a specific header.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$matches` | `array` | Array of plugins matched with header. |
+| `$header` | `string` | Plugin header to search for. |
+| `$plugins` | `array` | Array of plugins installed. |
+
+- **Since**: 4.3.0 Introduced.
+
+**Defined in**: [`includes/classes/admin/plugin-updates/class-cocart-admin-plugin-updates.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/admin/plugin-updates/class-cocart-admin-plugin-updates.php#L220)
+
+---
+
+## `cocart_get_plugins_for_cocart`
+
+Filter allows you to get plugins which "maybe" are for CoCart.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$matches` | `array` | Array of plugins that "maybe" are for CoCart. |
+| `$plugins` | `array` | Array of plugins installed. |
+
+- **Since**: 4.3.0 Introduced.
+
+**Defined in**: [`includes/classes/admin/plugin-updates/class-cocart-admin-plugin-updates.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/admin/plugin-updates/class-cocart-admin-plugin-updates.php#L251)
+
+---
+
+## `cocart_prevent_wc_admin_note_created`
+
+Filter to prevent note from being created.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$prevent_note_creation` | `bool` | False by default |
+| `$args` | `array` | Arguments to create the note. |
+
+- **Since**: 3.2.0 Introduced
+
+**Defined in**: [`includes/classes/admin/woocommerce/class-cocart-wc-admin-notices.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/admin/woocommerce/class-cocart-wc-admin-notices.php#L102)
+
+---
+
+## `cocart_install_capability`
+
+Filter the current users capabilities to install a CoCart plugin.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$capability` | `string` | Capability level. |
+
+
+**Defined in**: [`includes/classes/class-cocart-helpers.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/class-cocart-helpers.php#L561)
+
+---
+
+## `cocart_show_plugin_search`
+
+Filter if CoCart Plugin Suggestions should be active.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$show_suggestions` | `bool` | True if CoCart Plugin Suggestions is active. |
+
+
+**Defined in**: [`includes/classes/class-cocart-helpers.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/class-cocart-helpers.php#L586)
+
+---
+
+## `cocart_enable_setup_wizard`
+
+See if we need the setup wizard or not.
+
+- **Since**: 3.1.0 Introduced.
+
+**Defined in**: [`includes/classes/class-cocart-install.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/class-cocart-install.php#L373)
+
+---
+
+## `cocart_requested_cart_key`
+
+Filter allows the cart key to be overridden. Developer Note: Really only here so I don't have to create a new session handler to inject a customer ID with the POS Support Add-on.
+
+- **Since**: 4.2.0 Introduced.
+
+**Defined in**: [`includes/classes/class-cocart-session-handler.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/class-cocart-session-handler.php#L137)
+
+---
+
+## `cocart_cart_expiring`
+
+Filter allows you to change the amount of time before the cart starts to expire. Default is (DAY_IN_SECONDS * 6) = 6 Days
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/class-cocart-session-handler.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/class-cocart-session-handler.php#L252)
+
+---
+
+## `cocart_cart_expiration`
+
+Filter allows you to change the amount of time before the cart has expired. Default is (DAY_IN_SECONDS * 7) = 7 Days
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/class-cocart-session-handler.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/class-cocart-session-handler.php#L260)
+
+---
+
+## `cocart_cart_source`
+
+Filter source of cart.
+
+- **Since**: 3.0.0 Introduced.
+
+**Defined in**: [`includes/classes/class-cocart-session-handler.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/class-cocart-session-handler.php#L348)
+
+---
+
+## `cocart_disable_load_cart`
+
+Filter checks if "Load Cart from Session" feature is disabled.
+
+- **Since**: 3.0.0 Introduced.
+- **Returns**: `bool`
+
+**Defined in**: [`includes/classes/class-cocart-session.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/class-cocart-session.php#L146)
+
+---
+
+## `cocart_load_cart_query_name`
+
+Filter allows developers to add more white labelling when loading the cart via web.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$action_query` | `string` | Default is 'cocart-load-cart' |
+
+- **Since**: 2.8.2 Introduced.
+
+**Defined in**: [`includes/classes/class-cocart-session.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/class-cocart-session.php#L182)
+
+---
+
+## `cocart_load_cart_redirect_home`
+
+Filter allows you to change where to redirect should loading the cart fail.
+
+- **Since**: 5.0.0 Introduced.
+
+**Defined in**: [`includes/classes/class-cocart-session.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/class-cocart-session.php#L277)
+
+---
+
+## `cocart_is_offline_mode`
+
+Filters CoCart's offline mode.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$offline_mode` | `boolean` | Is CoCart's offline mode active. |
+
+
+**Defined in**: [`includes/classes/class-cocart-status.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/class-cocart-status.php#L51)
+
+---
+
+## `cocart_is_local_site`
+
+Filters is_local_site check.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$is_local` | `boolean` | If the current site is a local site. |
+
+
+**Defined in**: [`includes/classes/class-cocart-status.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/class-cocart-status.php#L149)
+
+---
+
+## `cocart_known_staging`
+
+Filters the flags of known staging sites. An array of arrays that each are used to check if the current site is staging. }
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$known_staging` | `array` | 
+An array of arrays that each are used to check if the current site is staging.
+- `$urls` (array): URLs of staging sites in regex to check against site_url.
+- `$constants` (array): PHP constants of known staging/development environments.
+ |
+
+
+**Defined in**: [`includes/classes/class-cocart-status.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/class-cocart-status.php#L211)
+
+---
+
+## `cocart_is_staging_site`
+
+Filters is_staging_site check.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$is_staging` | `boolean` | If the current site is a staging site. |
+
+
+**Defined in**: [`includes/classes/class-cocart-status.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/class-cocart-status.php#L237)
+
+---
+
+## `cocart_update_cart_validation`
+
+Filter allows you to determine if the updated item in cart passed validation.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$cart_valid` | `bool` | True by default. |
+| `$item_key` | `string` | Item key of the item updated. |
+| `$cart_item` | `array` | Cart item after updated. |
+| `$quantity` | `int` | New quantity amount. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/callbacks/update-cart.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/callbacks/update-cart.php#L89)
+
+---
+
+## `cocart_auth_header`
+
+Filter allows you to change the authorization header.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$auth_header` | `string` | Authorization header. |
+
+- **Since**: 4.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/class-cocart-authentication.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/class-cocart-authentication.php#L221)
+
+---
+
+## `cocart_disable_all_cors`
+
+Modifies if the "Cross Origin Headers" are allowed. Set as false to enable support.
+
+- **Since**: 2.2.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/class-cocart-authentication.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/class-cocart-authentication.php#L478)
+
+---
+
+## `cocart_allow_origin`
+
+Filter allows you to change the allowed HTTP origin result.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$origin` | `string` | Origin URL if allowed, empty string if not. |
+
+- **Since**: 2.5.1 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/class-cocart-authentication.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/class-cocart-authentication.php#L641)
+
+---
+
+## `cocart_does_product_allow_price_change`
+
+Filter which products that can be allowed to override the price if not all.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$allow_change` | `bool` | Allow price change. |
+| `$cart_item` | `array` | Cart item. |
+| `$request` | `WP_REST_Request` | The request object. |
+
+- **Since**: 4.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/class-cocart-cart-cache.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/class-cocart-cart-cache.php#L298)
+
+---
+
+## `cocart_cart_item_required_stock_is_not_enough`
+
+Allows filter if product have enough stock to get added to the cart.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$has_stock` | `bool` | If have enough stock. |
+| `$product` | `WC_Product` | The product object. |
+| `$cart_item` | `array` | Cart item values. |
+
+
+**Defined in**: [`includes/classes/rest-api/class-cocart-cart-validation.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/class-cocart-cart-validation.php#L104)
+
+---
+
+## `cocart_cannot_add_product_type_to_cart_message`
+
+Filters message about product type that cannot be added to the cart.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$product_data` | `WC_Product` | The product object. |
+
+
+**Defined in**: [`includes/classes/rest-api/class-cocart-product-validation.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/class-cocart-product-validation.php#L102)
+
+---
+
+## `cocart_return_default_response`
+
+**See Also:**
+- `cocart_{$endpoint}_response`
+Filter decides if the responses return as default or use the modified response which is filtered by the rest base.
+
+- **Since**: 3.0.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/class-cocart-response.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/class-cocart-response.php#L58)
+
+---
+
+## `cocart_load_cart_from_session`
+
+Filter allows you to decide if the cart should load user meta when initialized. This means merge cart data from a registered customer with the requested cart.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$user_id` | `int` | User ID when authenticated. Zero if not authenticated. |
+| `$customer_id` | `string` | Customer ID requested when authenticated or a cart key for guests. |
+
+- **Since**: 5.0.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/class-cocart-rest-api.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/class-cocart-rest-api.php#L232)
+
+---
+
+## `cocart_set_customer_id`
+
+Filter allows to set the customer ID.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$current_user_id` | `int` | Current user ID. |
+
+- **Since**: 4.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/class-cocart-rest-api.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/class-cocart-rest-api.php#L480)
+
+---
+
+## `cocart_product_cannot_add_to_cart_message`
+
+Filters message about product cannot be added to cart.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$product_data` | `WC_Product` | The product object. |
+
+- **Since**: 2.0.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-add-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-add-item-controller.php#L299)
+
+---
+
+## `cocart_item_added`
+
+Filter allows additional data to be returned.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$item_added` | `array` | Item added to cart. |
+| `$item_key` | `string` | Item key of the item added. |
+
+- **Since**: 2.0.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-add-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-add-item-controller.php#L348)
+
+---
+
+## `cocart_totals_calculated_message`
+
+Filters message about cart totals have been calculated.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-calculate-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-calculate-controller.php#L98)
+
+---
+
+## `cocart_cart_cleared_message`
+
+Filters message about the cart being cleared.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-clear-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-clear-cart-controller.php#L136)
+
+---
+
+## `cocart_clear_cart_failed_message`
+
+Filters message about the cart failing to clear.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-clear-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-clear-cart-controller.php#L151)
+
+---
+
+## `cocart_return_empty_cart`
+
+Filter response for empty cart.
+
+- **Since**: 2.0.8 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L212)
+
+---
+
+## `cocart_item_product`
+
+Filter allows you to alter the item product data returned.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$product` | `WC_Product` | The product object. |
+| `$cart_item` | `array` | The cart item data. |
+| `$item_key` | `string` | The item key currently looped. |
+
+- **Since**: 2.0.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L243)
+
+---
+
+## `cocart_cart_item_removed_message`
+
+Filter message about item removed from the cart.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$product` | `WC_Product` | The product object. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L261)
+
+---
+
+## `cocart_product_title`
+
+Filters the product title in cart.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$product_title` | `string` | Product title. |
+| `$product` | `WC_Product` | The product object. |
+| `$cart_item` | `array` | Cart item. |
+| `$item_key` | `string` | Item key. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L291)
+
+---
+
+## `cocart_item_thumbnail`
+
+Filters the item thumbnail ID.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$thumbnail_id` | `int` | Product thumbnail ID. |
+| `$cart_item` | `array` | Cart item. |
+| `$item_key` | `string` | Item key. |
+
+- **Since**: 2.0.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L329)
+
+---
+
+## `cocart_cart_contents`
+
+Filter allows additional data to be returned for a specific item in cart.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$cart_contents` | `array` | Cart contents. |
+| `$item_key` | `string` | Item key. |
+| `$cart_item` | `array` | Cart item. |
+| `$product` | `WC_Product` | The product object. |
+
+- **Since**: 2.0.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L351)
+
+---
+
+## `cocart_return_cart_session_contents`
+
+Return cart content from session if set.
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L363)
+
+---
+
+## `cocart_return_cart_contents`
+
+Return cart content from session if set.
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L365)
+
+---
+
+## `cocart_invalid_variation_data_message`
+
+Filters message about invalid variation data.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$attribute_label` | `string` | Attribute Label. |
+| `$attribute` | `array` | Allowed values. |
+
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L551)
+
+---
+
+## `cocart_missing_variation_data_message`
+
+Filters message about missing variation data.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$missing_attributes` | `int` | Number of missing attributes. |
+| `$missing_attributes` | `array` | List of missing attributes. |
+
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L578)
+
+---
+
+## `cocart_product_does_not_exist_message`
+
+Filters message about product does not exist.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$product` | `WC_Product` | The product object. |
+
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L694)
+
+---
+
+## `cocart_product_failed_validation_message`
+
+Filters message about product failing validation.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$product` | `WC_Product` | The product object. |
+
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L746)
+
+---
+
+## `cocart_product_can_not_add_another_message`
+
+Filters message about product not being allowed to add another.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$product` | `WC_Product` | The product object. |
+
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L786)
+
+---
+
+## `cocart_product_cannot_be_purchased_message`
+
+Filters message about product unable to be purchased.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$product` | `WC_Product` | The product object. |
+
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L804)
+
+---
+
+## `cocart_product_is_out_of_stock_message`
+
+Filters message about product is out of stock.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$product` | `WC_Product` | The product object. |
+
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L825)
+
+---
+
+## `cocart_no_items_in_cart_message`
+
+Filters message about no items in the cart.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-count-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-count-controller.php#L118)
+
+---
+
+## `cocart_no_items_message`
+
+Filters message about no items in cart.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L106)
+
+---
+
+## `cocart_item_not_in_cart_message`
+
+Filters message about item not in cart.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$method` | `string` | Method. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L129)
+
+---
+
+## `cocart_can_not_remove_item_message`
+
+Filters message about can not remove item.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L171)
+
+---
+
+## `cocart_cart_item_key_required_message`
+
+Filters message about cart item key required.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$method` | `string` | Method. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L188)
+
+---
+
+## `cocart_can_not_restore_item_message`
+
+Filters message about can not restore item.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L249)
+
+---
+
+## `cocart_cart_item_key_required_message`
+
+Filters message about cart item key required.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$method` | `string` | Method. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L266)
+
+---
+
+## `cocart_item_not_in_cart_message`
+
+Filters message about cart item key required.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$method` | `string` | Method. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L313)
+
+---
+
+## `cocart_can_not_increase_quantity_message`
+
+Filters message about product not being allowed to increase quantity.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$current_data` | `WC_Product` | The product object. |
+
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L369)
+
+---
+
+## `cocart_can_not_update_item_message`
+
+Filters message about can not update item.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L414)
+
+---
+
+## `cocart_update_item`
+
+Filter allows you to alter the returned response once item is updated.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$response` | `array` | Response returned. |
+| `$new_data` | `array` | Item data. |
+| `$quantity` | `float` | Requested quantity to update for item. |
+| `$product_data` | `WC_Product` | The product object. |
+
+- **Since**: 2.0.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L470)
+
+---
+
+## `cocart_cart_item_key_required_message`
+
+Filters message about cart item key required.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$method` | `string` | Method. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L487)
+
+---
+
+## `cocart_prepare_product_attribute`
+
+Filter a attribute item returned from the API. Allows modification of the product attribute data right before it is returned.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$response` | `WP_REST_Response` | The response object. |
+| `$item` | `object` | The original attribute object. |
+| `$request` | `WP_REST_Request` | The request object. |
+
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/products/class-cocart-product-attributes-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/products/class-cocart-product-attributes-controller.php#L154)
+
+---
+
+## `cocart_product_review_query`
+
+Filters arguments, before passing to WP_Comment_Query, when querying reviews via the REST API.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$prepared_args` | `array` | Array of arguments for WP_Comment_Query. |
+| `$request` | `WP_REST_Request` | The request object. |
+
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php#L258)
+
+---
+
+## `cocart_pre_insert_product_review`
+
+Filters a review before it is inserted via the REST API. Allows modification of the review right before it is inserted via wp_insert_comment(). Returning a WP_Error value from the filter will short circuit insertion and allow skipping further processing.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$prepared_review` | `array|WP_Error` | The prepared review data for wp_insert_comment(). |
+| `$request` | `WP_REST_Request` | Full details about the request. |
+
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php#L406)
+
+---
+
+## `cocart_prepare_product_review`
+
+Filter product reviews object returned from the REST API.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$response` | `WP_REST_Response` | The response object. |
+| `$review` | `WP_Comment` | Product review object used to create response. |
+| `$request` | `WP_REST_Request` | The request object. |
+
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php#L534)
+
+---
+
+## `cocart_preprocess_product_review`
+
+Filters a review after it is prepared for the database. Allows modification of the review right after it is prepared for the database.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$prepared_review` | `array` | The prepared review data for `wp_insert_comment`. |
+| `$request` | `WP_REST_Request` | The request object. |
+
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php#L589)
+
+---
+
+## `cocart_product_review_collection_params`
+
+Filter collection parameters for the reviews controller. This filter registers the collection parameter, but does not map the collection parameter to an internal WP_Comment_Query parameter. Use the `cocart_product_review_query` filter to set WP_Comment_Query parameters.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$params` | `array` | JSON Schema-formatted collection parameters. |
+
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php#L825)
+
+---
+
+## `cocart_prepare_product_object`
+
+Filter the data for a response.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$response` | `WP_REST_Response` | The response object. |
+| `$product` | `WC_Product` | The product object. |
+| `$request` | `WP_REST_Request` | The request object. |
+
+
+**Defined in**: [`includes/classes/rest-api/controllers/v1/products/class-cocart-products-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/products/class-cocart-products-controller.php#L335)
+
+---
+
+## `cocart_cart_item_name`
+
+Filter allows the product name of the item to change.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$product_name` | `string` | Product name. |
+| `$product` | `WC_Product` | The product object. |
+| `$cart_item` | `array` | The cart item data. |
+| `$item_key` | `string` | The item key generated based on the details of the item. |
+
+- **Since**: 3.0.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/admin/class-cocart-session-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/admin/class-cocart-session-controller.php#L364)
+
+---
+
+## `cocart_cart_item_title`
+
+Filter allows the product title of the item to change.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$product_title` | `string` | Product title. |
+| `$product` | `WC_Product` | The product object. |
+| `$cart_item` | `array` | The cart item data. |
+| `$item_key` | `string` | The item key generated based on the details of the item. |
+
+- **Since**: 3.0.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/admin/class-cocart-session-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/admin/class-cocart-session-controller.php#L375)
+
+---
+
+## `cocart_cart_item_data`
+
+Filter allows you to alter the remaining cart item data.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$cart_item` | `array` | The cart item data. |
+| `$item_key` | `string` | Generated ID based on the product information when added to the cart. |
+
+- **Since**: 3.0.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/admin/class-cocart-session-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/admin/class-cocart-session-controller.php#L453)
+
+---
+
+## `cocart_skip_woocommerce_item_validation`
+
+Filter the item to skip product validation as it is added to cart.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$validate_product` | `bool` | Whether to validate the product or not. |
+| `$product_data` | `array` | Contains the product data of the product to add to cart. |
+| `$product_id` | `int` | The product ID. |
+
+- **Since**: 3.0.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-add-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-add-item-controller.php#L345)
+
+---
+
+## `cocart_product_cannot_add_to_cart_message`
+
+Filters message about product cannot be added to cart.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$product_data` | `WC_Product` | The product object. |
+
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-add-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-add-item-controller.php#L387)
+
+---
+
+## `cocart_add_item_query_parameters`
+
+Filters the query parameters for adding item to cart. This filter allows you to extend the query parameters without removing any default parameters.
+
+- **Since**: 3.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-add-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-add-item-controller.php#L560)
+
+---
+
+## `cocart_add_items_query_parameters`
+
+Extends the query parameters. Dev Note: Nothing needs to pass so your safe if you think you will remove any default parameters.
+
+- **Since**: 3.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-add-items-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-add-items-controller.php#L353)
+
+---
+
+## `cocart_get_cart_item`
+
+Filters the cart item before it is returned.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$item` | `array` | Details of the item in the cart if it exists. |
+| `$condition` | `string` | Condition of item. Default: "add", Option: "add", "remove", "restore", "update". |
+
+- **Since**: 3.0.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L120)
+
+---
+
+## `cocart_empty_cart`
+
+Filter response for empty cart.
+
+- **Since**: 3.0.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L321)
+
+---
+
+## `cocart_product_failed_validation_message`
+
+Filters message about product failing validation.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$product` | `WC_Product` | The product object. |
+
+- **Since**: 1.0.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L583)
+
+---
+
+## `cocart_product_can_not_add_another_message`
+
+Filters message about product not being allowed to add another.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$product` | `WC_Product` | The product object. |
+
+- **Since**: 3.0.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L951)
+
+---
+
+## `cocart_product_is_out_of_stock_message`
+
+Filters message about product is out of stock.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$product` | `WC_Product` | The product object. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L1003)
+
+---
+
+## `cocart_product_not_enough_stock_message`
+
+Filters message about product not having enough stock.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$product` | `WC_Product` | The product object. |
+| `$stock_quantity` | `int` | Quantity remaining. |
+
+- **Since**: 3.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L1036)
+
+---
+
+## `cocart_cart_item_name`
+
+Filter allows the product name of the item to change.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$product_name` | `string` | Product name. |
+| `$product` | `WC_Product` | The product object. |
+| `$cart_item` | `array` | The cart item data. |
+| `$item_key` | `string` | The item key generated based on the details of the item. |
+
+- **Since**: 3.0.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L1148)
+
+---
+
+## `cocart_cart_item_title`
+
+Filter allows the product title of the item to change.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$product_title` | `string` | Product title. |
+| `$product` | `WC_Product` | The product object. |
+| `$cart_item` | `array` | The cart item data. |
+| `$item_key` | `string` | The item key generated based on the details of the item. |
+
+- **Since**: 3.0.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L1159)
+
+---
+
+## `cocart_cart_item_data`
+
+Filter allows you to alter the remaining cart item data.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$cart_item` | `array` | The cart item data. |
+| `$item_key` | `string` | Generated ID based on the product information when added to the cart. |
+| `$product` | `WC_Product` | The product object. |
+
+- **Since**: 3.0.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L1320)
+
+---
+
+## `cocart_item_product`
+
+Filter allows you to alter the item product data returned.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$product` | `WC_Product` | The product object. |
+| `$cart_item` | `array` | The cart item data. |
+| `$item_key` | `string` | The item key currently looped. |
+
+- **Since**: 2.0.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L1361)
+
+---
+
+## `cocart_cart_items`
+
+Filter allows additional data to be returned for a specific item in cart.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$items` | `array` | Array of items in the cart. |
+| `$item_key` | `string` | The item key currently looped. |
+| `$cart_item` | `array` | The cart item data. |
+| `$product` | `WC_Product` | The product object. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L1375)
+
+---
+
+## `cocart_cross_sells`
+
+Filters the cross sell items.
+
+- **Since**: 3.0.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L1500)
+
+---
+
+## `cocart_cart_items_schema`
+
+Extend cart schema properties for items. Filter allows you to extend the cart schema properties for items without removing any default properties.
+
+- **Since**: 3.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L3076)
+
+---
+
+## `cocart_cart_items_extensions_schema`
+
+Extend cart schema properties for extensions. Filter allows you to extend the cart schema properties for extensions.
+
+- **Since**: 5.0.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L3085)
+
+---
+
+## `cocart_cart_query_parameters`
+
+Extend the query parameters for the cart. This filter allows you to extend the query parameters without removing any default parameters.
+
+- **Since**: 3.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L3138)
+
+---
+
+## `cocart_cart_cleared_message`
+
+Filters message about the cart being cleared.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-clear-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-clear-cart-controller.php#L150)
+
+---
+
+## `cocart_clear_cart_failed_message`
+
+Filters message about the cart failing to clear.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-clear-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-clear-cart-controller.php#L171)
+
+---
+
+## `cocart_no_items_in_cart_message`
+
+Filters message about no items in the cart.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-count-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-count-controller.php#L111)
+
+---
+
+## `cocart_item_not_in_cart_message`
+
+Filters message about cart item key required.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$method` | `string` | Method. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-item-controller.php#L102)
+
+---
+
+## `cocart_no_items_in_cart_message`
+
+Filters message about no items in the cart.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-items-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-items-controller.php#L89)
+
+---
+
+## `cocart_no_items_message`
+
+Filters message about no items in cart.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-remove-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-remove-item-controller.php#L96)
+
+---
+
+## `cocart_item_removed_message`
+
+Filters message about item removed from cart.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-remove-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-remove-item-controller.php#L145)
+
+---
+
+## `cocart_can_not_remove_item_message`
+
+Filters message about can not remove item.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-remove-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-remove-item-controller.php#L196)
+
+---
+
+## `cocart_item_restored_message`
+
+Filters message about item already restored to cart.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-restore-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-restore-item-controller.php#L119)
+
+---
+
+## `cocart_cart_item_restored_title`
+
+Re-calculate totals now an item has been restored.
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-restore-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-restore-item-controller.php#L145)
+
+---
+
+## `cocart_cart_item_restored_message`
+
+Filters message about item restored.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$restored_message` | `string` | Message. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-restore-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-restore-item-controller.php#L164)
+
+---
+
+## `cocart_can_not_restore_item_message`
+
+Filters message about can not restore item.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-restore-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-restore-item-controller.php#L189)
+
+---
+
+## `cocart_item_not_in_cart_message`
+
+Filters message about cart item key required.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$method` | `string` | Method. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-update-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-update-item-controller.php#L109)
+
+---
+
+## `cocart_update_cart_validation`
+
+Filter allows you to determine if the updated item in cart passed validation.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$cart_valid` | `bool` | True by default. |
+| `$item_key` | `string` | Item key. |
+| `$current_data` | `array` | Product data of the item in cart. |
+| `$quantity` | `float` | The requested quantity to change to. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-update-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-update-item-controller.php#L145)
+
+---
+
+## `cocart_can_not_increase_quantity_message`
+
+Filters message about product not being allowed to increase quantity.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$product` | `WC_Product` | The product object. |
+
+- **Since**: 1.0.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-update-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-update-item-controller.php#L168)
+
+---
+
+## `cocart_can_not_update_item_message`
+
+Filters message about can not update item.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-update-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-update-item-controller.php#L210)
+
+---
+
+## `cocart_update_item`
+
+Filters the update status.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$response` | `array` | Status response. |
+| `$new_data` | `array` | Cart item. |
+| `$quantity` | `int` | Quantity. |
+| `$product` | `WC_Product` | The product object. |
+
+- **Since**: 2.0.1 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-update-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-update-item-controller.php#L265)
+
+---
+
+## `cocart_login_extras`
+
+Filter allows you to add extra information based on the current user.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$extra_information` | `array` | The extra information. |
+| `$current_user` | `object` | The current user. |
+
+- **Since**: 3.8.1 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/others/class-cocart-login-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/others/class-cocart-login-controller.php#L126)
+
+---
+
+## `cocart_store_index`
+
+Filters the API store index data. This contains the data describing the API. This includes information about the store, routes available on the API, and a small amount of data about the site.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$response` | `WP_REST_Response` | Response data. |
+
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/others/class-cocart-store-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/others/class-cocart-store-controller.php#L117)
+
+---
+
+## `cocart_products_add_to_cart_rest_url`
+
+Filters the REST URL shortcut for adding the product to cart.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$rest_url` | `string` | REST URL for adding product to the cart. |
+| `$product` | `WC_Product` | The product object. |
+| `$type` | `string` | Product type. |
+| `$id` | `int` | Product ID. |
+
+- **Since**: 3.1.0 Introduced.
+
+**Defined in**: [`includes/classes/rest-api/controllers/v2/products/class-cocart-products-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/products/class-cocart-products-controller.php#L895)
+
+---
+
+## `cocart_get_customer_`
+
+We go through each field and check that we can return it's data as set by default. If we can't get the data we rely on getting customer data via a filter for that field. Any fields that can not return information will be empty.
+
+
+**Defined in**: [`includes/classes/utilities/class-cocart-utilities-cart-helpers.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/utilities/class-cocart-utilities-cart-helpers.php#L85)
+
+---
+
+## `cocart_shipping_package_details_array`
+
+Filter allows you to change the package details.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$product_names` | `array` | Product names. |
+| `$package` | `array` | Package details. |
+
+- **Since**: 3.0.0 Introduced.
+
+**Defined in**: [`includes/classes/utilities/class-cocart-utilities-cart-helpers.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/utilities/class-cocart-utilities-cart-helpers.php#L219)
+
+---
+
+## `cocart_item_thumbnail_size`
+
+Filters the thumbnail size of the product image.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$thumbnail_size` | `string` | Thumbnail size. |
+| `$removed_item` | `bool` | Determines if the item in the cart is removed. |
+
+- **Since**: 2.0.0 Introduced.
+
+**Defined in**: [`includes/classes/utilities/class-cocart-utilities-cart-helpers.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/utilities/class-cocart-utilities-cart-helpers.php#L680)
+
+---
+
+## `cocart_cart_item_name`
+
+Filter allows the product name of the item to change.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$product_name` | `string` | Product name. |
+| `$product` | `WC_Product` | The product object. |
+| `$cart_item` | `array` | The cart item data. |
+| `$item_key` | `string` | The item key generated based on the details of the item. |
+
+- **Since**: 3.0.0 Introduced.
+
+**Defined in**: [`includes/classes/utilities/class-cocart-utilities-cart-helpers.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/utilities/class-cocart-utilities-cart-helpers.php#L768)
+
+---
+
+## `cocart_cart_item_data`
+
+Filter allows you to alter the remaining cart item data.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$cart_item` | `array` | The cart item data. |
+| `$item_key` | `string` | Generated ID based on the product information when added to the cart. |
+| `$product` | `WC_Product` | The product object. |
+
+- **Since**: 3.0.0 Introduced.
+
+**Defined in**: [`includes/classes/utilities/class-cocart-utilities-cart-helpers.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/utilities/class-cocart-utilities-cart-helpers.php#L815)
+
+---
+
+## `cocart_product_cannot_be_added_message`
+
+Filters message about product that cannot be added to cart.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$product` | `WC_Product` | The product object. |
+
+- **Since**: 3.0.0 Introduced.
+
+**Defined in**: [`includes/classes/utilities/class-cocart-utilities-cart-helpers.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/utilities/class-cocart-utilities-cart-helpers.php#L1013)
+
+---
+
+## `cocart_quantity_maximum_allowed`
+
+Filter allows control over the maximum quantity a customer is able to add said item to the cart.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$quantity` | `int|float` | Maximum quantity to validate with. |
+| `$product` | `WC_Product` | The product object. |
+
+- **Since**: 3.1.0 Introduced.
+
+**Defined in**: [`includes/classes/utilities/class-cocart-utilities-cart-helpers.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/utilities/class-cocart-utilities-cart-helpers.php#L1125)
+
+---
+
+## `cocart_invalid_variation_data_message`
+
+Filters message about invalid variation data.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$attribute_label` | `string` | Attribute Label. |
+| `$attribute` | `array` | Allowed values. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/utilities/class-cocart-utilities-cart-helpers.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/utilities/class-cocart-utilities-cart-helpers.php#L1209)
+
+---
+
+## `cocart_missing_variation_data_message`
+
+Filters message about missing variation data.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$count` | `int` | Number of missing attributes. |
+| `$attributes` | `string` | Comma separate a list of missing attributes. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/utilities/class-cocart-utilities-cart-helpers.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/utilities/class-cocart-utilities-cart-helpers.php#L1241)
+
+---
+
+## `cocart_product_cannot_be_purchased_message`
+
+Filters message about product unable to be purchased.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$product` | `WC_Product` | The product object. |
+
+
+**Defined in**: [`includes/classes/utilities/class-cocart-utilities-cart-helpers.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/utilities/class-cocart-utilities-cart-helpers.php#L1389)
+
+---
+
+## `cocart_cart_item_key_required_message`
+
+Filters message about cart item key required.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$message` | `string` | Message. |
+| `$status` | `string` | Status of which we are checking the item key. |
+
+- **Since**: 2.1.0 Introduced.
+
+**Defined in**: [`includes/classes/utilities/class-cocart-utilities-cart-helpers.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/utilities/class-cocart-utilities-cart-helpers.php#L1424)
+
+---
+
+## `cocart_quantity_minimum_requirement`
+
+Filters the minimum quantity requirement the product allows to be purchased.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$minimum_quantity` | `int` | Minimum purchase quantity requirement. |
+| `$product` | `WC_Product` | The product object. |
+
+- **Since**: 3.0.17 Introduced.
+
+**Defined in**: [`includes/classes/utilities/class-cocart-utilities-product-helpers.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/utilities/class-cocart-utilities-product-helpers.php#L137)
+
+---
+
+## `cocart_quantity_maximum_allowed`
+
+Filters the products maximum quantity allowed to be purchased.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$maximum_quantity` | `int` | Maximum purchase quantity allowed. |
+| `$product` | `WC_Product` | The product object. |
+
+- **Since**: 3.1.0 Introduced.
+
+**Defined in**: [`includes/classes/utilities/class-cocart-utilities-product-helpers.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/utilities/class-cocart-utilities-product-helpers.php#L162)
+
+---
+
+## `cocart_products_variable_empty_price`
+
+Filter the variable products empty prices.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$empty_prices` | `array` | Empty array. |
+| `$product` | `WC_Product` | The project object. |
+
+- **Since**: 3.1.0 Introduced.
+
+**Defined in**: [`includes/classes/utilities/class-cocart-utilities-product-helpers.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/utilities/class-cocart-utilities-product-helpers.php#L198)
+
+---
+
+## `cocart_products_get_price_range`
+
+Filters the products price range.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$price` | `array` | The current product price range. |
+| `$product` | `WC_Product` | The product object. |
+
+- **Since**: 3.1.0 Introduced.
+
+**Defined in**: [`includes/classes/utilities/class-cocart-utilities-product-helpers.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/utilities/class-cocart-utilities-product-helpers.php#L245)
+
+---
+
+## `cocart_products_allowed_meta_keys`
+
+Filter allows you to specify the allowed meta keys for the product. When filtering, only list the meta keys you want to include!
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$allowed_meta_keys` | `array` | Allowed meta keys. |
+| `$product` | `WC_Product` | The product object. |
+
+- **Since**: 5.0.0 Updated to whitelist allowed meta keys.
+
+**Defined in**: [`includes/classes/utilities/class-cocart-utilities-product-helpers.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/utilities/class-cocart-utilities-product-helpers.php#L325)
+
+---
+
+## `cocart_products_get_safe_meta_data`
+
+Filter allows you to control what remaining product meta data is safe to return.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$safe_meta` | `array` | Safe meta. |
+| `$product` | `WC_Product` | The product object. |
+
+- **Since**: 3.11.0 Introduced.
+
+**Defined in**: [`includes/classes/utilities/class-cocart-utilities-product-helpers.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/utilities/class-cocart-utilities-product-helpers.php#L342)
+
+---
+
+## `cocart_get_product_slug`
+
+Filter allows you to change the product slug returned.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$product` | `WC_Product` | The product object. |
+
+- **Since**: 5.0.0 Introduced.
+
+**Defined in**: [`includes/classes/utilities/class-cocart-utilities-product-helpers.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/utilities/class-cocart-utilities-product-helpers.php#L412)
+
+---
+
+## `cocart_prepare_money_disable_decimals`
+
+Filter allows you to disable the decimals. If set to "True" the decimals will be forced to "Zero".
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$disable_decimals` | `bool` | False by default. |
+
+- **Since**: 3.1.0 Introduced.
+
+**Defined in**: [`includes/cocart-formatting-functions.php`](https://github.com/co-cart/co-cart/blob/development/includes/cocart-formatting-functions.php#L106)
+
+---
+
+## `cocart_price_no_html`
+
+Filters the string of price markup.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$return` | `string` | Price HTML markup. |
+| `$price` | `string` | Formatted price. |
+| `$args` | `array` | Pass on the args. |
+| `$unformatted_price` | `float` | Price as float to allow plugins custom formatting. Since 3.2.0. |
+| `$original_price` | `float|string` | Original price as float, or empty string. Since 5.0.0. |
+
+
+**Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/development/includes/cocart-rest-functions.php#L342)
+
+---
+
+## `cocart_wp_frontend_url`
+
+Filters the frontend URL that users will be redirected to if WordPress access is disabled.
+
+- **Since**: 5.0.0 Introduced.
+
+**Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/development/includes/cocart-rest-functions.php#L648)
+
+---
+
+## `cocart_wp_disable_access`
+
+Filters access to WordPress. Default is 'no'.
+
+- **Since**: 5.0.0 Introduced.
+
+**Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/development/includes/cocart-rest-functions.php#L682)
+
+---

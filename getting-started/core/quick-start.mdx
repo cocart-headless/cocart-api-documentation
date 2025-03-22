@@ -1,0 +1,157 @@
+---
+title: Quick Start
+description: 'Learn how to create a cart'
+---
+
+This tutorial uses a REST client for the examples, we will walk through the following steps in order to achieve placing items in the cart. The screenshots are from [Postman](https://www.postman.com/), but you can also use other REST clients like [Insomnia](https://insomnia.rest/) if you want.
+
+<Info>
+    RESTful requests are a standardized way for applications to communicate with servers over the internet. These requests use different methods to perform specific actions:
+
+    - **GET**: Fetch information from the server.
+    - **POST**: Creates information to the server.
+    - **PUT**: Updates existing information on the server.
+    - **DELETE**: Deleting information from the server.
+</Info>
+
+**Let's get started**
+
+Normally you would need to decide if the cart we are managing is for a guest customer or a registered customer. For this tutorial we will focus on a guest customers. They have no identification on your store so it helps to start at the beginning.
+
+## Fetch all available products
+
+Next, we need to know the ID of the product we want to order. For this example, I decided to go with the product named *Beanie with Logo*, one of the sample products in WooCommerce core. To list all available products, we make the following request:
+
+First, we need to know the ID of the product we want that can be used to add the item to the cart.
+
+I can get a list of products from `/wp-json/cocart/v2/products`. This returns products in JSON format and shows product IDs and pricing information:
+
+[IMAGE]
+
+## Add a product to the cart
+
+We can then pick which product we’d like to add to the cart, and go ahead and add it via the `/wp-json/cocart/v2/cart/add-item` route. This will either add the item to the cart, returning the new updated cart object, or return an error response if something went wrong.
+
+<Tip>
+    In comparison to the previous **GET** requests, adding a product to the cart requires a **POST** request.
+</Tip>
+
+After making the request, we can see that the desired product had been added to the cart:
+
+[IMAGE]
+
+We can also see that the first shipping rate is selected by default.
+
+<Tip>
+    Of course, it’s possible placing multiple products as well as one product multiple times to the cart.
+
+    To add multiple products to the cart, simply call the `/wp-json/cocart/v2/cart/add-item` endpoint with various products.
+
+    To add one product multiple times to the cart, simply adjust the quantity parameter of the `/wp-json/cocart/v2/cart/add-item` endpoint.
+
+    We recommend using the batch endpoint `/wp-json/cocart/batch` when possible to help with the performance of the API as well as provide one complete cart response.
+</Tip>
+
+Once the item is added to the cart, a cart session is created and a new cart key (randomly generated) is assigned. This session stores the information about the cart items, shipping options, discounts applied, the totals and the customers information provided etc.
+
+## Collecting and tracking the cart key
+
+There are two ways you can get the cart key. The first is via the cart response where you see `cart_key`. The second is via the returned response headers. There you will need to look for `CoCart-API-Cart-Key`. In this case the cart key is `{cart_key}`.
+
+This cart key is what we need to keep track of the cart session for the guest customer. The reason for that is because we don't rely on WooCommerce session cookie to store the cart key for us. Doing this allows more freedom for developers and control on how they want to build their headless store.
+
+<Warning>
+    Not using the same cart key for the guest customer will lead to several cart sessions being created with no way of getting the previous cart session back the next time you add a product or update the cart.
+</Warning>
+
+Once you get the `cart_key`, you must store it somewhere in your application. It can be:
+
+- **Browser Storage**
+    - using a cookie
+    - LocalStorage (with encryption)
+    - SessionStorage (for temporary sessions)
+- **Storage Libraries**
+    - [localForage](https://www.npmjs.com/package/localforage) - Offline storage with fallbacks
+    - [PouchDB](https://pouchdb.com/) - Offline-first database
+- **Native Storage**
+    - [SQLite](https://www.sqlite.org/) - For mobile applications
+    - [Hive](https://docs.hivedb.dev/) - For Flutter applications
+    - Secure Keychain/Keystore for mobile platforms
+
+## Adding customer information
+
+With the item now in the cart, we can attempt to add customer information using the `/wp-json/cocart/v2/cart/update?cart_key={$cart_key}&namespace=update-customer` endpoint.
+
+<Note>
+    Notice that I placed the cart key as global parameter. You can apply the cart key via the headers to if you prefer.
+</Note>
+
+This endpoint requires a billing and shipping address. The payload we send looks something like this:
+
+```json
+{
+    "first_name": "Anakin",
+    "last_name": "Skywalker",
+    "email": "thatisnomoon@space.com",
+    "phone": "01908672354",
+    "company": "Darth Vadar LTD",
+    "address_1": "70 The Crescent",
+    "address_2": "", // Only if needed.
+    "city": "BELFAST",
+    "state": "", // Only if needed.
+    "country": "GB",
+    "postcode": "BT90 2PU"
+}
+```
+
+Customers may want to provide a different address other than the billing address provided. Extend the fields with a `s_` prefix in front to identify the field is for shipping. Followed by setting the field `ship_to_different_address` as **true**.
+
+```json
+{
+    "first_name": "Anakin",
+    "last_name": "Skywalker",
+    "email": "thatisnomoon@space.com",
+    "phone": "01908672354",
+    "company": "Darth Vadar LTD",
+    "address_1": "70 The Crescent",
+    "city": "BELFAST",
+    "country": "GB",
+    "postcode": "BT90 2PU",
+    "s_first_name": "Sith",
+    "s_last_name": "Lord",
+    "s_address_1": "515 Cherry Drive",
+    "s_city": "San Pablo",
+    "s_state": "CA",
+    "s_postcode": "94806",
+    "s_country": "US",
+    "s_company": "Galaxy Ruler LLC",
+    "ship_to_different_address": true
+}
+```
+
+<Info>
+    A different shipping address can only be applied if you have [CoCart Plus](https://cocartapi.com/pricing/) installed.
+</Info>
+
+<Warning>
+    We don't yet have the option to create an order via an API but we do provide the option to load the cart session to the native WooCommerce store to continue the checkout procedure there. We will have the checkout API available in the future.
+</Warning>
+
+## Load cart into store
+
+123
+
+## Resources
+
+- Get Cart Info (/cocart/v2/cart)
+- Add Item to Cart (/cocart/v2/cart/add-item)
+- List Products (/cocart/v2/products)
+
+## Further Reading
+
+- [Technical Documentation](/overview/standards)
+- [Guiding principles](/documentation/developers/guides/guiding-principles)
+
+## Thoughts & feedback
+
+We hope you found this tutorial helpful! If you’ve got any questions or there’s another tutorial topic you’re keen to see, feel free to drop a comment or reach out in the [CoCart Community in Discord](https://cocartapi.com/community/?ref=mintlify). Your feedback helps us create content that better serves you. Thanks for reading!

@@ -1,0 +1,38 @@
+---
+title: Security
+description: 'Security is the most important part of creating a headless store.'
+icon: shield
+---
+
+<Note>
+    By default, CoCart cannot be found in WordPress REST API index under namespaces or routes.
+</Note>
+
+Don't be alarmed. This doesn't mean CoCart is not active on your site, we simply hide CoCart from any outsider trying to see if you are running it.
+
+Most developers don't like the index of the REST API exposing these details so we made sure at least CoCart is not shown automatically.
+
+<Info>
+    We developed our own security plugin designed specifically for the REST API to provide a firewall from bad requests and protection for data exposed without authentication such as the index listing the routes available.
+
+    **List of Features**
+    * Hides all sensitive details from the `wp-json` index.
+    * Deny access to any API route if the `user-agent` is not trust worthy or a bot.
+    * Block use of any API route in an iFrame.
+    * Rate limiting for any route.
+    * Anonymous user data returned if accessed without authentication.
+    * CORs support.
+    * Permissions callback override for any route and method.
+
+[Get your API secure](#)
+</Info>
+
+## Authentication header
+
+If you want to change the authorization header used for authenticating users with CoCart. Use this filter to rename.
+
+```php
+add_filter( 'cocart_auth_header', function() {
+    return 'Neo'; // Custom authorization header.
+});
+```
