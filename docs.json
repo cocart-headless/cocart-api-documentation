@@ -1,0 +1,546 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "CoCart API",
+  "colors": {
+    "primary": "#5F32D9",
+    "light": "#5F32D9",
+    "dark": "#5F32D9"
+  },
+  "favicon": "/favicon.png",
+  "navigation": {
+    "versions": [
+      {
+        "version": "core-v4.3",
+        "default": true,
+        "anchors": [
+          {
+            "anchor": "Documentation",
+            "icon": "book-open",
+            "tabs": [
+              {
+                "tab": "User-Guides",
+                "groups": [
+                  {
+                    "group": "Overview",
+                    "pages": [
+                      "overview/introduction",
+                      "overview/standards",
+                      "overview/roadmap",
+                      "overview/security-policy"
+                    ]
+                  },
+                  {
+                    "group": "Getting Started",
+                    "pages": [
+                      {
+                        "group": "CoCart",
+                        "icon": "cart-shopping",
+                        "pages": [
+                          "getting-started/core/setup",
+                          "getting-started/core/quick-start"
+                        ]
+                      },
+                      {
+                        "group": "CoCart Plus",
+                        "icon": "cart-plus",
+                        "pages": [
+                          "getting-started/plus/setup",
+                          "getting-started/license-activation"
+                        ]
+                      },
+                      {
+                        "group": "JWT Authentication",
+                        "icon": "hashtag",
+                        "pages": [
+                          "getting-started/jwt/setup",
+                          "getting-started/jwt/quick-start",
+                          "getting-started/jwt/concepts"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "Learn",
+                    "pages": [
+                      "documentation/security",
+                      "documentation/learn/batch-requests",
+                      "documentation/learn/rate-limiting",
+                      "documentation/learn/legacy/cors",
+                      "documentation/learn/legacy/load-cart"
+                    ]
+                  },
+                  {
+                    "group": "Developers",
+                    "pages": [
+                      {
+                        "group": "Action hooks",
+                        "icon": "tag",
+                        "pages": [
+                          "documentation/developers/legacy/actions",
+                          "documentation/developers/jwt/actions"
+                        ]
+                      },
+                      {
+                        "group": "Filters",
+                        "icon": "filter",
+                        "pages": [
+                          "documentation/developers/legacy/filters",
+                          "documentation/developers/jwt/filters"
+                        ]
+                      },
+                      {
+                        "group": "Functions",
+                        "icon": "robot",
+                        "pages": [
+                          "documentation/developers/legacy/functions"
+                        ]
+                      },
+                      {
+                        "group": "Guides",
+                        "icon": "book",
+                        "pages": [
+                          "documentation/developers/guides/guiding-principles",
+                          "documentation/developers/guides/legacy/extending-cart-creating-callbacks"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "Plugins",
+                    "pages": [
+                      "plugins/woocommerce-extensions",
+                      "plugins/suggestions",
+                      "plugins/incompatible"
+                    ]
+                  },
+                  {
+                    "group": "Tools and Resources",
+                    "pages": [
+                      "documentation/tools",
+                      "documentation/resources",
+                      {
+                        "group": "WP-CLI",
+                        "icon": "terminal",
+                        "pages": [
+                          "documentation/wp-cli",
+                          "documentation/developers/jwt/wp-cli"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "Contributing",
+                    "pages": [
+                      "contributing/opening-issues",
+                      "contributing/backers"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "API Reference",
+                "groups": [
+                  {
+                    "group": "API Documentation",
+                    "pages": [
+                      "api-reference/introduction",
+                      "api-reference/authentication"
+                    ]
+                  },
+                  {
+                    "group": "JWT Authentication",
+                    "pages": [
+                      "api-reference/jwt/refresh-token",
+                      "api-reference/jwt/validate-token"
+                    ]
+                  },
+                  {
+                    "group": "API v1",
+                    "pages": [
+                      "api-reference/v1/error-codes",
+                      {
+                        "group": "Cart",
+                        "pages": [
+                          "api-reference/v1/cart/get"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "Knowledge Base",
+                "groups": [
+                  {
+                    "group": "Knowledge Base",
+                    "pages": [
+                      "knowledge-base/introduction",
+                      "knowledge-base/cart-key",
+                      "knowledge-base/force-permissions",
+                      "knowledge-base/adding-code",
+                      "knowledge-base/plugin-suggestions",
+                      "knowledge-base/nulled-plugins",
+                      "knowledge-base/wp-config",
+                      {
+                        "group": "Troubleshooting",
+                        "icon": "question",
+                        "pages": [
+                          "knowledge-base/troubleshoot/authentication",
+                          "knowledge-base/troubleshoot/setup-wizard"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "What's New",
+                "groups": [
+                  {
+                    "group": "What's New",
+                    "pages": [
+                      "updates/overview",
+                      "updates/documentation",
+                      "updates/core",
+                      "updates/jwt"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anchor": "Discord",
+            "href": "https://cocartapi.com/community/?ref=mintlify",
+            "icon": "discord"
+          },
+          {
+            "anchor": "Support",
+            "href": "mailto:support@cocartapi.com"
+          }
+        ]
+      },
+      {
+        "version": "core-v5",
+        "anchors": [
+          {
+            "anchor": "Documentation",
+            "icon": "book-open",
+            "tabs": [
+              {
+                "tab": "User-Guides",
+                "groups": [
+                  {
+                    "group": "Overview",
+                    "pages": [
+                      "overview/introduction",
+                      "overview/standards",
+                      "overview/roadmap",
+                      "overview/security-policy"
+                    ]
+                  },
+                  {
+                    "group": "Getting Started",
+                    "pages": [
+                      {
+                        "group": "CoCart",
+                        "icon": "cart-shopping",
+                        "pages": [
+                          "getting-started/core/setup",
+                          "getting-started/core/quick-start"
+                        ]
+                      },
+                      {
+                        "group": "CoCart Plus",
+                        "icon": "cart-plus",
+                        "pages": [
+                          "getting-started/plus/setup",
+                          "getting-started/license-activation"
+                        ]
+                      },
+                      {
+                        "group": "JWT Authentication",
+                        "icon": "hashtag",
+                        "pages": [
+                          "getting-started/jwt/setup",
+                          "getting-started/jwt/quick-start",
+                          "getting-started/jwt/concepts"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "Learn",
+                    "pages": [
+                      "documentation/security",
+                      "documentation/learn/batch-requests",
+                      "documentation/learn/rate-limiting",
+                      "documentation/learn/cors",
+                      "documentation/learn/load-cart"
+                    ]
+                  },
+                  {
+                    "group": "Developers",
+                    "pages": [
+                      {
+                        "group": "Action hooks",
+                        "icon": "tag",
+                        "pages": [
+                          "documentation/developers/actions",
+                          "documentation/developers/jwt/actions"
+                        ]
+                      },
+                      {
+                        "group": "Filters",
+                        "icon": "filter",
+                        "pages": [
+                          "documentation/developers/filters",
+                          "documentation/developers/jwt/filters"
+                        ]
+                      },
+                      {
+                        "group": "Functions",
+                        "icon": "robot",
+                        "pages": [
+                          "documentation/developers/functions"
+                        ]
+                      },
+                      {
+                        "group": "Guides",
+                        "icon": "book",
+                        "pages": [
+                          "documentation/developers/guides/guiding-principles",
+                          "documentation/developers/guides/extending-cart-creating-callbacks"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "Plugins",
+                    "pages": [
+                      "plugins/woocommerce-extensions",
+                      "plugins/suggestions",
+                      "plugins/incompatible"
+                    ]
+                  },
+                  {
+                    "group": "Tools and Resources",
+                    "pages": [
+                      "documentation/tools",
+                      "documentation/resources",
+                      {
+                        "group": "WP-CLI",
+                        "icon": "terminal",
+                        "pages": [
+                          "documentation/wp-cli",
+                          "documentation/developers/jwt/wp-cli"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "Contributing",
+                    "pages": [
+                      "contributing/opening-issues",
+                      "contributing/backers"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "API Reference",
+                "groups": [
+                  {
+                    "group": "API Documentation",
+                    "pages": [
+                      "api-reference/introduction",
+                      "api-reference/authentication"
+                    ]
+                  },
+                  {
+                    "group": "JWT Authentication",
+                    "pages": [
+                      "api-reference/jwt/refresh-token",
+                      "api-reference/jwt/validate-token"
+                    ]
+                  },
+                  {
+                    "group": "API v1",
+                    "pages": [
+                      "api-reference/v1/error-codes",
+                      {
+                        "group": "Cart",
+                        "pages": [
+                          "api-reference/v1/cart/get"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "Knowledge Base",
+                "groups": [
+                  {
+                    "group": "Knowledge Base",
+                    "pages": [
+                      "knowledge-base/introduction",
+                      "knowledge-base/cart-key",
+                      "knowledge-base/force-permissions",
+                      "knowledge-base/adding-code",
+                      "knowledge-base/plugin-suggestions",
+                      "knowledge-base/nulled-plugins",
+                      "knowledge-base/wp-config",
+                      {
+                        "group": "Troubleshooting",
+                        "icon": "question",
+                        "pages": [
+                          "knowledge-base/troubleshoot/authentication",
+                          "knowledge-base/troubleshoot/setup-wizard"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "What's New",
+                "groups": [
+                  {
+                    "group": "What's New",
+                    "pages": [
+                      "updates/overview",
+                      "updates/documentation",
+                      "updates/core",
+                      "updates/jwt"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anchor": "Discord",
+            "href": "https://cocartapi.com/community/?ref=mintlify",
+            "icon": "discord"
+          },
+          {
+            "anchor": "Support",
+            "href": "mailto:support@cocartapi.com"
+          }
+        ]
+      }
+    ]
+  },
+  "styling": {
+    "codeblocks": "system"
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg",
+    "href": "https://docs.cocartapi.com"
+  },
+  "api": {
+    "playground": {
+      "display": "interactive"
+    }
+  },
+  "appearance": {
+    "default": "dark"
+  },
+  "background": {
+    "decoration": "gradient",
+    "color": {
+      "light": "#FEFDFB",
+      "dark": "#18181B"
+    }
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "News",
+        "href": "https://cocart.dev/news/?ref=mintlify"
+      },
+      {
+        "label": "Wall of Love",
+        "href": "https://cocartapi.com/wall-of-love/?ref=mintlify"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Download CoCart",
+      "href": "https://download.cocartapi.com/cocart-core.zip"
+    }
+  },
+  "seo": {
+    "metatags": {
+      "robots": "noindex"
+    },
+    "indexing": "navigable"
+  },
+  "footer": {
+    "socials": {
+      "x": "https://twitter.com/cocartapi",
+      "github": "https://github.com/cocart-headless",
+      "website": "https://cocartapi.com/?ref=mintlify"
+    },
+    "links": [
+      {
+        "header": "Product",
+        "items": [
+          {
+            "label": "Pricing",
+            "href": "https://cocartapi.com/pricing/?ref=mintlify"
+          },
+          {
+            "label": "Blog",
+            "href": "https://cocart.dev/news/?ref=mintlify"
+          },
+          {
+            "label": "Showcase",
+            "href": "https://cocartapi.com/showcase/?ref=mintlify"
+          },
+          {
+            "label": "Try the API",
+            "href": "https://cocartapi.com/try-free-demo/?ref=mintlify"
+          }
+        ]
+      },
+      {
+        "header": "For Developers",
+        "items": [
+          {
+            "label": "Suggest a Feature",
+            "href": "https://cocartapi.com/suggest-a-feature/?ref=mintlify"
+          },
+          {
+            "label": "Roadmap",
+            "href": "https://cocartapi.com/roadmap/?ref=mintlify"
+          },
+          {
+            "label": "Translate CoCart",
+            "href": "https://translate.cocartapi.com/?ref=mintlify"
+          }
+        ]
+      },
+      {
+        "header": "Legal",
+        "items": [
+          {
+            "label": "Terms & Conditions",
+            "href": "https://cocartapi.com/terms-and-conditions-polar/?ref=mintlify"
+          },
+          {
+            "label": "Refund Policy",
+            "href": "https://cocartapi.com/refund-policy/?ref=mintlify"
+          },
+          {
+            "label": "Support Policy",
+            "href": "https://cocartapi.com/support-policy/?ref=mintlify"
+          }
+        ]
+      }
+    ]
+  }
+}
