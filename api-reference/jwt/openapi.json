@@ -14,7 +14,8 @@
                     "default": "https"
                 },
                 "host": {
-                    "default": "example-store.com"
+                    "default": "example-store.com",
+                    "description": "Your store domain"
                 }
             }
         }

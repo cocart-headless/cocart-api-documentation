@@ -11,7 +11,7 @@
   "favicon": "/favicon.png",
   "api": {
     "playground": {
-      "mode": "simple"
+      "mode": "show"
     }
   },
   "modeToggle": {
@@ -134,8 +134,7 @@
         "documentation/learn/batch-requests",
         "documentation/learn/rate-limiting",
         "documentation/learn/legacy/cors",
-        "documentation/learn/legacy/load-cart",
-        "documentation/learn/session"
+        "documentation/learn/legacy/load-cart"
       ]
     },
     {
@@ -146,8 +145,7 @@
         "documentation/learn/batch-requests",
         "documentation/learn/rate-limiting",
         "documentation/learn/cors",
-        "documentation/learn/load-cart",
-        "documentation/learn/session"
+        "documentation/learn/load-cart"
       ]
     },
     {

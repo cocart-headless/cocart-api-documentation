@@ -1,43 +1,75 @@
 ---
-title: 'Home'
-description: 'Welcome to CoCart API Documentation'
+title: 'CoCart Documentation'
+description: 'Welcome to the documentation for CoCart API'
 icon: home
 mode: "custom"
 ---
 
-<div class="text-align: center; font-size: 24px; font-weight: 600; margin-bottom: 2rem;">
-    <p>Explore the docs</p>
+<div className="flex flex-col items-center gap-4 container" id="hero">
+    <div className="text-gray-900 dark:text-gray-200 text-5xl">
+        <h1>CoCart Documentation</h1>
+    </div>
+
+    <p className="text-xl text-slate-500">
+        The headless commerce solution for WooCommerce that puts you in control
+    </p>
+
+    <div className="mt-2">
+        If you’re new to CoCart API, you can get started using the guides below.
+    </div>
 </div>
 
-<Frame>
+<div className="flex flex-col items-center gap-4 container">
     <CardGroup cols={2}>
-    <Card
-        title="Customize Style"
-        icon="palette"
-        href="https://mintlify.com/docs/settings/global"
-    >
-        Customize your docs to your company's colors and brands
-    </Card>
-    <Card
-        title="Reference APIs"
-        icon="code"
-        href="https://mintlify.com/docs/api-playground/openapi"
-    >
-        Automatically generate endpoints from an OpenAPI spec
-    </Card>
-    <Card
-        title="Add Components"
-        icon="screwdriver-wrench"
-        href="https://mintlify.com/docs/components/accordion"
-    >
-        Build interactive features and designs to guide your users
-    </Card>
-    <Card
-        title="Get Inspiration"
-        icon="stars"
-        href="https://mintlify.com/showcase"
-    >
-        Check out our showcase of our favorite documentation
-    </Card>
+        <Card
+            title="Installation"
+            icon="rocket"
+            href="/getting-started"
+        >
+            Quick start guide to integrate CoCart into your project
+        </Card>
+        <Card
+            title="Standards"
+            icon="clipboard"
+            href="/overview/standards"
+        >
+            Learn about CoCart's core standards for the REST API
+        </Card>
+        <Card
+            title="API Reference"
+            icon="code"
+            href="/api-reference"
+        >
+            Integrate and scale your headless store using our API
+        </Card>
+        <Card
+            title="Authentication"
+            icon="lock"
+            href="/api-reference/authentication"
+        >
+            Learn about securing your CoCart API requests
+        </Card>
     </CardGroup>
-</Frame>
+</div>
+
+<div className="flex flex-col items-center gap-4 container">
+    <p className="text-xl text-slate-500">
+        Need Help?
+    </p>
+    <CardGroup cols={2}>
+        <Card
+        title="Community Support"
+        icon="users"
+        href="https://github.com/co-cart/co-cart/discussions"
+        >
+        Join our community discussions on GitHub
+        </Card>
+        <Card
+        title="Discord Support"
+        icon="discord"
+        href="https://cocartapi.com/community/?ref=mintlify"
+        >
+        Join our community discussions on Discord
+        </Card>
+    </CardGroup>
+</div>
