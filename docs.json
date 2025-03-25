@@ -142,9 +142,10 @@
                 "tab": "API Reference",
                 "groups": [
                   {
-                    "group": "API Documentation",
+                    "group": "Overview",
                     "pages": [
                       "api-reference/introduction",
+                      "api-reference/playground",
                       "api-reference/authentication"
                     ]
                   },
@@ -352,9 +353,10 @@
                 "tab": "API Reference",
                 "groups": [
                   {
-                    "group": "API Documentation",
+                    "group": "Overview",
                     "pages": [
                       "api-reference/introduction",
+                      "api-reference/playground",
                       "api-reference/authentication"
                     ]
                   },
