@@ -4,13 +4,17 @@ sidebarTitle: 'In JWT'
 description: 'Trigger an action when these hooks are called'
 ---
 
-<Info>
+<Note>
     Download the [JWT Authentication for CoCart](https://wordpress.org/plugins/cocart-jwt-authentication/) plugin to use these hooks.
-</Info>
+</Note>
 
 Each action hook is documented below with its description and usage example.
 
 ## `cocart_jwt_token_generated`
+
+<Info>
+    Made available since v2.1.0
+</Info>
 
 Fires when a new JWT token is generated after successful authentication.
 
@@ -23,6 +27,10 @@ add_action( 'cocart_jwt_token_generated', function( $token, $user ) {
 
 ## `cocart_jwt_auth_token_refreshed`
 
+<Info>
+    Made available since v2.1.0
+</Info>
+
 Fires when a token is refreshed using a refresh token.
 
 ```php
@@ -33,6 +41,10 @@ add_action( 'cocart_jwt_auth_token_refreshed', function( $token, $user ) {
 ```
 
 ## `cocart_jwt_auth_token_validated`
+
+<Info>
+    Made available since v2.1.0
+</Info>
 
 Fires when a token is successfully validated.
 
@@ -45,6 +57,10 @@ add_action( 'cocart_jwt_auth_token_validated', function( $decoded ) {
 ```
 
 ## `cocart_jwt_auth_token_deleted`
+
+<Info>
+    Made available since v2.1.0
+</Info>
 
 Fires when a token is deleted.
 

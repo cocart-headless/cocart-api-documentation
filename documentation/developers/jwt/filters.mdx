@@ -4,13 +4,17 @@ sidebarTitle: 'In JWT'
 description: 'Control how JWT Authentication operates when tokens are created'
 ---
 
-<Info>
+<Note>
     Download the [JWT Authentication for CoCart](https://wordpress.org/plugins/cocart-jwt-authentication/) plugin to use these filters.
-</Info>
+</Note>
 
 Each filter is documented below with its description and usage example.
 
 ## `cocart_jwt_auth_issued_at`
+
+<Info>
+    Made available since v2.0.0
+</Info>
 
 Allows you to change the token issuance timestamp (iat claim) for token timing synchronization.
 
@@ -23,6 +27,10 @@ add_filter( 'cocart_jwt_auth_issued_at', function( $timestamp ) {
 
 ## `cocart_jwt_auth_issuer`
 
+<Info>
+    Made available since v2.0.0
+</Info>
+
 Allows you to change the token issuer (iss claim) for multi-site setups or custom API endpoints.
 
 ```php
@@ -32,6 +40,10 @@ add_filter( 'cocart_jwt_auth_issuer', function( $issuer ) {
 ```
 
 ## `cocart_jwt_auth_not_before`
+
+<Info>
+    Made available since v2.0.0
+</Info>
 
 Allows you to set when the token becomes valid (nbf claim) for token activation control.
 
@@ -44,6 +56,10 @@ add_filter( 'cocart_jwt_auth_not_before', function( $time, $issued_at ) {
 
 ## `cocart_jwt_auth_expire`
 
+<Info>
+    Made available since v2.0.0
+</Info>
+
 Allows you to customize when the token will expire (exp claim) based on roles or conditions.
 
 ```php
@@ -55,7 +71,11 @@ add_filter( 'cocart_jwt_auth_expire', function( $expiration, $issued_at ) {
 
 ## `cocart_jwt_auth_algorithm`
 
-Allows you to change the algorithm used for token signing.
+<Info>
+    Made available since v2.0.0
+</Info>
+
+vAllows you to change the algorithm used for token signing.
 
 ```php
 add_filter( 'cocart_jwt_auth_algorithm', function( $algorithm ) {
@@ -64,6 +84,10 @@ add_filter( 'cocart_jwt_auth_algorithm', function( $algorithm ) {
 ```
 
 ## `cocart_jwt_auth_token_user_data`
+
+<Info>
+    Made available since v2.2.0
+</Info>
 
 Allows additional user data to be applied to the payload before the token is generated.
 
@@ -79,6 +103,10 @@ add_filter( 'cocart_jwt_auth_token_user_data', function( $data, $user ) {
 
 ## `cocart_jwt_auth_refresh_token_generation`
 
+<Info>
+    Made available since v2.0.0
+</Info>
+
 Allows you to change how refresh tokens are generated.
 
 ```php
@@ -88,6 +116,10 @@ add_filter( 'cocart_jwt_auth_refresh_token_generation', function( $token ) {
 ```
 
 ## `cocart_jwt_auth_refresh_token_expiration`
+
+<Info>
+    Made available since v2.0.0
+</Info>
 
 Allows you to customize refresh token lifetime based on roles or conditions.
 

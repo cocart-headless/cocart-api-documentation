@@ -19,6 +19,12 @@
             "icon": "book-open",
             "tabs": [
               {
+                "tab": "Home",
+                "pages": [
+                  "/"
+                ]
+              },
+              {
                 "tab": "User-Guides",
                 "groups": [
                   {
@@ -64,8 +70,8 @@
                     "group": "Learn",
                     "pages": [
                       "documentation/security",
-                      "documentation/learn/batch-requests",
-                      "documentation/learn/rate-limiting",
+                      "documentation/learn/legacy/batch-requests",
+                      "documentation/learn/legacy/rate-limiting",
                       "documentation/learn/legacy/cors",
                       "documentation/learn/legacy/load-cart"
                     ]
@@ -163,9 +169,66 @@
                       {
                         "group": "Cart",
                         "pages": [
-                          "api-reference/v1/cart/get"
+                          "api-reference/v1/cart/get-cart",
+                          "api-reference/v1/cart/get-cart-in-session",
+                          "api-reference/v1/cart/get-cart-customer",
+                          "api-reference/v1/cart/get-cart-item",
+                          "api-reference/v1/cart/add-item",
+                          "api-reference/v1/cart/update-item",
+                          "api-reference/v1/cart/remove-item",
+                          "api-reference/v1/cart/restore-item",
+                          "api-reference/v1/cart/clear-cart",
+                          "api-reference/v1/cart/count-items",
+                          "api-reference/v1/cart/calculate",
+                          "api-reference/v1/cart/totals",
+                          "api-reference/v1/cart/plus/get-shipping-methods",
+                          "api-reference/v1/cart/plus/set-shipping-method",
+                          "api-reference/v1/cart/plus/removed-items",
+                          "api-reference/v1/cart/plus/quantities",
+                          "api-reference/v1/cart/plus/get-payment-methods",
+                          "api-reference/v1/cart/plus/set-payment-method",
+                          "api-reference/v1/cart/plus/get-fees",
+                          "api-reference/v1/cart/plus/add-fee",
+                          "api-reference/v1/cart/plus/customer",
+                          "api-reference/v1/cart/plus/cross-sells",
+                          "api-reference/v1/cart/plus/get-applied-coupons",
+                          "api-reference/v1/cart/plus/apply-coupon",
+                          "api-reference/v1/cart/plus/remove-coupon",
+                          "api-reference/v1/cart/plus/calculate-fees",
+                          "api-reference/v1/cart/plus/calculate-shipping"
+                        ]
+                      },
+                      {
+                        "group": "Product",
+                        "pages": [
+                          "api-reference/v1/product/products"
                         ]
                       }
+                    ]
+                  },
+                  {
+                    "group": "Plugins",
+                    "pages": [
+                      "api-reference/plugins/wc-name-your-price",
+                      "api-reference/plugins/wc-mix-and-match-products"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "Tutorials",
+                "groups": [
+                  {
+                    "group": "Tutorials",
+                    "pages": [
+                      "tutorials/postman",
+                      "tutorials/covert-cart-to-order"
+                    ]
+                  },
+                  {
+                    "group": "Tips and Tricks",
+                    "pages": [
+                      "tutorials/generate-image-dataurl"
                     ]
                   }
                 ]
@@ -218,7 +281,13 @@
           },
           {
             "anchor": "Support",
-            "href": "mailto:support@cocartapi.com"
+            "href": "mailto:support@cocartapi.com",
+            "icon": "envelope"
+          },
+          {
+            "anchor": "Request Feature",
+            "href": "https://cocartapi.com/suggest-a-feature/?ref=mintlify",
+            "icon": "rocket"
           }
         ]
       },
@@ -229,6 +298,12 @@
             "anchor": "Documentation",
             "icon": "book-open",
             "tabs": [
+              {
+                "tab": "Home",
+                "pages": [
+                  "/"
+                ]
+              },
               {
                 "tab": "User-Guides",
                 "groups": [
@@ -374,9 +449,57 @@
                       {
                         "group": "Cart",
                         "pages": [
-                          "api-reference/v1/cart/get"
+                          "api-reference/v1/cart/get-cart",
+                          "api-reference/v1/cart/get-cart-in-session",
+                          "api-reference/v1/cart/get-cart-customer",
+                          "api-reference/v1/cart/get-cart-item",
+                          "api-reference/v1/cart/add-item",
+                          "api-reference/v1/cart/update-item",
+                          "api-reference/v1/cart/remove-item",
+                          "api-reference/v1/cart/restore-item",
+                          "api-reference/v1/cart/clear",
+                          "api-reference/v1/cart/calculate",
+                          "api-reference/v1/cart/totals",
+                          "api-reference/v1/cart/get-shipping-methods",
+                          "api-reference/v1/cart/set-shipping-methods",
+                          "api-reference/v1/cart/removed-items",
+                          "api-reference/v1/cart/quantities",
+                          "api-reference/v1/cart/get-payment-methods",
+                          "api-reference/v1/cart/set-payment-methods",
+                          "api-reference/v1/cart/get-fees",
+                          "api-reference/v1/cart/set-fees",
+                          "api-reference/v1/cart/customer",
+                          "api-reference/v1/cart/cross-sells",
+                          "api-reference/v1/cart/get-coupons",
+                          "api-reference/v1/cart/set-coupons",
+                          "api-reference/v1/cart/calculate-shipping"
                         ]
                       }
+                    ]
+                  },
+                  {
+                    "group": "Plugins",
+                    "pages": [
+                      "api-reference/plugins/wc-name-your-price",
+                      "api-reference/plugins/wc-mix-and-match-products"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "Tutorials",
+                "groups": [
+                  {
+                    "group": "Tutorials",
+                    "pages": [
+                      "tutorials/postman",
+                      "tutorials/covert-cart-to-order"
+                    ]
+                  },
+                  {
+                    "group": "Tips and Tricks",
+                    "pages": [
+                      "tutorials/generate-image-dataurl"
                     ]
                   }
                 ]
@@ -429,7 +552,13 @@
           },
           {
             "anchor": "Support",
-            "href": "mailto:support@cocartapi.com"
+            "href": "mailto:support@cocartapi.com",
+            "icon": "envelope"
+          },
+          {
+            "anchor": "Request Feature",
+            "href": "https://cocartapi.com/suggest-a-feature/?ref=mintlify",
+            "icon": "rocket"
           }
         ]
       }

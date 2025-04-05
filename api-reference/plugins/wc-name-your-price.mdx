@@ -1,0 +1,27 @@
+---
+title: 'Name Your Price for WooCommerce'
+sidebarTitle: 'Name Your Price'
+description: 'Allow customers to define the product price. Also useful for accepting user-set donations.'
+---
+
+The [Name Your Price](https://woocommerce.com/products/name-your-price/) plugin extension lets you be flexible in what price you are willing to accept for selected products. You can use this plugin to accept donations or to take a new approach to selling products. You can suggest a price to your customers and optionally enforce a minimum acceptable price, or leave it entirely in the hands of the customer.
+
+<Info>
+    Name Your Price supports CoCart since <Tooltip tip="This is the version of the plugin">v3.1.0</Tooltip>
+</Info>
+
+## Add item to cart
+
+Apply the customers requested price for the product when adding item to cart.
+
+```bash cURL
+curl -X POST https://your-store.com/wp-json/cocart/v2/cart/add-item \
+-H "Content-Type: application/json" \
+-d '{
+    "id": "129",
+    "quantity": "1",
+    "cart_item_data": {
+        "nyp": 24
+    }
+}'
+```

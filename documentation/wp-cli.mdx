@@ -6,10 +6,10 @@ description: 'CoCart CLI offers the ability to manage the CoCart plugin via the 
 
 ## What is WP-CLI?
 
-WP-CLI is a set of command-line tools for managing WordPress installations. You can update plugins, set up multisite installs and much more, without using a web browser.
+WP-CLI is a powerful set of command-line tools for managing WordPress installations. You can update plugins, configure multisite installations, and much more, all without using a web browser.
 
 <Note>
-    You can find more about WP-CLI at https://wp-cli.org/
+    For more information about WP-CLI visit the official site https://wp-cli.org/
 </Note>
 
 ## Core Commands
@@ -25,3 +25,35 @@ All CoCart related commands are grouped into wp cocart command.
 | `wp cocart update`     | Updates the CoCart database.                      |
 | `wp cocart version`    | Returns the version of CoCart installed.          |
 | `wp cocart db-version` | Returns the database version of CoCart installed. |
+
+## What is CoCart CLI?
+
+CoCart CLI (COCART-CLI) offers an efficient way to manage carts via the command line.
+
+<Info>
+    This tool is a part of CoCart Plus from version 2.0.0 onwards and leverages the capabilities of the WC REST API. This means that most tasks achievable through the REST API can also be performed via the command line.
+</Info>
+
+## Frequently Asked Questions
+
+<AccordionGroup>
+    <Accordion title="How do I install CoCart CLI?">
+        CoCart CLI is included as part of CoCart Plus from version 2.0.0 onwards. Ensure you have CoCart Plus 2.0.0 or later installed, and you automatically have access to COCART-CLI.
+    </Accordion>
+
+    <Accordion title="Is CoCart CLI different from WP-CLI?">
+        CoCart CLI is a part of WP-CLI specifically designed for CoCart. While WP-CLI deals with general WordPress management, COCART-CLI focuses on CoCart-specific tasks.
+    </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+    <Accordion title="Why am I getting a “permission denied” error?">
+        This error often occurs if your user role doesn’t have the necessary permissions. Ensure you’re using an account with administrative privileges.
+    </Accordion>
+
+    <Accordion title="What should I do if a command is not working as expected?">
+        Check for typos and verify the command syntax with –help. If the issue persists, consult the Command Reference or seek support from the CoCart community.
+    </Accordion>
+</AccordionGroup>

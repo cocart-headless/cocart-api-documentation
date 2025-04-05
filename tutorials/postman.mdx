@@ -1,0 +1,74 @@
+---
+title: 'Getting Started with Postman'
+description: 'Learn how to use Postman to interact with CoCart API'
+---
+
+# Introduction
+
+[Postman](https://www.postman.com/) is a popular API development tool that makes it easy to build, test, and modify API requests from a user-friendly graphical interface for sending HTTP requests and viewing responses, making it perfect for testing and exploring the CoCart API. We recommend using Postman with the CoCart API when you are troubleshooting issues with your application.
+
+## Why Use Postman?
+
+- Easy-to-use graphical interface for making API requests
+- Save and organize your API requests for future use
+- Test different parameters and authentication methods quickly
+- View detailed response data in a structured format
+- Share API collections with your team
+
+## Setting Up Postman
+
+1. Download and install Postman from the [official website](https://www.postman.com/downloads/)
+2. Create a free Postman account (optional but recommended)
+3. Launch Postman on your computer
+
+## Importing CoCart API Collection
+
+CoCart provides an OpenAPI document that follows the [OpenAPI Specification](https://swagger.io/specification/) that you can import to get started quickly:
+
+1. Download the CoCart OpenAPI document: [CoCart OpenAPI Document](#)
+2. In Postman, click the "Import" button in the top left
+3. Drag and drop the downloaded the OpenAPI file or browse to select it
+4. Click "Import" to add the collection to your workspace
+
+## Configuring Environment Variables
+
+To use the CoCart API effectively with Postman, set up your environment variables:
+
+1. Click the "Environments" tab in Postman
+2. Create a new environment (e.g., "CoCart Local")
+3. Add the following variables:
+   - `url`: Your WordPress site URL (e.g., `http://localhost/wordpress`)
+   - `consumer_key`: Your WooCommerce consumer key - for Session API ONLY
+   - `consumer_secret`: Your WooCommerce consumer secret - for Session API ONLY
+
+## Making Your First Request
+
+1. Select the imported CoCart collection
+2. Choose the environment you created
+3. Open the "Products" request
+4. Click "Send" to make your first API request
+
+The response will show your stores product data in JSON format.
+
+## Authentication
+
+If you need customer authentication:
+
+1. In the request's "Auth" tab, select "Basic Auth"
+2. Enter your the customers username/email/phone number
+3. Enter your the customers password
+
+[See Authentication](../api-reference/authentication) for more information.
+
+## Next Steps
+
+- Explore the various endpoints in the CoCart collection
+- Try modifying request parameters to see different responses
+- Use the "Tests" tab to write test scripts for your requests
+- Save your frequently used requests for quick access
+
+For more information about using Postman, visit the [Postman Learning Center](https://learning.postman.com/).
+
+## What’s next
+
+If you click on the right side in Postman that says “Code”, you can turn the request we just created into the language of your choosing such as PHP, Javascript, Python, Node or Ruby to help you get started. Postman has great documentation that might be helpful and an AI assistant.

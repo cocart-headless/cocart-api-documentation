@@ -42,13 +42,30 @@ The API uses JSON to serialize data. You don’t need to specify .json at the en
     If you want to change the CoCart API Namespace, we have an add-on in the works that will do just that. Please show interest by contacting support to be on waitlist.
 </Tip>
 
-## Compatibility
+## Versioning Strategy
 
-We won’t make breaking changes to existing API endpoints for API versions lower than `v2`. If breaking changes are necessary, we’ll release a new major version. We may deprecate APIs that have been replaced by a newer version.
+The main principles of the strategy are:
+
+1. All breaking changes will be bundled into a new version
+2. Deprecations for existing versions whenever a new version is announced is 6 months
+3. In order to provide quicker adoption of new changes, they will be released on on ongoing basis
+5. All API responses will contain the version of CoCart core via the returned header `CoCart-Version` if you have `WP_DEBUG` enabled which will be set to the current version of the plugin you are using.
+
+Should there be any fundamental requirement changes that require an API breaking change, we will notify via a blog post.
+
+## Breaking Changes
+
+Breaking changes are any changes that require developer resources to maintain existing functionality. This includes resources used for investigation into the changes that need to be made, determination of features/endpoints being deprecated and final implementation of all these changes. A list of breaking changes are things like:
+
+* Removing a param from the API request/response
+* Modifying the name for any params or endpoints
+* Adding/changing optional or required params (e.g., making a customers name a required field in the request)
+
+We won’t make breaking changes to existing API endpoints for API versions lower than `v2`. If breaking changes are necessary that changes the data in the response, we’ll release a new major version. We may deprecate APIs that have been replaced by a newer version.
 
 When doing so, we will expect developers to manage a transition to the new resources within the deprecation timeline of old ones.
 
-We will make the following sort of changes we do not consider to be breaking:
+Changes we do not consider to be breaking:
 
 - Adding new endpoints
 - Adding optional query parameters to API endpoints
@@ -56,6 +73,10 @@ We will make the following sort of changes we do not consider to be breaking:
 - Reordering properties in existing API responses
 
 It is important that clients are built to be robust to these changes.
+
+**Deprecation**: Deprecated versions will be unsupported and it is recommended that developers cease to use these APIs.
+
+**Sunset**: Once an API is sunset, the corresponding set of endpoints will no longer be accessible via the API.
 
 ## Requirements and limitations
 
@@ -137,4 +158,24 @@ Datetime fields in the APIs conform to the **[ISO 8601](https://en.wikipedia.org
 
 ## Country Codes
 
-Countries are identified in the APIs via **[ISO 3166-1 Alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)** codes. For example: `GB` and `US`.
+Countries are identified in the APIs using **[ISO 3166-1 Alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)** codes. For example: `GB` and `US`.
+
+## Currency
+
+Currency are identified in the APIs using **[ISO-4217](http://en.wikipedia.org/wiki/ISO_4217)** codes. This is a three-letter string like `USD` or `EUR`. The value of a currency is represented by your WooCommerce store settings on the **General** tab.
+
+Most currencies have a “precision” of two (like USD: $1.23).
+
+* `AED`, `VEF`, `PKR`, `IDR`, `HKD`, `QAR`, `PHP`, `NZD`, `INR`, `EUR`, `ARS`, `THB`, `MXN`, `EGP`, `DZD`, `SAR`, `LBP`, `COP`, `TRY`, `SGD`, `MAD`, `AUD`, `USD`, `MYR`, `CAD`, `BRL`, `GBP`.
+
+The following currencies don’t use a decimal:
+
+* `VND`, `KRW`, `CLP`, `JPY`
+
+And these use three decimal places:
+
+* `KWD`, `IQD`, `BHD`, `TND`
+
+<Tip>
+    It is important that you set the currency correctly for the API to return price values correctly.
+</Tip>

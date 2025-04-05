@@ -84,7 +84,7 @@ Once you get the `cart_key`, you must store it somewhere in your application. It
 
 ## Adding customer information
 
-With the item now in the cart, we can attempt to add customer information using the `/wp-json/cocart/v2/cart/update?cart_key={$cart_key}&namespace=update-customer` endpoint.
+With the item now in the cart, we can attempt to add customer information using the `/wp-json/cocart/v2/cart/update?cart_key=<cart_key>&namespace=update-customer` endpoint.
 
 <Note>
     Notice that I placed the cart key as global parameter. You can apply the cart key via the headers to if you prefer.

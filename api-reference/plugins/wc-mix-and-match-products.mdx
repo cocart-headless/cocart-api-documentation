@@ -1,0 +1,40 @@
+---
+title: 'Mix and Match Products for WooCommerce'
+sidebarTitle: 'Mix and Match Products'
+description: 'Allows customers to create their own product bundles.'
+---
+
+Selling cases of wine? A dozen donuts? Fruit baskets? Six-packs of T-shirts? [Mix and Match Products](https://woocommerce.com/products/woocommerce-mix-and-match-products/) is ideal for offering similar products in bulk containers. Perfect for encouraging customers to buy in bulk without forcing them to buy items that don’t interest them.
+
+<Info>
+    Mix and Match Products supports CoCart since <Tooltip tip="This is the version of the plugin">v1.10.0</Tooltip>
+</Info>
+
+## Add item to cart
+
+Add a container with the customers selected items and quantity.
+
+```bash cURL
+curl -X POST https://your-store.com/wp-json/cocart/v2/cart/add-item \
+-H "Content-Type: application/json" \
+-d '{
+    "id": "1102",
+    "quantity": "2",
+    "cart_item_data": {
+        "mnm_config": [
+            {
+                "product_id": 987,
+                "quantity": 1
+            },
+            {
+                "product_id": 1001,
+                "quantity": 2
+            },
+            {
+                "product_id": 1003,
+                "quantity": 3
+            }
+        ]
+    }
+}
+'```

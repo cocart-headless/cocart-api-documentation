@@ -9,36 +9,37 @@ The CoCart API provides multiple authentication methods to suit different needs.
 ## Public vs. Authenticated Access
 
 - **Public Access**: Products API and Cart API
-- **Authenticated Access**: Required for registered customers to access their personal carts
-
-<Warning>
-  All authenticated API requests must be made over HTTPS. Requests made over plain HTTP will fail. Authentication establishes a secure customer session.
-</Warning>
+- **Authenticated Access**: Required for registered customers to access their personal carts or special access/prices to products
 
 ## Customer Authentication Methods
 
-CoCart supports Basic Authentication with multiple identifier options:
+The use of **Basic Authentication** is only required should your store allow customer registration or provide membership access for specially discounted prices that can only be made available if the user has identified themselves. To make a successful request to an API that requires Basic Authentication, you must pass one of the identify methods we support combined as an authorization header for each request.
+
+<Tip>
+  When building a request using Basic Authentication, make sure you add the Authentication: Basic HTTP header with encoded credentials over HTTPS. Requests made over plain HTTP will fail. Authentication establishes a secure customer session.
+</Tip>
+
+In the following request examples, you would replace `<username>`, `<email_address>`, `<phone_number>` and `<password>` with your credentials before sending the request:
 
 <Tabs>
   <Tab title="Username + Password">
     <CodeGroup>
       ```bash cURL
       curl -X GET 'https://your-store.com/wp-json/cocart/v2/cart' \
-        -H 'Authorization: Basic base64_encode(customer_username:password123)'
+        -H 'Accept: application/json' \
+        -H 'Authorization: Basic base64_encode(<username>:<password>)'
       ```
 
       ```php PHP
       <?php
-      $username = 'customer_username';
-      $password = 'password123';
-      
       $ch = curl_init();
       
       curl_setopt_array($ch, [
           CURLOPT_URL => 'https://your-store.com/wp-json/cocart/v2/cart',
           CURLOPT_RETURNTRANSFER => true,
           CURLOPT_HTTPHEADER => [
-              'Authorization: Basic ' . base64_encode($username . ':' . $password)
+            'Accept: application/json',
+            'Authorization: Basic ' . base64_encode(<username> . ':' . <password>)
           ]
       ]);
       
@@ -48,10 +49,13 @@ CoCart supports Basic Authentication with multiple identifier options:
       curl_close($ch);
       ```
 
-      ```javascript Javascript
-      const auth = btoa('customer_username:password123');
+      ```javascript JavaScript
+      const auth = btoa('<username>:<password>');
       fetch('https://your-store.com/wp-json/cocart/v2/cart', {
-        headers: { 'Authorization': `Basic ${auth}` }
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Basic ${auth}`
+        }
       });
       ```
     </CodeGroup>
@@ -60,13 +64,13 @@ CoCart supports Basic Authentication with multiple identifier options:
     <CodeGroup>
       ```bash cURL
       curl -X GET 'https://your-store.com/wp-json/cocart/v2/cart' \
-        -H 'Authorization: Basic base64_encode(customer@example.com:password123)'
+        -H 'Authorization: Basic base64_encode(<email_address>:<password>)'
       ```
 
       ```php PHP
       <?php
-      $email = 'customer@example.com';
-      $password = 'password123';
+      $email = '<email_address>';
+      $password = '<password>';
       
       $ch = curl_init();
       
@@ -84,8 +88,8 @@ CoCart supports Basic Authentication with multiple identifier options:
       curl_close($ch);
       ```
 
-      ```javascript Javascript
-      const auth = btoa('customer@example.com:password123');
+      ```javascript JavaScript
+      const auth = btoa('<email_address>:<password>');
       fetch('https://your-store.com/wp-json/cocart/v2/cart', {
         headers: { 'Authorization': `Basic ${auth}` }
       });
@@ -96,13 +100,13 @@ CoCart supports Basic Authentication with multiple identifier options:
     <CodeGroup>
       ```bash cURL
       curl -X GET 'https://your-store.com/wp-json/cocart/v2/cart' \
-        -H 'Authorization: Basic base64_encode(+1234567890:password123)'
+        -H 'Authorization: Basic base64_encode(<phone_number>:<password>)'
       ```
 
       ```php PHP
       <?php
-      $phone = '+1234567890';
-      $password = 'password123';
+      $phone = '<phone_number>';
+      $password = '<password>';
       
       $ch = curl_init();
       
@@ -120,8 +124,8 @@ CoCart supports Basic Authentication with multiple identifier options:
       curl_close($ch);
       ```
 
-      ```javascript Javascript
-      const auth = btoa('+1234567890:password123');
+      ```javascript JavaScript
+      const auth = btoa('<phone_number>:<password>');
       fetch('https://your-store.com/wp-json/cocart/v2/cart', {
         headers: { 'Authorization': `Basic ${auth}` }
       });
@@ -132,7 +136,7 @@ CoCart supports Basic Authentication with multiple identifier options:
 
 ## Storing Authentication Credentials
 
-After successful authentication, securely store the credentials using one of these recommended methods:
+After successful authentication, securely store the credentials using one of these methods:
 
 - **Browser Storage**
   - LocalStorage (with encryption)
@@ -144,6 +148,8 @@ After successful authentication, securely store the credentials using one of the
   - [SQLite](https://www.sqlite.org/) - For mobile applications
   - [Hive](https://docs.hivedb.dev/) - For Flutter applications
   - Secure Keychain/Keystore for mobile platforms
+
+[Learn more about web storage](#web-storage-%26-cookies)
 
 ## JWT Authentication (Recommended)
 
@@ -278,5 +284,27 @@ If your server configuration doesn't properly handle the Authorization header, y
 </CodeGroup>
 
 However, these methods are less secure and should be used only as a fallback.
+
+## Web storage & cookies
+
+There are two types of web storage: **LocalStorage** and **SessionStorage**. These were created as improvements to using Cookies since the storage capacity for web storage is much higher than Cookie storage. However, there are different pros and cons to each of these storage options.
+
+**LocalStorage**
+
+Anything stored in local web storage is persistent. This means that the data will persist until the data is explicitly deleted. Depending on the needs of your project, you might view this as a positive. However, you should be mindful of using LocalStorage, since any changes/additions to data will be available on all future visits to the webpage in question. We would not usually recommend using LocalStorage, although there may be a few exceptions to this. If you decide to use LocalStorage, it is good to know that it supports the same-origin policy, so all data stored here will only be available via the same origin. An added performance perk of using LocalStorage would be a resulting decrease in client-server traffic since the data does not have to be sent back to the server for every HTTP request.  
+
+**SessionStorage**
+
+SessionStorage is similar to LocalStorage, but the key difference is that SessionStorage is not persistent. Once the window (or tab, depending on which browser you are using) that was used to write to SessionStorage is closed, the data will be lost. This is useful in restricting read access to your token within a user session. Using SessionStorage is normally more preferable than LocalStorage when thinking in terms of security. Like LocalStorage, the perks of same-origin policy support and decreased client-server traffic apply to SessionStorage as well.
+
+**Cookies**
+
+Cookies are the more traditional way to store session data. You can set an expiration time for each cookie, which would allow for ease of revocability and restriction of access. However, the client-server traffic would definitely increase when using cookies, since the data is being sent back to the server for every HTTP request. If you decide to use cookies, you need to protect against session hijacking. By default, cookies are sent in plaintext over HTTP, which makes their contents vulnerable to packet sniffing and/or man-in-the-middle attacks where attackers may modify your traffic. You should always enforce HTTPS to protect your data in transit. This will provide confidentiality, integrity (of the data), and authentication. However, if your web application or site is available both through HTTP and HTTPS, you will also want to use the ‘Secure’ flag on the cookie. This will prevent attackers from being able to send links to the HTTP version of your site to a user and listening in on the resulting HTTP request generated.
+
+Another secondary defense against session hijacking when using cookies would be to validate the user’s identity again before any high-impact actions are carried out. One other flag to consider for improving the security of your cookies would be the ‘HttpOnly’ flag. This flag tells the browser that the cookie in question shall only be accessible from the server specified. Any attempts made by client-side scripts would be forbidden by this flag, therefore helping to protect against most cross-site scripting (XSS) attacks.
+
+<Note>
+  WooCommerce uses the cookie method natively for handling the cart session but CoCart does not. The cookie method defeated the purpose of CoCart supporting guest customers and slows down the performance of the API.
+</Note>
 
 [**Troubleshoot Authentication Issues →**](../knowledge-base/troubleshoot/authentication)

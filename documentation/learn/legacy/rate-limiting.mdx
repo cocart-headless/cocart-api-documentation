@@ -30,65 +30,20 @@ A default maximum of 25 requests can be made within a 10-second time frame. Thes
 
 ## Methods restricted by Rate Limiting
 
-`GET`, `POST`, `PUT`, `PATCH`, and `DELETE`
+`POST`, `PUT`, `PATCH`, and `DELETE`
 
 ## Enable Rate Limiting
 
-Developers can enable rate limiting in two ways.
-
-### Constants
-
-Set the following constants in your `wp-config.php`.
-
-```php
-define( 'COCART_RATE_LIMITING_ENABLED', true );
-if ( defined( 'COCART_RATE_LIMITING_ENABLED' ) && COCART_RATE_LIMITING_ENABLED ) {
-    define( 'COCART_RATE_LIMITING_PROXY_SUPPORT', false );
-    define( 'COCART_RATE_LIMITING_LIMIT', 25 );
-    define( 'COCART_RATE_LIMITING_SECONDS', 10 );
-}
-```
-
-### Using the `cocart_api_rate_limit_options` filter.
-
-<Note>
-    Filtering provides more defined control and takes precedence over any constants set in your `wp-config.php` file.
-</Note>
+Developers can enable rate limiting using the `cocart_api_rate_limit_options` filter.
 
 ```php
 add_filter( 'cocart_api_rate_limit_options', function() {
-    return [
-        'enabled' => true, // enables/disables Rate Limiting. Default: false
-        'proxy_support' => false, // enables/disables Proxy support. Default: false
-        'limit' => 25, // limit of request per timeframe. Default: 25
-        'seconds' => 10, // timeframe in seconds. Default: 10
-    ];
-} );
-```
-
-With this configuration, CoCart will block requests from a user ID or IP address if they’ve sent 25 requests or more within 10 seconds or less. The limit will be reset once the timeframe has expired.
-
-You can take it a step further by configuring for a specific endpoint while every other endpoint uses the same rate limit.
-
-```php
-add_filter( 'cocart_api_rate_limit_options', function( $default_options ) {
-    // If the cart is requested 3 times within 60 seconds. No need to keep checking the cart more than that, right?
-    if ( preg_match( '#/cocart/v2/cart#', $GLOBALS['wp']->query_vars['rest_route'] ) ) {
-        return [
-            'enabled' => true,
-            'proxy_support' => $default_options->proxy_support,
-            'limit' => 3,
-            'seconds' => 60
-        ];
-    }
-
-    // All other endpoints are rate limited to these conditions.
-    return [
-        'enabled' => true,
-        'proxy_support' => $default_options->proxy_support,
-        'limit' => 10,
-        'seconds' => 10
-    ];
+	return [
+		'enabled' => RateLimits::ENABLED, // enables/disables Rate Limiting. Default: false
+		'proxy_support' => RateLimits::PROXY_SUPPORT, // enables/disables Proxy support. Default: false
+		'limit' => RateLimits::LIMIT, // limit of request per timeframe. Default: 25
+		'seconds' => RateLimits::SECONDS, // timeframe in seconds. Default: 10
+	];
 } );
 ```
 
@@ -109,7 +64,7 @@ For the `proxy_support` option to work properly, service layers (load balancer, 
 - `X_FORWARDED` *[Documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Forwarded), [RFC 7239](https://datatracker.ietf.org/doc/html/rfc7239)*
 
 <Info>
-    This is disabled by default and may not be needed if you decide to provide your own [fingerprint ID](#fingerprint-id).
+    This is disabled by default.
 </Info>
 
 ## Limit usage information observability
@@ -118,16 +73,16 @@ Current limit information can be observed via custom response headers:
 
 - `RateLimit-Limit` *Maximum requests per time frame.*
 - `RateLimit-Remaining` *Requests available during current time frame.*
-- `RateLimit-Retry-After` *Seconds until requests are unblocked again. Only shown when the limit is reached.*
 - `RateLimit-Reset` *Unix timestamp of next time frame reset.*
+- `RateLimit-Retry-After` *Seconds until requests are unblocked again. Only shown when the limit is reached.*
 
 ### Response headers example
 
 ```http
 RateLimit-Limit: 5
 RateLimit-Remaining: 0
-RateLimit-Retry-After: 28
 RateLimit-Reset: 1654880642
+RateLimit-Retry-After: 28
 ```
 
 ## Tracking Abuses
@@ -139,25 +94,6 @@ add_action(
     'cocart_api_rate_limit_exceeded',
     function ( $offending_ip ) { /* Custom tracking implementation */ }
 );
-```
-
-## Fingerprint ID
-
-<Info>
-    Fingerprint ID is supported since v2.0.0
-</Info>
-
-Common scenario of fraud checkouts and card-testing is always a problem such as getting hit with rotating IPs. To help account for that scenario, we made rate limiting more extensible so that you can provide a different trigger called a **Fingerprint**.
-
-You can use your own custom fingerprinting ID system using the filter `cocart_api_rate_limit_id`.
-
-```php
-add_filter( 'cocart_api_rate_limit_id', function() {
-    $user_agent      = isset( $_SERVER['HTTP_USER_AGENT'] ) ? wc_clean( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
-    $accept_language = isset( $_SERVER['HTTP_ACCEPT_LANGUAGE'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_ACCEPT_LANGUAGE'] ) ) : '';
-
-    return md5( $user_agent . $accept_language );
-} );
 ```
 
 ## Testing Guide
