@@ -1,7 +1,77 @@
 ---
-title: License Activation
-description: ''
-icon: key
+title: "License Activation"
+description: "Enter your CoCart license key to activate your license."
+icon: "key"
+tag: "WIP"
 ---
 
-> Dev Note: Needs completing once new license system is in place.
+> Dev Note: Needs to be completed with some additional updates for new license system.
+
+Once CoCart is installed you should see a new menu item named **CoCart** in your WordPress dashboard, plus the following notification that prompts you to activate your license for CoCart:
+
+<Card title="Activation Notification" img="/images/card-with-image.png">
+    This notification will ask you to enter your license key.
+</Card>
+
+Go to **CoCart > Updates** or click the **Activate License** link. This should bring up the license activation screen:
+
+<Card title="Updates Screen" img="/images/card-with-image.png">
+    Here you enter your license key.
+</Card>
+
+Copy your CoCart license key provided and paste it into the license field. Click **Save Changes**.
+
+Your license should now be active:
+
+<Card title="Updates Screen" img="/images/card-with-image.png">
+    Confirmation that you have activated your license.
+</Card>
+
+That’s it! You will now automatically receive updates for CoCart when they become available.
+
+<AccordionGroup>
+    <Accordion title="Where can I find my license key?">
+        After purchasing, you will receive a unique license key via email and your [Polar account](https://polar.sh/cocartheadless/portal/request) with your purchase.
+    </Accordion>
+
+    <Accordion title="Will Local & staging installations count against my license limit?">
+        No, local and staging installations do not count against your license limit. You can use CoCart on as many local or staging sites as you like without affecting your active site limit.
+    </Accordion>
+
+    <Accordion title="What is qualified as local or staging site?">
+        The following URLs are considered local or staging sites and will not count against your active site limit.
+
+        **Local URLs**:
+
+        * 192.168.x.x
+        * 127.0.0.1
+        * localhost (includes)
+        * .local (top-level domain)
+        * .test (top-level domain)
+        * .wip (top-level domain)
+        * .docksal (docksal)
+        * .docksal.site (docksal)
+        * .dev.cc (ServerPress)
+        * .lndo.site (Lando)
+
+        **Staging URLs**:
+
+        * .staging.kinsta.com (Kinsta.com)
+        * .kinsta.cloud (Kinsta.com)
+        * .stage.site (Dreampress)
+        * .newspackstaging.com (Newspack)
+        * .pantheonsite.io (Pantheon)
+        * .flywheelsites.com (Flywheel)
+        * .flywheelstaging.com (Flywheel)
+        * .cloudwaysapps.com (Cloudways)
+        * .azurewebsites.net (Azure)
+        * .wpserveur.net (WPServeur)
+        * -liquidwebsites.com (Liquidweb)
+        * .myftpupload.com (Go Daddy)
+        * .sg-host.com (Singapore Web Hosting)
+        * .platformsh.site (Platform.sh)
+        * .wpstage.net (WP Stagecoach)
+    </Accordion>
+</AccordionGroup>
+
+You can also always deactivate the license key from your site from your WordPress dashboard under CoCart > Updates, and activate it on another site.

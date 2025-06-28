@@ -1,0 +1,162 @@
+---
+title: 'Variation Examples'
+description: 'Know all the combinations for variable products when adding to cart.'
+icon: 'shuffle'
+---
+
+## Adding Variable Products to Cart
+
+When adding a variation from a variable product to the cart, there are several approaches you can take. Below are examples of each method and their outcomes.
+
+### Method 1: No Attribute Data
+
+To make things clear from the start. Adding a variable product without attribute data will fail as the variation cannot be determined. This method is not recommended.
+
+```json
+{
+    "id": "16",
+    "quantity": "1"
+}
+
+```json
+{
+    "id": "16",
+    "quantity": "1"
+}
+```
+
+**Response**:
+
+```json
+{
+    "code": "cocart_no_variation_found",
+    "message": "No matching variation found.",
+    "data": {
+        "status": 404
+    }
+}
+```
+
+### Method 2: Using Attribute Data
+
+<Tabs>
+    <Tab title="Incorrect Values">
+        <Note>
+            Note the lowercase "no"
+        </Note>
+
+        ```json
+        {
+            "id": "16",
+            "quantity": "1",
+            "variation": {
+                "attribute_pa_color": "green",
+                "attribute_logo": "no"
+            }
+        }
+        ```
+
+        **Response**
+
+        ```json
+        {
+            "code": "cocart_no_variation_found",
+            "message": "No matching variation found.",
+            "data": {
+                "status": 404
+            }
+        }
+        ```
+    </Tab>
+
+    <Tab title="Correct Values">
+        ```json
+        {
+            "id": "16",
+            "quantity": "1",
+            "variation": {
+                "attribute_pa_color": "blue",
+                "attribute_logo": "No"
+            }
+        }
+        ```
+    </Tab>
+</Tabs>
+
+### Method 3: Using Variation ID
+
+You can directly add a specific variation using its **ID**.
+
+```json
+{
+    "id": "39",
+    "quantity": "1"
+}
+```
+
+However, if you specify an invalid attribute with the variation ID you will receive an error. The error will provide the **allowed values**.
+
+```json
+{
+    "id": "39",
+    "quantity": "1",
+    "variation": {
+        "attribute_pa_color": "orange",
+        "attribute_logo": "Yes"
+    }
+}
+```
+
+**Response**
+
+```json
+{
+    "code": "cocart_invalid_variation_data",
+    "message": "Invalid value posted for Color. Allowed values: blue, green, red",
+    "data": {
+        "status": 400
+    }
+}
+```
+
+### Method 4: Using Alternative Attribute Formats
+
+<Tabs>
+    <Tab title="Using Labels">
+        You can use attribute labels instead of slugs.
+
+        ```json
+        {
+            "id": "16",
+            "quantity": "1",
+            "variation": {
+                "Color": "blue",
+                "Logo": "Yes"
+            }
+        }
+        ```
+    </Tab>
+
+    <Tab title="Mixed Format (Slug and Label)">
+        You can mix slugs and labels (note: label values must be exact for custom attributes).
+
+        ```json
+        {
+            "id": "16",
+            "quantity": "1",
+            "variation": {
+                "pa_color": "blue",
+                "Logo": "Yes"
+            }
+        }
+        ```
+    </Tab>
+</Tabs>
+
+## Important Notes
+
+1. Attribute values are case-sensitive
+2. When using variation IDs, attribute data is optional
+3. Custom attribute labels must match exactly
+4. Values maybe limited to specific options
+5. You can use either attribute slugs (`attribute_pa_color`) or labels (`Color`)

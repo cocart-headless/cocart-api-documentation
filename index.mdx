@@ -1,17 +1,17 @@
 ---
-title: 'CoCart Documentation'
-description: 'Welcome to the documentation for CoCart API'
-icon: home
+title: "CoCart Documentation"
+description: "Welcome to the documentation for CoCart API"
+icon: "home"
 mode: "custom"
 ---
 
-<div className="flex flex-col items-center gap-4 container" id="hero">
+<div className="flex flex-col items-center gap-4 container pl-5 pr-5 custom-container" id="hero">
     <div className="text-gray-900 dark:text-gray-200 text-5xl">
         <h1>CoCart Documentation</h1>
     </div>
 
     <p className="text-xl text-slate-500">
-        The headless commerce solution for WooCommerce that puts you in control
+        CoCart is the REST-API that unlocks powerful headless WooCommerce capabilities.
     </p>
 
     <div className="mt-2">
@@ -19,18 +19,20 @@ mode: "custom"
     </div>
 </div>
 
-<div className="flex flex-col items-center gap-4 container">
+<div className="flex flex-col items-center gap-4 container pl-5 pr-5 custom-container">
     <CardGroup cols={2}>
         <Card
             title="Installation"
             icon="rocket"
+            color="#f91880"
             href="/getting-started"
         >
-            Quick start guide to integrate CoCart into your project
+            Get started with CoCart in minutes, by downloading and installing on your WordPress site.
         </Card>
         <Card
             title="Standards"
             icon="clipboard"
+            color="#EA8000"
             href="/overview/standards"
         >
             Learn about CoCart's core standards for the REST API
@@ -45,6 +47,7 @@ mode: "custom"
         <Card
             title="Authentication"
             icon="lock"
+            color="#F8CA14"
             href="/api-reference/authentication"
         >
             Learn about securing your CoCart API requests
@@ -52,24 +55,50 @@ mode: "custom"
     </CardGroup>
 </div>
 
-<div className="flex flex-col items-center gap-4 container">
+<div className="flex flex-col items-center gap-4 container pl-5 pr-5 custom-container mt-0 mb-4">
     <p className="text-xl text-slate-500">
         Need Help?
     </p>
     <CardGroup cols={2}>
         <Card
-        title="Community Support"
+        title="Ask a question"
         icon="users"
+        color="#12BC00"
         href="https://github.com/co-cart/co-cart/discussions"
         >
-        Join our community discussions on GitHub
+            Join the community discussions on GitHub.
         </Card>
         <Card
-        title="Discord Support"
+        title="Community Support"
         icon="discord"
+        color="#FFFFFF"
         href="https://cocartapi.com/community/?ref=mintlify"
         >
-        Join our community discussions on Discord
+            Join the community on Discord to chat with us and fellow CoCart users.
+        </Card>
+    </CardGroup>
+</div>
+
+<div className="flex flex-col items-center gap-4 container pl-5 pr-5 custom-container mt-0">
+    <p className="text-xl text-slate-500">
+        Stay up to date
+    </p>
+    <CardGroup cols={2}>
+        <Card
+        title="Read our blog"
+        icon="newspaper"
+        color="#F8CA14"
+        href="https://github.com/co-cart/co-cart/discussions"
+        >
+            Learn about the latest features and updates from CoCart.
+        </Card>
+        <Card
+        title="Follow us on X/Twitter"
+        icon="twitter"
+        color="#1d9bf0"
+        href="https://cocartapi.com/community/?ref=mintlify"
+        >
+            Follow us on **X/Twitter** to get notified when we release new features
         </Card>
     </CardGroup>
 </div>

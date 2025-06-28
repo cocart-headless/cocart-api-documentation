@@ -1,0 +1,100 @@
+---
+title: "JWT Authentication"
+description: "These commands are strictly designed to help with your development."
+icon: "hashtag"
+'og:title': "CoCart JWT Authentication Commands for WP CLI"
+---
+
+## Clean up tokens
+
+Cleans up expired JWT tokens.
+
+```bash
+wp cocart jwt cleanup [--batch-size=<number>] [--force]
+```
+
+### Arguments
+
+<ParamField path="batch-size" type="number">
+    Number of users to process per batch (default: 100) (Optional)
+</ParamField>
+
+<ParamField path="force" type="bool">
+    Force cleanup of all tokens (Optional)
+</ParamField>
+
+**Examples:**
+
+```bash
+wp cocart jwt cleanup --batch-size=50
+wp cocart jwt cleanup --force
+```
+
+## View token details
+
+Displays details of a JWT token in a table.
+
+```bash
+wp cocart jwt view <token>
+```
+
+### Arguments
+
+<ParamField path="token" type="string" required>
+    The JWT token to view
+</ParamField>
+
+**Example:**
+
+```bash
+wp cocart jwt view eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOlwvXC9jb2NhcnRhcGkubG9jYWwiLCJpYXQiOjE3Mzk3NTEzNzIsIm5iZiI6MTczOTc1MTM3MiwiZXhwIjoxNzQwNjE1MzcyLCJkYXRhIjp7InVzZXIiOnsiaWQiOjEsInVzZXJuYW1lIjoic2ViYXN0aWVuIiwiaXAiOiIxMjcuMC4wLjEiLCJkZXZpY2UiOiJIVFRQX1hfVUNCUk9XU0VSX0RFVklDRV9VQSJ9LCJzZWNyZXRfa2V5IjoiYmFuYW5hIn19.aBuyRwAtvGb6SI4BB_MN4NYN01jqVZN4PPnd1jfW2UA
+```
+
+## Lists tokens
+
+Lists all active JWT tokens.
+
+```bash
+wp cocart jwt list [--page=<number>] [--per-page=<number>]
+```
+
+### Arguments
+
+<ParamField path="page" type="number">
+    Page number to display (default: 1)
+</ParamField>
+
+<ParamField path="per-page" type="number">
+    Number of tokens to display per page (default: 20)
+</ParamField>
+
+**Example:**
+
+```bash
+wp cocart jwt list --page=2 --per-page=10
+```
+
+## Create token
+
+Generates a new JWT token for a user.
+
+```bash
+wp cocart jwt create --user_id=<id> [--user-agent=<user-agent>]
+```
+
+### Arguments
+
+<ParamField path="user_id" type="int" required>
+    The user ID to generate the token for
+</ParamField>
+
+<ParamField path="user-agent" type="string">
+    The User Agent to override the server User Agent (optional)
+</ParamField>
+
+**Examples:**
+
+```bash
+wp cocart jwt create --user_id=123
+wp cocart jwt create --user_id=123 --user-agent="Custom User Agent"
+```

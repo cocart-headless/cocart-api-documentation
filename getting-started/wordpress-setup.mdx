@@ -1,0 +1,169 @@
+---
+title: "WordPress Setup"
+description: "The best way to host your WordPress site for headless store."
+icon: "wordpress"
+tag: "WIP"
+---
+
+Deciding on the best way to host and configure your WordPress site for headless store can be a daunting task. There are many options available, and it can be difficult to know which one is right for you.
+
+This guide will help you understand the different options available and specify the best ones for your needs.
+
+## The different types of hosting available
+
+There are many different types of hosting available, but the most common ones are:
+- Shared hosting
+- VPS hosting
+- Dedicated hosting
+- Managed WordPress hosting
+
+Each type of hosting has its own pros and cons, and the best one for you will depend on your needs.
+
+## The pros and cons of each type of hosting
+
+### Shared hosting
+
+Shared hosting is the most common type of hosting. It is also the cheapest option, making it a good choice for small businesses and personal websites.
+However, shared hosting has some drawbacks. Because you are sharing a server with other websites, your website may be slower and less reliable than if you were on a dedicated server. Additionally, you may have limited control over your server environment, which can make it difficult to customize your website.
+
+### VPS hosting
+
+VPS (Virtual Private Server) hosting is a step up from shared hosting. With VPS hosting, you have your own virtual server that is isolated from other websites. This means that your website will be faster and more reliable than with shared hosting.
+
+However, VPS hosting is more expensive than shared hosting, and it requires more technical knowledge to set up and manage. If you are not comfortable managing your own server, VPS hosting may not be the best option for you.
+
+### Dedicated hosting
+
+Dedicated hosting is the most expensive option, but it also offers the most control and flexibility. With dedicated hosting, you have your own physical server that is not shared with any other websites. This means that you can customize your server environment to meet your specific needs.
+
+However, dedicated hosting is also the most complex option, and it requires a lot of technical knowledge to set up and manage. If you are not comfortable managing your own server, dedicated hosting may not be the best option for you.
+
+### Managed WordPress hosting
+
+Managed WordPress hosting is a specialized type of hosting that is designed specifically for WordPress websites. With managed WordPress hosting, your website is hosted on a server that is optimized for WordPress, and you have access to a team of experts who can help you with any issues you may have.
+
+This type of hosting is more expensive than shared hosting, but it can save you time and hassle in the long run. If you are not comfortable managing your own server, managed WordPress hosting may be the best option for you.
+
+## Taking advantage of the WordPress Configuration File
+
+The WordPress configuration file **wp-config.php** is located at the root of WordPress and allows you to customize your WordPress installation.
+
+By taking advantage of the WordPress configuration file, you can improve the performance and reliability of your website, and make it easier to manage.
+
+For running a headless WordPress setup, we will be looking at a few options that will help improve the performance of your WordPress site and reduce the number of database calls when accessing the REST API.
+
+### WP_SITEURL
+
+**Site URL** is the address where your WordPress site is installed. It should include the **https://** part and should not have a slash **/** at the end.
+
+**Recommend**: If you are using a subdirectory for your WordPress installation, you should set the site URL to the root of your site. This will allow you to access your site from the root URL without having to include the subdirectory in the URL.
+
+```php
+define( 'WP_HOME', 'https://example.com/wordpress' );
+```
+
+[More information](https://developer.wordpress.org/advanced-administration/wordpress/wp-config/#wp-siteurl)
+
+### WP_HOME
+
+**Home** is the address where you want your visitors to access your site. It should include the **https://** part and should not have a slash **/** at the end.
+
+**Recommend**: If you are using a subdirectory for your WordPress installation, you should set the home URL to the root of your site. This will allow you to access your site from the root URL without having to include the subdirectory in the URL.
+
+```php
+define( 'WP_HOME', 'https://example.com/wordpress' );
+```
+
+[More information](https://developer.wordpress.org/advanced-administration/wordpress/wp-config/#blog-address-url)
+
+### Memory Limit
+
+Having enough memory for WooCommerce is a must, even for smaller stores. We recommend setting the memory limit to at least **128M**.
+
+```php
+define( 'WP_MAX_MEMORY_LIMIT', '128M' );
+```
+
+[More information](https://developer.wordpress.org/advanced-administration/wordpress/wp-config/#increasing-memory-allocated-to-php)
+
+### Disable File Edits
+
+Once your site is live, you should disable the ability to edit files from the WordPress admin. This will prevent any unauthorized changes to your site.
+
+```php
+define( 'DISALLOW_FILE_EDIT', true );
+```
+
+### Disable Updates
+
+Having updates running in the background can cause issues with your site on production. For piece of mind, we recommend you disable updates.
+
+```php
+define( 'AUTOMATIC_UPDATER_DISABLED', true );
+```
+
+[More information](https://developer.wordpress.org/advanced-administration/wordpress/wp-config/#disable-plugin-and-theme-update-and-installation)
+
+### Debugging WordPress
+
+Debugging WordPress is essential for identifying and resolving issues. However, it is important to disable debugging on production sites to prevent exposing sensitive information.
+
+While working on your headless site, we recommend this simple configuration to enable debugging. It will log errors to a file instead of displaying them on the screen.
+
+This is especially useful where you may not have direct access to the server logs.
+
+```php
+define( 'WP_DEBUG', true );
+
+if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+	// Enable Debug logging to the /wp-content/debug.log file
+	define( 'WP_DEBUG_LOG', true );
+
+	// Disable display of errors and warnings
+	define( 'WP_DEBUG_DISPLAY', false );
+	@ini_set( 'display_errors', 0 );
+}
+```
+
+[More information](https://developer.wordpress.org/advanced-administration/wordpress/wp-config/#wp-debug)
+
+
+## Setting up CORS to allow the frontend to access the REST API
+
+When using CoCart with a decoupled frontend, you will encounter CORS (Cross-Origin Resource Sharing) issues. CORS is a security feature implemented by web browsers to prevent malicious websites from making requests to other domains.
+
+To resolve CORS issues, you need to configure your server to allow requests from your frontend domain. This is done by setting the **Access-Control-Allow-Origin** header in your server's response.
+
+Simply set this filter `cocart_disable_all_cors` to `false` to enable CORS.
+
+```php
+<?php
+add_filter( 'cocart_disable_all_cors', function() { return false; });
+```
+
+To fine tune so only specify single domain is allowed, use the filter `cocart_allow_origin`.
+
+```php
+<?php
+add_filter( 'cocart_allow_origin', function() { return 'https://example-store.com'; });
+```
+
+If you are also accessing other REST API's from your WordPress site then you will also need to setup CORS in general too.
+
+```php
+<?php
+add_action( 'rest_api_init', function() {
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type");
+});
+```
+
+For **Access-Control-Allow-Origin** header, specify the single domain instead of a wildcard `*`.
+
+## Additional Resources
+- [WordPress Configuration File](https://developer.wordpress.org/advanced-administration/wordpress/wp-config/)
+- [WordPress Security Guide](https://developer.wordpress.org/advanced-administration/security/hardening/)
+- [WordPress Performance Guide](https://developer.wordpress.org/advanced-administration/performance/optimization/)
+- [WordPress Debugging Guide](https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/)
+- [Common WordPress Errors](https://developer.wordpress.org/advanced-administration/wordpress/common-errors/)

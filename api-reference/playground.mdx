@@ -1,7 +1,7 @@
 ---
-title: 'CoCart Playground'
-description: 'Setup a WooCommerce store demo with CoCart to play around.'
-icon: trowel
+title: "CoCart Playground"
+description: "Setup a WooCommerce store demo with CoCart to play around."
+icon: "trowel"
 ---
 
 Create reproducible WooCommerce testing environment with the core of CoCart to test out the REST API right away. It generates a blueprint that:
@@ -30,14 +30,33 @@ The rest is up to you to play around with.
 
 ## What to expect from Playground:
 
-- Playground is valid for 30 days. After that the site expires and all data will be erased and can no longer be accessed.
-- Test CoCart on a clean WordPress environment.
+- Playground is valid for 30 days. After that the site expires, all data will be erased and can no longer be accessed.
+- Test CoCart on a clean WordPress shippingment.
 - Don’t worry about issues with CORS. It’s already setup.
 - Try all our core features. No strings attached. Search, filter and return product data you need. Add products to cart either as a guest or a registered customer.
 - Push CoCart to its limits. Don’t worry about breaking anything, it’s just a demo site.
 
-## Can I install, import content or change WordPress to a Network Site?
 
-Yes to all. You are the administrator of the playground.
+<AccordionGroup>
+    <Accordion title="Can I install, import content or change WordPress to a Network Site?">
+        Yes to all. You are the administrator of the playground.
 
-For more information about the WordPress Playground please visit [https://wordpress.org/playground/](https://wordpress.org/playground/)
+        For more information about the WordPress Playground please visit [https://wordpress.org/playground/](https://wordpress.org/playground/)
+    </Accordion>
+
+    <Accordion title="Taxes are disabled?">
+        Yes, not everything can be setup for the Playground. Simply go to **WooCommerce -> Settings** and on the general tab, check "Enable tax rates and calculations" and press "Save changes". Then you can see a new tab called **Tax**.
+    </Accordion>
+
+    <Accordion title="No shipping methods?">
+        Yes, not everything can be setup for the Playground. Simply go to **WooCommerce -> Settings** and on the **Shipping** tab you can create shipping zones and apply the shipping methods.
+    </Accordion>
+
+    <Accordion title="The Playground is not setting up?">
+        WordPress Playground is not stable and may have an issue creating an environment at times. If not succeeding, please consider [creating a sandbox instead](https://app.instawp.io/launch?t=cocart-demo-core-only&d=v2).
+    </Accordion>
+</AccordionGroup>
+
+<Info>
+    Sandbox sites are live for **only 5 days** and also include **CoCart Plus**. Some taxes and shipping options have also been configured.
+</Info>

@@ -1,0 +1,51 @@
+---
+title: "How to Update CoCart"
+sidebarTitle: "Updating CoCart"
+description: ""
+icon: "rotate"
+---
+
+Each release provides an improvement, new features, issues fixed, compatibility, even tighten security to make CoCart do what it needs to do for your headless store.
+
+## Updating CoCart
+
+### Automatic - one click update
+
+The CoCart plugin can be updated via the "Plugins" page found in your WordPress website admin area. Updates will appear when available and can be applied by simply clicking on the _update now_ link.
+
+### Manual update
+
+You may also apply plugin updates manually by copying and pasting the plugin files into your `wp-content/plugins` folder. You can download any free CoCart plugin files from the WordPress plugin directory and any premium CoCart plugin files from your customer portal.
+
+There is no loss or change to data whilst modifying the plugin’s files making it safe to delete and re-upload the plugin folder.
+
+### Backups
+
+While running a headless website is not the same as a regular WordPress website, it is still important to backup the infrastructure that allows you to run it.
+
+#### Automatic backups
+
+The most efficient and reliable approach is to use an automated site backup service. There are many available that provide such a service. Some of the most popular ones include:
+
+- [UpdraftPlus](https://updraftplus.com/)
+- [BackupBuddy](https://ithemes.com/backupbuddy/)
+- [VaultPress](https://jetpack.com/support/backup/)
+- [WP Time Capsule](https://wptimecapsule.com/)
+- [BlogVault](https://blogvault.net/)
+
+#### Manual backups
+
+To do things manually, there are two parts to backing up your store:
+
+* Backup your database! There are multiple ways to do this, see the Codex for your options to back up your content. Both manual and plugin options exist.
+* Using SFTP head to your wp-content folder to backup your theme and plugin files.
+
+### CoCart data update notice
+
+If you have configured CoCart to process database updates manually then you may be prompted with a notice to upgrade the database. The logic to check if a **database upgrade** is required will run in the admin area after a new version number is detected, therefore, it is fully compatible with both the update methods listed above.
+
+**Update CoCart Database** starts the process of updating your database to match the plugin version you installed or updated to. The database organizes, contains, and stores your customers cart in session. It is an essential process.
+
+Once the update process starts, you can view the progress which will take you to the **Scheduled Actions** section and show the pending actions for the update.
+
+Once it is completed, the next time you view an admin page you will see the dismissible update complete banner.

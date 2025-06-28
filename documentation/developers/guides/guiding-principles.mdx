@@ -1,6 +1,7 @@
 ---
-title: 'Guiding Principles'
-description: 'The following principles should be considered when extending, creating, or updating endpoints in CoCart'
+title: "Guiding Principles"
+description: "The following principles should be considered when extending, creating, or updating endpoints in CoCart"
+icon: "wrench"
 ---
 
 > Dev Note: Needs completing!!!
@@ -20,7 +21,7 @@ There are 2 notable exceptions to this rule in the CoCart API; _Errors_ and _Car
 
 ### Error Handling
 
-Errors, including validation errors, should return an error response code (4xx or 5xx) and a [`WP_Error` object](https://developer.wordpress.org/reference/classes/wp_error/). 
+Errors, including validation errors, should return an error response code (4xx or 5xx) and a [`WP_Error`](https://developer.wordpress.org/reference/classes/wp_error/) object.
 
 Error messages should be localized, but do not need to be written with language aimed at customers (clients should use the given error code to create customer-facing notices as needed).
 

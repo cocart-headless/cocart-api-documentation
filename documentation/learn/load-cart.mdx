@@ -1,6 +1,6 @@
 ---
-title: Load Cart
-description: 'Learn to load a cart session securely'
+title: "Load Cart"
+description: "Learn to load a cart session securely"
 icon: "arrow-right-arrow-left"
 ---
 
@@ -68,6 +68,7 @@ add_filter( 'cocart_load_cart_query_name', function() {
 If you do not need or want to use WooCommerce native checkout then disable using this filter.
 
 ```php
+<?php
 add_filter( 'cocart_disable_load_cart', function() {
     return true;
 });

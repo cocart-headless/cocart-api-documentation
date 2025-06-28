@@ -1,7 +1,8 @@
 ---
-title: Setup JWT for CoCart
-sidebarTitle: 'Setup'
-description: 'Learn how to setup JWT Authentication for CoCart.'
+title: "Setup"
+sidebarTitle: "Setup"
+description: "Learn how to setup JWT Authentication for CoCart."
+'og:title': "Setup JWT Authentication for CoCart"
 ---
 
 <Info>
@@ -10,25 +11,25 @@ description: 'Learn how to setup JWT Authentication for CoCart.'
 
 ## Secret Key Configuration
 
-Add the following code to your wp-config.php file:
+Add the following code to your **wp-config.php** file:
 
 ```php
 define( 'COCART_JWT_AUTH_SECRET_KEY', 'YOUR-UNIQUE-SECRET-KEY' );
 ```
 
-<Note>
+<Warning>
     Never share or commit your secret key. Keep it secure and unique for each environment.
-</Note>
+</Warning>
 
 ## Enable PHP HTTP Authorization Header
 
 ### Shared Hosts
 
-Most shared hosts have disabled the **HTTP Authorization Header** by default.
+Most shared hosting providers have disabled the **HTTP Authorization Header** by default.
 
 To enable this option you'll need to edit your **.htaccess** file by adding the following:
 
-```
+```apache
 RewriteEngine on
 RewriteCond %{HTTP:Authorization} ^(.*)
 RewriteRule ^(.*) - [E=HTTP_AUTHORIZATION:%1]
@@ -36,7 +37,7 @@ RewriteRule ^(.*) - [E=HTTP_AUTHORIZATION:%1]
 
 or
 
-```
+```apache
 RewriteEngine On
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 ```
@@ -45,13 +46,13 @@ RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
 To enable this option you'll need to edit your **.htaccess** file by adding the following outside of IfModule:
 
-```
+```apache
 SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
 ```
 
 Example of what that looks like.
 
-```
+```apache
 # BEGIN WordPress
 <IfModule mod_rewrite.c>
 RewriteEngine On
@@ -70,30 +71,32 @@ SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
 
 ## How It Works
 
-Here's how the authentication process works in your WordPress application:
+CoCart JWT Authentication implements a secure OAuth 2.0 compliant authentication flow. Here's how the authentication process works in your WordPress application:
 
-**1. Authentication Request**
+<Steps>
+    <Step title="Authentication Request">
+        Client authenticates the login endpoint via Authorization header using the basic method to obtain JWT tokens.
+    </Step>
 
-Client authenticates the login endpoint via Authorization header using the basic method to obtain JWT tokens.
+    <Step title="Token Usage">
+        Use the JWT token to authenticate any REST API requests via Authorization header using bearer method.
+    </Step>
 
-**2. Token Usage**
+    <Step title="Token Refresh">
+        Use refresh token to obtain new access tokens without re-authentication via the refresh-token endpoint.
+    </Step>
 
-Use the JWT token to authenticate any REST API requests via Authorization header using bearer method.
-
-**3. Token Refresh**
-
-Use refresh token to obtain new access tokens without re-authentication via the refresh-token endpoint.
-
-**4. Validate Token**
-
-Validate the token in the background of your application from time to time to check the users authentication session is still valid.
+    <Step title="Validate Token">
+        Validate the token in the background of your application from time to time to check the users authentication session is still valid.
+    </Step>
+</Steps>
 
 ## Security Best Practices
 
 CoCart JWT Authentication comes with built-in security features to protect your WordPress application. Here are the key security measures you should be aware of:
 
-* Automatic token revocation on password/email changes.
-* Automatic token revocation on user deletion.
-* Automatic token revocation on user logout.
-* Configurable token expiration times.
-* Secure refresh token rotation.
+<Check>Automatic token revocation on password/email changes.</Check>
+<Check>Automatic token revocation on user deletion.</Check>
+<Check>Automatic token revocation on user logout.</Check>
+<Check>Configurable token expiration times.</Check>
+<Check>Secure refresh token rotation.</Check>

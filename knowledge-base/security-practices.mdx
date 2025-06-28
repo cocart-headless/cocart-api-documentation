@@ -1,0 +1,59 @@
+---
+title: "Security Practices"
+description: "Learn about security practices for token storage and server-side configuration."
+icon: "shield"
+'robots': "noindex, follow"
+---
+
+> Dev note: This page needs improving.
+
+## Secure Storage
+
+<Warning>
+    **localStorage** is vulnerable to XSS attacks and should not be used for storing sensitive tokens in production applications.
+</Warning>
+
+Here are recommended approaches for token storage, in order of security:
+
+1. **HttpOnly Cookies** (Most Secure)
+    - Protected from XSS attacks
+    - Automatic CSRF protection when configured properly
+    - Handled automatically by browsers
+
+2. **Web Workers + IndexedDB**
+    - Isolated from main thread
+    - Protected from XSS
+    - More complex implementation
+
+3. **In-Memory Storage**
+    - Cleared on page refresh
+    - Protected from XSS
+    - Requires state management solution
+
+## Server-Side Configuration
+
+Your server should set cookies with secure options:
+
+<CodeGroup>
+    ```javascript JavaScript
+    // Example server-side cookie configuration (Express.js)
+    res.cookie('jwt_token', token, {
+        httpOnly: true,     // Prevents JavaScript access
+        secure: true,       // Requires HTTPS
+        sameSite: 'strict', // CSRF protection
+        maxAge: 3600000,    // 1 hour
+        path: '/'           // Cookie path
+    });
+    ```
+</CodeGroup>
+
+## Security Best Practices
+
+1. **Always use HTTPS** for token transmission
+2. **Set appropriate cookie flags:**
+    - HttpOnly
+    - Secure
+    - SameSite=Strict
+3. **Implement CSRF protection**
+4. **Use short token expiration times**
+5. **Rotate refresh tokens**

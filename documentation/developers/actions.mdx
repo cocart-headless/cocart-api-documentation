@@ -1,522 +1,382 @@
 ---
-title: Action hooks available in the core of CoCart
-sidebarTitle: 'In Core'
-description: 'Trigger an action when these hooks are called'
+title: "Action hooks available in the core of CoCart"
+sidebarTitle: "In Core"
+description: "Trigger an action when these hooks are called"
+tag: "WIP"
 ---
 
-## `cocart_update_cart_before_totals`
-Fires before the cart has updated via a callback, but before cart totals are re-calculated.
+Each action hook is documented below with its description and usage example.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$request` | `WP_REST_Request` | The request object. |
-| `$controller` | `object` | The cart controller. |
+<Warning>
+    The action hooks listed here are not complete! Feel free to inquire about any specific action hook you may need help with.
+</Warning>
 
-- **Since**: 4.1.0 Introduced.
+## Installation Hooks
 
-**Usage**
-```php
-do_action( 'cocart_update_cart_before_totals', function() {
-    // Your code here
-}, 10, );
-```
+### `cocart_init`
 
-**Defined in**: [`includes/abstracts/abstract-cocart-extension-callback.php`](https://github.com/co-cart/co-cart/blob/development/includes/abstracts/abstract-cocart-extension-callback.php#L85)
-
----
-
-## `cocart_update_cart_after_totals`
-Fires after the cart has updated via a callback and the cart totals are re-calculated.
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$request` | `WP_REST_Request` | The request object. |
-| `$controller` | `object` | The cart controller. |
-
-- **Since**: 4.1.0 Introduced.
-
-**Usage**
-```php
-do_action( 'cocart_update_cart_after_totals', function() {
-    // Your code here
-}, 10, );
-```
-
-**Defined in**: [`includes/abstracts/abstract-cocart-extension-callback.php`](https://github.com/co-cart/co-cart/blob/development/includes/abstracts/abstract-cocart-extension-callback.php#L98)
-
----
-
-## `cocart_init`
 Fires once CoCart has finished loading.
 
-- **Since**: 3.0.0 Introduced.
+<Info>
+    Made available since v3.0.0
+</Info>
 
 **Usage**
 ```php
-do_action( 'cocart_init', function() {
+do_action('cocart_init', function() {
     // Your code here
 });
 ```
 
-**Defined in**: [`includes/class-cocart.php`](https://github.com/co-cart/co-cart/blob/development/includes/class-cocart.php#L186)
+**Defined in**: [`includes/class-cocart.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/class-cocart.php#L142)
 
 ---
 
-## `cocart_updated`
+### `cocart_updated`
+
 Runs after CoCart has been updated.
 
-- **Since**: 1.2.0 Introduced.
+<Info>
+    Made available since v1.2.0
+</Info>
 
 **Usage**
 ```php
-do_action( 'cocart_updated', function() {
+do_action('cocart_updated', function() {
     // Your code here
 });
 ```
 
-**Defined in**: [`includes/classes/class-cocart-install.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/class-cocart-install.php#L79)
+**Defined in**: [`includes/classes/class-cocart-install.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/class-cocart-install.php#L78)
 
 ---
 
-## `cocart_installed`
+### `cocart_installed`
+
 Runs after CoCart has been installed.
 
-- **Since**: 1.2.0 Introduced.
+<Info>
+    Made available since v1.2.0
+</Info>
 
 **Usage**
 ```php
-do_action( 'cocart_installed', function() {
+do_action('cocart_installed', function() {
     // Your code here
 });
 ```
 
-**Defined in**: [`includes/classes/class-cocart-install.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/class-cocart-install.php#L257)
+**Defined in**: [`includes/classes/class-cocart-install.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/class-cocart-install.php#L256)
 
 ---
 
-## `cocart_after_session_saved_data`
+## Cart Updates
+
+### `cocart_update_cart_before_totals`
+
+Fires before the cart has updated via a callback, but before cart totals are re-calculated.
+
+**Parameters**
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
+
+<ParamField query="controller" type="object">
+  The cart controller.
+</ParamField>
+
+<Info>
+    Made available since v4.1.0
+</Info>
+
+**Usage**
+```php
+add_action('cocart_update_cart_before_totals', function($request, $controller) {
+    // Your code here
+}, 10, 2);
+```
+
+**Defined in**: [`includes/abstracts/abstract-cocart-extension-callback.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/abstracts/abstract-cocart-extension-callback.php#L85)
+
+---
+
+### `cocart_update_cart_after_totals`
+
+Fires after the cart has updated via a callback and cart totals are re-calculated.
+
+**Parameters**
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
+
+<ParamField query="controller" type="object">
+  The cart controller.
+</ParamField>
+
+<Info>
+    Made available since v4.1.0
+</Info>
+
+**Usage**
+```php
+add_action('cocart_update_cart_after_totals', function($request, $controller) {
+    // Your code here
+}, 10, 2);
+```
+
+---
+
+## Session Hooks
+
+### `cocart_after_session_saved_data`
+
 Fires after session data is saved.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$customer_id` | `int` | Customer ID. |
-| `$data` | `array` | Cart data. |
-| `$cart_expiration` | `int` | Cart expiration. |
-| `$cart_source` | `string` | Cart source. |
+**Parameters**
 
-- **Since**: 4.2.0 Introduced.
+<ParamField query="customer_id" type="int">
+  Customer ID.
+</ParamField>
 
-**Usage**
-```php
-do_action( 'cocart_after_session_saved_data', function() {
-    // Your code here
-}, 10, );
-```
+<ParamField query="data" type="array">
+  Cart data.
+</ParamField>
 
-**Defined in**: [`includes/classes/class-cocart-session-handler.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/class-cocart-session-handler.php#L383)
+<ParamField query="cart_expiration" type="int">
+  Cart expiration.
+</ParamField>
 
----
+<ParamField query="cart_source" type="string">
+  Cart source.
+</ParamField>
 
-## `cocart_cart_loaded`
-cocart_cart_loaded. Fires once a cart has loaded. Can be used to trigger a webhook.
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$cart_key` | `string` | The cart key. |
-
-- **Since**: 3.8.0 Introduced.
+<Info>
+    Made available since v4.2.0
+</Info>
 
 **Usage**
 ```php
-do_action( 'cocart_cart_loaded', function() {
+add_action('cocart_after_session_saved_data', function($customer_id, $data, $cart_expiration, $cart_source) {
     // Your code here
-}, 10, );
+}, 10, 4);
 ```
-
-**Defined in**: [`includes/classes/class-cocart-session.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/class-cocart-session.php#L121)
 
 ---
 
-## `cocart_update_cart_before_totals`
-<Warning>**Deprecated:** 4.1.0 Replaced with `cocart_update_cart_before_totals` hook.</Warning>
+### `cocart_cart_loaded`
 
-**See Also:**
-- `cocart_update_cart_before_totals`
-Fires after the cart has updated via a callback.
+Fires once a cart has loaded. Can be used to trigger a webhook.
 
-- **Since**: 3.1.0 Introduced.
+**Parameters**
+
+<ParamField query="cart_key" type="string">
+  The cart key.
+</ParamField>
+
+<Info>
+    Made available since v3.8.0
+</Info>
 
 **Usage**
 ```php
-do_action( 'cocart_update_cart_before_totals', function() {
+add_action('cocart_cart_loaded', function($cart_key) {
     // Your code here
-});
+}, 10, 1);
 ```
-
-**Defined in**: [`includes/classes/rest-api/callbacks/update-cart.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/callbacks/update-cart.php#L119)
 
 ---
 
-## `cocart_register_extension_callback`
-cocart_register_extension_callback.
+## Cart Items Management
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$cart_extension` | `CoCart_Cart_Extension` | Instance of the CoCart_Cart_Extension class which exposes the CoCart_Cart_Extension::register() method. |
+### `cocart_item_added_updated_in_cart`
 
-- **Since**: 3.1.0 Introduced.
-
-**Usage**
-```php
-do_action( 'cocart_register_extension_callback', function() {
-    // Your code here
-}, 10, );
-```
-
-**Defined in**: [`includes/classes/rest-api/class-cocart-cart-extension.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/class-cocart-cart-extension.php#L63)
-
----
-
-## `cocart_item_added_updated_in_cart`
 Fires if item was added again to the cart but updated the quantity.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$cart_item_key` | `string` | Item key of the item added again. |
-| `$item_added` | `array` | Item added to cart again. |
-| `$new_quantity` | `int` | New quantity of the item. |
+**Parameters**
 
-- **Since**: 2.1.0 Introduced.
+<ParamField query="cart_item_key" type="string">
+  Item key of the item added again.
+</ParamField>
+
+<ParamField query="item_added" type="array">
+  Item added to cart again.
+</ParamField>
+
+<ParamField query="new_quantity" type="int">
+  New quantity of the item.
+</ParamField>
+
+<Info>
+    Made available since v2.1.0
+</Info>
 
 **Usage**
 ```php
-do_action( 'cocart_item_added_updated_in_cart', function() {
+add_action('cocart_item_added_updated_in_cart', function($cart_item_key, $item_added, $new_quantity) {
     // Your code here
-}, 10, );
+}, 10, 3);
 ```
-
-**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-add-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-add-item-controller.php#L260)
 
 ---
 
-## `cocart_item_added_to_cart`
+### `cocart_item_added_to_cart`
+
 Fires once an item has been added to cart.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$item_key` | `string` | Item key of the item added. |
-| `$item_added` | `array` | Item added to cart. |
+**Parameters**
 
-- **Since**: 2.1.0 Introduced.
+<ParamField query="item_key" type="string">
+  Item key of the item added.
+</ParamField>
 
-**Usage**
-```php
-do_action( 'cocart_item_added_to_cart', function() {
-    // Your code here
-}, 10, );
-```
+<ParamField query="item_added" type="array">
+  Item added to cart.
+</ParamField>
 
-**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-add-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-add-item-controller.php#L281)
-
----
-
-## `cocart_before_cart_emptied`
-Triggers before the cart emptied.
-
-- **Since**: 1.0.0 Introduced.
+<Info>
+    Made available since v2.1.0
+</Info>
 
 **Usage**
 ```php
-do_action( 'cocart_before_cart_emptied', function() {
+add_action('cocart_item_added_to_cart', function($item_key, $item_added) {
     // Your code here
-});
+}, 10, 2);
 ```
-
-**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-clear-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-clear-cart-controller.php#L72)
 
 ---
 
-## `cocart_cart_emptied`
-Triggers once the cart is emptied.
+### `cocart_item_removed`
 
-- **Since**: 1.0.0 Introduced.
+Fires when an item is removed from the cart.
+
+**Parameters**
+
+<ParamField query="current_data" type="array">
+  The cart item data.
+</ParamField>
+
+<Info>
+    Made available since v2.0.0
+</Info>
 
 **Usage**
 ```php
-do_action( 'cocart_cart_emptied', function() {
+add_action('cocart_item_removed', function($current_data) {
     // Your code here
-});
+}, 10, 1);
 ```
-
-**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-clear-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-clear-cart-controller.php#L115)
 
 ---
 
-## `cocart_cart_cleared`
-Triggers once the cart is cleared.
+### `cocart_item_restored`
 
-- **Since**: 1.0.0 Introduced.
+Fires when an item is restored to the cart.
+
+**Parameters**
+
+<ParamField query="current_data" type="array">
+  The cart item data.
+</ParamField>
+
+<Info>
+    Made available since v2.0.0
+</Info>
 
 **Usage**
 ```php
-do_action( 'cocart_cart_cleared', function() {
+add_action('cocart_item_restored', function($current_data) {
     // Your code here
-});
+}, 10, 1);
 ```
-
-**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-clear-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-clear-cart-controller.php#L123)
 
 ---
 
-## `cocart_get_cart`
-cocart_get_cart.
+### `cocart_item_quantity_changed`
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$cart_contents` | `array` | Cart contents. |
+Fires when the quantity of an item in the cart is changed.
 
-- **Since**: 2.0.0 Introduced.
+**Parameters**
+
+<ParamField query="item_key" type="string">
+  Item key.
+</ParamField>
+
+<ParamField query="new_data" type="array">
+  Item data.
+</ParamField>
+
+<Info>
+    Made available since v2.0.0
+</Info>
 
 **Usage**
 ```php
-do_action( 'cocart_get_cart', function() {
+add_action('cocart_item_quantity_changed', function($item_key, $new_data) {
     // Your code here
-}, 10, );
+}, 10, 2);
 ```
-
-**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L132)
 
 ---
 
-## `cocart_item_removed`
-cocart_item_removed
+## Product Reviews
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$current_data` | `array` | The cart item data. |
+### `cocart_insert_product_review`
 
-- **Since**: 2.0.0 Introduced.
-
-**Usage**
-```php
-do_action( 'cocart_item_removed', function() {
-    // Your code here
-}, 10, );
-```
-
-**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L142)
-
----
-
-## `cocart_item_restored`
-cocart_item_restored
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$current_data` | `array` | The cart item data. |
-
-- **Since**: 2.0.0 Introduced.
-
-**Usage**
-```php
-do_action( 'cocart_item_restored', function() {
-    // Your code here
-}, 10, );
-```
-
-**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L220)
-
----
-
-## `cocart_item_quantity_changed`
-cocart_item_quantity_changed
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$item_key` | `string` | Item key. |
-| `$new_data` | `array` | Item data. |
-
-- **Since**: 2.0.0 Introduced.
-
-**Usage**
-```php
-do_action( 'cocart_item_quantity_changed', function() {
-    // Your code here
-}, 10, );
-```
-
-**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L393)
-
----
-
-## `cocart_insert_product_review`
 Fires after a comment is created via the REST API.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$review` | `WP_Comment` | Inserted comment object. |
-| `$request` | `WP_REST_Request` | The request object. |
-| `$creating` | `bool` | True when creating a comment, false when updating. |
+**Parameters**
 
+<ParamField query="review" type="WP_Comment">
+  Inserted comment object.
+</ParamField>
 
-**Usage**
-```php
-do_action( 'cocart_insert_product_review', function() {
-    // Your code here
-}, 10, );
-```
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
 
-**Defined in**: [`includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php#L433)
+<ParamField query="creating" type="bool">
+  True when creating a comment, false when updating.
+</ParamField>
 
----
-
-## `cocart_item_added_to_cart`
-Fires once an item has been added to cart.
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$item_key` | `string` | Item key of the item added. |
-| `$item_added` | `array` | Item added to cart. |
-| `$request` | `WP_REST_Request` | The request object. |
-
-- **Since**: 2.1.0 Introduced.
+<Info>
+    Made available since v2.1.0
+</Info>
 
 **Usage**
 ```php
-do_action( 'cocart_item_added_to_cart', function() {
+add_action('cocart_insert_product_review', function($review, $request, $creating) {
     // Your code here
-}, 10, );
+}, 10, 3);
 ```
-
-**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-add-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-add-item-controller.php#L366)
 
 ---
 
-## `cocart_cart`
+## Deprecated Hooks
+
+### `cocart_cart`
+
 <Warning>**Deprecated:** 3.0.0 Use `cocart_cart` hook instead.</Warning>
 
-**See Also:**
-- `cocart_cart`
-Deprecated action hook `cocart_get_cart`.
-
-
 **Usage**
 ```php
-do_action( 'cocart_cart', function() {
+do_action('cocart_cart', function() {
     // Your code here
 });
 ```
 
-**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L201)
-
 ---
 
-## `cocart_before_cart_emptied`
-Triggers before the cart emptied.
+### `cocart_update_cart_before_totals`
 
-- **Since**: 1.0.0 Introduced.
+<Warning>**Deprecated:** 4.1.0 Replaced with `cocart_update_cart_before_totals` hook.</Warning>
 
 **Usage**
 ```php
-do_action( 'cocart_before_cart_emptied', function() {
+do_action('cocart_update_cart_before_totals', function() {
     // Your code here
 });
 ```
-
-**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-clear-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-clear-cart-controller.php#L97)
-
----
-
-## `cocart_cart_emptied`
-Triggers once the cart is emptied.
-
-- **Since**: 1.0.0 Introduced.
-
-**Usage**
-```php
-do_action( 'cocart_cart_emptied', function() {
-    // Your code here
-});
-```
-
-**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-clear-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-clear-cart-controller.php#L120)
-
----
-
-## `cocart_cart_cleared`
-Triggers once the cart is cleared.
-
-- **Since**: 1.0.0 Introduced.
-
-**Usage**
-```php
-do_action( 'cocart_cart_cleared', function() {
-    // Your code here
-});
-```
-
-**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-clear-cart-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-clear-cart-controller.php#L138)
-
----
-
-## `cocart_item_removed`
-cocart_item_removed
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$current_data` | `array` | The product object. |
-
-- **Since**: 2.0.0 Introduced.
-
-**Usage**
-```php
-do_action( 'cocart_item_removed', function() {
-    // Your code here
-}, 10, );
-```
-
-**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-remove-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-remove-item-controller.php#L158)
-
----
-
-## `cocart_item_restored`
-cocart_item_restored
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$current_data` | `array` | The product object. |
-
-- **Since**: 2.0.0 Introduced.
-
-**Usage**
-```php
-do_action( 'cocart_item_restored', function() {
-    // Your code here
-}, 10, );
-```
-
-**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-restore-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-restore-item-controller.php#L134)
-
----
-
-## `cocart_item_quantity_changed`
-cocart_item_quantity_changed
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$item_key` | `string` | Item key. |
-| `$new_data` | `array` | Item data. |
-
-- **Since**: 2.0.0 Introduced.
-
-**Usage**
-```php
-do_action( 'cocart_item_quantity_changed', function() {
-    // Your code here
-}, 10, );
-```
-
-**Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-update-item-controller.php`](https://github.com/co-cart/co-cart/blob/development/includes/classes/rest-api/controllers/v2/cart/class-cocart-update-item-controller.php#L191)
-
----
 

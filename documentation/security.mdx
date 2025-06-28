@@ -1,7 +1,7 @@
 ---
-title: Security
-description: 'Security is the most important part of creating a headless store.'
-icon: shield
+title: "Security"
+description: "Security is the most important part of creating a headless store."
+icon: "shield"
 ---
 
 <Note>
@@ -29,10 +29,13 @@ Most developers don't like the index of the REST API exposing these details so w
 
 ## Authentication header
 
-If you want to change the authorization header used for authenticating users with CoCart. Use this filter to rename.
+If you want to change the authorization header used for authenticating users with CoCart. Use filter `cocart_auth_header` to fetch the authorization value from it.
 
 ```php
-add_filter( 'cocart_auth_header', function() {
-    return 'Neo'; // Custom authorization header.
-});
+add_filter( 'cocart_auth_header', function( $auth_header ) {
+    $custom_header = isset( $_SERVER['HTTP_X_MY_CUSTOM_AUTH'] ) 
+    ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_MY_CUSTOM_AUTH'] ) ) : '';
+
+    return ! empty( $custom_header ) ? $custom_header : $auth_header;
+}, 10, 1);
 ```

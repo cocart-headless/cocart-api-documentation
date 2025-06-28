@@ -1,7 +1,7 @@
 ---
-title: 'Mix and Match Products for WooCommerce'
-sidebarTitle: 'Mix and Match Products'
-description: 'Allows customers to create their own product bundles.'
+title: "Mix and Match Products for WooCommerce"
+sidebarTitle: "Mix and Match Products"
+description: "Allows customers to create their own product bundles."
 ---
 
 Selling cases of wine? A dozen donuts? Fruit baskets? Six-packs of T-shirts? [Mix and Match Products](https://woocommerce.com/products/woocommerce-mix-and-match-products/) is ideal for offering similar products in bulk containers. Perfect for encouraging customers to buy in bulk without forcing them to buy items that don’t interest them.
@@ -20,7 +20,7 @@ curl -X POST https://your-store.com/wp-json/cocart/v2/cart/add-item \
 -d '{
     "id": "1102",
     "quantity": "2",
-    "cart_item_data": {
+    "item_data": {
         "mnm_config": [
             {
                 "product_id": 987,
@@ -36,5 +36,5 @@ curl -X POST https://your-store.com/wp-json/cocart/v2/cart/add-item \
             }
         ]
     }
-}
-'```
+}'
+```

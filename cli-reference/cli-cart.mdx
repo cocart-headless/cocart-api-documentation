@@ -1,0 +1,149 @@
+---
+title: "Cart"
+description: "Commands for managing the cart."
+icon: "cart-shopping"
+tag: "NOT READY!"
+'og:title': "Cart Commands for CoCart CLI"
+'robots': "noindex, follow"
+---
+
+<Warning>
+    At the moment the commands are only documented here while they are still being tested. An announcement in the future will provide details when they will be usable.
+</Warning>
+
+## Get Cart
+
+Get the contents of a cart.
+
+```bash
+wp cocart cart get
+```
+
+### Arguments
+
+<ParamField path="cart_key" type="string">
+    The cart key.
+</ParamField>
+
+<ParamField path="user_id" type="int">
+    The user ID.
+</ParamField>
+
+```bash
+wp cocart cart get --cart_key=t_978655cffb069bbc97e8cdd2991d3c
+wp cocart cart get --user_id=174
+```
+
+## Clear Cart
+
+Clear the contents of a cart.
+
+```bash
+wp cocart cart clear
+```
+
+### Arguments
+
+<ParamField path="cart_key" type="string">
+    The cart key.
+</ParamField>
+
+<ParamField path="user_id" type="int">
+    The user ID.
+</ParamField>
+
+**Examples**
+
+```bash
+wp cocart cart clear --cart_key=t_978655cffb069bbc97e8cdd2991d3c
+wp cocart cart clear --user_id=174
+```
+
+## Add to Cart
+
+Add an item to the cart.
+
+```bash
+wp cocart cart add
+```
+
+### Arguments
+
+<ParamField path="cart_key" type="string">
+    The cart key.
+</ParamField>
+
+<ParamField path="user_id" type="int">
+    The user ID.
+</ParamField>
+
+<ParamField path="product_id" type="int" required>
+    The product ID.
+</ParamField>
+
+<ParamField path="quantity" type="int">
+    The quantity of the product.
+</ParamField>
+
+```bash
+wp cocart cart add --cart_key=t_978655cffb069bbc97e8cdd2991d3c --product_id=247
+wp cocart cart add --user_id=174 --product_id=247
+```
+
+## Remove Item
+
+Remove an item from the cart.
+
+```bash
+wp cocart cart remove
+```
+
+### Arguments
+
+<ParamField path="cart_key" type="string">
+    The cart key.
+</ParamField>
+
+<ParamField path="user_id" type="int">
+    The user ID.
+</ParamField>
+
+<ParamField path="item_key" type="int" required>
+    The item key.
+</ParamField>
+
+```bash
+wp cocart cart remove --cart_key=t_978655cffb069bbc97e8cdd2991d3c --item_key=70efdf2ec9b086079795c442636b55fb
+wp cocart cart remove --user_id=174 --item_key=70efdf2ec9b086079795c442636b55fb
+```
+
+## Update Item
+
+Update the quantity of an item in the cart.
+
+```bash
+wp cocart cart update
+```
+
+### Arguments
+
+<ParamField path="cart_key" type="string">
+    The cart key.
+</ParamField>
+
+<ParamField path="user_id" type="int">
+    The user ID.
+</ParamField>
+
+<ParamField path="item_key" type="int" required>
+    The item key.
+</ParamField>
+
+<ParamField path="quantity" type="int" required>
+    The quantity of the item.
+</ParamField>
+
+```bash
+wp cocart cart update --cart_key=t_978655cffb069bbc97e8cdd2991d3c --item_key=70efdf2ec9b086079795c442636b55fb --quantity=2
+wp cocart cart update --user_id=174 --item_key=70efdf2ec9b086079795c442636b55fb --quantity=2
+```

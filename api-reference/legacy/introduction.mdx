@@ -1,0 +1,90 @@
+---
+title: "Introduction"
+description: "Welcome to the API Reference for CoCart."
+icon: "hand"
+'robots': "noindex, follow"
+---
+
+**Finding it hard to decouple WooCommerce from WordPress without hitting roadblocks?**
+
+CoCart is here to eliminate the hassle of creating your own REST API endpoints for WooCommerce and provides all the essential features for a powerful, headless eCommerce experience making it easy to decouple WooCommerce from WordPress.
+
+Want to try it out? [Setup a sandbox site](/api-reference/playground) to test it out.
+
+We highly recommend looking at our [community initiatives](/resources/community) to help your journey for support and networking.
+
+<Note>
+    We make the assumption that you are comfortable with REST API's and understand the basics of WordPress and WooCommerce. Since they are both (including CoCart) are built in PHP, we recommend having some knowledge of it as well.
+</Note>
+
+Have a question, checkout our [Frequently Asked Questions](/api-reference/faq) or [contact support](mailto:support@cocartapi.com) if not already answered.
+
+## Base url
+
+The base URL is where your WordPress is installed. All requests made to CoCart API is via your WordPress site url `https://example-store.com/wp-json/cocart/`
+
+## Request/Response Format ##
+
+The default response format is in JSON. Requests with a message-body use plain JSON to set or update resource attributes. Successful requests will return a `200 OK` HTTP status.
+
+Some general information about response:
+
+* Resource IDs are returned as integers.
+* Other number values, such as price, item counts, are returned as integers or strings.
+* Blank fields may return as `null` instead of being returned as blank strings or omitted.
+
+## Body Types ##
+
+There are different types of body types when making a request. Make sure when using either of these body types that you have the correct `Content-Type` for the header.
+
+| Body Type             | Content-Type                      |
+| --------------------- | --------------------------------- |
+| form-data             | application/json                  |
+| raw                   | application/json                  |
+| x-www-form-urlencoded | application/x-www-form-urlencoded |
+
+<aside class="notice">
+    Body data must be passed correctly for the CoCart REST API to succeed.
+</aside>
+
+Using **raw** works best if you are passing an object of data for a `variation` or `cart_item_data`. Use [any of the tools available](/documentation/tools) to help test the API with if you are unsure.
+
+## Errors ##
+
+Occasionally you might encounter errors when accessing the REST API. Here are the possible types:
+
+| Error Code                  | Error Type                                                    |
+| --------------------------- |-------------------------------------------------------------- |
+| `400 Bad Request`           | Invalid request, e.g. using an unsupported HTTP method.       |
+| `401 Unauthorized`          | Authentication or permission error, e.g. incorrect login.     |
+| `403 Forbidden`             | Not allowed to process this action or have permission.        |
+| `404 Not Found`             | Requests to resources that don't exist or are missing.        |
+| `405 Method Not Allowed`    | A request method is not supported for the requested resource. |
+| `406 Not Acceptable`        | Indicates that the server could not produce a response.       |
+| `500 Internal Server Error` | Server error                                                  |
+
+> WP REST API error example
+
+```json
+{
+    "code": "rest_no_route",
+    "message": "No route was found matching the URL and request method",
+    "data": {
+        "status": 404
+    }
+}
+```
+
+> CoCart error example
+
+```json
+{
+    "code": "cocart_clear_cart_failed",
+    "message": "Clearing the cart failed!",
+    "data": {
+        "status": 406
+    }
+}
+```
+
+Errors return both an appropriate HTTP status code and response object which contains a `code`, `message` and `data` attribute.

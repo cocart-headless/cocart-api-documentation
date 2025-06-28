@@ -1,0 +1,16 @@
+---
+title: "Breaking Changes in CoCart Core v5"
+sidebarTitle: "Breaking Core Changes"
+description: "These breaking changes improve the core of CoCart and provides better support for these specific features."
+icon: "rectangle-code"
+---
+
+## REST API
+
+* Avatars only return if requested now when using the login endpoint.
+* Store API now returns array of CoCart versions installed not just the core version.
+* Product meta will not return by default. To improve security and prevent PII from exposure, meta must now be whitelisted instead using the new filter `cocart_products_allowed_meta_keys`.
+
+## Plugin
+
+The text domain a.k.a the plugin slug, has changed from `cart-rest-api-for-woocommerce` to `cocart-core`. This affects any translations including custom. If you did a custom translation you will need to rename the text domain to match.

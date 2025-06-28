@@ -1,12 +1,12 @@
 ---
-title: Quick Start
-sidebarTitle: 'Quick Start'
-description: ''
+title: "Quick Start"
+sidebarTitle: "Quick Start"
+description: ""
+'og:title': "Quick Start Guide for CoCart JWT Authentication"
+'og:description': "Quick start guide to using CoCart JWT Authentication."
 ---
 
-<Info>
-    This guide assumes you have already installed and configured CoCart JWT Authentication. If not, make sure you have downloaded the [JWT Authentication for CoCart](https://wordpress.org/plugins/cocart-jwt-authentication/) plugin and installed it.
-</Info>
+This guide assumes you have already installed and configured CoCart JWT Authentication. If not,  please follow the [setup guide](/getting-started/jwt/setup) first.
 
 ## Authentication Flow
 
@@ -16,9 +16,9 @@ To authenticate a user and get a JWT token:
 
 ```
 curl -X POST \
-  https://your-site.com/wp-json/cocart/v2/login \
-  -H "Content-Type: application/json" \
-  -d '{"username": "your-username", "password": "your-password"}'
+    https://your-site.com/wp-json/cocart/v2/login \
+    -H "Content-Type: application/json" \
+    -d '{"username": "your-username", "password": "your-password"}'
 ```
 
 ```json

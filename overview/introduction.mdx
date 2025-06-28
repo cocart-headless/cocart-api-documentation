@@ -1,46 +1,92 @@
 ---
-title: Welcome to CoCart API
-sidebarTitle: 'Introduction'
-description: 'CoCart is the headless API for developers.'
+title: "Welcome to CoCart"
+sidebarTitle: "Welcome"
+description: "CoCart is the REST-API that unlocks powerful headless WooCommerce capabilities."
 icon: "hand-spock"
 ---
 
-Transform your WooCommerce store into a powerful, decoupled commerce platform with CoCart — an open-source REST API that liberates your store from WordPress's traditional constraints. Build modern storefronts using frameworks like Astro, React, Vue, or Next.js, gaining complete control over your customer experience.
+<Warning>
+    **CoCart Core v5** is not yet published as it is still in development but feel free to review the documentation for it and provide feedback on changes, improvements and new features. **Beta releases will be out soon**.
+</Warning>
 
-## Who is this for?
+CoCart is purpose-built for developers and designers to transform a WooCommerce store into a powerful, decoupled eCommerce store — and liberates your store from WordPress's traditional constraints with a robust REST API.
 
-CoCart empowers developers with a robust REST API that significantly reduces development time, enabling you to build modern and scalable storefronts independent of WordPress. Our intuitive API handles presentation, management, calculations, and processing, delivering optimal performance across any configuration.
+Build a modern and scalable storefront with confidence independent of WordPress using frameworks like **Astro**, **React**, **Vue**, or **Next.js**, gaining complete control over your customers experience no matter what your store sells.
 
-## How does it work?
+Our intuitive API handles management, calculations, and processing, delivering optimal performance across any configuration.
 
-CoCart seamlessly integrates with WooCommerce's Data Stores API and preserves WooCommerce hook compatibility, ensuring broad support for existing extensions out of the box.
+<CardGroup cols={2}>
+    <Card
+        title="Installation"
+        icon="rocket"
+        color="#f91880"
+        href="/getting-started"
+    >
+        Get started with CoCart in minutes, by downloading and installing on your WordPress site.
+    </Card>
+    <Card
+        title="Standards"
+        icon="clipboard"
+        color="#EA8000"
+        href="/overview/standards"
+    >
+        Learn about CoCart's core standards for the REST API
+    </Card>
+</CardGroup>
 
-To enable headless cart functionality in WooCommerce, CoCart implements a custom session handler that generates unique keys for each user session in the WordPress database. This approach manages session-related metadata client-side without exposing sensitive customer data or requiring cookies.
+## Built to Solve Real Headless Challenges
 
-## How do I get started?
+If your finding it hard to decouple WooCommerce from WordPress due to hitting roadblocks. CoCart can help by providing all the essential features you need to start building a headless eCommerce experience. Here's why:
 
-You can download CoCart from the [CoCart API website](https://cocartapi.com/download/?ref=mintlify). Being based on the WordPress REST-API, it’s extremely easy to get started.
+<AccordionGroup>
+    <Accordion title="Source of Truth" icon="anchor">
+        Built on WooCommerce’s Data Stores API and mirrors most WooCommerce hooks, ensuring broad compatibility from the start.
+    </Accordion>
 
-## What is a REST API?
+    <Accordion title="Simple, Secure Sessions" icon="cookie-bite">
+        Lightweight session keys. No cookies. Database-based session management built for headless.
+    </Accordion>
 
-REST (Representational State Transfer) is an architectural style for building web services that communicate over HTTP, similar to how web browsers interact with servers. It provides a standardized way for applications to exchange data and perform operations.
+    <Accordion title="Easy Authentication" icon="key">
+        Basic authentication for customers are handled however they prefer to login or guided depending on your store needs:
 
-Recommend reading the [REST API handbook](https://developer.wordpress.org/rest-api/) for more information.
+        * Username and Password
+        * Email and Password
+        * Phone Number and Password.
+        * JWT supported via official add-on.
 
-## Prerequisites
+        No Admin API Keys required. 
+    </Accordion>
 
-Before using CoCart, ensure your WordPress permalinks are configured to any setting except "Plain". This configuration is essential for accessing the REST API using standard endpoint URIs (e.g., cocart/v2/products). Configure this under Settings > Permalinks.
+    <Accordion title="Domain Dominance" icon="globe">
+        Addressing CORS issues in decoupled setups, CoCart grants you control over the origin. [View CORS section](/documentation/learn/cors) for more info.
+    </Accordion>
 
-<Card title="Upload Plugin" img="https://cocartapi.com/wp-content/uploads/2023/11/image-3.png">
-</Card>
+    <Accordion title="Efficient Product Search" icon="shirt">
+        Search by name, SKU, or ID — with or without authentication. Filter the results your customers query.
+    </Accordion>
 
-With these settings in place, you're ready to begin using CoCart.
+    <Accordion title="Real-Time Cart Validation" icon="check">
+        Our system minimizes the need for multiple requests to verify item and coupon validity in your cart. It efficiently checks stock, calculates totals and fees, ensuring real-time accuracy so your responses are consistently up-to-date.
+    </Accordion>
 
-## WooCommerce Dependency
+    <Accordion title="Works with Woo Checkout" icon="credit-card">
+        Prefer WooCommerce's checkout? Load any cart session into it easily.
+    </Accordion>
 
-CoCart requires an active WooCommerce installation to function. If WooCommerce is not installed or is deactivated, CoCart will automatically disable itself during activation to prevent technical issues.
+    <Accordion title="Customizable Callbacks" icon="cogs">
+        Register your own cart callbacks without creating new endpoints. CoCart handles the rest, returning responses once complete.
+    </Accordion>
 
-You'll see a prompt to install or activate WooCommerce if needed.
+    <Accordion title="Cart Insights" icon="chart-bar">
+        Monitor all cart sessions, including those nearing expiration or already expired.
+    </Accordion>
 
-<Card title="Upload Plugin" img="https://cocartapi.com/wp-content/uploads/2023/11/image-2.png">
-</Card>
+    <Accordion title="Name Your Price Built In" icon="barcode">
+        Empower your customers to donation-based pricing that broadens your flexibility.
+    </Accordion>
+
+    <Accordion title="Bulk Cart Requests" icon="layer-group">
+        Combine multiple API calls into one for better performance. [View Bulk Requests section](/documentation/learn/batch-requests) for more info
+    </Accordion>
+</AccordionGroup>

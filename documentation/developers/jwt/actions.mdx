@@ -1,7 +1,7 @@
 ---
-title: Action hooks available in JWT Authentication
-sidebarTitle: 'In JWT'
-description: 'Trigger an action when these hooks are called'
+title: "Action hooks available in JWT Authentication"
+sidebarTitle: "In JWT"
+description: "Trigger an action when these hooks are called"
 ---
 
 <Note>
@@ -10,7 +10,9 @@ description: 'Trigger an action when these hooks are called'
 
 Each action hook is documented below with its description and usage example.
 
-## `cocart_jwt_token_generated`
+## Token Events
+
+### `cocart_jwt_token_generated`
 
 <Info>
     Made available since v2.1.0
@@ -25,7 +27,7 @@ add_action( 'cocart_jwt_token_generated', function( $token, $user ) {
 }, 10, 2 );
 ```
 
-## `cocart_jwt_auth_token_refreshed`
+### `cocart_jwt_auth_token_refreshed`
 
 <Info>
     Made available since v2.1.0
@@ -40,7 +42,7 @@ add_action( 'cocart_jwt_auth_token_refreshed', function( $token, $user ) {
 }, 10, 2 );
 ```
 
-## `cocart_jwt_auth_token_validated`
+### `cocart_jwt_auth_token_validated`
 
 <Info>
     Made available since v2.1.0
@@ -56,7 +58,9 @@ add_action( 'cocart_jwt_auth_token_validated', function( $decoded ) {
 } );
 ```
 
-## `cocart_jwt_auth_token_deleted`
+## Token Management
+
+### `cocart_jwt_auth_token_deleted`
 
 <Info>
     Made available since v2.1.0

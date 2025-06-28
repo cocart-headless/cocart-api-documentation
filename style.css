@@ -1,9 +1,15 @@
 #hero {
+    margin: 6rem auto 1.5rem; max-width: 70rem;
+
     h1 {
         text-align: center; font-size: 24px; font-weight: 600; margin-bottom: 2rem;
     }
 }
 
-.container {
-    margin: 6rem auto 8rem; max-width: 70rem; padding-left: 1.25rem; padding-right: 1.25rem;
+.custom-container {
+    margin: 6rem auto 1.5rem;
+}
+
+.custom-container a.card {
+    max-width: 320px;
 }

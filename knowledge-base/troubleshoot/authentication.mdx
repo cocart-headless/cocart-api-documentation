@@ -1,56 +1,62 @@
 ---
-title: 'Authentication / Login'
-sidebarTitle: 'Authentication'
-description: Trouble with authentication?
+title: "Authentication / Login"
+sidebarTitle: "Authentication"
+description: "Trouble with authentication?"
+icon: "lock"
+'og:title': "Troubleshooting Authentication with CoCart"
 ---
 
-## Issue with authenticating in general?
+<AccordionGroup>
+    <Accordion title="Issue with authenticating in general?">
+        You may need to add this to your **.htaccess** file in the parent folder where your WordPress installation is. Once added, restart the server and authentication should work.
 
-You may need to add this to your **.htaccess** file in the parent folder where your WordPress installation is. Once added, restart the server and authentication should work.
+        ```apache
+        <IfModule mod_rewrite.c>
+        RewriteEngine on
+        RewriteCond %{HTTP:Authorization} ^(.*)
+        RewriteRule ^(.*) - [E=HTTP_AUTHORIZATION:%1]
+        </IfModule>
+        ```
+    </Accordion>
 
-```.htaccess
-<IfModule mod_rewrite.c>
-RewriteEngine on
-RewriteCond %{HTTP:Authorization} ^(.*)
-RewriteRule ^(.*) - [E=HTTP_AUTHORIZATION:%1]
-</IfModule>
-```
+    <Accordion title="Basic authentication not working?">
+        Basic authentication is recommended to be used on secure sites that have SSL enabled, so if you attempting to authenticate CoCart without it being secured. Then it will simply fail.
 
-## Basic authentication not working?
+        <Info>
+            If you are testing on a local or development environment, CoCart will allow you to authenticate via the basic method.
+        </Info>
+    </Accordion>
 
-Basic authentication is recommended to be used on secure sites that have SSL enabled, so if you attempting to authenticate CoCart without it being secured. Then it will simply fail.
+    <Accordion title="How can I authenticate as a customer?">
+        CoCart supports all standard and additional support for identifying ways to login.
 
-<Info>
-    If you are testing on a local or development environment, CoCart will allow you to authenticate via the basic method.
-</Info>
+        * Username + Password
+        * Email + Password
+        * Billing Phone Number + Password
 
-## How can I authenticate as a customer?
+        How you choose to allow your customers to login is up to you.
 
-CoCart supports all standard and additional support for identifying ways to login.
+        <Note>
+            Should the customer forget the username they created or what was assigned when registering as a customer, using their email address instead is good alternative.
+        </Note>
 
-* Username + Password
-* Email + Password
-* Billing Phone Number + Password
+        <RequestExample>
+        ```bash cURL
+            curl --request POST \
+                --url https://localhost/wp-json/cocart/v2/login \
+                --header "Authorization: Basic " + btoa('username:password')
+                --header "Content-Type: application/json"
+        ```
+        </RequestExample>
+    </Accordion>
 
-How you choose to allow your customers to login is up to you.
+    <Accordion title="Not possible to use authentication headers, alternative?">
+        If it is not be possible to authenticate the right way using the headers, you can authenticate the user via URL.
 
-<Note>
-    Should the customer forget the username they created or was assigned when registering as a customer, using their email address instead is good alternative.
-</Note>
+        ```bash
+        wp-json/cocart/v2/login?username=sebastien@domain.com&password=password
+        ```
 
-<RequestExample>
-```bash cURL
-    curl --request POST \
-        --url https://localhost/wp-json/cocart/v2/login \
-        --header "Authorization: Basic " + btoa('username:password')
-        --header "Content-Type: application/json"
-```
-</RequestExample>
-
-## Not possible to use authentication headers, alternative?
-
-If it is not be possible to authenticate the right way using the headers, you can authenticate the user via URL.
-
-`wp-json/cocart/v2/login?username=sebastien@domain.com&password=password`
-
-Please keep your sites secure!
+        Please keep your sites secure!
+    </Accordion>
+</AccordionGroup>

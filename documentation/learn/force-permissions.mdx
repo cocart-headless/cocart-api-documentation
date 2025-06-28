@@ -1,7 +1,7 @@
 ---
-title: 'Force Permissions'
-sidebarTitle: 'Restrict access'
-description: Learn how to restrict access to certain CoCart routes
+title: "API Permissions"
+sidebarTitle: "Restrict access"
+description: "Learn how to restrict access to certain CoCart routes."
 icon: "user-lock"
 ---
 
@@ -29,12 +29,12 @@ There are no parameters required. Just return an array of the API routes you wis
 
 Filter name: `cocart_api_permission_check_{method}`
 
-Replace `{method}` with get, post, put, delete or options.
+Replace `{method}` with `get`, `post`, `put`, `delete` or `options`.
 
 ```php
 add_filter( 'cocart_api_permission_check_get', function() {
   return array(
-  	'v1/count-items',
+    'v1/count-items',
     'v2/cart/items/count',
     'v2/cart/totals',
     'v2/store'

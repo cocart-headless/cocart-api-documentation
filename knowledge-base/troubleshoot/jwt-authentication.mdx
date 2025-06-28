@@ -1,0 +1,73 @@
+---
+title: "JWT Authentication"
+description: "Trouble with JWT authentication?"
+icon: "hashtag"
+---
+
+<AccordionGroup>
+    <Accordion title="What are the system requirements for JWT Authentication?">
+        You'll need to configure a secret key in your `wp-config.php` file and ensure your server has HTTP Authorization Header enabled. See the [Setup Guide](/getting-started/jwt/setup) for information.
+    </Accordion>
+
+    <Accordion title="How does token refresh mechanism work?">
+        When you authenticate, you receive both an access token and a refresh token. The access token is used for API requests and expires after a configurable period (**default 10 days**).
+
+        When it expires, you can use the refresh token (**valid for 30 days by default**) to obtain a new access token without re-authenticating with username and password.
+    </Accordion>
+
+    <Accordion title="How do I handle CORS in my application?">
+        CORS is handled at the core level. Please see [CORS guide](/documentation/learn/legacy/cors) for more information.
+    </Accordion>
+
+    <Accordion title="What happens to tokens when a user changes their password or email?">
+        By default, all tokens are automatically revoked when a user changes their password or email. This behavior can be [customized using filters](/documentation/developers/jwt/filters).
+    </Accordion>
+
+    <Accordion title="What signing algorithms are supported?">
+        The plugin supports multiple signing algorithms including `HS256`, `HS384`, `HS512`, `RS256`, `RS384`, `RS512`, `ES256`, `ES384`, `ES512`, `PS256`, `PS384`, and `PS512`.
+
+        You can choose and configure your preferred algorithm through the [filters](/documentation/developers/jwt/filters).
+    </Accordion>
+
+    <Accordion title="My server uses a static IP address, what can I do?">
+        If your having issues matching IP address due to server configuration, perhaps force the IP to the static IP address your server provides. Example:
+
+        ```php
+        add_filter( 'cocart_jwt_auth_token_before_sign', function( $payload ) {
+            $payload['data']['user']['ip'] = '127.0.0.1'; // Replace IP address with static IP.
+
+            return $payload;
+        } );
+        ```
+    </Accordion>
+
+    <Accordion title="We use a fixed custom user agent so authentication is failing.">
+        Perhaps filter the device to your specific user agent. That way it always matches. Example:
+
+        ```php
+        add_filter( 'cocart_jwt_auth_token_before_sign', function( $payload ) {
+            $payload['data']['user']['device'] = 'My Custom User Agent'; // Replace with your user agent.
+
+            return $payload;
+        } );
+        ```
+    </Accordion>
+
+    <Accordion title="How can I customize token claims and validation rules?">
+        You can use the [filters](/documentation/developers/jwt/filters) to modify token claims, lifetime and data.
+    </Accordion>
+
+    <Accordion title="How can I create, view or list JWT tokens?">
+        There are are WP-CLI commands strictly designed to help with your development. See [Cli-Reference](/cli-reference/cli-jwt) for commands.
+    </Accordion>
+
+    <Accordion title="Why would the token no longer be valid when it hasn't expired yet?">
+        In short: The most obvious would be that the user **IP address** has changed.
+
+        Long answer: It is a common issue with JWT tokens and can be resolved by [**implementing a token validation and refresh flow**](/tutorials/jwt-token-checkup).
+
+        When a user has either moved location or simply switched their networks at some point. Your site/app is going to experience authentication failure on the next request due to the fact the token is no longer valid.
+
+        This is a security feature of JWT tokens to prevent replay attacks.
+    </Accordion>
+</AccordionGroup>

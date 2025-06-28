@@ -1,6 +1,6 @@
 ---
-title: Install CoCart
-description: 'Follow one of many the ways to install CoCart'
+title: "Install CoCart"
+description: "Follow one of many the ways to install CoCart"
 ---
 
 ### Before you start
@@ -53,3 +53,22 @@ On the [releases page](https://github.com/co-cart/co-cart/releases), look under 
 
 Once you have downloaded the plugin, follow the installation instructions.
 
+## Prerequisites
+
+Before using CoCart, ensure your WordPress permalinks are configured to any setting except "Plain". This configuration is essential for accessing the REST API using standard endpoint URIs (e.g. `cocart/v2/products`).
+
+Configure this under **Settings > Permalinks**.
+
+<Card title="Permalink Settings" img="https://cocartapi.com/wp-content/uploads/2023/11/image-3.png">
+</Card>
+
+With these settings in place, you're ready to begin using CoCart.
+
+## WooCommerce Dependency
+
+CoCart requires an active WooCommerce installation to function. If WooCommerce is not installed or is deactivated, CoCart will automatically disable itself during activation to prevent technical issues.
+
+You'll see a prompt to install or activate WooCommerce if needed.
+
+<Card title="Admin notice requesting WooCommerce" img="https://cocartapi.com/wp-content/uploads/2023/11/image-2.png">
+</Card>

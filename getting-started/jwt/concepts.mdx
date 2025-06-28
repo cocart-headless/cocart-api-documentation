@@ -1,27 +1,32 @@
 ---
-title: Core Concepts
-description: 'JSON Web Tokens are an open standard (RFC 7519) for securely transmitting information between parties as a JSON object.'
+title: "Core Concepts"
+description: "JSON Web Tokens are an open standard (RFC 7519) for securely transmitting information between parties as a JSON object."
+'og:title': "Core Concepts that CoCart JWT Authentication Provides"
 ---
 
 In WordPress REST API authentication:
 
 ## JSON Web Tokens (JWT)
 
-**Structure**
+<CardGroup cols={2}>
+    <Card title="Structure" icon="layer-group">
+        JWTs consist of three parts: Header, Payload, and Signature, each base64-encoded and separated by dots.
+    </Card>
 
-JWTs consist of three parts: Header, Payload, and Signature, each base64-encoded and separated by dots
+    <Card title="Stateless" icon="cloud">
+        Tokens carry all necessary information, reducing database queries and improving performance.
+    </Card>
+</CardGroup>
 
-**Stateless**
+<CardGroup cols={2}>
+    <Card title="Secure" icon="shield-halved">
+        Digital signatures ensure token integrity and authenticity using cryptographic algorithms.
+    </Card>
 
-Tokens carry all necessary information, reducing database queries and improving performance.
-
-**Secure**
-
-Digital signatures ensure token integrity and authenticity using cryptographic algorithms.
-
-**Flexible**
-
-Can include custom claims for additional user data or permissions.
+    <Card title="Flexible" icon="puzzle-piece">
+        Can include custom claims for additional user data or permissions.
+    </Card>
+</CardGroup>
 
 ## Token Types
 
@@ -49,21 +54,20 @@ Long-lived tokens used to maintain user sessions. They:
 
 Understanding how tokens are managed throughout their lifetime:
 
-**1. Creation**
-
-Tokens are generated upon successful authentication with user credentials.
-
-**2. Validation**
-
-Each API request validates the token’s signature, expiration, and claims.
-
-**3. Refresh**
-
-Access tokens are renewed using refresh tokens before expiration.
-
-**4. Revocation**
-
-Tokens can be invalidated for security events or user actions.
+<Steps>
+    <Step title="Creation">
+        Tokens are generated upon successful authentication with user credentials.
+    </Step>
+    <Step title="Validation">
+        Each API request validates the token’s signature, expiration, and claims.
+    </Step>
+    <Step title="Refresh">
+        Access tokens are renewed using refresh tokens before expiration.
+    </Step>
+    <Step title="Revocation">
+        Tokens can be invalidated for security events or user actions.
+    </Step>
+</Steps>
 
 ## Rate Limiting
 
@@ -75,24 +79,23 @@ Rate limiting is a security feature that helps protect your API from abuse by li
 
 ### How It Works
 
-**1. Request Tracking**
+<Steps>
+    <Step title="Request Tracking">
+        Each request is tracked based on the client’s IP address.
+    </Step>
+    <Step title="Window Management">
+        Requests are counted within a configurable time window. (default: 1 minute)
+    </Step>
+    <Step title="Limit Enforcement">
+        * For refresh token, limits are exceeded to `10` requests per minute per IP.
+        * For validating token, limits are exceeded to `2` requests per minute per IP.
 
-Each request is tracked based on the client’s IP address.
-
-**2. Window Management**
-
-Requests are counted within a configurable time window. (default: 1 minute)
-
-**3. Limit Enforcement**
-
-* For refresh token, limits are exceeded to `10` requests per minute per IP.
-* For validating token, limits are exceeded to `2` requests per minute per IP.
-
-Then requests are blocked with a 429 (Too Many Requests) response.
-
-**4. Reset Period**
-
-After the time window expires, the request count resets automatically.
+        Then requests are blocked with a 429 (Too Many Requests) response.
+    </Step>
+    <Step title="Reset Period">
+        After the time window expires, the request count resets automatically.
+    </Step>
+</Steps>
 
 ### Rate Limit Headers
 
@@ -113,3 +116,15 @@ Unix timestamp when the current time window expires.
 #### `Retry-After` integer
 
 Seconds to wait before making another request. (only present when rate limited)
+
+### Default Limits
+
+Different endpoints have different rate limits to balance security and usability:
+
+* **Token Validation**: 10 requests per minute per token
+* * Higher limit for API operations
+* * Applies to protected endpoints
+
+* **Token Refresh**: 2 requests per minute per refresh token
+* * Moderate limit for token renewal
+* * Prevents refresh token abuse

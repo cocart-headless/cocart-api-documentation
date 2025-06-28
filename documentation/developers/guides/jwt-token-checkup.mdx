@@ -1,0 +1,167 @@
+---
+title: "Understanding JWT Token Invalidation"
+sidebarTitle: "JWT Token Checkup"
+description: "Learn how to validate and refresh JWT tokens."
+icon: "fingerprint"
+tag: "WIP"
+---
+
+## The Problem
+
+When implementing JWT authentication, you may encounter a common scenario:
+
+1. A user logs into your store's mobile app while on WiFi
+2. The JWT token is issued and includes their current IP address
+3. Later, the user switches to cellular data or changes networks
+4. Their next API request fails with a 401 error, despite having a valid token
+
+This happens because the JWT token includes IP validation as a security measure to prevent token theft and replay attacks. When the user's IP address changes, the security check fails.
+
+## Common Scenarios That Trigger This
+
+- Switching between WiFi and cellular data
+- Moving between different WiFi networks
+- Using the app while commuting
+- VPN connections being enabled or disabled
+
+## Solution Overview
+
+This guide demonstrates how to implement a robust token validation and refresh flow that:
+
+1. Detects when a token becomes invalid
+2. Automatically refreshes the token without disrupting the user experience
+3. Falls back to re-authentication only when necessary
+
+## How to setup?
+
+<Info>
+    This guide shows how to implement secure token handling using HTTP-only cookies.
+</Info>
+
+<Warning>
+    Ensure your server is configured to set secure HttpOnly cookies with appropriate SameSite attributes.
+</Warning>
+
+### 1. Validate the token
+
+First, check if the current token is still valid using the validation endpoint:
+
+<CodeGroup>
+    ```javascript JavaScript
+    async function validateToken() {
+        const response = await fetch('https://your-store.com/wp-json/cocart/jwt/validate-token', {
+            method: 'POST',
+            credentials: 'include', // Important for sending cookies
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        return response.status === 200;
+    }
+    ```
+</CodeGroup>
+
+### 2. Implementation Token Refresh
+
+When validation fails, implement the refresh flow:
+
+<CodeGroup>
+    ```javascript JavaScript
+    async function refreshAuthToken() {
+        const response = await fetch('https://your-store.com/wp-json/cocart/jwt/refresh-token', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Token refresh failed');
+        }
+
+        return response.ok; // Cookies are handled automatically by the browser
+    }
+    ```
+</CodeGroup>
+
+### 3. Complete Error Handler
+
+<CodeGroup>
+    ```javascript JavaScript
+    async function handleAuthError(error) {
+        if (error.status === 401) {
+            try {
+                await refreshAuthToken();
+                return true; // Token refresh successful
+            } catch (refreshError) {
+                // Redirect to login if refresh fails
+                window.location.href = '/login'; // This would be the page URL for your login page not the login endpoint.
+                return false;
+            }
+        }
+        throw error;
+    }
+    ```
+</CodeGroup>
+
+## Implementation Example
+
+<CodeGroup>
+    ```javascript JavaScript
+    class AuthJWTManager {
+        constructor() {
+            this.validationAttempts = 0;
+            this.refreshAttempts = 0;
+        }
+
+        async ensureValidToken() {
+            try {
+                if (await validateToken()) {
+                    return true;
+                }
+            } catch (error) {
+                return await handleAuthError(error);
+            }
+        }
+    }
+    ```
+</CodeGroup>
+
+## Server-Side Configuration
+
+Your server should set cookies with secure options:
+
+<CodeGroup>
+    ```javascript JavaScript
+    // Example server-side cookie configuration (Express.js)
+    res.cookie('jwt_token', token, {
+        httpOnly: true,     // Prevents JavaScript access
+        secure: true,       // Requires HTTPS
+        sameSite: 'strict', // CSRF protection
+        maxAge: 3600000,    // 1 hour
+        path: '/'           // Cookie path
+    });
+    ```
+</CodeGroup>
+
+## Security Considerations
+
+- Cookies are automatically sent with requests to your domain
+- HttpOnly prevents XSS attacks from stealing tokens
+- SameSite=Strict prevents CSRF attacks
+- Secure flag ensures cookies only work over HTTPS
+- No client-side token storage needed
+
+## Error Response
+
+The API returns a standardized error response:
+
+```json
+{
+    "code": "cocart_authentication_error",
+    "message": "Authentication failed.",
+    "status": 401
+}
+```

@@ -1,23 +1,30 @@
 ---
-title: Filters available in the core of CoCart
-sidebarTitle: 'In Core'
-description: 'These filters let you control how CoCart operates for your store'
+title: "Filters available in the core of CoCart"
+sidebarTitle: "In Core"
+description: "These filters let you control how CoCart operates for your store"
+tag: "WIP"
+'robots': "noindex, follow"
 ---
 
 ## `cocart_is_rest_api_request`
+
 Filters the REST API requested.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$is_rest_api_request` | `bool` | True if CoCart REST API is requested. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="is_rest_api_request" type="boolean">
+  True if CoCart REST API is requested.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_is_rest_api_request', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/class-cocart.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/class-cocart.php#L506)
@@ -25,19 +32,24 @@ add_filter( 'cocart_is_rest_api_request', function() {
 ---
 
 ## `cocart_register_submenu_page`
+
 Hook to register submenu_pages class handlers The array element should be 'submenu_page_slug' => array( 'class_name' => array(), 'data' => array() )
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$submenus` | `array` | Array of submenu pages. |
+<Info>
+  Made available since v3.10.0
+</Info>
 
-- **Since**: 3.10.0 Introduced.
+**Parameters**
+
+<ParamField query="submenus" type="array">
+  Array of submenu pages.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_register_submenu_page', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/admin/class-cocart-admin-menus.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/admin/class-cocart-admin-menus.php#L92)
@@ -45,9 +57,12 @@ add_filter( 'cocart_register_submenu_page', function() {
 ---
 
 ## `cocart_in_plugin_update_message`
+
 Filter allows you to change the upgrade notice.
 
-- **Since**: 4.3.0 Introduced.
+<Info>
+  Made available since v4.3.0
+</Info>
 
 **Usage**
 ```php
@@ -61,21 +76,32 @@ add_filter( 'cocart_in_plugin_update_message', function() {
 ---
 
 ## `cocart_get_plugins_with_header`
+
 Filter allows you to get the plugins that have a valid value for a specific header.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$matches` | `array` | Array of plugins matched with header. |
-| `$header` | `string` | Plugin header to search for. |
-| `$plugins` | `array` | Array of plugins installed. |
+<Info>
+  Made available since v4.3.0
+</Info>
 
-- **Since**: 4.3.0 Introduced.
+**Parameters**
+
+<ParamField query="matches" type="array">
+  Array of plugins matched with header.
+</ParamField>
+
+<ParamField query="header" type="string">
+  Plugin header to search for.
+</ParamField>
+
+<ParamField query="plugins" type="array">
+  Array of plugins installed.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_get_plugins_with_header', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/admin/plugin-updates/class-cocart-admin-plugin-updates.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/admin/plugin-updates/class-cocart-admin-plugin-updates.php#L220)
@@ -83,20 +109,28 @@ add_filter( 'cocart_get_plugins_with_header', function() {
 ---
 
 ## `cocart_get_plugins_for_cocart`
+
 Filter allows you to get plugins which "maybe" are for CoCart.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$matches` | `array` | Array of plugins that "maybe" are for CoCart. |
-| `$plugins` | `array` | Array of plugins installed. |
+<Info>
+  Made available since v4.3.0
+</Info>
 
-- **Since**: 4.3.0 Introduced.
+**Parameters**
+
+<ParamField query="matches" type="array">
+  Array of plugins that "maybe" are for CoCart.
+</ParamField>
+
+<ParamField query="plugins" type="array">
+  Array of plugins installed.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_get_plugins_for_cocart', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/admin/plugin-updates/class-cocart-admin-plugin-updates.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/admin/plugin-updates/class-cocart-admin-plugin-updates.php#L248)
@@ -104,20 +138,28 @@ add_filter( 'cocart_get_plugins_for_cocart', function() {
 ---
 
 ## `cocart_prevent_wc_admin_note_created`
+
 Filter to prevent note from being created.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$prevent_note_creation` | `bool` | False by default |
-| `$args` | `array` | Arguments to create the note. |
+<Info>
+  Made available since v3.2.0
+</Info>
 
-- **Since**: 3.2.0 Introduced
+**Parameters**
+
+<ParamField query="prevent_note_creation" type="boolean">
+  False by default.
+</ParamField>
+
+<ParamField query="args" type="array">
+  Arguments to create the note.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_prevent_wc_admin_note_created', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/admin/woocommerce/class-cocart-wc-admin-notices.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/admin/woocommerce/class-cocart-wc-admin-notices.php#L102)
@@ -125,18 +167,24 @@ add_filter( 'cocart_prevent_wc_admin_note_created', function() {
 ---
 
 ## `cocart_install_capability`
+
 Filter the current users capabilities to install a CoCart plugin.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$capability` | `string` | Capability level. |
+<Info>
+  Made available since v4.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="capability" type="string">
+  Capability level.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_install_capability', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/class-cocart-helpers.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/class-cocart-helpers.php#L560)
@@ -144,18 +192,24 @@ add_filter( 'cocart_install_capability', function() {
 ---
 
 ## `cocart_show_plugin_search`
+
 Filter if CoCart Plugin Suggestions should be active.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$show_suggestions` | `bool` | True if CoCart Plugin Suggestions is active. |
+<Info>
+  Made available since v4.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="show_suggestions" type="boolean">
+  True if CoCart Plugin Suggestions is active.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_show_plugin_search', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/class-cocart-helpers.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/class-cocart-helpers.php#L585)
@@ -163,9 +217,12 @@ add_filter( 'cocart_show_plugin_search', function() {
 ---
 
 ## `cocart_enable_setup_wizard`
+
 See if we need the setup wizard or not.
 
-- **Since**: 3.1.0 Introduced.
+<Info>
+  Made available since v3.1.0
+</Info>
 
 **Usage**
 ```php
@@ -179,9 +236,12 @@ add_filter( 'cocart_enable_setup_wizard', function() {
 ---
 
 ## `cocart_requested_cart_key`
+
 Filter allows the cart key to be overridden. Developer Note: Really only here so I don't have to create a new session handler to inject a customer ID with the POS Support Add-on.
 
-- **Since**: 4.2.0 Introduced.
+<Info>
+  Made available since v4.2.0
+</Info>
 
 **Usage**
 ```php
@@ -195,9 +255,12 @@ add_filter( 'cocart_requested_cart_key', function() {
 ---
 
 ## `cocart_cart_expiring`
+
 Filter allows you to change the amount of time before the cart starts to expire. Default is (DAY_IN_SECONDS * 6) = 6 Days
 
-- **Since**: 2.1.0 Introduced.
+<Info>
+  Made available since v2.1.0
+</Info>
 
 **Usage**
 ```php
@@ -211,9 +274,12 @@ add_filter( 'cocart_cart_expiring', function() {
 ---
 
 ## `cocart_cart_expiration`
+
 Filter allows you to change the amount of time before the cart has expired. Default is (DAY_IN_SECONDS * 7) = 7 Days
 
-- **Since**: 2.1.0 Introduced.
+<Info>
+  Made available since v2.1.0
+</Info>
 
 **Usage**
 ```php
@@ -227,9 +293,12 @@ add_filter( 'cocart_cart_expiration', function() {
 ---
 
 ## `cocart_cart_source`
+
 Filter source of cart.
 
-- **Since**: 3.0.0 Introduced.
+<Info>
+  Made available since v3.0.0
+</Info>
 
 **Usage**
 ```php
@@ -243,9 +312,12 @@ add_filter( 'cocart_cart_source', function() {
 ---
 
 ## `cocart_merge_cart_content`
+
 Filter allows you to adjust the merged cart contents.
 
-- **Since**: 2.1.0 Introduced.
+<Info>
+  Made available since v2.1.0
+</Info>
 
 **Usage**
 ```php
@@ -259,10 +331,14 @@ add_filter( 'cocart_merge_cart_content', function() {
 ---
 
 ## `cocart_disable_load_cart`
+
 Filter checks if "Load Cart from Session" feature is disabled.
 
-- **Since**: 3.0.0 Introduced.
--**Returns**: `bool`
+<Info>
+  Made available since v3.0.0
+</Info>
+
+**Returns**: `bool`
 
 **Usage**
 ```php
@@ -276,19 +352,24 @@ add_filter( 'cocart_disable_load_cart', function() {
 ---
 
 ## `cocart_load_cart_query_name`
+
 Filter allows developers to add more white labelling when loading the cart via web.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$action_query` | `string` | Default is 'cocart-load-cart' |
+<Info>
+  Made available since v2.8.2
+</Info>
 
-- **Since**: 2.8.2 Introduced.
+**Parameters**
+
+<ParamField query="action_query" type="string">
+  Default is 'cocart-load-cart'.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_load_cart_query_name', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/class-cocart-session.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/class-cocart-session.php#L396)
@@ -296,22 +377,36 @@ add_filter( 'cocart_load_cart_query_name', function() {
 ---
 
 ## `cocart_update_cart_validation`
+
 Filter allows you to determine if the updated item in cart passed validation.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$cart_valid` | `bool` | True by default. |
-| `$item_key` | `string` | Item key of the item updated. |
-| `$cart_item` | `array` | Cart item after updated. |
-| `$quantity` | `int` | New quantity amount. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="cart_valid" type="boolean">
+  True by default.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  Item key of the item updated.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  Cart item after updated.
+</ParamField>
+
+<ParamField query="quantity" type="integer">
+  New quantity amount.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_update_cart_validation', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/callbacks/update-cart.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/callbacks/update-cart.php#L88)
@@ -319,19 +414,24 @@ add_filter( 'cocart_update_cart_validation', function() {
 ---
 
 ## `cocart_auth_header`
+
 Filter allows you to change the authorization header.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$auth_header` | `string` | Authorization header. |
+<Info>
+  Made available since v4.1.0
+</Info>
 
-- **Since**: 4.1.0 Introduced.
+**Parameters**
+
+<ParamField query="auth_header" type="string">
+  Authorization header.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_auth_header', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/class-cocart-authentication.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/class-cocart-authentication.php#L220)
@@ -339,9 +439,12 @@ add_filter( 'cocart_auth_header', function() {
 ---
 
 ## `cocart_disable_all_cors`
+
 Modifies if the "Cross Origin Headers" are allowed. Set as false to enable support.
 
-- **Since**: 2.2.0 Introduced.
+<Info>
+  Made available since v2.2.0
+</Info>
 
 **Usage**
 ```php
@@ -355,21 +458,26 @@ add_filter( 'cocart_disable_all_cors', function() {
 ---
 
 ## `cocart_send_nocache_headers`
+
 <Warning>**Deprecated:** 4.3.11 No longer used. See `cocart_send_cache_control_patterns` filter instead to control which routes are not cached.</Warning>
 
 Send nocache headers on authenticated requests.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$rest_send_nocache_headers` | `bool` | Whether to send no-cache headers. |
+<Info>
+  Made available since v4.2.0
+</Info>
 
-- **Since**: 4.2.0 Introduced.
+**Parameters**
+
+<ParamField query="rest_send_nocache_headers" type="boolean">
+  Whether to send no-cache headers.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_send_nocache_headers', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/class-cocart-authentication.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/class-cocart-authentication.php#L533)
@@ -377,19 +485,24 @@ add_filter( 'cocart_send_nocache_headers', function() {
 ---
 
 ## `cocart_allow_origin`
+
 Filter allows you to change the allowed HTTP origin result.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$origin` | `string` | Origin URL if allowed, empty string if not. |
+<Info>
+  Made available since v2.5.1
+</Info>
 
-- **Since**: 2.5.1 Introduced.
+**Parameters**
+
+<ParamField query="origin" type="string">
+  Origin URL if allowed, empty string if not.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_allow_origin', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/class-cocart-authentication.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/class-cocart-authentication.php#L591)
@@ -397,21 +510,32 @@ add_filter( 'cocart_allow_origin', function() {
 ---
 
 ## `cocart_does_product_allow_price_change`
+
 Filter which products that can be allowed to override the price if not all.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$allow_change` | `bool` | Allow price change. |
-| `$cart_item` | `array` | Cart item. |
-| `$request` | `WP_REST_Request` | The request object. |
+<Info>
+  Made available since v4.1.0
+</Info>
 
-- **Since**: 4.1.0 Introduced.
+**Parameters**
+
+<ParamField query="allow_change" type="boolean">
+  Allow price change.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  Cart item.
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_does_product_allow_price_change', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/class-cocart-cart-cache.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/class-cocart-cart-cache.php#L287)
@@ -419,20 +543,28 @@ add_filter( 'cocart_does_product_allow_price_change', function() {
 ---
 
 ## `cocart_cart_item_removed_message`
+
 Filter message about item removed from the cart.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$product` | `WC_Product` | The product object. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_cart_item_removed_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/class-cocart-cart-validation.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/class-cocart-cart-validation.php#L85)
@@ -440,20 +572,32 @@ add_filter( 'cocart_cart_item_removed_message', function() {
 ---
 
 ## `cocart_cart_item_required_stock_is_not_enough`
+
 Allows filter if product have enough stock to get added to the cart.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$has_stock` | `bool` | If have enough stock. |
-| `$product` | `WC_Product` | The product object. |
-| `$cart_item` | `array` | Cart item values. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="has_stock" type="boolean">
+  If have enough stock.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  Cart item values.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_cart_item_required_stock_is_not_enough', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/class-cocart-cart-validation.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/class-cocart-cart-validation.php#L163)
@@ -461,19 +605,28 @@ add_filter( 'cocart_cart_item_required_stock_is_not_enough', function() {
 ---
 
 ## `cocart_cannot_add_product_type_to_cart_message`
+
 Filters message about product type that cannot be added to the cart.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$product_data` | `WC_Product` | The product object. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product_data" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_cannot_add_product_type_to_cart_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/class-cocart-product-validation.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/class-cocart-product-validation.php#L101)
@@ -481,11 +634,14 @@ add_filter( 'cocart_cannot_add_product_type_to_cart_message', function() {
 ---
 
 ## `cocart_return_default_response`
+
 **See Also:**
 - `cocart_{$endpoint}_response`
 Filter decides if the responses return as default or use the modified response which is filtered by the rest base.
 
-- **Since**: 3.0.0 Introduced.
+<Info>
+  Made available since v3.0.0
+</Info>
 
 **Usage**
 ```php
@@ -499,19 +655,24 @@ add_filter( 'cocart_return_default_response', function() {
 ---
 
 ## `cocart_set_customer_id`
+
 Filter allows to set the customer ID.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$current_user_id` | `int` | Current user ID. |
+<Info>
+  Made available since v4.1.0
+</Info>
 
-- **Since**: 4.1.0 Introduced.
+**Parameters**
+
+<ParamField query="current_user_id" type="integer">
+  Current user ID.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_set_customer_id', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/class-cocart-rest-api.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/class-cocart-rest-api.php#L283)
@@ -519,20 +680,28 @@ add_filter( 'cocart_set_customer_id', function() {
 ---
 
 ## `cocart_product_cannot_add_to_cart_message`
+
 Filters message about product cannot be added to cart.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$product_data` | `WC_Product` | The product object. |
+<Info>
+  Made available since v2.0.0
+</Info>
 
-- **Since**: 2.0.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product_data" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_product_cannot_add_to_cart_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-add-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-add-item-controller.php#L298)
@@ -540,20 +709,28 @@ add_filter( 'cocart_product_cannot_add_to_cart_message', function() {
 ---
 
 ## `cocart_item_added`
+
 Filter allows additional data to be returned.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$item_added` | `array` | Item added to cart. |
-| `$item_key` | `string` | Item key of the item added. |
+<Info>
+  Made available since v2.0.0
+</Info>
 
-- **Since**: 2.0.0 Introduced.
+**Parameters**
+
+<ParamField query="item_added" type="array">
+  Item added to cart.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  Item key of the item added.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_item_added', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-add-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-add-item-controller.php#L347)
@@ -561,19 +738,24 @@ add_filter( 'cocart_item_added', function() {
 ---
 
 ## `cocart_totals_calculated_message`
+
 Filters message about cart totals have been calculated.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_totals_calculated_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-calculate-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-calculate-controller.php#L97)
@@ -581,19 +763,24 @@ add_filter( 'cocart_totals_calculated_message', function() {
 ---
 
 ## `cocart_cart_cleared_message`
+
 Filters message about the cart being cleared.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_cart_cleared_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-clear-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-clear-cart-controller.php#L135)
@@ -601,19 +788,24 @@ add_filter( 'cocart_cart_cleared_message', function() {
 ---
 
 ## `cocart_clear_cart_failed_message`
+
 Filters message about the cart failing to clear.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_clear_cart_failed_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-clear-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-clear-cart-controller.php#L150)
@@ -621,9 +813,12 @@ add_filter( 'cocart_clear_cart_failed_message', function() {
 ---
 
 ## `cocart_return_empty_cart`
+
 Filter response for empty cart.
 
-- **Since**: 2.0.8 Introduced.
+<Info>
+  Made available since v2.0.8
+</Info>
 
 **Usage**
 ```php
@@ -637,21 +832,32 @@ add_filter( 'cocart_return_empty_cart', function() {
 ---
 
 ## `cocart_item_product`
+
 Filter allows you to alter the item product data returned.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$product` | `WC_Product` | The product object. |
-| `$cart_item` | `array` | The cart item data. |
-| `$item_key` | `string` | The item key currently looped. |
+<Info>
+  Made available since v2.0.0
+</Info>
 
-- **Since**: 2.0.0 Introduced.
+**Parameters**
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  The cart item data.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  The item key currently looped.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_item_product', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L242)
@@ -659,20 +865,28 @@ add_filter( 'cocart_item_product', function() {
 ---
 
 ## `cocart_cart_item_removed_message`
+
 Filter message about item removed from the cart.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$product` | `WC_Product` | The product object. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_cart_item_removed_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L260)
@@ -680,22 +894,36 @@ add_filter( 'cocart_cart_item_removed_message', function() {
 ---
 
 ## `cocart_product_title`
+
 Filters the product title in cart.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$product_title` | `string` | Product title. |
-| `$product` | `WC_Product` | The product object. |
-| `$cart_item` | `array` | Cart item. |
-| `$item_key` | `string` | Item key. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="product_title" type="string">
+  Product title.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  Cart item.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  Item key.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_product_title', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L290)
@@ -703,21 +931,32 @@ add_filter( 'cocart_product_title', function() {
 ---
 
 ## `cocart_item_thumbnail`
+
 Filters the item thumbnail ID.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$thumbnail_id` | `int` | Product thumbnail ID. |
-| `$cart_item` | `array` | Cart item. |
-| `$item_key` | `string` | Item key. |
+<Info>
+  Made available since v2.0.0
+</Info>
 
-- **Since**: 2.0.0 Introduced.
+**Parameters**
+
+<ParamField query="thumbnail_id" type="integer">
+  Product thumbnail ID.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  Cart item.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  Item key.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_item_thumbnail', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L328)
@@ -725,9 +964,12 @@ add_filter( 'cocart_item_thumbnail', function() {
 ---
 
 ## `cocart_item_thumbnail_size`
+
 Filters the thumbnail size of the product image.
 
-- **Since**: 2.0.0 Introduced.
+<Info>
+  Made available since v2.0.0
+</Info>
 
 **Usage**
 ```php
@@ -741,21 +983,32 @@ add_filter( 'cocart_item_thumbnail_size', function() {
 ---
 
 ## `cocart_item_thumbnail_src`
+
 Filters the source of the product thumbnail.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$thumbnail_src` | `string` | URL of the product thumbnail. |
-| `$cart_item` | `array` | Cart item. |
-| `$item_key` | `string` | Item key. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="thumbnail_src" type="string">
+  URL of the product thumbnail.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  Cart item.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  Item key.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_item_thumbnail_src', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L349)
@@ -763,22 +1016,36 @@ add_filter( 'cocart_item_thumbnail_src', function() {
 ---
 
 ## `cocart_cart_contents`
+
 Filter allows additional data to be returned for a specific item in cart.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$cart_contents` | `array` | Cart contents. |
-| `$item_key` | `string` | Item key. |
-| `$cart_item` | `array` | Cart item. |
-| `$product` | `WC_Product` | The product object. |
+<Info>
+  Made available since v2.0.0
+</Info>
 
-- **Since**: 2.0.0 Introduced.
+**Parameters**
+
+<ParamField query="cart_contents" type="array">
+  Cart contents.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  Item key.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  Cart item.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_cart_contents', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L365)
@@ -786,9 +1053,12 @@ add_filter( 'cocart_cart_contents', function() {
 ---
 
 ## `cocart_return_cart_session_contents`
+
 Return cart content from session if set.
 
-- **Since**: 2.1.0 Introduced.
+<Info>
+  Made available since v2.1.0
+</Info>
 
 **Usage**
 ```php
@@ -802,9 +1072,12 @@ add_filter( 'cocart_return_cart_session_contents', function() {
 ---
 
 ## `cocart_return_cart_contents`
+
 Return cart content from session if set.
 
-- **Since**: 2.1.0 Introduced.
+<Info>
+  Made available since v2.1.0
+</Info>
 
 **Usage**
 ```php
@@ -818,20 +1091,32 @@ add_filter( 'cocart_return_cart_contents', function() {
 ---
 
 ## `cocart_invalid_variation_data_message`
+
 Filters message about invalid variation data.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$attribute_label` | `string` | Attribute Label. |
-| `$attribute` | `array` | Allowed values. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="attribute_label" type="string">
+  Attribute Label.
+</ParamField>
+
+<ParamField query="attribute" type="array">
+  Allowed values.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_invalid_variation_data_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L565)
@@ -839,20 +1124,32 @@ add_filter( 'cocart_invalid_variation_data_message', function() {
 ---
 
 ## `cocart_missing_variation_data_message`
+
 Filters message about missing variation data.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$missing_attributes` | `string` | Number of missing attributes. |
-| `$missing_attributes` | `array` | List of missing attributes. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="missing_attributes" type="string">
+  Number of missing attributes.
+</ParamField>
+
+<ParamField query="missing_attributes" type="array">
+  List of missing attributes.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_missing_variation_data_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L592)
@@ -860,19 +1157,28 @@ add_filter( 'cocart_missing_variation_data_message', function() {
 ---
 
 ## `cocart_product_does_not_exist_message`
+
 Filters message about product does not exist.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$product` | `WC_Product` | The product object. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_product_does_not_exist_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L708)
@@ -880,19 +1186,28 @@ add_filter( 'cocart_product_does_not_exist_message', function() {
 ---
 
 ## `cocart_product_failed_validation_message`
+
 Filters message about product failing validation.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$product` | `WC_Product` | The product object. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_product_failed_validation_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L760)
@@ -900,22 +1215,40 @@ add_filter( 'cocart_product_failed_validation_message', function() {
 ---
 
 ## `cocart_add_to_cart_quantity`
+
 Filters the quantity for specified products.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$quantity` | `int` | The original quantity of the item. |
-| `$product_id` | `int` | The product ID. |
-| `$variation_id` | `int` | The variation ID. |
-| `$variation` | `array` | The variation data. |
-| `$cart_item_data` | `array` | The cart item data. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="quantity" type="integer">
+  The original quantity of the item.
+</ParamField>
+
+<ParamField query="product_id" type="integer">
+  The product ID.
+</ParamField>
+
+<ParamField query="variation_id" type="integer">
+  The variation ID.
+</ParamField>
+
+<ParamField query="variation" type="array">
+  The variation data.
+</ParamField>
+
+<ParamField query="cart_item_data" type="array">
+  The cart item data.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_add_to_cart_quantity', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L774)
@@ -923,9 +1256,12 @@ add_filter( 'cocart_add_to_cart_quantity', function() {
 ---
 
 ## `cocart_add_to_cart_sold_individually_quantity`
+
 Quantity for sold individual products can be filtered.
 
-- **Since**: 2.0.13 Introduced.
+<Info>
+  Made available since v2.0.13
+</Info>
 
 **Usage**
 ```php
@@ -939,9 +1275,12 @@ add_filter( 'cocart_add_to_cart_sold_individually_quantity', function() {
 ---
 
 ## `cocart_add_to_cart_sold_individually_found_in_cart`
+
 Quantity for sold individual products can be filtered.
 
-- **Since**: 2.0.13 Introduced.
+<Info>
+  Made available since v2.0.13
+</Info>
 
 **Usage**
 ```php
@@ -955,19 +1294,28 @@ add_filter( 'cocart_add_to_cart_sold_individually_found_in_cart', function() {
 ---
 
 ## `cocart_product_can_not_add_another_message`
+
 Filters message about product not being allowed to add another.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$product` | `WC_Product` | The product object. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_product_can_not_add_another_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L813)
@@ -975,19 +1323,28 @@ add_filter( 'cocart_product_can_not_add_another_message', function() {
 ---
 
 ## `cocart_product_cannot_be_purchased_message`
+
 Filters message about product unable to be purchased.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$product` | `WC_Product` | The product object. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_product_cannot_be_purchased_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L831)
@@ -995,19 +1352,28 @@ add_filter( 'cocart_product_cannot_be_purchased_message', function() {
 ---
 
 ## `cocart_product_is_out_of_stock_message`
+
 Filters message about product is out of stock.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$product` | `WC_Product` | The product object. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_product_is_out_of_stock_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L852)
@@ -1015,19 +1381,24 @@ add_filter( 'cocart_product_is_out_of_stock_message', function() {
 ---
 
 ## `cocart_no_items_in_cart_message`
+
 Filters message about no items in the cart.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_no_items_in_cart_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-count-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-count-controller.php#L117)
@@ -1035,19 +1406,24 @@ add_filter( 'cocart_no_items_in_cart_message', function() {
 ---
 
 ## `cocart_no_items_message`
+
 Filters message about no items in cart.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_no_items_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L105)
@@ -1055,20 +1431,28 @@ add_filter( 'cocart_no_items_message', function() {
 ---
 
 ## `cocart_item_not_in_cart_message`
+
 Filters message about item not in cart.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$method` | `string` | Method. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="method" type="string">
+  Method.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_item_not_in_cart_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L128)
@@ -1076,19 +1460,24 @@ add_filter( 'cocart_item_not_in_cart_message', function() {
 ---
 
 ## `cocart_can_not_remove_item_message`
+
 Filters message about can not remove item.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_can_not_remove_item_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L170)
@@ -1096,20 +1485,28 @@ add_filter( 'cocart_can_not_remove_item_message', function() {
 ---
 
 ## `cocart_cart_item_key_required_message`
+
 Filters message about cart item key required.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$method` | `string` | Method. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="method" type="string">
+  Method.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_cart_item_key_required_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L187)
@@ -1117,19 +1514,24 @@ add_filter( 'cocart_cart_item_key_required_message', function() {
 ---
 
 ## `cocart_can_not_restore_item_message`
+
 Filters message about can not restore item.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_can_not_restore_item_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L248)
@@ -1137,20 +1539,28 @@ add_filter( 'cocart_can_not_restore_item_message', function() {
 ---
 
 ## `cocart_cart_item_key_required_message`
+
 Filters message about cart item key required.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$method` | `string` | Method. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="method" type="string">
+  Method.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_cart_item_key_required_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L265)
@@ -1158,20 +1568,28 @@ add_filter( 'cocart_cart_item_key_required_message', function() {
 ---
 
 ## `cocart_item_not_in_cart_message`
+
 Filters message about cart item key required.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$method` | `string` | Method. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="method" type="string">
+  Method.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_item_not_in_cart_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L312)
@@ -1179,19 +1597,28 @@ add_filter( 'cocart_item_not_in_cart_message', function() {
 ---
 
 ## `cocart_can_not_increase_quantity_message`
+
 Filters message about product not being allowed to increase quantity.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$current_data` | `WC_Product` | The product object. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="current_data" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_can_not_increase_quantity_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L368)
@@ -1199,19 +1626,24 @@ add_filter( 'cocart_can_not_increase_quantity_message', function() {
 ---
 
 ## `cocart_can_not_update_item_message`
+
 Filters message about can not update item.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_can_not_update_item_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L413)
@@ -1219,22 +1651,36 @@ add_filter( 'cocart_can_not_update_item_message', function() {
 ---
 
 ## `cocart_update_item`
+
 Filter allows you to alter the returned response once item is updated.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$response` | `array` | Response returned. |
-| `$new_data` | `array` | Item data. |
-| `$quantity` | `float` | Requested quantity to update for item. |
-| `$product_data` | `WC_Product` | The product object. |
+<Info>
+  Made available since v2.0.0
+</Info>
 
-- **Since**: 2.0.0 Introduced.
+**Parameters**
+
+<ParamField query="response" type="array">
+  Response returned.
+</ParamField>
+
+<ParamField query="new_data" type="array">
+  Item data.
+</ParamField>
+
+<ParamField query="quantity" type="float">
+  Requested quantity to update for item.
+</ParamField>
+
+<ParamField query="product_data" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_update_item', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L469)
@@ -1242,20 +1688,28 @@ add_filter( 'cocart_update_item', function() {
 ---
 
 ## `cocart_cart_item_key_required_message`
+
 Filters message about cart item key required.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$method` | `string` | Method. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="method" type="string">
+  Method.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_cart_item_key_required_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L486)
@@ -1263,20 +1717,32 @@ add_filter( 'cocart_cart_item_key_required_message', function() {
 ---
 
 ## `cocart_prepare_product_attribute`
+
 Filter a attribute item returned from the API. Allows modification of the product attribute data right before it is returned.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$response` | `WP_REST_Response` | The response object. |
-| `$item` | `object` | The original attribute object. |
-| `$request` | `WP_REST_Request` | The request object. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="response" type="WP_REST_Response">
+  The response object.
+</ParamField>
+
+<ParamField query="item" type="object">
+  The original attribute object.
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_prepare_product_attribute', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/products/class-cocart-product-attributes-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/products/class-cocart-product-attributes-controller.php#L154)
@@ -1284,19 +1750,28 @@ add_filter( 'cocart_prepare_product_attribute', function() {
 ---
 
 ## `cocart_product_review_query`
+
 Filters arguments, before passing to WP_Comment_Query, when querying reviews via the REST API.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$prepared_args` | `array` | Array of arguments for WP_Comment_Query. |
-| `$request` | `WP_REST_Request` | The request object. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="prepared_args" type="array">
+  Array of arguments for WP_Comment_Query.
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_product_review_query', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php#L258)
@@ -1304,19 +1779,28 @@ add_filter( 'cocart_product_review_query', function() {
 ---
 
 ## `cocart_pre_insert_product_review`
+
 Filters a review before it is inserted via the REST API. Allows modification of the review right before it is inserted via wp_insert_comment(). Returning a WP_Error value from the filter will short circuit insertion and allow skipping further processing.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$prepared_review` | `array|WP_Error` | The prepared review data for wp_insert_comment(). |
-| `$request` | `WP_REST_Request` | Full details about the request. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="prepared_review" type="array|WP_Error">
+  The prepared review data for wp_insert_comment().
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  Full details about the request.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_pre_insert_product_review', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php#L406)
@@ -1324,20 +1808,32 @@ add_filter( 'cocart_pre_insert_product_review', function() {
 ---
 
 ## `cocart_prepare_product_review`
+
 Filter product reviews object returned from the REST API.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$response` | `WP_REST_Response` | The response object. |
-| `$review` | `WP_Comment` | Product review object used to create response. |
-| `$request` | `WP_REST_Request` | The request object. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="response" type="WP_REST_Response">
+  The response object.
+</ParamField>
+
+<ParamField query="review" type="WP_Comment">
+  Product review object used to create response.
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_prepare_product_review', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php#L534)
@@ -1345,19 +1841,28 @@ add_filter( 'cocart_prepare_product_review', function() {
 ---
 
 ## `cocart_preprocess_product_review`
+
 Filters a review after it is prepared for the database. Allows modification of the review right after it is prepared for the database.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$prepared_review` | `array` | The prepared review data for `wp_insert_comment`. |
-| `$request` | `WP_REST_Request` | The request object. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="prepared_review" type="array">
+  The prepared review data for `wp_insert_comment`.
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_preprocess_product_review', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php#L589)
@@ -1365,18 +1870,24 @@ add_filter( 'cocart_preprocess_product_review', function() {
 ---
 
 ## `cocart_product_review_collection_params`
+
 Filter collection parameters for the reviews controller. This filter registers the collection parameter, but does not map the collection parameter to an internal WP_Comment_Query parameter. Use the `cocart_product_review_query` filter to set WP_Comment_Query parameters.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$params` | `array` | JSON Schema-formatted collection parameters. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="params" type="array">
+  JSON Schema-formatted collection parameters.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_product_review_collection_params', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php#L825)
@@ -1384,20 +1895,32 @@ add_filter( 'cocart_product_review_collection_params', function() {
 ---
 
 ## `cocart_prepare_product_object`
+
 Filter the data for a response.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$response` | `WP_REST_Response` | The response object. |
-| `$product` | `WC_Product` | The product object. |
-| `$request` | `WP_REST_Request` | The request object. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="response" type="WP_REST_Response">
+  The response object.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_prepare_product_object', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v1/products/class-cocart-products-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/products/class-cocart-products-controller.php#L334)
@@ -1405,22 +1928,36 @@ add_filter( 'cocart_prepare_product_object', function() {
 ---
 
 ## `cocart_cart_item_name`
+
 Filter allows the product name of the item to change.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$product_name` | `string` | Product name. |
-| `$product` | `WC_Product` | The product object. |
-| `$cart_item` | `array` | The cart item data. |
-| `$item_key` | `string` | The item key generated based on the details of the item. |
+<Info>
+  Made available since v3.0.0
+</Info>
 
-- **Since**: 3.0.0 Introduced.
+**Parameters**
+
+<ParamField query="product_name" type="string">
+  Product name.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  The cart item data.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  The item key generated based on the details of the item.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_cart_item_name', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/admin/class-cocart-session-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/admin/class-cocart-session-controller.php#L363)
@@ -1428,22 +1965,36 @@ add_filter( 'cocart_cart_item_name', function() {
 ---
 
 ## `cocart_cart_item_title`
+
 Filter allows the product title of the item to change.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$product_title` | `string` | Product title. |
-| `$product` | `WC_Product` | The product object. |
-| `$cart_item` | `array` | The cart item data. |
-| `$item_key` | `string` | The item key generated based on the details of the item. |
+<Info>
+  Made available since v3.0.0
+</Info>
 
-- **Since**: 3.0.0 Introduced.
+**Parameters**
+
+<ParamField query="product_title" type="string">
+  Product title.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  The cart item data.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  The item key generated based on the details of the item.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_cart_item_title', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/admin/class-cocart-session-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/admin/class-cocart-session-controller.php#L374)
@@ -1451,20 +2002,28 @@ add_filter( 'cocart_cart_item_title', function() {
 ---
 
 ## `cocart_cart_item_data`
+
 Filter allows you to alter the remaining cart item data.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$cart_item` | `array` | The cart item data. |
-| `$item_key` | `string` | Generated ID based on the product information when added to the cart. |
+<Info>
+  Made available since v3.0.0
+</Info>
 
-- **Since**: 3.0.0 Introduced.
+**Parameters**
+
+<ParamField query="cart_item" type="array">
+  The cart item data.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  Generated ID based on the product information when added to the cart.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_cart_item_data', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/admin/class-cocart-session-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/admin/class-cocart-session-controller.php#L452)
@@ -1472,20 +2031,28 @@ add_filter( 'cocart_cart_item_data', function() {
 ---
 
 ## `cocart_item_thumbnail_size`
+
 Filters the thumbnail size of the product image.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$thumbnail_size` | `string` | Thumbnail size. |
-| `$removed_item` | `bool` | Determines if the item in the cart is removed. |
+<Info>
+  Made available since v2.0.0
+</Info>
 
-- **Since**: 2.0.0 Introduced.
+**Parameters**
+
+<ParamField query="thumbnail_size" type="string">
+  Thumbnail size.
+</ParamField>
+
+<ParamField query="removed_item" type="boolean">
+  Determines if the item in the cart is removed.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_item_thumbnail_size', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/admin/class-cocart-session-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/admin/class-cocart-session-controller.php#L484)
@@ -1493,21 +2060,32 @@ add_filter( 'cocart_item_thumbnail_size', function() {
 ---
 
 ## `cocart_skip_woocommerce_item_validation`
+
 Filter the item to skip product validation as it is added to cart.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$validate_product` | `bool` | Whether to validate the product or not. |
-| `$product_data` | `array` | Contains the product data of the product to add to cart. |
-| `$product_id` | `int` | The product ID. |
+<Info>
+  Made available since v3.0.0
+</Info>
 
-- **Since**: 3.0.0 Introduced.
+**Parameters**
+
+<ParamField query="validate_product" type="boolean">
+  Whether to validate the product or not.
+</ParamField>
+
+<ParamField query="product_data" type="array">
+  Contains the product data of the product to add to cart.
+</ParamField>
+
+<ParamField query="product_id" type="integer">
+  The product ID.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_skip_woocommerce_item_validation', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-add-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-add-item-controller.php#L388)
@@ -1515,19 +2093,28 @@ add_filter( 'cocart_skip_woocommerce_item_validation', function() {
 ---
 
 ## `cocart_product_cannot_add_to_cart_message`
+
 Filters message about product cannot be added to cart.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$product_data` | `WC_Product` | The product object. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product_data" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_product_cannot_add_to_cart_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-add-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-add-item-controller.php#L433)
@@ -1535,9 +2122,12 @@ add_filter( 'cocart_product_cannot_add_to_cart_message', function() {
 ---
 
 ## `cocart_add_item_query_parameters`
+
 Filters the query parameters for adding item to cart. This filter allows you to extend the query parameters without removing any default parameters.
 
-- **Since**: 3.1.0 Introduced.
+<Info>
+  Made available since v3.1.0
+</Info>
 
 **Usage**
 ```php
@@ -1551,9 +2141,12 @@ add_filter( 'cocart_add_item_query_parameters', function() {
 ---
 
 ## `cocart_add_items_query_parameters`
+
 Extends the query parameters. Dev Note: Nothing needs to pass so your safe if you think you will remove any default parameters.
 
-- **Since**: 3.1.0 Introduced.
+<Info>
+  Made available since v3.1.0
+</Info>
 
 **Usage**
 ```php
@@ -1567,20 +2160,28 @@ add_filter( 'cocart_add_items_query_parameters', function() {
 ---
 
 ## `cocart_get_cart_item`
+
 Filters the cart item before it is returned.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$item` | `array` | Details of the item in the cart if it exists. |
-| `$condition` | `string` | Condition of item. Default: "add", Option: "add", "remove", "restore", "update". |
+<Info>
+  Made available since v3.0.0
+</Info>
 
-- **Since**: 3.0.0 Introduced.
+**Parameters**
+
+<ParamField query="item" type="array">
+  Details of the item in the cart if it exists.
+</ParamField>
+
+<ParamField query="condition" type="string">
+  Condition of item. Default: "add", Option: "add", "remove", "restore", "update".
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_get_cart_item', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L121)
@@ -1588,9 +2189,12 @@ add_filter( 'cocart_get_cart_item', function() {
 ---
 
 ## `cocart_empty_cart`
+
 Filter response for empty cart.
 
-- **Since**: 3.0.0 Introduced.
+<Info>
+  Made available since v3.0.0
+</Info>
 
 **Usage**
 ```php
@@ -1604,9 +2208,12 @@ add_filter( 'cocart_empty_cart', function() {
 ---
 
 ## `cocart_quantity_minimum_requirement`
+
 Filter allows control over the minimum quantity a customer must add to purchase said item.
 
-- **Since**: 3.0.17 Introduced.
+<Info>
+  Made available since v3.0.17
+</Info>
 
 **Usage**
 ```php
@@ -1620,9 +2227,12 @@ add_filter( 'cocart_quantity_minimum_requirement', function() {
 ---
 
 ## `cocart_quantity_maximum_allowed`
+
 Filter allows control over the maximum quantity a customer is able to add said item to the cart.
 
-- **Since**: 3.1.0 Introduced.
+<Info>
+  Made available since v3.1.0
+</Info>
 
 **Usage**
 ```php
@@ -1636,21 +2246,32 @@ add_filter( 'cocart_quantity_maximum_allowed', function() {
 ---
 
 ## `cocart_invalid_variation_data_message`
+
 Filters message about invalid variation data.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$attribute_label` | `string` | Attribute Label. |
-| `$attribute` | `array` | Allowed values. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="attribute_label" type="string">
+  Attribute Label.
+</ParamField>
+
+<ParamField query="attribute" type="array">
+  Allowed values.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_invalid_variation_data_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L529)
@@ -1658,21 +2279,32 @@ add_filter( 'cocart_invalid_variation_data_message', function() {
 ---
 
 ## `cocart_missing_variation_data_message`
+
 Filters message about missing variation data.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$missing_attributes` | `string` | Number of missing attributes. |
-| `$missing_attributes` | `array` | List of missing attributes. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="missing_attributes" type="string">
+  Number of missing attributes.
+</ParamField>
+
+<ParamField query="missing_attributes" type="array">
+  List of missing attributes.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_missing_variation_data_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L561)
@@ -1680,20 +2312,28 @@ add_filter( 'cocart_missing_variation_data_message', function() {
 ---
 
 ## `cocart_product_failed_validation_message`
+
 Filters message about product failing validation.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$product` | `WC_Product` | The product object. |
+<Info>
+  Made available since v1.0.0
+</Info>
 
-- **Since**: 1.0.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_product_failed_validation_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L731)
@@ -1701,20 +2341,28 @@ add_filter( 'cocart_product_failed_validation_message', function() {
 ---
 
 ## `cocart_product_cannot_be_added_message`
+
 Filters message about product that cannot be added to cart.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$product` | `WC_Product` | The product object. |
+<Info>
+  Made available since v3.0.0
+</Info>
 
-- **Since**: 3.0.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_product_cannot_be_added_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L1081)
@@ -1722,9 +2370,12 @@ add_filter( 'cocart_product_cannot_be_added_message', function() {
 ---
 
 ## `cocart_add_to_cart_sold_individually_quantity`
+
 Quantity for sold individual products can be filtered.
 
-- **Since**: 2.0.13 Introduced.
+<Info>
+  Made available since v2.0.13
+</Info>
 
 **Usage**
 ```php
@@ -1738,9 +2389,12 @@ add_filter( 'cocart_add_to_cart_sold_individually_quantity', function() {
 ---
 
 ## `cocart_add_to_cart_sold_individually_found_in_cart`
+
 Quantity for sold individual products can be filtered.
 
-- **Since**: 2.0.13 Introduced.
+<Info>
+  Made available since v2.0.13
+</Info>
 
 **Usage**
 ```php
@@ -1754,20 +2408,28 @@ add_filter( 'cocart_add_to_cart_sold_individually_found_in_cart', function() {
 ---
 
 ## `cocart_product_can_not_add_another_message`
+
 Filters message about product not being allowed to add another.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$product` | `WC_Product` | The product object. |
+<Info>
+  Made available since v3.0.0
+</Info>
 
-- **Since**: 3.0.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_product_can_not_add_another_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L1142)
@@ -1775,20 +2437,28 @@ add_filter( 'cocart_product_can_not_add_another_message', function() {
 ---
 
 ## `cocart_product_is_out_of_stock_message`
+
 Filters message about product is out of stock.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$product` | `WC_Product` | The product object. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_product_is_out_of_stock_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L1190)
@@ -1796,21 +2466,32 @@ add_filter( 'cocart_product_is_out_of_stock_message', function() {
 ---
 
 ## `cocart_product_not_enough_stock_message`
+
 Filters message about product not having enough stock.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$product` | `WC_Product` | The product object. |
-| `$stock_quantity` | `int` | Quantity remaining. |
+<Info>
+  Made available since v3.1.0
+</Info>
 
-- **Since**: 3.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+<ParamField query="stock_quantity" type="integer">
+  Quantity remaining.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_product_not_enough_stock_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L1223)
@@ -1818,9 +2499,12 @@ add_filter( 'cocart_product_not_enough_stock_message', function() {
 ---
 
 ## `cocart_filter_request_data`
+
 Filters additional requested data.
 
-- **Since**: 3.0.0 Introduced.
+<Info>
+  Made available since v3.0.0
+</Info>
 
 **Usage**
 ```php
@@ -1834,22 +2518,36 @@ add_filter( 'cocart_filter_request_data', function() {
 ---
 
 ## `cocart_cart_item_name`
+
 Filter allows the product name of the item to change.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$product_name` | `string` | Product name. |
-| `$_product` | `WC_Product` | The product object. |
-| `$cart_item` | `array` | The cart item data. |
-| `$item_key` | `string` | The item key generated based on the details of the item. |
+<Info>
+  Made available since v3.0.0
+</Info>
 
-- **Since**: 3.0.0 Introduced.
+**Parameters**
+
+<ParamField query="product_name" type="string">
+  Product name.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  The cart item data.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  The item key generated based on the details of the item.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_cart_item_name', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L1323)
@@ -1857,22 +2555,36 @@ add_filter( 'cocart_cart_item_name', function() {
 ---
 
 ## `cocart_cart_item_title`
+
 Filter allows the product title of the item to change.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$product_title` | `string` | Product title. |
-| `$_product` | `WC_Product` | The product object. |
-| `$cart_item` | `array` | The cart item data. |
-| `$item_key` | `string` | The item key generated based on the details of the item. |
+<Info>
+  Made available since v3.0.0
+</Info>
 
-- **Since**: 3.0.0 Introduced.
+**Parameters**
+
+<ParamField query="product_title" type="string">
+  Product title.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  The cart item data.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  The item key generated based on the details of the item.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_cart_item_title', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L1334)
@@ -1880,20 +2592,28 @@ add_filter( 'cocart_cart_item_title', function() {
 ---
 
 ## `cocart_cart_item_data`
+
 Filter allows you to alter the remaining cart item data.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$cart_item` | `array` | The cart item data. |
-| `$item_key` | `string` | Generated ID based on the product information when added to the cart. |
+<Info>
+  Made available since v3.0.0
+</Info>
 
-- **Since**: 3.0.0 Introduced.
+**Parameters**
+
+<ParamField query="cart_item" type="array">
+  The cart item data.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  Generated ID based on the product information when added to the cart.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_cart_item_data', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L1460)
@@ -1901,19 +2621,24 @@ add_filter( 'cocart_cart_item_data', function() {
 ---
 
 ## `cocart_item_thumbnail_size`
+
 Filters the thumbnail size of the product image.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$removed_item` | `bool` | Determines if the item in the cart is removed. |
+<Info>
+  Made available since v2.0.0
+</Info>
 
-- **Since**: 2.0.0 Introduced.
+**Parameters**
+
+<ParamField query="removed_item" type="boolean">
+  Determines if the item in the cart is removed.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_item_thumbnail_size', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L1488)
@@ -1921,21 +2646,32 @@ add_filter( 'cocart_item_thumbnail_size', function() {
 ---
 
 ## `cocart_item_product`
+
 Filter allows you to alter the item product data returned.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$product` | `WC_Product` | The product object. |
-| `$cart_item` | `array` | The cart item data. |
-| `$item_key` | `string` | The item key currently looped. |
+<Info>
+  Made available since v2.0.0
+</Info>
 
-- **Since**: 2.0.0 Introduced.
+**Parameters**
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  The cart item data.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  The item key currently looped.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_item_product', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L1546)
@@ -1943,22 +2679,36 @@ add_filter( 'cocart_item_product', function() {
 ---
 
 ## `cocart_cart_items`
+
 Filter allows additional data to be returned for a specific item in cart.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$items` | `array` | Array of items in the cart. |
-| `$item_key` | `string` | The item key currently looped. |
-| `$cart_item` | `array` | The cart item data. |
-| `$product` | `WC_Product` | The product object. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="items" type="array">
+  Array of items in the cart.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  The item key currently looped.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  The cart item data.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_cart_items', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L1560)
@@ -1966,19 +2716,24 @@ add_filter( 'cocart_cart_items', function() {
 ---
 
 ## `cocart_cross_sells`
+
 Filters the cross sell items.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$request` | `WP_REST_Request` | The request object. |
+<Info>
+  Made available since v3.0.0
+</Info>
 
-- **Since**: 3.0.0 Introduced.
+**Parameters**
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_cross_sells', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L1689)
@@ -1986,20 +2741,28 @@ add_filter( 'cocart_cross_sells', function() {
 ---
 
 ## `cocart_shipping_package_details_array`
+
 Filter allows you to change the package details.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$product_names` | `array` | Product names. |
-| `$package` | `array` | Package details. |
+<Info>
+  Made available since v3.0.0
+</Info>
 
-- **Since**: 3.0.0 Introduced.
+**Parameters**
+
+<ParamField query="product_names" type="array">
+  Product names.
+</ParamField>
+
+<ParamField query="package" type="array">
+  Package details.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_shipping_package_details_array', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L1740)
@@ -2007,19 +2770,24 @@ add_filter( 'cocart_shipping_package_details_array', function() {
 ---
 
 ## `cocart_shipping_package_name`
+
 Filters the package name for the shipping method.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$shipping_name` | `string` | Shipping name. |
+<Info>
+  Made available since v3.0.0
+</Info>
 
-- **Since**: 3.0.0 Introduced.
+**Parameters**
+
+<ParamField query="shipping_name" type="string">
+  Shipping name.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_shipping_package_name', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L1765)
@@ -2027,20 +2795,28 @@ add_filter( 'cocart_shipping_package_name', function() {
 ---
 
 ## `cocart_available_shipping_packages`
+
 Filter allows you to alter the shipping packages returned.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$packages` | `array` | Available shipping packages. |
-| `$chosen_method` | `array` | Chosen shipping method. |
+<Info>
+  Made available since v4.1.0
+</Info>
 
-- **Since**: 4.1.0 Introduced.
+**Parameters**
+
+<ParamField query="packages" type="array">
+  Available shipping packages.
+</ParamField>
+
+<ParamField query="chosen_method" type="array">
+  Chosen shipping method.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_available_shipping_packages', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-cart-controller.php#L1811)
@@ -2048,12 +2824,16 @@ add_filter( 'cocart_available_shipping_packages', function() {
 ---
 
 ## `cocart_cart_items_schema`
+
 <Warning>**Deprecated:** 3.1.0 Use `cocart_cart_items_schema` filter instead.</Warning>
 
 **See Also:**
 - `cocart_cart_items_schema`
 This filter is now deprecated and is replaced with `cocart_cart_items_schema`.
 
+<Info>
+  Made available since v3.1.0
+</Info>
 
 **Usage**
 ```php
@@ -2067,9 +2847,12 @@ add_filter( 'cocart_cart_items_schema', function() {
 ---
 
 ## `cocart_cart_items_schema`
+
 Extend the cart schema properties for items. This filter allows you to extend the cart schema properties for items without removing any default properties.
 
-- **Since**: 3.1.0 Introduced.
+<Info>
+  Made available since v3.1.0
+</Info>
 
 **Usage**
 ```php
@@ -2083,9 +2866,12 @@ add_filter( 'cocart_cart_items_schema', function() {
 ---
 
 ## `cocart_cart_query_parameters`
+
 Extend the query parameters for the cart. This filter allows you to extend the query parameters without removing any default parameters.
 
-- **Since**: 3.1.0 Introduced.
+<Info>
+  Made available since v3.1.0
+</Info>
 
 **Usage**
 ```php
@@ -2099,19 +2885,24 @@ add_filter( 'cocart_cart_query_parameters', function() {
 ---
 
 ## `cocart_cart_cleared_message`
+
 Filters message about the cart being cleared.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_cart_cleared_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-clear-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-clear-cart-controller.php#L149)
@@ -2119,19 +2910,24 @@ add_filter( 'cocart_cart_cleared_message', function() {
 ---
 
 ## `cocart_clear_cart_failed_message`
+
 Filters message about the cart failing to clear.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_clear_cart_failed_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-clear-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-clear-cart-controller.php#L169)
@@ -2139,19 +2935,24 @@ add_filter( 'cocart_clear_cart_failed_message', function() {
 ---
 
 ## `cocart_no_items_in_cart_message`
+
 Filters message about no items in the cart.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_no_items_in_cart_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-count-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-count-controller.php#L110)
@@ -2159,20 +2960,28 @@ add_filter( 'cocart_no_items_in_cart_message', function() {
 ---
 
 ## `cocart_item_not_in_cart_message`
+
 Filters message about cart item key required.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$method` | `string` | Method. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="method" type="string">
+  Method.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_item_not_in_cart_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-item-controller.php#L101)
@@ -2180,19 +2989,24 @@ add_filter( 'cocart_item_not_in_cart_message', function() {
 ---
 
 ## `cocart_no_items_in_cart_message`
+
 Filters message about no items in the cart.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_no_items_in_cart_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-items-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-items-controller.php#L88)
@@ -2200,19 +3014,24 @@ add_filter( 'cocart_no_items_in_cart_message', function() {
 ---
 
 ## `cocart_no_items_message`
+
 Filters message about no items in cart.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_no_items_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-remove-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-remove-item-controller.php#L97)
@@ -2220,18 +3039,24 @@ add_filter( 'cocart_no_items_message', function() {
 ---
 
 ## `cocart_item_removed_message`
+
 Filters message about item removed from cart.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_item_removed_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-remove-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-remove-item-controller.php#L146)
@@ -2239,19 +3064,24 @@ add_filter( 'cocart_item_removed_message', function() {
 ---
 
 ## `cocart_can_not_remove_item_message`
+
 Filters message about can not remove item.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_can_not_remove_item_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-remove-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-remove-item-controller.php#L196)
@@ -2259,18 +3089,24 @@ add_filter( 'cocart_can_not_remove_item_message', function() {
 ---
 
 ## `cocart_item_restored_message`
+
 Filters message about item already restored to cart.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_item_restored_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-restore-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-restore-item-controller.php#L118)
@@ -2278,9 +3114,12 @@ add_filter( 'cocart_item_restored_message', function() {
 ---
 
 ## `cocart_cart_item_restored_title`
+
 Re-calculate totals now an item has been restored.
 
-- **Since**: 2.1.0 Introduced.
+<Info>
+  Made available since v2.1.0
+</Info>
 
 **Usage**
 ```php
@@ -2294,19 +3133,24 @@ add_filter( 'cocart_cart_item_restored_title', function() {
 ---
 
 ## `cocart_cart_item_restored_message`
+
 Filters message about item restored.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$restored_message` | `string` | Message. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="restored_message" type="string">
+  Message.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_cart_item_restored_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-restore-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-restore-item-controller.php#L163)
@@ -2314,19 +3158,24 @@ add_filter( 'cocart_cart_item_restored_message', function() {
 ---
 
 ## `cocart_can_not_restore_item_message`
+
 Filters message about can not restore item.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_can_not_restore_item_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-restore-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-restore-item-controller.php#L187)
@@ -2334,20 +3183,28 @@ add_filter( 'cocart_can_not_restore_item_message', function() {
 ---
 
 ## `cocart_item_not_in_cart_message`
+
 Filters message about cart item key required.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$method` | `string` | Method. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="method" type="string">
+  Method.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_item_not_in_cart_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-update-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-update-item-controller.php#L108)
@@ -2355,22 +3212,36 @@ add_filter( 'cocart_item_not_in_cart_message', function() {
 ---
 
 ## `cocart_update_cart_validation`
+
 Filter allows you to determine if the updated item in cart passed validation.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$cart_valid` | `bool` | True by default. |
-| `$item_key` | `string` | Item key. |
-| `$current_data` | `array` | Product data of the item in cart. |
-| `$quantity` | `float` | The requested quantity to change to. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="cart_valid" type="boolean">
+  True by default.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  Item key.
+</ParamField>
+
+<ParamField query="current_data" type="array">
+  Product data of the item in cart.
+</ParamField>
+
+<ParamField query="quantity" type="float">
+  The requested quantity to change to.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_update_cart_validation', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-update-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-update-item-controller.php#L144)
@@ -2378,20 +3249,28 @@ add_filter( 'cocart_update_cart_validation', function() {
 ---
 
 ## `cocart_can_not_increase_quantity_message`
+
 Filters message about product not being allowed to increase quantity.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$product` | `WC_Product` | The product object. |
+<Info>
+  Made available since v1.0.0
+</Info>
 
-- **Since**: 1.0.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_can_not_increase_quantity_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-update-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-update-item-controller.php#L167)
@@ -2399,19 +3278,24 @@ add_filter( 'cocart_can_not_increase_quantity_message', function() {
 ---
 
 ## `cocart_can_not_update_item_message`
+
 Filters message about can not update item.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_can_not_update_item_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-update-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-update-item-controller.php#L209)
@@ -2419,22 +3303,36 @@ add_filter( 'cocart_can_not_update_item_message', function() {
 ---
 
 ## `cocart_update_item`
+
 Filters the update status.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$response` | `array` | Status response. |
-| `$new_data` | `array` | Cart item. |
-| `$quantity` | `int` | Quantity. |
-| `$product` | `WC_Product` | The product object. |
+<Info>
+  Made available since v2.0.1
+</Info>
 
-- **Since**: 2.0.1 Introduced.
+**Parameters**
+
+<ParamField query="response" type="array">
+  Status response.
+</ParamField>
+
+<ParamField query="new_data" type="array">
+  Cart item.
+</ParamField>
+
+<ParamField query="quantity" type="integer">
+  Quantity.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_update_item', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/cart/class-cocart-update-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/cart/class-cocart-update-item-controller.php#L263)
@@ -2442,20 +3340,28 @@ add_filter( 'cocart_update_item', function() {
 ---
 
 ## `cocart_login_extras`
+
 Filter allows you to add extra information based on the current user.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$extra_information` | `array` | The extra information. |
-| `$current_user` | `object` | The current user. |
+<Info>
+  Made available since v3.8.1
+</Info>
 
-- **Since**: 3.8.1 Introduced.
+**Parameters**
+
+<ParamField query="extra_information" type="array">
+  The extra information.
+</ParamField>
+
+<ParamField query="current_user" type="object">
+  The current user.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_login_extras', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/others/class-cocart-login-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/others/class-cocart-login-controller.php#L120)
@@ -2463,18 +3369,24 @@ add_filter( 'cocart_login_extras', function() {
 ---
 
 ## `cocart_store_index`
+
 Filters the API store index data. This contains the data describing the API. This includes information about the store, routes available on the API, and a small amount of data about the site.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$response` | `WP_REST_Response` | Response data. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="response" type="WP_REST_Response">
+  Response data.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_store_index', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/others/class-cocart-store-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/others/class-cocart-store-controller.php#L116)
@@ -2482,22 +3394,36 @@ add_filter( 'cocart_store_index', function() {
 ---
 
 ## `cocart_products_add_to_cart_rest_url`
+
 Filters the REST URL shortcut for adding the product to cart.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$rest_url` | `string` | REST URL for adding product to the cart. |
-| `$product` | `WC_Product` | The product object. |
-| `$type` | `string` | Product type. |
-| `$id` | `int` | Product ID. |
+<Info>
+  Made available since v3.1.0
+</Info>
 
-- **Since**: 3.1.0 Introduced.
+**Parameters**
+
+<ParamField query="rest_url" type="string">
+  REST URL for adding product to the cart.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+<ParamField query="type" type="string">
+  Product type.
+</ParamField>
+
+<ParamField query="id" type="integer">
+  Product ID.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_products_add_to_cart_rest_url', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/products/class-cocart-products-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/products/class-cocart-products-controller.php#L920)
@@ -2505,9 +3431,12 @@ add_filter( 'cocart_products_add_to_cart_rest_url', function() {
 ---
 
 ## `cocart_products_variable_empty_price`
+
 Filter the variable products empty prices.
 
-- **Since**: 3.1.0 Introduced.
+<Info>
+  Made available since v3.1.0
+</Info>
 
 **Usage**
 ```php
@@ -2521,20 +3450,28 @@ add_filter( 'cocart_products_variable_empty_price', function() {
 ---
 
 ## `cocart_products_get_price_range`
+
 Filters the products price range.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$price` | `array` | The current product price range. |
-| `$product` | `WC_Product` | The product object. |
+<Info>
+  Made available since v3.1.0
+</Info>
 
-- **Since**: 3.1.0 Introduced.
+**Parameters**
+
+<ParamField query="price" type="array">
+  The current product price range.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_products_get_price_range', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/products/class-cocart-products-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/products/class-cocart-products-controller.php#L1051)
@@ -2542,19 +3479,24 @@ add_filter( 'cocart_products_get_price_range', function() {
 ---
 
 ## `cocart_products_ignore_private_meta_keys`
+
 Filter allows you to ignore private meta data for the product to return. When filtering, only list the meta key!
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$product` | `WC_Product` | The product object. |
+<Info>
+  Made available since v3.11.0
+</Info>
 
-- **Since**: 3.11.0 Introduced.
+**Parameters**
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_products_ignore_private_meta_keys', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/products/class-cocart-products-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/products/class-cocart-products-controller.php#L1084)
@@ -2562,19 +3504,24 @@ add_filter( 'cocart_products_ignore_private_meta_keys', function() {
 ---
 
 ## `cocart_products_get_safe_meta_data`
+
 Filter allows you to control what remaining product meta data is safe to return.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$product` | `WC_Product` | The product object. |
+<Info>
+  Made available since v3.11.0
+</Info>
 
-- **Since**: 3.11.0 Introduced.
+**Parameters**
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_products_get_safe_meta_data', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/rest-api/controllers/v2/products/class-cocart-products-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v2/products/class-cocart-products-controller.php#L1109)
@@ -2582,19 +3529,28 @@ add_filter( 'cocart_products_get_safe_meta_data', function() {
 ---
 
 ## `cocart_product_cannot_be_purchased_message`
+
 Filters message about product unable to be purchased.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$product` | `WC_Product` | The product object. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_product_cannot_be_purchased_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/utilities/class-cocart-utilities-cart-helpers.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/utilities/class-cocart-utilities-cart-helpers.php#L214)
@@ -2602,20 +3558,28 @@ add_filter( 'cocart_product_cannot_be_purchased_message', function() {
 ---
 
 ## `cocart_cart_item_key_required_message`
+
 Filters message about cart item key required.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$message` | `string` | Message. |
-| `$status` | `string` | Status of which we are checking the item key. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
-- **Since**: 2.1.0 Introduced.
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Status of which we are checking the item key.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_cart_item_key_required_message', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/utilities/class-cocart-utilities-cart-helpers.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/utilities/class-cocart-utilities-cart-helpers.php#L249)
@@ -2623,9 +3587,12 @@ add_filter( 'cocart_cart_item_key_required_message', function() {
 ---
 
 ## `cocart_quantity_minimum_requirement`
+
 Filters the minimum quantity requirement the product allows to be purchased.
 
-- **Since**: 3.1.0 Introduced.
+<Info>
+  Made available since v3.1.0
+</Info>
 
 **Usage**
 ```php
@@ -2639,9 +3606,12 @@ add_filter( 'cocart_quantity_minimum_requirement', function() {
 ---
 
 ## `cocart_quantity_maximum_allowed`
+
 Filters the products maximum quantity allowed to be purchased.
 
-- **Since**: 3.1.0 Introduced.
+<Info>
+  Made available since v3.1.0
+</Info>
 
 **Usage**
 ```php
@@ -2655,20 +3625,28 @@ add_filter( 'cocart_quantity_maximum_allowed', function() {
 ---
 
 ## `cocart_products_variable_empty_price`
+
 Filter the variable products empty prices.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$empty_prices` | `array` | Empty array. |
-| `$product` | `WC_Product` | The project object. |
+<Info>
+  Made available since v3.1.0
+</Info>
 
-- **Since**: 3.1.0 Introduced.
+**Parameters**
+
+<ParamField query="empty_prices" type="array">
+  Empty array.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The project object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_products_variable_empty_price', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/utilities/class-cocart-utilities-product-helpers.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/utilities/class-cocart-utilities-product-helpers.php#L190)
@@ -2676,20 +3654,28 @@ add_filter( 'cocart_products_variable_empty_price', function() {
 ---
 
 ## `cocart_products_get_price_range`
+
 Filters the products price range.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$price` | `array` | The current product price range. |
-| `$product` | `WC_Product` | The product object. |
+<Info>
+  Made available since v3.1.0
+</Info>
 
-- **Since**: 3.1.0 Introduced.
+**Parameters**
+
+<ParamField query="price" type="array">
+  The current product price range.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_products_get_price_range', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/utilities/class-cocart-utilities-product-helpers.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/utilities/class-cocart-utilities-product-helpers.php#L237)
@@ -2697,20 +3683,28 @@ add_filter( 'cocart_products_get_price_range', function() {
 ---
 
 ## `cocart_products_ignore_private_meta_keys`
+
 Filter allows you to ignore private meta data for the product to return. When filtering, only list the meta key!
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$ignored_meta_keys` | `array` | Ignored meta keys. |
-| `$product` | `WC_Product` | The product object. |
+<Info>
+  Made available since v3.11.0
+</Info>
 
-- **Since**: 3.11.0 Introduced.
+**Parameters**
+
+<ParamField query="ignored_meta_keys" type="array">
+  Ignored meta keys.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_products_ignore_private_meta_keys', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/utilities/class-cocart-utilities-product-helpers.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/utilities/class-cocart-utilities-product-helpers.php#L303)
@@ -2718,20 +3712,28 @@ add_filter( 'cocart_products_ignore_private_meta_keys', function() {
 ---
 
 ## `cocart_products_get_safe_meta_data`
+
 Filter allows you to control what remaining product meta data is safe to return.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$safe_meta` | `array` | Safe meta. |
-| `$product` | `WC_Product` | The product object. |
+<Info>
+  Made available since v3.11.0
+</Info>
 
-- **Since**: 3.11.0 Introduced.
+**Parameters**
+
+<ParamField query="safe_meta" type="array">
+  Safe meta.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_products_get_safe_meta_data', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/classes/utilities/class-cocart-utilities-product-helpers.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/utilities/class-cocart-utilities-product-helpers.php#L335)
@@ -2739,22 +3741,40 @@ add_filter( 'cocart_products_get_safe_meta_data', function() {
 ---
 
 ## `cocart_price_no_html`
+
 Filters the string of price markup.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$return` | `string` | Price HTML markup. |
-| `$price` | `string` | Formatted price. |
-| `$args` | `array` | Pass on the args. |
-| `$unformatted_price` | `float` | Price as float to allow plugins custom formatting. Since 3.2.0. |
-| `$original_price` | `float|string` | Original price as float, or empty string. Since 5.0.0. |
+<Info>
+  Made available since v2.1.0
+</Info>
 
+**Parameters**
+
+<ParamField query="return" type="string">
+  Price HTML markup.
+</ParamField>
+
+<ParamField query="price" type="string">
+  Formatted price.
+</ParamField>
+
+<ParamField query="args" type="array">
+  Pass on the args.
+</ParamField>
+
+<ParamField query="unformatted_price" type="float">
+  Price as float to allow plugins custom formatting. Since 3.2.0.
+</ParamField>
+
+<ParamField query="original_price" type="float|string">
+  Original price as float, or empty string. Since 5.0.0.
+</ParamField>
 
 **Usage**
 ```php
 add_filter( 'cocart_price_no_html', function() {
     // Your code here
-}, 10, );
+}, 10 );
 ```
 
 **Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-rest-functions.php#L340)
@@ -2762,8 +3782,12 @@ add_filter( 'cocart_price_no_html', function() {
 ---
 
 ## `cocart_prepare_money_disable_decimals`
+
 This filter allows you to disable the decimals. If set to "True" the decimals will be set to "Zero".
 
+<Info>
+  Made available since v2.1.0
+</Info>
 
 **Usage**
 ```php

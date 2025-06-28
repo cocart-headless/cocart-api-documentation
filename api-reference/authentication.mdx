@@ -1,7 +1,7 @@
 ---
-title: Authentication
-description: 'Learn how to authenticate with the CoCart API for secure access.'
-icon: lock
+title: "Authentication"
+description: "Learn how to authenticate with the CoCart API for secure access."
+icon: "lock"
 ---
 
 The CoCart API provides multiple authentication methods to suit different needs. While the Products API and Cart API are publicly accessible without authentication, authenticating users enables personalized shopping experiences.
@@ -291,20 +291,32 @@ There are two types of web storage: **LocalStorage** and **SessionStorage**. The
 
 **LocalStorage**
 
-Anything stored in local web storage is persistent. This means that the data will persist until the data is explicitly deleted. Depending on the needs of your project, you might view this as a positive. However, you should be mindful of using LocalStorage, since any changes/additions to data will be available on all future visits to the webpage in question. We would not usually recommend using LocalStorage, although there may be a few exceptions to this. If you decide to use LocalStorage, it is good to know that it supports the same-origin policy, so all data stored here will only be available via the same origin. An added performance perk of using LocalStorage would be a resulting decrease in client-server traffic since the data does not have to be sent back to the server for every HTTP request.  
+Anything stored in local web storage is persistent. This means that the data will persist until the data is explicitly deleted. Depending on the needs of your project, you might view this as a positive.
+
+However, you should be mindful of using LocalStorage, since any changes/additions to data will be available on all future visits to the webpage in question. We would not usually recommend using LocalStorage, although there may be a few exceptions to this.
+
+If you decide to use LocalStorage, it is good to know that it supports the same-origin policy, so all data stored here will only be available via the same origin. An added performance perk of using LocalStorage would be a resulting decrease in client-server traffic since the data does not have to be sent back to the server for every HTTP request.
 
 **SessionStorage**
 
-SessionStorage is similar to LocalStorage, but the key difference is that SessionStorage is not persistent. Once the window (or tab, depending on which browser you are using) that was used to write to SessionStorage is closed, the data will be lost. This is useful in restricting read access to your token within a user session. Using SessionStorage is normally more preferable than LocalStorage when thinking in terms of security. Like LocalStorage, the perks of same-origin policy support and decreased client-server traffic apply to SessionStorage as well.
+SessionStorage is similar to LocalStorage, but the key difference is that SessionStorage is not persistent. Once the window (or tab, depending on which browser you are using) that was used to write to SessionStorage is closed, the data will be lost.
+
+This is useful in restricting read access to your token within a user session. Using SessionStorage is normally more preferable than LocalStorage when thinking in terms of security. Like LocalStorage, the perks of same-origin policy support and decreased client-server traffic apply to SessionStorage as well.
 
 **Cookies**
 
-Cookies are the more traditional way to store session data. You can set an expiration time for each cookie, which would allow for ease of revocability and restriction of access. However, the client-server traffic would definitely increase when using cookies, since the data is being sent back to the server for every HTTP request. If you decide to use cookies, you need to protect against session hijacking. By default, cookies are sent in plaintext over HTTP, which makes their contents vulnerable to packet sniffing and/or man-in-the-middle attacks where attackers may modify your traffic. You should always enforce HTTPS to protect your data in transit. This will provide confidentiality, integrity (of the data), and authentication. However, if your web application or site is available both through HTTP and HTTPS, you will also want to use the ‘Secure’ flag on the cookie. This will prevent attackers from being able to send links to the HTTP version of your site to a user and listening in on the resulting HTTP request generated.
+Cookies are the more traditional way to store session data. You can set an expiration time for each cookie, which would allow for ease of revocability and restriction of access. However, the client-server traffic would definitely increase when using cookies, since the data is being sent back to the server for every HTTP request. If you decide to use cookies, you need to protect against session hijacking.
 
-Another secondary defense against session hijacking when using cookies would be to validate the user’s identity again before any high-impact actions are carried out. One other flag to consider for improving the security of your cookies would be the ‘HttpOnly’ flag. This flag tells the browser that the cookie in question shall only be accessible from the server specified. Any attempts made by client-side scripts would be forbidden by this flag, therefore helping to protect against most cross-site scripting (XSS) attacks.
+By default, cookies are sent in plaintext over HTTP, which makes their contents vulnerable to packet sniffing and/or man-in-the-middle attacks where attackers may modify your traffic. You should always enforce HTTPS to protect your data in transit. This will provide confidentiality, integrity (of the data), and authentication.
+
+However, if your web application or site is available both through HTTP and HTTPS, you will also want to use the ‘Secure’ flag on the cookie. This will prevent attackers from being able to send links to the HTTP version of your site to a user and listening in on the resulting HTTP request generated.
+
+Another secondary defense against session hijacking when using cookies would be to validate the user’s identity again before any high-impact actions are carried out. One other flag to consider for improving the security of your cookies would be the ‘HttpOnly’ flag. This flag tells the browser that the cookie in question shall only be accessible from the server specified.
+
+Any attempts made by client-side scripts would be forbidden by this flag, therefore helping to protect against most cross-site scripting (XSS) attacks.
 
 <Note>
-  WooCommerce uses the cookie method natively for handling the cart session but CoCart does not. The cookie method defeated the purpose of CoCart supporting guest customers and slows down the performance of the API.
+  WooCommerce uses the cookie method natively for handling the cart session but CoCart does not. The session cookie prevented CoCart supporting guest customers and slowed down the performance of the API.
 </Note>
 
 [**Troubleshoot Authentication Issues →**](../knowledge-base/troubleshoot/authentication)

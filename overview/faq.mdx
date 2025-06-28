@@ -1,0 +1,90 @@
+---
+title: "Frequently Asked Questions"
+description: "We ask the most frequently asked questions for CoCart"
+icon: "question"
+---
+
+<AccordionGroup>
+    <Accordion title="How do I setup CoCart?">
+        Please see the getting started section for [CoCart setup](/getting-started/core/setup). Being based on the WordPress REST-API, it’s extremely easy to get started.
+    </Accordion>
+
+    <Accordion title="What is a REST API?">
+        REST (Representational State Transfer) is an architectural style for building web services that communicate over HTTP, similar to how web browsers interact with servers. It provides a standardized way for applications to exchange data and perform operations.
+
+        Recommend reading the [REST API handbook](https://developer.wordpress.org/rest-api/) for more information.
+    </Accordion>
+
+    <Accordion title="What is the source of truth?">
+        CoCart reads the WooCommerce data and exposes it safely in the REST API. This allows the use of most WooCommerce hooks to provide a wider array of support for most WooCommerce extensions out of the box.
+    </Accordion>
+
+    <Accordion title="Does CoCart work for multi-site network?">
+        Yes. Just install CoCart and activate it on the sites you want to use CoCart. The base URL to access the REST API will be based on your network configuration type.
+    </Accordion>
+
+    <Accordion title="Are there any limitations?">
+        CoCart is designed to be completely open to customization via **filters** and **action hooks**.
+
+        CoCart does it's best to work out of the box with [WooCommerce extensions](/plugins/woocommerce-extensions) but we know that is not going to be always the case.
+
+        If there is a compatibility issue with a plugin that you would like to work with CoCart. We would be happy to hear about it.
+    </Accordion>
+
+    <Accordion title="Why does CoCart use a custom session handler and table in the database?">
+        If you're familiar with WooCommerce, you may be wondering why using a custom session handler at all instead of the WooCommerce default session handler?
+
+        A number of reasons but the ones that really matter are.
+
+        - The default session handler only supports cookies.
+        - The default session handler has no support for concurrent requests.
+        - The default session handler **does not support guest customers without cookies**.
+        - The default session handler **does not store additional session data to help you**.
+        - The default session handler **does not allow support for POS capability** (coming soon).
+        - More consistent with modern web.
+    </Accordion>
+
+    <Accordion title="What WooCommerce extensions work with CoCart?">
+        Take a look at our [tested and verified list](/plugins/woocommerce-extensions) for extensions that work with CoCart.
+
+        We also have a list of [incompatible plugins](/plugins/incompatible) that don't work with CoCart.
+
+        With over 50,000 plugins available in the WordPress directory, WooCommerce’s marketplace and others out there in the WordPress abyss, some conflicts may arise.
+
+        In the unusual circumstance that such an issue occurs, we will always do our utmost to try and resolve those conflicts through our friendly support.
+    </Accordion>
+
+    <Accordion title="Where are the SDK's?">
+        A TypeScript SDK is currently in the works. If you have a specific language that you would like an SDK for, please [contact us](mailto:support@cocartapi.com) to let us know or simply [make a feature request](https://cocartapi.com/suggest-a-feature/?ref=mintlify).
+    </Accordion>
+
+    <Accordion title="Do you have a Public Roadmap?">
+        Yes. [View roadmap](https://cocartheadless.featurebase.app/roadmap/status).
+    </Accordion>
+
+    <Accordion title="Where can I get help for CoCart?">
+        You can get help either [via email](mailto:support@cocartapi.com) or [via our Discord server](https://cocartapi.com/community/).
+
+        Please read our [support policy](https://cocartapi.com/support-policy/) on what is and what is not supported.
+    </Accordion>
+
+    <Accordion title="Where can I get help for WooCommerce?">
+        That would be found at [WooCommerce.com](https://woocommerce.com).
+
+        Please read our [support policy](https://cocartapi.com/support-policy/) on what is and what is not supported.
+    </Accordion>
+
+    <Accordion title="Can I translate CoCart?">
+        Absolutely. Visit our translation site, [register an account](http://translate.cocartapi.com/wp-login.php?action=register) if you haven't already. Select the project you want to help translate, pick the language and start translating.
+
+        If the language you’d like to translate the plugin into isn’t available yet, please [ask via email](mailto:support@cocartapi.com?Subject=Requesting Translation Set) to let us know which one so I can create that translation set.
+    </Accordion>
+
+    <Accordion title="Where can I report a bug or open an issue?">
+        Please view [opening issues](/resources/opening-issues) section for more information.
+    </Accordion>
+
+    <Accordion title="My question is not listed here. Where can I find more?">
+        We have more available in our [support center](/knowledge-base/introduction).
+    </Accordion>
+</AccordionGroup>
