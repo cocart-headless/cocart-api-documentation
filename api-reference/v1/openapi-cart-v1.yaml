@@ -1,0 +1,625 @@
+openapi: 3.0.3
+
+info:
+  title: CoCart - Cart API v1
+  version: 4.6.0
+  description: API for managing shopping carts
+  termsOfService: http://cocartapi.com/terms-of-conditions-polar/
+  contact:
+    email: support@cocartapi.com
+  license:
+    name: GNU General Public License v3.0
+    url: http://www.gnu.org/licenses/gpl-3.0.html
+
+externalDocs:
+  description: Find out more about CoCart API
+  url: https://docs.cocartapi.com
+
+servers:
+  - url: "{protocol}://{host}/wp-json/cocart/v1"
+    description: API v1
+    variables:
+      protocol:
+        enum: [http, https]
+        default: https
+      host:
+        default: example-store.com
+        description: Your store domain
+
+tags:
+  - name: cart
+    description: Operations for managing the shopping cart
+  - name: items
+    description: Operations for managing cart items
+  - name: coupons
+    description: Operations for managing cart coupons
+  - name: fees
+    description: Operations for managing cart fees
+  - name: shipping
+    description: Operations for managing shipping methods and rates
+  - name: calculate
+    description: Operations for calculating cart totals
+  - name: products
+    description: Operations for managing products
+
+paths:
+  /get-cart:
+    get:
+      tags:
+        - cart
+      summary: Get cart contents
+      description: Gets the cart items added by the customer.
+      parameters:
+        - name: cart_key
+          in: query
+          description: Unique identifier for the cart/customer.
+          schema:
+            type: string
+          required: false
+        - name: thumb
+          in: query
+          description: Returns the URL of the product image thumbnail.
+          schema:
+            type: boolean
+            default: false
+          required: false
+      responses:
+        "200":
+          description: List of cart items.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+
+  /add-item:
+    post:
+      tags:
+        - items
+      summary: Add item to cart
+      description: Adds a product item to the customer's cart.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                product_id:
+                  description: Unique identifier for the product.
+                  type: string
+                quantity:
+                  description: The quantity amount of the item to add to cart.
+                  type: string
+                  default: "1"
+                variation_id:
+                  description: Unique identifier for the variation.
+                  type: integer
+                variation:
+                  description: The variation attributes that identity the variation of the item.
+                  type: object
+                cart_item_data:
+                  description: Additional item data passed to make item unique.
+                  type: object
+                return_cart:
+                  description: Returns the cart once item is added.
+                  type: boolean
+                  default: false
+              required:
+                - quantity
+      responses:
+        "200":
+          description: Item added to cart successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AddItemResponse"
+        "400":
+          description: Bad request - invalid parameters or product not found.
+        "404":
+          description: Product not found.
+
+  /calculate:
+    post:
+      tags:
+        - calculate
+      summary: Calculate cart totals
+      description: Calculates the cart totals including taxes, shipping, and discounts.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                return:
+                  description: Returns the cart totals once calculated.
+                  type: boolean
+                  default: false
+      responses:
+        "200":
+          description: Cart totals calculated successfully.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: string
+                    description: Success message when return parameter is false or not provided.
+                    example: Cart totals have been calculated.
+                  - $ref: "#/components/schemas/CalculateResponse"
+        "400":
+          description: Bad request - invalid parameters.
+
+  /count-items:
+    get:
+      tags:
+        - items
+      summary: Count cart items
+      description: Returns the count of items in the customer's cart.
+      responses:
+        "200":
+          description: Cart item count retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CountItemsResponse"
+        "400":
+          description: Bad request - invalid parameters.
+
+  /clear:
+    post:
+      tags:
+        - cart
+      summary: Clear cart
+      description: Removes all items from the customer's cart.
+      responses:
+        "200":
+          description: Cart cleared successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClearResponse"
+        "406":
+          description: Cart clearing failed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: cocart_clear_cart_failed
+                  message:
+                    type: string
+                    example: Clearing the cart failed!
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: integer
+                        example: 406
+
+  /item:
+    get:
+      tags:
+        - items
+      summary: Get cart item
+      description: Retrieves a specific item from the customer's cart.
+      parameters:
+        - name: cart_item_key
+          in: query
+          description: Unique identifier for the item in the cart.
+          schema:
+            type: string
+          required: false
+      responses:
+        "200":
+          description: Cart item retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartItem"
+        "404":
+          description: Cart item not found.
+
+    post:
+      tags:
+        - items
+      summary: Update cart item
+      description: Updates the quantity of a specific item in the customer's cart.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cart_item_key:
+                  description: Unique identifier for the item in the cart.
+                  type: string
+                quantity:
+                  description: Quantity of this item to update to.
+                  type: string
+                return_cart:
+                  description: Returns the whole cart to reduce API requests.
+                  type: boolean
+                  default: false
+              required:
+                - quantity
+      responses:
+        "200":
+          description: Cart item updated successfully.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/CartItem"
+                  - $ref: "#/components/schemas/Cart"
+        "400":
+          description: Bad request - invalid parameters.
+        "404":
+          description: Cart item not found.
+
+    delete:
+      tags:
+        - items
+      summary: Remove cart item
+      description: Removes a specific item from the customer's cart.
+      parameters:
+        - name: cart_item_key
+          in: query
+          description: Unique identifier for the item in the cart.
+          schema:
+            type: string
+          required: false
+        - name: return_cart
+          in: query
+          description: Returns the whole cart to reduce API requests.
+          schema:
+            type: boolean
+            default: false
+          required: false
+      responses:
+        "200":
+          description: Cart item removed successfully.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      removed:
+                        type: boolean
+                        example: true
+                  - $ref: "#/components/schemas/Cart"
+        "404":
+          description: Cart item not found.
+
+  /logout:
+    post:
+      tags:
+        - cart
+      summary: Logout customer
+      description: Logs out the customer and clears their session.
+      responses:
+        "200":
+          description: Customer logged out successfully.
+          content:
+            application/json:
+              schema:
+                type: boolean
+                example: true
+
+  /totals:
+    get:
+      tags:
+        - calculate
+      summary: Get cart totals
+      description: Retrieves the cart totals including subtotal, taxes, shipping, and discounts.
+      parameters:
+        - name: html
+          in: query
+          description: Returns the totals pre-formatted.
+          schema:
+            type: boolean
+            default: false
+          required: false
+      responses:
+        "200":
+          description: Cart totals retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TotalsResponse"
+        "400":
+          description: Bad request - invalid parameters.
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: Basic authentication with username and password (optional)
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Cart:
+      type: object
+      description: Cart object containing cart items with alphanumeric keys.
+      additionalProperties:
+        $ref: "#/components/schemas/CartItem"
+
+    AddItemResponse:
+      type: object
+      properties:
+        key:
+          description: Unique identifier for the item within the cart.
+          type: string
+        product_id:
+          description: Unique identifier for the product.
+          type: integer
+        variation_id:
+          description: Unique identifier for the variation.
+          type: integer
+        variation:
+          description: Chosen attributes (for variations).
+          oneOf:
+            - type: object
+              additionalProperties:
+                type: string
+            - type: array
+              items:
+                type: string
+        quantity:
+          description: Quantity of this item in the cart.
+          type: integer
+        data_hash:
+          description: Hash of cart item data.
+          type: string
+        line_tax_data:
+          description: Line tax data.
+          type: object
+          properties:
+            subtotal:
+              description: Line subtotal tax data.
+              type: array
+              items:
+                type: number
+            total:
+              description: Line total tax data.
+              type: array
+              items:
+                type: number
+        line_subtotal:
+          description: Line subtotal (the price of the product before coupon discounts have been applied).
+          type: number
+        line_subtotal_tax:
+          description: Line subtotal tax.
+          type: number
+        line_total:
+          description: Line total (the price of the product after coupon discounts have been applied).
+          type: number
+        line_tax:
+          description: Line total tax.
+          type: number
+        product_name:
+          description: Product name.
+          type: string
+        product_title:
+          description: Product title.
+          type: string
+        product_price:
+          description: Current product price.
+          type: string
+        product_image:
+          description: Product image URL. (Returns if thumb is true)
+          type: string
+
+    CalculateResponse:
+      type: object
+      properties:
+        subtotal:
+          description: Cart subtotal (before taxes and shipping).
+          type: string
+        subtotal_tax:
+          description: Cart subtotal tax amount.
+          type: number
+        shipping_total:
+          description: Total shipping cost.
+          type: string
+        shipping_tax:
+          description: Shipping tax amount.
+          type: number
+        shipping_taxes:
+          description: Array of shipping taxes.
+          type: array
+          items:
+            type: object
+        discount_total:
+          description: Total discount amount applied.
+          type: number
+        discount_tax:
+          description: Discount tax amount.
+          type: number
+        cart_contents_total:
+          description: Total cart contents value.
+          type: string
+        cart_contents_tax:
+          description: Cart contents tax amount.
+          type: number
+        cart_contents_taxes:
+          description: Array of cart contents taxes.
+          type: array
+          items:
+            type: object
+        fee_total:
+          description: Total fees applied.
+          type: string
+        fee_tax:
+          description: Fee tax amount.
+          type: number
+        fee_taxes:
+          description: Array of fee taxes.
+          type: array
+          items:
+            type: object
+        total:
+          description: Cart total amount.
+          type: string
+        total_tax:
+          description: Total tax amount.
+          type: number
+
+    ClearResponse:
+      type: object
+      properties:
+        message:
+          description: Message indicating the result of clearing the cart.
+          type: string
+
+    TotalsResponse:
+      type: object
+      properties:
+        subtotal:
+          description: Subtotal of all items in the cart. Returns formatted price if html=true.
+          type: string
+        subtotal_tax:
+          description: Subtotal tax amount. Returns formatted price if html=true.
+          oneOf:
+            - type: number
+            - type: string
+        shipping_total:
+          description: Shipping total cost. Returns formatted price if html=true.
+          type: string
+        shipping_tax:
+          description: Shipping tax amount. Returns formatted price if html=true.
+          oneOf:
+            - type: number
+            - type: string
+        shipping_taxes:
+          description: Array of shipping tax rates.
+          type: array
+          items:
+            type: number
+        discount_total:
+          description: Total discount amount. Returns formatted price if html=true.
+          oneOf:
+            - type: number
+            - type: string
+        discount_tax:
+          description: Discount tax amount. Returns formatted price if html=true.
+          oneOf:
+            - type: number
+            - type: string
+        cart_contents_total:
+          description: Cart contents total. Returns formatted price if html=true.
+          type: string
+        cart_contents_tax:
+          description: Cart contents tax. Returns formatted price if html=true.
+          oneOf:
+            - type: number
+            - type: string
+        cart_contents_taxes:
+          description: Array of cart content tax rates.
+          type: array
+          items:
+            type: number
+        fee_total:
+          description: Fee total amount. Returns formatted price if html=true.
+          type: string
+        fee_tax:
+          description: Fee tax amount. Returns formatted price if html=true.
+          oneOf:
+            - type: number
+            - type: string
+        fee_taxes:
+          description: Array of fee tax rates.
+          type: array
+          items:
+            type: number
+        total:
+          description: Total amount of the cart including tax. Returns formatted price if html=true.
+          type: string
+        total_tax:
+          description: Total tax amount. Returns formatted price if html=true.
+          oneOf:
+            - type: number
+            - type: string
+
+    CartItem:
+      type: object
+      properties:
+        key:
+          type: string
+          description: Unique identifier for the item within the cart.
+        product_id:
+          type: integer
+          description: Unique identifier for the product.
+        variation_id:
+          type: integer
+          description: Unique identifier for the variation.
+        variation:
+          description: Chosen attributes (for variations).
+          oneOf:
+            - type: object
+              additionalProperties:
+                type: string
+            - type: array
+              items:
+                type: string
+        quantity:
+          type: integer
+          description: Quantity of this item in the cart.
+        data_hash:
+          type: string
+          description: Hash of cart item data.
+        line_tax_data:
+          type: object
+          description: Line tax data.
+          properties:
+            subtotal:
+              description: Line subtotal tax data.
+              type: array
+              items:
+                type: number
+            total:
+              description: Line total tax data.
+              type: array
+              items:
+                type: number
+        line_subtotal:
+          type: number
+          description: Line subtotal (the price of the product before coupon discounts have been applied).
+        line_subtotal_tax:
+          type: number
+          description: Line subtotal tax.
+        line_total:
+          type: number
+          description: Line total (the price of the product after coupon discounts have been applied).
+        line_tax:
+          type: number
+          description: Line total tax.
+        product_name:
+          type: string
+          description: Product name.
+        product_title:
+          type: string
+          description: Product title.
+        product_price:
+          type: string
+          description: Current product price.
+        product_image:
+          type: string
+          description: Product image URL. (Returns if thumb is true)
+      additionalProperties: false
+
+    CountItemsResponse:
+      oneOf:
+        - type: string
+          description: Numeric count as string when cart has items
+          example: "5"
+        - type: string
+          description: Message when cart is empty
+          example: "There are no items in the cart!"
