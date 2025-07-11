@@ -70,6 +70,43 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Cart"
+              example:
+                "1c383cd30b7c298ab50293adfecb7b18":
+                  key: "1c383cd30b7c298ab50293adfecb7b18"
+                  product_id: 35
+                  variation_id: 0
+                  variation: []
+                  quantity: 6
+                  data_hash: "b5c1d5ca8bae6d4896cf1807cdf763f0"
+                  line_tax_data:
+                    subtotal: []
+                    total: []
+                  line_subtotal: 108
+                  line_subtotal_tax: 0
+                  line_total: 108
+                  line_tax: 0
+                  data: {}
+                  product_name: "T-Shirt with Logo"
+                  product_title: "T-Shirt with Logo"
+                  product_price: "£18.00"
+                "70efdf2ec9b086079795c442636b55fb":
+                  key: "70efdf2ec9b086079795c442636b55fb"
+                  product_id: 17
+                  variation_id: 0
+                  variation: []
+                  quantity: 5
+                  data_hash: "b5c1d5ca8bae6d4896cf1807cdf763f0"
+                  line_tax_data:
+                    subtotal: []
+                    total: []
+                  line_subtotal: 225
+                  line_subtotal_tax: 0
+                  line_total: 225
+                  line_tax: 0
+                  data: {}
+                  product_name: "Hoodie with Logo"
+                  product_title: "Hoodie with Logo"
+                  product_price: "£45.00"
 
   /get-cart/{id}:
     get:
@@ -98,6 +135,43 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Cart"
+              example:
+                "1c383cd30b7c298ab50293adfecb7b18":
+                  key: "1c383cd30b7c298ab50293adfecb7b18"
+                  product_id: 35
+                  variation_id: 0
+                  variation: []
+                  quantity: 6
+                  data_hash: "b5c1d5ca8bae6d4896cf1807cdf763f0"
+                  line_tax_data:
+                    subtotal: []
+                    total: []
+                  line_subtotal: 108
+                  line_subtotal_tax: 0
+                  line_total: 108
+                  line_tax: 0
+                  data: {}
+                  product_name: "T-Shirt with Logo"
+                  product_title: "T-Shirt with Logo"
+                  product_price: "£18.00"
+                "70efdf2ec9b086079795c442636b55fb":
+                  key: "70efdf2ec9b086079795c442636b55fb"
+                  product_id: 17
+                  variation_id: 0
+                  variation: []
+                  quantity: 5
+                  data_hash: "b5c1d5ca8bae6d4896cf1807cdf763f0"
+                  line_tax_data:
+                    subtotal: []
+                    total: []
+                  line_subtotal: 225
+                  line_subtotal_tax: 0
+                  line_total: 225
+                  line_tax: 0
+                  data: {}
+                  product_name: "Hoodie with Logo"
+                  product_title: "Hoodie with Logo"
+                  product_price: "£45.00"
         "404":
           description: Cart in session is not valid or not found.
 
@@ -128,6 +202,43 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Cart"
+              example:
+                "1c383cd30b7c298ab50293adfecb7b18":
+                  key: "1c383cd30b7c298ab50293adfecb7b18"
+                  product_id: 35
+                  variation_id: 0
+                  variation: []
+                  quantity: 6
+                  data_hash: "b5c1d5ca8bae6d4896cf1807cdf763f0"
+                  line_tax_data:
+                    subtotal: []
+                    total: []
+                  line_subtotal: 108
+                  line_subtotal_tax: 0
+                  line_total: 108
+                  line_tax: 0
+                  data: {}
+                  product_name: "T-Shirt with Logo"
+                  product_title: "T-Shirt with Logo"
+                  product_price: "£18.00"
+                "70efdf2ec9b086079795c442636b55fb":
+                  key: "70efdf2ec9b086079795c442636b55fb"
+                  product_id: 17
+                  variation_id: 0
+                  variation: []
+                  quantity: 5
+                  data_hash: "b5c1d5ca8bae6d4896cf1807cdf763f0"
+                  line_tax_data:
+                    subtotal: []
+                    total: []
+                  line_subtotal: 225
+                  line_subtotal_tax: 0
+                  line_total: 225
+                  line_tax: 0
+                  data: {}
+                  product_name: "Hoodie with Logo"
+                  product_title: "Hoodie with Logo"
+                  product_price: "£45.00"
         "404":
           description: Customer ID is required or cart not found.
 
@@ -567,7 +678,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ShippingMethodsObjectResponse"
+                $ref: "#/components/schemas/ShippingMethod"
         "404":
           description: No shipping methods available or not needed.
     post:
@@ -790,7 +901,7 @@ paths:
               schema:
                 oneOf:
                   - $ref: "#/components/schemas/StringResponse"
-                  - $ref: "#/components/schemas/ShippingMethodsObjectResponse"
+                  - $ref: "#/components/schemas/ShippingMethod"
         "404":
           description: Invalid postcode or missing country.
 
@@ -978,75 +1089,12 @@ components:
   schemas:
     Cart:
       type: object
-      description: Cart object containing cart items with alphanumeric keys.
+      description: "A map of cart item keys to cart item objects. Each property key is a unique cart item key."
       additionalProperties:
         $ref: "#/components/schemas/CartItem"
 
     AddItemResponse:
-      type: object
-      properties:
-        key:
-          description: Unique identifier for the item within the cart.
-          type: string
-        product_id:
-          description: Unique identifier for the product.
-          type: integer
-        variation_id:
-          description: Unique identifier for the variation.
-          type: integer
-        variation:
-          description: Chosen attributes (for variations).
-          oneOf:
-            - type: object
-              additionalProperties:
-                type: string
-            - type: array
-              items:
-                type: string
-        quantity:
-          description: Quantity of this item in the cart.
-          type: integer
-        data_hash:
-          description: Hash of cart item data.
-          type: string
-        line_tax_data:
-          description: Line tax data.
-          type: object
-          properties:
-            subtotal:
-              description: Line subtotal tax data.
-              type: array
-              items:
-                type: number
-            total:
-              description: Line total tax data.
-              type: array
-              items:
-                type: number
-        line_subtotal:
-          description: Line subtotal (the price of the product before coupon discounts have been applied).
-          type: number
-        line_subtotal_tax:
-          description: Line subtotal tax.
-          type: number
-        line_total:
-          description: Line total (the price of the product after coupon discounts have been applied).
-          type: number
-        line_tax:
-          description: Line total tax.
-          type: number
-        product_name:
-          description: Product name.
-          type: string
-        product_title:
-          description: Product title.
-          type: string
-        product_price:
-          description: Current product price.
-          type: string
-        product_image:
-          description: Product image URL. (Returns if thumb is true)
-          type: string
+      $ref: "#/components/schemas/CartItem"
 
     CalculateResponse:
       type: object
@@ -1321,11 +1369,6 @@ components:
         message:
           type: string
 
-    ShippingMethodsResponse:
-      type: object
-      additionalProperties:
-        $ref: "#/components/schemas/ShippingMethod"
-
     ShippingMethod:
       type: object
       properties:
@@ -1344,12 +1387,6 @@ components:
         taxes:
           type: object
         chosen_method:
-          type: boolean
-
-    ShippingMethodSetResponse:
-      type: object
-      properties:
-        success:
           type: boolean
 
     CartWeightResponse:
@@ -1523,7 +1560,7 @@ components:
     CalculateShippingResponse:
       oneOf:
         - $ref: "#/components/schemas/StringResponse"
-        - $ref: "#/components/schemas/ShippingMethodsObjectResponse"
+        - $ref: "#/components/schemas/ShippingMethod"
 
     DiscountTotalResponse:
       type: object
@@ -1602,10 +1639,6 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/CartFee"
-    ShippingMethodsObjectResponse:
-      type: object
-      additionalProperties:
-        $ref: "#/components/schemas/ShippingMethod"
     RemovedItemsObjectResponse:
       type: object
       additionalProperties:
