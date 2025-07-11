@@ -71,6 +71,66 @@ paths:
               schema:
                 $ref: "#/components/schemas/Cart"
 
+  /get-cart/{id}:
+    get:
+      tags:
+        - cart
+      summary: Get cart in session by cart key
+      description: Gets the cart in session for the provided cart key.
+      parameters:
+        - name: id
+          in: path
+          description: Unique cart key for the session.
+          required: true
+          schema:
+            type: string
+        - name: thumb
+          in: query
+          description: Returns the URL of the product image thumbnail.
+          schema:
+            type: boolean
+            default: false
+          required: false
+      responses:
+        "200":
+          description: Cart in session retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+        "404":
+          description: Cart in session is not valid or not found.
+
+  /get-cart/customer/{id}:
+    get:
+      tags:
+        - cart
+      summary: Get persistent cart by customer ID
+      description: Gets the persistent cart for the provided customer ID.
+      parameters:
+        - name: id
+          in: path
+          description: Unique customer ID.
+          required: true
+          schema:
+            type: string
+        - name: thumb
+          in: query
+          description: Returns the URL of the product image thumbnail.
+          schema:
+            type: boolean
+            default: false
+          required: false
+      responses:
+        "200":
+          description: Persistent cart retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+        "404":
+          description: Customer ID is required or cart not found.
+
   /add-item:
     post:
       tags:
@@ -332,6 +392,577 @@ paths:
                 $ref: "#/components/schemas/TotalsResponse"
         "400":
           description: Bad request - invalid parameters.
+
+  /coupon:
+    get:
+      tags:
+        - coupons
+      summary: Get applied coupons
+      description: Gets the coupons applied to the cart.
+      responses:
+        "200":
+          description: List of applied coupons.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CouponArrayResponse"
+        "404":
+          description: Coupons are not enabled for this store.
+    post:
+      tags:
+        - coupons
+      summary: Apply coupon to cart
+      description: Applies a coupon to the cart.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                coupon:
+                  type: string
+                  description: Coupon code to apply.
+              required:
+                - coupon
+      responses:
+        "200":
+          description: Coupon applied successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CouponAppliedResponse"
+        "400":
+          description: Coupon failed to apply.
+        "404":
+          description: No coupon code provided.
+    delete:
+      tags:
+        - coupons
+      summary: Remove coupon from cart
+      description: Removes a coupon from the cart.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                coupon:
+                  type: string
+                  description: Coupon code to remove.
+              required:
+                - coupon
+      responses:
+        "200":
+          description: Coupon removed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CouponRemovedResponse"
+        "404":
+          description: Coupon does not exist in the cart.
+
+  /check-coupons:
+    get:
+      tags:
+        - coupons
+      summary: Check all applied coupons
+      description: Checks all applied coupons to see if they are still valid.
+      responses:
+        "200":
+          description: All coupons are valid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckCouponsResponse"
+        "404":
+          description: No coupons have been applied.
+        "400":
+          description: Some coupons are invalid.
+
+  /fees:
+    get:
+      tags:
+        - fees
+      summary: Get all cart fees
+      description: Gets all fees applied to the cart.
+      responses:
+        "200":
+          description: List of cart fees.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeeArrayResponse"
+    post:
+      tags:
+        - fees
+      summary: Add fee to cart
+      description: Adds a fee to the cart.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the fee.
+                amount:
+                  type: string
+                  description: Amount for the fee.
+                taxable:
+                  type: boolean
+                  description: Determines if the fee is taxable.
+                  default: false
+                tax_class:
+                  type: string
+                  description: The tax class the fee applies to.
+              required:
+                - name
+                - amount
+      responses:
+        "200":
+          description: Fee added successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+        "404":
+          description: The name or amount of the fee is missing, or cart is empty.
+        "403":
+          description: Fee already exists.
+    delete:
+      tags:
+        - fees
+      summary: Remove all cart fees
+      description: Removes all fees from the cart.
+      responses:
+        "200":
+          description: All cart fees have been removed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+        "400":
+          description: Cart fees failed to remove.
+
+  /shipping-methods:
+    get:
+      tags:
+        - shipping
+      summary: Get available shipping methods
+      description: Gets available shipping methods for the cart.
+      parameters:
+        - name: recurring_cart_key
+          in: query
+          description: Recurring cart key for subscription shipping methods.
+          schema:
+            type: string
+          required: false
+      responses:
+        "200":
+          description: List of available shipping methods.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShippingMethodsObjectResponse"
+        "404":
+          description: No shipping methods available or not needed.
+    post:
+      tags:
+        - shipping
+      summary: Set shipping method
+      description: Sets a shipping method for the cart.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                key:
+                  type: string
+                  description: Shipping method key.
+                recurring_cart_key:
+                  type: string
+                  description: Recurring cart key for subscription shipping methods.
+              required:
+                - key
+      responses:
+        "200":
+          description: Shipping method set successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BooleanResponse"
+        "404":
+          description: Shipping method is incorrect or does not exist.
+
+  /weight:
+    get:
+      tags:
+        - cart
+      summary: Get cart weight
+      description: Gets the total weight of items in the cart.
+      responses:
+        "200":
+          description: Cart weight retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+
+  /removed-items:
+    get:
+      tags:
+        - items
+      summary: Get removed cart items
+      description: Gets the removed items from the cart.
+      responses:
+        "200":
+          description: List of removed cart items.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RemovedItemsObjectResponse"
+
+  /quantities:
+    get:
+      tags:
+        - items
+      summary: Get cart item quantities
+      description: Gets the quantities of all items in the cart.
+      responses:
+        "200":
+          description: Cart item quantities retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuantitiesObjectResponse"
+
+  /payment-methods:
+    get:
+      tags:
+        - payment
+      summary: Get available payment methods
+      description: Gets available payment methods for the cart.
+      responses:
+        "200":
+          description: List of available payment methods.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentMethodsObjectResponse"
+    post:
+      tags:
+        - payment
+      summary: Set payment method
+      description: Sets a payment method for the cart.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gateway_id:
+                  type: string
+                  description: Payment gateway ID.
+              required:
+                - gateway_id
+      responses:
+        "200":
+          description: Payment method set successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BooleanResponse"
+        "404":
+          description: Payment method is incorrect or does not exist.
+
+  /customer:
+    get:
+      tags:
+        - cart
+      summary: Get cart owner details
+      description: Gets the details of the cart owner (customer).
+      responses:
+        "200":
+          description: Cart owner details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerResponse"
+
+  /cross-sells:
+    get:
+      tags:
+        - products
+      summary: Get cross-sell products
+      description: Gets cross-sell products for the cart.
+      parameters:
+        - name: thumb
+          in: query
+          description: Returns the URL of the product image thumbnail.
+          schema:
+            type: boolean
+            default: false
+          required: false
+      responses:
+        "200":
+          description: List of cross-sell products.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CrossSellsObjectResponse"
+
+  /calculate/fees:
+    post:
+      tags:
+        - calculate
+      summary: Calculate cart fees
+      description: Calculates the cart fees.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                set_session:
+                  type: boolean
+                  description: Sets the cart fees in session once calculated.
+                  default: false
+                return:
+                  type: boolean
+                  description: Returns the cart fees once calculated.
+                  default: false
+      responses:
+        "200":
+          description: Cart fees calculated successfully.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/StringResponse"
+                  - $ref: "#/components/schemas/FeeArrayResponse"
+        "400":
+          description: Bad request - invalid parameters.
+
+  /calculate/shipping:
+    post:
+      tags:
+        - calculate
+      summary: Calculate shipping
+      description: Calculates shipping for the cart.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                country:
+                  type: string
+                  description: Country is required to calculate shipping.
+                state:
+                  type: string
+                  description: State is optional.
+                city:
+                  type: string
+                  description: City is optional.
+                postcode:
+                  type: string
+                  description: Postcode/ZIP is optional.
+                return_methods:
+                  type: boolean
+                  description: Return shipping methods after calculation.
+                  default: false
+              required:
+                - country
+      responses:
+        "200":
+          description: Shipping calculated successfully.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/StringResponse"
+                  - $ref: "#/components/schemas/ShippingMethodsObjectResponse"
+        "404":
+          description: Invalid postcode or missing country.
+
+  /totals/discount:
+    get:
+      tags:
+        - calculate
+      summary: Get discount total
+      description: Gets the total discount applied to the cart.
+      responses:
+        "200":
+          description: Discount total retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+
+  /totals/discount/coupon-totals:
+    get:
+      tags:
+        - calculate
+      summary: Get coupon discount totals
+      description: Gets the discount totals per coupon.
+      responses:
+        "200":
+          description: Coupon discount totals retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DynamicStringObjectResponse"
+
+  /totals/discount/coupon-tax:
+    get:
+      tags:
+        - calculate
+      summary: Get coupon discount tax totals
+      description: Gets the discount tax totals per coupon.
+      responses:
+        "200":
+          description: Coupon discount tax totals retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+
+  /totals/fee:
+    get:
+      tags:
+        - calculate
+      summary: Get fee total
+      description: Gets the total fees applied to the cart.
+      responses:
+        "200":
+          description: Fee total retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+
+  /totals/fee/tax:
+    get:
+      tags:
+        - calculate
+      summary: Get fee tax
+      description: Gets the total fee tax applied to the cart.
+      responses:
+        "200":
+          description: Fee tax retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+
+  /totals/shipping:
+    get:
+      tags:
+        - calculate
+      summary: Get shipping total
+      description: Gets the total shipping cost for the cart.
+      parameters:
+        - name: calculate
+          in: query
+          description: Calculate shipping before returning total.
+          schema:
+            type: boolean
+            default: false
+          required: false
+      responses:
+        "200":
+          description: Shipping total retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+
+  /totals/shipping/tax:
+    get:
+      tags:
+        - calculate
+      summary: Get shipping tax
+      description: Gets the total shipping tax for the cart.
+      parameters:
+        - name: calculate
+          in: query
+          description: Calculate shipping before returning tax.
+          schema:
+            type: boolean
+            default: false
+          required: false
+      responses:
+        "200":
+          description: Shipping tax retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+
+  /totals/subtotal:
+    get:
+      tags:
+        - calculate
+      summary: Get subtotal
+      description: Gets the subtotal of the cart.
+      responses:
+        "200":
+          description: Subtotal retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+
+  /totals/subtotal/tax:
+    get:
+      tags:
+        - calculate
+      summary: Get subtotal tax
+      description: Gets the subtotal tax of the cart.
+      responses:
+        "200":
+          description: Subtotal tax retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+
+  /totals/tax:
+    get:
+      tags:
+        - calculate
+      summary: Get total tax
+      description: Gets the total tax for the cart.
+      responses:
+        "200":
+          description: Total tax retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+
+  /totals/total:
+    get:
+      tags:
+        - calculate
+      summary: Get cart total
+      description: Gets the total amount for the cart.
+      responses:
+        "200":
+          description: Cart total retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
 
 components:
   securitySchemes:
@@ -623,3 +1254,375 @@ components:
         - type: string
           description: Message when cart is empty
           example: "There are no items in the cart!"
+
+    AppliedCouponsResponse:
+      type: array
+      items:
+        type: string
+
+    CouponAppliedResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        coupon:
+          type: string
+        response:
+          type: boolean
+
+    CouponRemovedResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        coupon:
+          type: string
+        response:
+          type: boolean
+
+    CheckCouponsResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        response:
+          type: boolean
+
+    CartFeesResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/CartFee"
+
+    CartFee:
+      type: object
+      properties:
+        name:
+          type: string
+        amount:
+          type: number
+        taxable:
+          type: boolean
+        tax_class:
+          type: string
+        total:
+          type: number
+        tax:
+          type: number
+
+    FeeAddedResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+    FeesRemovedResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+    ShippingMethodsResponse:
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/ShippingMethod"
+
+    ShippingMethod:
+      type: object
+      properties:
+        key:
+          type: string
+        method_id:
+          type: string
+        instance_id:
+          type: integer
+        label:
+          type: string
+        cost:
+          type: number
+        html:
+          type: string
+        taxes:
+          type: object
+        chosen_method:
+          type: boolean
+
+    ShippingMethodSetResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+
+    CartWeightResponse:
+      type: object
+      properties:
+        weight:
+          type: string
+
+    RemovedItemsResponse:
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/RemovedItem"
+
+    RemovedItem:
+      type: object
+      properties:
+        key:
+          type: string
+        product_id:
+          type: integer
+        quantity:
+          type: integer
+        name:
+          type: string
+
+    CartQuantitiesResponse:
+      type: object
+      additionalProperties:
+        type: integer
+
+    PaymentMethodsResponse:
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/PaymentMethod"
+
+    PaymentMethod:
+      type: object
+      properties:
+        id:
+          type: string
+        method_title:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+        icon_urls:
+          type: array
+          items:
+            type: string
+        has_fields:
+          type: boolean
+        countries:
+          type: array
+          items:
+            type: string
+        availability:
+          type: string
+        supports:
+          type: array
+          items:
+            type: string
+        order_button_text:
+          type: string
+        chosen_gateway:
+          type: boolean
+
+    PaymentMethodSetResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+
+    CustomerResponse:
+      type: object
+      properties:
+        user:
+          type: object
+          properties:
+            ID:
+              type: integer
+            first_name:
+              type: string
+            last_name:
+              type: string
+        billing:
+          type: object
+          properties:
+            first_name:
+              type: string
+            last_name:
+              type: string
+            company:
+              type: string
+            email:
+              type: string
+            phone:
+              type: string
+            country:
+              type: string
+            state:
+              type: string
+            postcode:
+              type: string
+            city:
+              type: string
+            address:
+              type: string
+            address_1:
+              type: string
+            address_2:
+              type: string
+        shipping:
+          type: object
+          properties:
+            first_name:
+              type: string
+            last_name:
+              type: string
+            company:
+              type: string
+            country:
+              type: string
+            state:
+              type: string
+            postcode:
+              type: string
+            city:
+              type: string
+            address:
+              type: string
+            address_1:
+              type: string
+            address_2:
+              type: string
+        has_calculated_shipping:
+          type: boolean
+        is_vat_exempt:
+          type: string
+
+    CrossSellsResponse:
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/CrossSellItem"
+
+    CrossSellItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        product_name:
+          type: string
+        product_title:
+          type: string
+        price:
+          type: string
+        regular_price:
+          type: string
+        sale_price:
+          type: string
+        product_image:
+          type: string
+
+    CalculateFeesResponse:
+      oneOf:
+        - $ref: "#/components/schemas/StringResponse"
+        - $ref: "#/components/schemas/FeeArrayResponse"
+
+    CalculateShippingResponse:
+      oneOf:
+        - $ref: "#/components/schemas/StringResponse"
+        - $ref: "#/components/schemas/ShippingMethodsObjectResponse"
+
+    DiscountTotalResponse:
+      type: object
+      properties:
+        value:
+          type: string
+
+    CouponDiscountTotalsResponse:
+      type: object
+      additionalProperties:
+        type: string
+
+    CouponDiscountTaxResponse:
+      type: object
+      properties:
+        value:
+          type: string
+
+    FeeTotalResponse:
+      type: object
+      properties:
+        value:
+          type: string
+
+    FeeTaxResponse:
+      type: object
+      properties:
+        value:
+          type: string
+
+    ShippingTotalResponse:
+      type: object
+      properties:
+        value:
+          type: string
+
+    ShippingTaxResponse:
+      type: object
+      properties:
+        value:
+          type: string
+
+    SubtotalResponse:
+      type: object
+      properties:
+        value:
+          type: string
+
+    SubtotalTaxResponse:
+      type: object
+      properties:
+        value:
+          type: string
+
+    TotalTaxResponse:
+      type: object
+      properties:
+        value:
+          type: string
+
+    CartTotalResponse:
+      type: object
+      properties:
+        value:
+          type: string
+
+    StringResponse:
+      type: string
+    BooleanResponse:
+      type: boolean
+    CouponArrayResponse:
+      type: array
+      items:
+        type: string
+    FeeArrayResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/CartFee"
+    ShippingMethodsObjectResponse:
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/ShippingMethod"
+    RemovedItemsObjectResponse:
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/RemovedItem"
+    QuantitiesObjectResponse:
+      type: object
+      additionalProperties:
+        type: integer
+    PaymentMethodsObjectResponse:
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/PaymentMethod"
+    CrossSellsObjectResponse:
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/CrossSellItem"
+    DynamicStringObjectResponse:
+      type: object
+      additionalProperties:
+        type: string

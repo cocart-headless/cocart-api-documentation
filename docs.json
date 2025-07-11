@@ -186,10 +186,19 @@
                           "api-reference/v1/cart/plus/customer",
                           "api-reference/v1/cart/plus/cross-sells",
                           "api-reference/v1/cart/plus/get-applied-coupons",
+                          "api-reference/v1/cart/plus/check-coupons",
                           "api-reference/v1/cart/plus/apply-coupon",
                           "api-reference/v1/cart/plus/remove-coupon",
                           "api-reference/v1/cart/plus/calculate-fees",
-                          "api-reference/v1/cart/plus/calculate-shipping"
+                          "api-reference/v1/cart/plus/calculate-shipping",
+                          "api-reference/v1/cart/plus/get-totals-discount-coupon-tax",
+                          "api-reference/v1/cart/plus/get-totals-fee",
+                          "api-reference/v1/cart/plus/get-totals-fee-tax",
+                          "api-reference/v1/cart/plus/get-totals-shipping",
+                          "api-reference/v1/cart/plus/get-totals-shipping-tax",
+                          "api-reference/v1/cart/plus/get-totals-subtotal-tax",
+                          "api-reference/v1/cart/plus/get-totals-tax",
+                          "api-reference/v1/cart/plus/get-totals-total"
                         ]
                       },
                       {
@@ -612,10 +621,19 @@
                           "api-reference/v1/cart/plus/customer",
                           "api-reference/v1/cart/plus/cross-sells",
                           "api-reference/v1/cart/plus/get-applied-coupons",
+                          "api-reference/v1/cart/plus/check-coupons",
                           "api-reference/v1/cart/plus/apply-coupon",
                           "api-reference/v1/cart/plus/remove-coupon",
                           "api-reference/v1/cart/plus/calculate-fees",
-                          "api-reference/v1/cart/plus/calculate-shipping"
+                          "api-reference/v1/cart/plus/calculate-shipping",
+                          "api-reference/v1/cart/plus/get-totals-discount-coupon-tax",
+                          "api-reference/v1/cart/plus/get-totals-fee",
+                          "api-reference/v1/cart/plus/get-totals-fee-tax",
+                          "api-reference/v1/cart/plus/get-totals-shipping",
+                          "api-reference/v1/cart/plus/get-totals-shipping-tax",
+                          "api-reference/v1/cart/plus/get-totals-subtotal-tax",
+                          "api-reference/v1/cart/plus/get-totals-tax",
+                          "api-reference/v1/cart/plus/get-totals-total"
                         ]
                       },
                       {
@@ -1003,7 +1021,8 @@
       "copy",
       "view",
       "chatgpt",
-      "claude"
+      "claude",
+      "perplexity"
     ]
   }
 }
