@@ -196,7 +196,18 @@
                         "group": "Products",
                         "icon": "shirt",
                         "pages": [
-                          "api-reference/v1/product/products"
+                          "api-reference/v1/products/products",
+                          "api-reference/v1/products/get-product",
+                          "api-reference/v1/products/get-variations",
+                          "api-reference/v1/products/get-variation",
+                          "api-reference/v1/products/categories",
+                          "api-reference/v1/products/tags",
+                          "api-reference/v1/products/attributes",
+                          "api-reference/v1/products/get-attribute",
+                          "api-reference/v1/products/attribute-terms",
+                          "api-reference/v1/products/get-attribute-term",
+                          "api-reference/v1/products/reviews",
+                          "api-reference/v1/products/get-review"
                         ]
                       },
                       {
@@ -611,7 +622,18 @@
                         "group": "Products",
                         "icon": "shirt",
                         "pages": [
-                          "api-reference/v1/products/products"
+                          "api-reference/v1/products/products",
+                          "api-reference/v1/products/get-product",
+                          "api-reference/v1/products/get-variations",
+                          "api-reference/v1/products/get-variation",
+                          "api-reference/v1/products/categories",
+                          "api-reference/v1/products/tags",
+                          "api-reference/v1/products/attributes",
+                          "api-reference/v1/products/get-attribute",
+                          "api-reference/v1/products/attribute-terms",
+                          "api-reference/v1/products/get-attribute-term",
+                          "api-reference/v1/products/reviews",
+                          "api-reference/v1/products/get-review"
                         ]
                       },
                       {
