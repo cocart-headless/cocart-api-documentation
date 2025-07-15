@@ -1,16 +1,105 @@
 ---
 title: "Breaking Changes in CoCart Core v5"
-sidebarTitle: "Breaking Core Changes"
+sidebarTitle: "Breaking Changes"
 description: "These breaking changes improve the core of CoCart and provides better support for these specific features."
 icon: "rectangle-code"
+tag: "Core v5"
 ---
 
+<Warning>
+    Core v5 is still in development so some feature, filter, hook or ability may change before it's released.
+</Warning>
+
 ## REST API
+
+<Note>
+    The REST API has had small changes that affect the schema and default behaviors of all API. Please review the [API Reference](/api-reference/introduction) and check if an endpoint has been tagged "Updated".
+</Note>
 
 * Avatars only return if requested now when using the login endpoint.
 * Store API now returns array of CoCart versions installed not just the core version.
 * Product meta will not return by default. To improve security and prevent PII from exposure, meta must now be whitelisted instead using the new filter `cocart_products_allowed_meta_keys`.
+* Variation data for items is moved above totals when fetching the cart.
+* The quantity parameter when adding an item now accepts both a `numeric` or an `array` value allowing to extend support for other product types that are a container of other grouped products.
+* Product Categories changed `image_src` from a single thumbnail to return all image sizes available. Schema updated to match.
+* Product reviews was updated to support better query parameters. Affects both API versions. Schema updated to match.
+* Feature: Load Cart from Session has been rewritten to support both guest and registered customers.
+
+## Returned Headers
+
+The following returned headers have also been renamed. Better for security reasons.
+
+| Previous Header            | New Header           |
+| -------------------------- | -------------------- |
+| CoCart-API-Cart-Key        | Cart-Key             |
+| CoCart-Timestamp           | Timestamp            |
+| CoCart-API-Cart-Expiring   | Cart-Expiring        |
+| CoCart-API-Cart-Expiration | Cart-Expiration      |
+
+## Filters
+
+* Filter `cocart_cart_item_quantity` has changed the order of the `$cart_item` and `$item_key` parameter for consistency with other filters.
 
 ## Plugin
 
 The text domain a.k.a the plugin slug, has changed from `cart-rest-api-for-woocommerce` to `cocart-core`. This affects any translations including custom. If you did a custom translation you will need to rename the text domain to match.
+
+## Deprecations
+
+<Tip>
+    **Developer Impact**
+
+    If you have extended CoCart or used any public functions within CoCart for your own API endpoints. Please check the deprecated list below.
+</Tip>
+
+* The response class `CoCart_Response` is deprecated. New utility response classes have been created for better utilization.
+* Function `cocart_prepare_money_response()` is replaced with function `cocart_format_money()`.
+
+The following filters are no longer used:
+
+* `cocart_load_cart_override`
+* `cocart_load_cart`
+* `cocart_merge_cart_content`
+* `cocart_cart_loaded_successful_message`
+* `cocart_use_cookie_monster`
+* `cocart_filter_request_data`
+* `cocart_products_ignore_private_meta_keys`
+* `cocart_return_default_response`
+* `cocart_{$endpoint}_response`
+
+## For Developers
+
+<Note>
+    As CoCart is improved, the plugin is able to provide developers more options to make it there own. You can find these [new filters available with examples](/documentation/developers/filters).
+</Note>
+
+### New Actions
+
+* Introduced new hook `cocart_cart_created` that fires once a cart is created.
+* Introduced new hook `cocart_set_requested_cart` that fires before the session is finally set.
+* Introduced new hook `cocart_item_updated` that fires once an item has updated in cart.
+
+### New Filters
+
+* Introduced new filter [`cocart_load_cart_from_session`](/documentation/developers/filters#cocart-load-cart-from-session) allows you to decide if the cart should load user meta when initialized.
+* Introduced new filter `cocart_load_cart_redirect_home` allows you to change where to redirect should loading the cart fail.
+* Introduced new filter `cocart_cross_sell_item_thumbnail_src` that allows you to change the thumbnail source for a cross sell item.
+* Introduced new filter `cocart_http_allowed_safe_ports` that allows you to control the list of ports considered safe for accessing the API.
+* Introduced new filter `cocart_allowed_http_origins` that allows you to change the origin types allowed for HTTP requests.
+* Introduced new filter `cocart_set_api_namespace` allows CoCart to be white labelled.
+* Introduced new filter `cocart_rest_response` to be used as a final straw for changing the response based on the request made.
+* Introduced new filter `cocart_wp_disable_access` to disable access to WordPress.
+* Introduced new filter `cocart_wp_frontend_url` that allows you to control where to redirect users when visiting your WordPress site if you have disabled access to it.
+* Introduced new filter `cocart_wp_accessible_page_ids` to allow you to set the page ID's that are still accessible when you disable access to WordPress.
+* Introduced new filter `cocart_rest_should_load_namespace` to determine whether a namespace should be loaded.
+* Introduced new filter `cocart_products_allowed_meta_keys` allows you to specify the allowed meta keys for the product.
+* Introduced new filter `cocart_product_insert_review_status` allows you to change the status to `approved`. Other values set via filter will automatically reset to `hold`.
+* Introduced new filter `cocart_ip_headers` allows you to filter additional IP headers for common proxy setups.
+* Introduced new filter `cocart_ip_default_address` allows you to set the default IP address if none found.
+
+### New parameters
+
+* Added the request object as a parameter for action hooks `cocart_before_cart_emptied`, `cocart_cart_emptied`, `cocart_cart_cleared`.
+* Added the request object as a parameter for filters `cocart_allow_origin`, `cocart_cart_item_quantity`, `cocart_add_to_cart_quantity` and `cocart_cart_item_data`.
+* Added parameters for filter `cocart_add_to_cart_sold_individually_quantity`.
+* Added the cart class as a parameter for filter `cocart_shipping_package_name`.

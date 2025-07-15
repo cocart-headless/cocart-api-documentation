@@ -1,0 +1,58 @@
+---
+title: "Breaking Changes in CoCart Core v4"
+sidebarTitle: "Breaking Changes"
+description: "These breaking changes affect how CoCart handles cart sessions."
+icon: "rectangle-code"
+tag: "Core v4"
+---
+
+<Note>
+    Since the cart key is provided in both the cart response and returned headers. Saving the cart key in your own cookie or local storage is recommended.
+</Note>
+
+<Warning>
+    CoCart core v4.2 introduced a significant architectural change to how cart sessions are managed.
+
+    - **Cart keys** are now the primary method for identifying cart sessions for both guest and authenticated users. **No more WooCommerce session cookies when using the API**.
+    - All session management handled by CoCart makes it more reliable for headless and decoupled WooCommerce stores.
+
+    This change helps with the confusion of needing to pass along the session cookie or reading the cookie to extract the cart key and help with user switching much better. We got mixed feedback for before this change, so by removing the cookie the session handler relied on before, the developer has better control over it.
+</Warning>
+
+<Tip>
+    **Developer Impact**
+
+    - If you previously relied on WooCommerce’s session cookies with CoCart, you must now use the cart key returned.
+    - All custom integrations, middleware, or client apps must store and send the cart key with every relevant API request.
+</Tip>
+
+## Versions not to install
+
+* `4.0.0` - Was missing a required class. `4.0.1` fixes that.
+* `4.2.0` - A deprecated function was causing a fatal error. Fixed with `4.2.1`
+* `4.3.1` - Hot fix in `4.3.2` corrected issues that affected CoCart since `4.2.0` and patches were applied to previous versions to prevent roll update issues for those who had not updated automatically.
+
+## Deprecations
+
+<Tip>
+    We advise that you update on staging or local to check if you have used any of our experimental functions and filters that were added to the session handler to see if any have been deprecated. You can also see the list of deprecations below.
+</Tip>
+
+* Removed the legacy API that CoCart started with.
+* Removed support for stores running lower than WooCommerce version 4.5
+* User switching removed. Never worked 100%. Mainly added for internal debugging purposes.
+* No longer use `cocart_override_cart_item` filter. Recommend using `cocart_item_added_to_cart` action hook instead.
+* No longer user `cocart_cart_updated` hook. Replaced with `cocart_update_cart_before_totals` hook.
+* Removed the need to support web host "Pantheon" by filtering the cookie name.
+* Removed our session abstract `CoCart_Session` that extended `WC_Session`. Any remaining functions have moved to a refreshed session handler.
+* Function `CoCart_Session_Handler::destroy_cookie()` no longer used.
+* Function `CoCart_Session_Handler::cocart_setcookie()` no longer used.
+* Function `CoCart_Session_Handler::get_cart()` no longer used.
+* Filter `cocart_cookie` no longer used. Use `woocommerce_cookie` instead.
+* Filter `cocart_cookie_httponly` no longer used.
+* Filter `cocart_cookie_supported` no longer used.
+* Filter `cocart_set_cookie_options` no longer used.
+* Filter `cocart_cart_use_secure_cookie` no longer used. Use `wc_session_use_secure_cookie` instead.
+* Filter `cocart_is_cart_data_valid` no longer used.
+* Returned headers `X-CoCart-API-Timestamp` and `X-CoCart-API-Version` no longer used.
+
