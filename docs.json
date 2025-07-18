@@ -1047,7 +1047,7 @@
           "query": [
             {
               "key": "q",
-              "value": "Ask question about https://mintlify.com/docs$path.md"
+              "value": "Ask question about https://docs.cocartapi.com$path.md"
             }
           ]
         }
