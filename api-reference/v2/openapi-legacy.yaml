@@ -1892,7 +1892,7 @@ paths:
             tags:
                 - customers
             summary: Logout current user
-            description: Logs out the currently authenticated user
+            description: Logs out the user and clears their session.
             security:
                 - {}
             responses:
@@ -1901,14 +1901,8 @@ paths:
                     content:
                         application/json:
                             schema:
-                                type: object
-                                properties:
-                                    status:
-                                        type: integer
-                                        example: 200
-                                    message:
-                                        type: string
-                                        example: "Logged out successfully"
+                                type: boolean
+                                example: true
 
     /login:
         post:
