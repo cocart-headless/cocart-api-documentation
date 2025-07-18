@@ -1029,7 +1029,21 @@
       "view",
       "chatgpt",
       "claude",
-      "perplexity"
+      "perplexity",
+      {
+        "title": "Ask Gemini",
+        "description": "Ask Google Gemini about the current page",
+        "icon": "sparkle",
+        "href": {
+          "base": "https://gemini.google.com/app",
+          "query": [
+            {
+              "key": "q",
+              "value": "Ask question about https://mintlify.com/docs$path.md"
+            }
+          ]
+        }
+      }
     ]
   }
 }
