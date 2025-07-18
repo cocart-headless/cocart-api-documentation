@@ -1027,6 +1027,14 @@
     "options": [
       "copy",
       "view",
+      {
+        "title": "Suggest edits",
+        "description": "Edit page with your suggestion.",
+        "icon": "pencil",
+        "href": {
+          "base": "https://github.com/cocart-headless/cocart-api-documentation/edit/main/$path.md"
+        }
+      },
       "chatgpt",
       "claude",
       "perplexity",
