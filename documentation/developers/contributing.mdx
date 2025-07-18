@@ -1,0 +1,69 @@
+---
+title: "Contributing"
+description: "See the many ways you can contribute to CoCart"
+tag: "WIP"
+---
+
+- [Translating strings into your language](#translating-cocart).
+- Answering questions in the [CoCart community Discord](https://cocartapi.com/community/?ref=mintlify) server.
+- Testing open [issues](https://github.com/co-cart/co-cart/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc) or [pull requests](https://github.com/co-cart/co-cart/pulls?q=is%3Apr+is%3Aopen+sort%3Aupdated-desc) and sharing your findings in a comment.
+- Testing [CoCart beta versions and release candidates](https://github.com/co-cart/cocart-beta-tester). Those are announced in the CoCart development blog.
+- Submitting fixes, improvements, and enhancements.
+
+If you wish to contribute code, please read the information in the sections below. Then [fork](https://help.github.com/articles/fork-a-repo/) the correct module for CoCart, commit your changes, and [submit a pull request](https://help.github.com/articles/using-pull-requests/) 🎉
+
+CoCart Core is licensed under the GPLv3+, and all contributions to the project will be released under the same license. You maintain copyright over any contribution you make, and by submitting a pull request, you are agreeing to release that contribution under the GPLv3+ license.
+
+If you have questions about the process to contribute code or want to discuss details of your contribution, you can ask in the #support channel in the [CoCart community Discord](https://cocartapi.com/community/?ref=mintlify) server.
+
+## Getting started
+
+- [Setup LocalWP](https://localwp.com/releases/) and create a new WordPress site.
+- Install WooCommerce, setup dummy products, shipping methods and taxes. (WooCommerce provides sample data)
+- Install CoCart and start experimenting.
+- Just wanting to do a [string localization](#string-localization-guidelines)?
+
+## Coding Guidelines and Development
+
+<Tip>
+    1. Ensure you stick to the [WordPress Coding Standards](https://make.wordpress.org/core/handbook/best-practices/coding-standards/php/)
+    2. Ensure you use **LF** line endings in your code editor. Use [EditorConfig](http://editorconfig.org/) if your editor supports it so that indentation, line endings and other settings are auto configured.
+</Tip>
+
+### Creating Branches
+
+Branch names should go by the following structure (anything in `{}` brackets is a placeholder). **short-slug** should be replaced with a short name that best describes the changes, do ask for confirmation if needed.
+
+- `refactor/{short-slug}` for refactors.
+- `test/{short-slug}` for changes that are only test updates or additions.
+- `fix/{short-slug}` for changes that fix a bug. Provide the issue number the fix is for and include that in the branch name.
+- `add/{short-slug}` for changes that are adding a new feature.
+
+### Commits
+
+1. Make sure each commit addresses an atomic unit of work that independently works.
+2. Make sure the commit message has a subject line which includes a brief description of the change and (if needed), why it was necessary. Write the subject in the imperative, start with a verb, and do not end with a period. The subject line should be **no longer than 50 characters**.
+3. There must be an empty line between the subject line and the rest of the commit message (if any). The commit body should be **no longer than 72 characters**.
+4. The commit message should explain what caused the problem and what its consequences are (if helpful for understanding the changes).
+5. The commit message should explain how the changes achieve the goal, but only if it isn't obvious.
+
+See [this post](https://chris.beams.io/posts/git-commit/) for more on this and follow all the applicable sections of the pull request template.
+
+<Info>
+    Please avoid modifying the changelog directly or updating the .pot files. These will be updated by the CoCart team.
+</Info>
+
+## Translating CoCart
+
+It is recommended to translate CoCart via the [translate.cocartapi.com](https://translate.cocartapi.com/?ref=mintlify). You can join and help by translating there.
+
+If any of the CoCart plugins are already **100% translated** for your language, join anyway! The language files are regularly updated with new strings that need translation and will likely be added soon.
+
+## String localization guidelines
+
+1. Use the plugins textdomain in all strings.
+2. When using dynamic strings in `printf/sprintf`, if you are replacing more than 1 string, use numbered args. e.g. `Test %s string %s.` would be `Test %1$s string %2$s.`
+3. Use sentence case. e.g. `Some Thing` should be `Some thing`.
+4. Avoid HTML. If needed, insert the HTML using `sprintf`.
+
+For more information, see WP core document [i18n for WordPress Developers](https://codex.wordpress.org/I18n_for_WordPress_Developers).

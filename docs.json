@@ -114,7 +114,8 @@
                         "pages": [
                           "documentation/developers/legacy/functions"
                         ]
-                      }
+                      },
+                      "documentation/developers/contributing"
                     ]
                   },
                   {
@@ -555,7 +556,8 @@
                         "pages": [
                           "documentation/developers/functions"
                         ]
-                      }
+                      },
+                      "documentation/developers/contributing"
                     ]
                   },
                   {
