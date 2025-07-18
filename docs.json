@@ -53,8 +53,7 @@
                         "group": "CoCart Plus",
                         "icon": "cart-plus",
                         "pages": [
-                          "getting-started/plus/setup",
-                          "getting-started/license-activation"
+                          "getting-started/plus/setup"
                         ]
                       },
                       {
@@ -66,7 +65,8 @@
                           "getting-started/jwt/concepts",
                           "getting-started/jwt/advanced-configuration"
                         ]
-                      }
+                      },
+                      "getting-started/license-activation"
                     ]
                   },
                   {
@@ -495,8 +495,7 @@
                         "group": "CoCart Plus",
                         "icon": "cart-plus",
                         "pages": [
-                          "getting-started/plus/setup",
-                          "getting-started/license-activation"
+                          "getting-started/plus/setup"
                         ]
                       },
                       {
@@ -508,7 +507,8 @@
                           "getting-started/jwt/concepts",
                           "getting-started/jwt/advanced-configuration"
                         ]
-                      }
+                      },
+                      "getting-started/license-activation"
                     ]
                   },
                   {
