@@ -30,7 +30,7 @@ icon: "hashtag"
     </Accordion>
 
     <Accordion title="My server uses a static IP address, what can I do?">
-        If your having issues matching IP address due to server configuration, perhaps force the IP to the static IP address your server provides. Example:
+        If your having issues matching IP address due to server configuration, perhaps force the IP to the static IP address your server provides.
 
         ```php
         add_filter( 'cocart_jwt_auth_token_before_sign', function( $payload ) {
@@ -42,7 +42,7 @@ icon: "hashtag"
     </Accordion>
 
     <Accordion title="We use a fixed custom user agent so authentication is failing.">
-        Perhaps filter the device to your specific user agent. That way it always matches. Example:
+        Perhaps filter the device to your specific user agent. That way it always matches.
 
         ```php
         add_filter( 'cocart_jwt_auth_token_before_sign', function( $payload ) {
