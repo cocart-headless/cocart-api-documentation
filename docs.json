@@ -417,19 +417,19 @@
                 "tab": "What's New",
                 "groups": [
                   {
-                    "group": "What's New",
-                    "pages": [
-                      "breaking-changes/core-v5",
-                      "breaking-changes/core-v4"
-                    ]
-                  },
-                  {
                     "group": "Changelogs",
                     "pages": [
                       "updates/overview",
                       "updates/documentation",
                       "updates/core",
                       "updates/jwt"
+                    ]
+                  },
+                  {
+                    "group": "Breaking Changes",
+                    "pages": [
+                      "breaking-changes/core-v5",
+                      "breaking-changes/core-v4"
                     ]
                   }
                 ]
@@ -867,18 +867,18 @@
                 "tab": "What's New",
                 "groups": [
                   {
-                    "group": "What's New",
-                    "pages": [
-                      "breaking-changes/core-v5"
-                    ]
-                  },
-                  {
                     "group": "Changelogs",
                     "pages": [
                       "updates/overview",
                       "updates/documentation",
                       "updates/core",
                       "updates/jwt"
+                    ]
+                  },
+                  {
+                    "group": "Breaking Changes",
+                    "pages": [
+                      "breaking-changes/core-v5"
                     ]
                   }
                 ]
