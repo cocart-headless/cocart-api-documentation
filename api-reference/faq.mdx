@@ -1,0 +1,43 @@
+---
+title: "Frequently Asked Questions"
+description: "We ask the most frequently asked questions for the API"
+icon: "question"
+---
+
+<AccordionGroup>
+    <Accordion title="Does CoCart use cookies?">
+        CoCart does not use or rely on any WordPress or WooCommerce cookies.
+    </Accordion>
+
+    <Accordion title="How do I create a batch request?">
+        Standard WordPress batch requests are handled via `https://your-store.com/wp-json/batch/v1` endpoint.
+
+        For example adding multiple products to the cart request looks like:
+        ```json
+        {
+            "requests": [
+                {
+                    "method": "POST",
+                    "path": "/cocart/v2/cart/add-item",
+                    "body": {
+                        "id": "35",
+                        "quantity": "2"
+                    }
+                },
+                {
+                    "method": "POST",
+                    "path": "/cocart/v2/cart/add-item",
+                    "body": {
+                        "id": "36",
+                        "quantity": "5"
+                    }
+                }
+            ]
+        }
+        ```
+    </Accordion>
+
+    <Accordion title="My question is not listed here. Where can I find more?">
+        We have more available in our [support center](/knowledge-base/faq).
+    </Accordion>
+</AccordionGroup>
