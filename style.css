@@ -37,6 +37,12 @@ body, input, #category-select, .dropdown-item, #table-of-contents {
 
 #content-container {
     /*font-family: "Tiempos", serif;*/
+    margin-left: -3rem;
+    margin-right: 3rem;
+}
+
+#content-container > div {
+    max-width: 68rem;
 }
 
 .custom-container {
@@ -57,12 +63,12 @@ body, input, #category-select, .dropdown-item, #table-of-contents {
     background-color: rgb(var(--primary)/.1);
 }
 
-.bg-primary:not(.group .group-hover\:fill-primary-dark, ul#sidebar-group li a svg) {
+.bg-primary:not(.group .group-hover\:fill-primary-dark, ul#sidebar-group li a svg, div.bottom-0) {
     --tw-bg-opacity: 1;
     background-color: rgb(var(--background-dark)/var(--tw-bg-opacity));
 }
 
-.dark\:bg-primary-light:is(.dark *):not(.group .group-hover\:fill-primary-dark, ul#sidebar-group li a svg) {
+.dark\:bg-primary-light:is(.dark *):not(.group .group-hover\:fill-primary-dark, ul#sidebar-group li a svg, div.bottom-0) {
     --tw-bg-opacity: 1;
     background-color: rgb(var(--background-light)/var(--tw-bg-opacity));
 }
