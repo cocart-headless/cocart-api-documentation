@@ -37,12 +37,6 @@ body, input, #category-select, .dropdown-item, #table-of-contents {
 
 #content-container {
     /*font-family: "Tiempos", serif;*/
-    margin-left: -3rem;
-    margin-right: 3rem;
-}
-
-#content-container > div {
-    max-width: 68rem;
 }
 
 .custom-container {
@@ -51,12 +45,6 @@ body, input, #category-select, .dropdown-item, #table-of-contents {
 
 .custom-container a.card {
     max-width: 320px;
-}
-
-#page-context-menu-button {
-    & span {
-        display: none;
-    }
 }
 
 .bg-primary\/10 {
@@ -83,6 +71,23 @@ body, input, #category-select, .dropdown-item, #table-of-contents {
 
 .\[\&\>details\]\:rounded-none > details {
     border-radius: 0;
+}
+
+@media screen and (min-width: 928px) {
+    #content-container {
+        margin-left: -3rem;
+        margin-right: 3rem;
+    }
+
+    #content-container > div {
+        max-width: 68rem;
+    }
+
+    #page-context-menu-button {
+        & span {
+            display: none;
+        }
+    }
 }
 
 @media (max-width: 926px) {
