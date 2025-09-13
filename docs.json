@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
+  "theme": "palm",
   "name": "CoCart API",
   "colors": {
     "primary": "#6a42d7",
@@ -11,463 +11,23 @@
   "navigation": {
     "versions": [
       {
-        "version": "core-v4.6",
+        "version": "stable",
         "default": true,
         "anchors": [
           {
             "anchor": "Documentation",
-            "icon": "book-open",
+            "icon": "book",
             "tabs": [
               {
                 "tab": "Home",
+                "icon": "compass",
                 "pages": [
                   "/"
                 ]
               },
               {
                 "tab": "User-Guides",
-                "groups": [
-                  {
-                    "group": "Overview",
-                    "pages": [
-                      "overview/legacy/introduction",
-                      "overview/faq",
-                      "overview/standards",
-                      "overview/roadmap",
-                      "overview/security-policy"
-                    ]
-                  },
-                  {
-                    "group": "Getting Started",
-                    "pages": [
-                      "getting-started/wordpress-setup",
-                      {
-                        "group": "CoCart",
-                        "icon": "cart-shopping",
-                        "pages": [
-                          "getting-started/core/setup",
-                          "getting-started/core/quick-start"
-                        ]
-                      },
-                      {
-                        "group": "CoCart Plus",
-                        "icon": "cart-plus",
-                        "pages": [
-                          "getting-started/plus/setup"
-                        ]
-                      },
-                      {
-                        "group": "JWT Authentication",
-                        "icon": "hashtag",
-                        "pages": [
-                          "getting-started/jwt/setup",
-                          "getting-started/jwt/quick-start",
-                          "getting-started/jwt/concepts",
-                          "getting-started/jwt/advanced-configuration"
-                        ]
-                      },
-                      "getting-started/license-activation"
-                    ]
-                  },
-                  {
-                    "group": "Features",
-                    "pages": [
-                      "documentation/security",
-                      "documentation/learn/legacy/batch-requests",
-                      "documentation/learn/force-permissions",
-                      "documentation/learn/legacy/rate-limiting",
-                      "documentation/learn/legacy/cors",
-                      "documentation/learn/legacy/load-cart"
-                    ]
-                  },
-                  {
-                    "group": "Guides",
-                    "pages": [
-                      "documentation/developers/guides/guiding-principles",
-                      "documentation/developers/guides/jwt-token-checkup",
-                      "documentation/developers/guides/legacy/extending-cart-creating-callbacks",
-                      "documentation/developers/guides/updating-cocart"
-                    ]
-                  },
-                  {
-                    "group": "Developers",
-                    "pages": [
-                      {
-                        "group": "Action hooks",
-                        "icon": "tag",
-                        "pages": [
-                          "documentation/developers/legacy/actions",
-                          "documentation/developers/jwt/actions"
-                        ]
-                      },
-                      {
-                        "group": "Filters",
-                        "icon": "filter",
-                        "pages": [
-                          "documentation/developers/legacy/filters",
-                          "documentation/developers/jwt/filters"
-                        ]
-                      },
-                      {
-                        "group": "Functions",
-                        "icon": "robot",
-                        "pages": [
-                          "documentation/developers/legacy/functions"
-                        ]
-                      },
-                      "documentation/developers/contributing"
-                    ]
-                  },
-                  {
-                    "group": "Tools and Resources",
-                    "pages": [
-                      "documentation/tools",
-                      "documentation/resources",
-                      "documentation/wp-cli"
-                    ]
-                  },
-                  {
-                    "group": "Resources",
-                    "pages": [
-                      "resources/community",
-                      "resources/support-policy",
-                      "resources/opening-issues",
-                      "resources/backers"
-                    ]
-                  }
-                ]
-              },
-              {
-                "tab": "API Reference",
-                "groups": [
-                  {
-                    "group": "Overview",
-                    "pages": [
-                      "api-reference/legacy/introduction",
-                      "api-reference/faq",
-                      "api-reference/playground",
-                      "api-reference/authentication"
-                    ]
-                  },
-                  {
-                    "group": "JWT Authentication",
-                    "pages": [
-                      "api-reference/jwt/refresh-token",
-                      "api-reference/jwt/validate-token"
-                    ]
-                  },
-                  {
-                    "group": "API v1 (Deprecated in future)",
-                    "pages": [
-                      "api-reference/v1/error-codes",
-                      {
-                        "group": "Cart",
-                        "icon": "cart-shopping",
-                        "pages": [
-                          "api-reference/v1/cart/get-cart",
-                          "api-reference/v1/cart/get-cart-in-session",
-                          "api-reference/v1/cart/get-cart-customer",
-                          "api-reference/v1/cart/add-item",
-                          "api-reference/v1/cart/update-item",
-                          "api-reference/v1/cart/remove-item",
-                          "api-reference/v1/cart/restore-item",
-                          "api-reference/v1/cart/clear-cart",
-                          "api-reference/v1/cart/count-items",
-                          "api-reference/v1/cart/calculate",
-                          "api-reference/v1/cart/totals",
-                          "api-reference/v1/cart/plus/get-shipping-methods",
-                          "api-reference/v1/cart/plus/set-shipping-method",
-                          "api-reference/v1/cart/plus/removed-items",
-                          "api-reference/v1/cart/plus/quantities",
-                          "api-reference/v1/cart/plus/get-payment-methods",
-                          "api-reference/v1/cart/plus/set-payment-method",
-                          "api-reference/v1/cart/plus/get-fees",
-                          "api-reference/v1/cart/plus/add-fee",
-                          "api-reference/v1/cart/plus/customer",
-                          "api-reference/v1/cart/plus/cross-sells",
-                          "api-reference/v1/cart/plus/get-applied-coupons",
-                          "api-reference/v1/cart/plus/check-coupons",
-                          "api-reference/v1/cart/plus/apply-coupon",
-                          "api-reference/v1/cart/plus/remove-coupon",
-                          "api-reference/v1/cart/plus/calculate-fees",
-                          "api-reference/v1/cart/plus/calculate-shipping",
-                          "api-reference/v1/cart/plus/get-totals-discount-coupon-tax",
-                          "api-reference/v1/cart/plus/get-totals-fee",
-                          "api-reference/v1/cart/plus/get-totals-fee-tax",
-                          "api-reference/v1/cart/plus/get-totals-shipping",
-                          "api-reference/v1/cart/plus/get-totals-shipping-tax",
-                          "api-reference/v1/cart/plus/get-totals-subtotal-tax",
-                          "api-reference/v1/cart/plus/get-totals-tax",
-                          "api-reference/v1/cart/plus/get-totals-total"
-                        ]
-                      },
-                      {
-                        "group": "Products",
-                        "icon": "shirt",
-                        "pages": [
-                          "api-reference/v1/products/products",
-                          "api-reference/v1/products/get-product",
-                          "api-reference/v1/products/get-variations",
-                          "api-reference/v1/products/get-variation",
-                          "api-reference/v1/products/categories",
-                          "api-reference/v1/products/tags",
-                          "api-reference/v1/products/attributes",
-                          "api-reference/v1/products/get-attribute",
-                          "api-reference/v1/products/attribute-terms",
-                          "api-reference/v1/products/get-attribute-term",
-                          "api-reference/v1/products/reviews",
-                          "api-reference/v1/products/get-review"
-                        ]
-                      },
-                      {
-                        "group": "User Management",
-                        "icon": "user",
-                        "pages": [
-                          "api-reference/v1/user/logout"
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "group": "API v2",
-                    "pages": [
-                      "api-reference/v2/error-codes",
-                      "api-reference/v2/variation-examples",
-                      {
-                        "group": "Cart",
-                        "icon": "cart-shopping",
-                        "pages": [
-                          "api-reference/v2/cart/legacy/get-cart",
-                          "api-reference/v2/cart/legacy/post-add-item",
-                          "api-reference/v2/cart/legacy/post-add-items",
-                          "api-reference/v2/cart/legacy/post-calculate",
-                          "api-reference/v2/cart/legacy/post-clear",
-                          "api-reference/v2/cart/post-apply-coupon",
-                          "api-reference/v2/cart/get-coupons",
-                          "api-reference/v2/cart/delete-coupons",
-                          "api-reference/v2/cart/delete-coupons-by-code",
-                          "api-reference/v2/cart/get-coupons-validate",
-                          "api-reference/v2/cart/delete-items",
-                          "api-reference/v2/cart/legacy/get-items-count",
-                          "api-reference/v2/cart/legacy/post-item-by-key",
-                          "api-reference/v2/cart/legacy/delete-item-by-key",
-                          "api-reference/v2/cart/legacy/put-item-by-key",
-                          "api-reference/v2/cart/get-cart-mini",
-                          "api-reference/v2/cart/post-add-fee",
-                          "api-reference/v2/cart/post-remove-fees",
-                          "api-reference/v2/cart/post-set-shipping-method",
-                          "api-reference/v2/cart/legacy/get-totals",
-                          "api-reference/v2/cart/legacy/post-cart-update"
-                        ]
-                      },
-                      {
-                        "group": "Products",
-                        "icon": "shirt",
-                        "pages": [
-                          "api-reference/v2/products/legacy/get-products"
-                        ]
-                      },
-                      {
-                        "group": "User Management",
-                        "icon": "user",
-                        "pages": [
-                          "api-reference/v2/user/post-login",
-                          "api-reference/v2/user/post-logout",
-                          "api-reference/v2/user/post-register"
-                        ]
-                      },
-                      {
-                        "group": "Store",
-                        "icon": "store",
-                        "pages": [
-                          "api-reference/v2/store/legacy/get-store"
-                        ]
-                      },
-                      {
-                        "group": "Sessions",
-                        "icon": "database",
-                        "pages": [
-                          "api-reference/v2/sessions/list-sessions",
-                          "api-reference/v2/session/get-session",
-                          "api-reference/v2/session/delete-session"
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "group": "Plugins",
-                    "pages": [
-                      "api-reference/plugins/wc-name-your-price",
-                      "api-reference/plugins/wc-mix-and-match-products"
-                    ]
-                  },
-                  {
-                    "group": "Resources",
-                    "pages": [
-                      "resources/community",
-                      "resources/support-policy",
-                      "resources/opening-issues",
-                      "resources/backers"
-                    ]
-                  }
-                ]
-              },
-              {
-                "tab": "CLI Reference",
-                "groups": [
-                  {
-                    "group": "CoCart CLI",
-                    "pages": [
-                      "cli-reference/introduction",
-                      "cli-reference/cli-cart"
-                    ]
-                  },
-                  {
-                    "group": "Other CLI Commands",
-                    "pages": [
-                      "cli-reference/cli-jwt"
-                    ]
-                  },
-                  {
-                    "group": "Resources",
-                    "pages": [
-                      "resources/community",
-                      "resources/support-policy",
-                      "resources/opening-issues",
-                      "resources/backers"
-                    ]
-                  }
-                ]
-              },
-              {
-                "tab": "Tutorials",
-                "groups": [
-                  {
-                    "group": "Tutorials",
-                    "pages": [
-                      "tutorials/postman",
-                      "tutorials/covert-cart-to-order"
-                    ]
-                  },
-                  {
-                    "group": "Tips and Tricks",
-                    "pages": [
-                      "tutorials/generate-image-dataurl"
-                    ]
-                  },
-                  {
-                    "group": "Resources",
-                    "pages": [
-                      "resources/community",
-                      "resources/support-policy",
-                      "resources/opening-issues",
-                      "resources/backers"
-                    ]
-                  }
-                ]
-              },
-              {
-                "tab": "Support Centre",
-                "groups": [
-                  {
-                    "group": "Contact us",
-                    "pages": [
-                      "knowledge-base/contact-us"
-                    ]
-                  },
-                  {
-                    "group": "Knowledge Base",
-                    "pages": [
-                      "knowledge-base/faq",
-                      "knowledge-base/security-practices",
-                      "knowledge-base/legacy/cart-key",
-                      "knowledge-base/adding-code",
-                      "knowledge-base/plugin-suggestions",
-                      "knowledge-base/nulled-plugins",
-                      "knowledge-base/wp-config"
-                    ]
-                  },
-                  {
-                    "group": "Troubleshooting",
-                    "pages": [
-                      "knowledge-base/troubleshoot/authentication",
-                      "knowledge-base/troubleshoot/jwt-authentication"
-                    ]
-                  },
-                  {
-                    "group": "Plugins",
-                    "pages": [
-                      "plugins/woocommerce-extensions",
-                      "plugins/suggestions",
-                      "plugins/incompatible"
-                    ]
-                  },
-                  {
-                    "group": "Resources",
-                    "pages": [
-                      "resources/community",
-                      "resources/support-policy",
-                      "resources/opening-issues",
-                      "resources/backers"
-                    ]
-                  }
-                ]
-              },
-              {
-                "tab": "What's New",
-                "groups": [
-                  {
-                    "group": "Changelogs",
-                    "pages": [
-                      "updates/overview",
-                      "updates/documentation",
-                      "updates/core",
-                      "updates/jwt"
-                    ]
-                  },
-                  {
-                    "group": "Breaking Changes",
-                    "pages": [
-                      "breaking-changes/core-v5",
-                      "breaking-changes/core-v4"
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "anchor": "Community",
-            "href": "https://cocartapi.com/community/?ref=mintlify",
-            "icon": "discord"
-          },
-          {
-            "anchor": "Feature requests",
-            "href": "https://cocartapi.com/suggest-a-feature/?ref=mintlify",
-            "icon": "bell-concierge"
-          },
-          {
-            "anchor": "Wall of Love",
-            "href": "https://cocartapi.com/wall-of-love/?ref=mintlify",
-            "icon": "heart"
-          }
-        ]
-      },
-      {
-        "version": "core-v5",
-        "anchors": [
-          {
-            "anchor": "Documentation",
-            "icon": "book-open",
-            "tabs": [
-              {
-                "tab": "Home",
-                "pages": [
-                  "/"
-                ]
-              },
-              {
-                "tab": "User-Guides",
+                "icon": "book",
                 "groups": [
                   {
                     "group": "Overview",
@@ -581,6 +141,7 @@
               },
               {
                 "tab": "API Reference",
+                "icon": "code",
                 "groups": [
                   {
                     "group": "Overview",
@@ -684,30 +245,12 @@
                           "api-reference/v2/cart/post-add-items",
                           "api-reference/v2/cart/post-calculate",
                           "api-reference/v2/cart/post-clear",
-                          "api-reference/v2/cart/post-apply-coupon",
-                          "api-reference/v2/cart/get-coupons",
-                          "api-reference/v2/cart/delete-coupons",
-                          "api-reference/v2/cart/delete-coupons-by-code",
-                          "api-reference/v2/cart/get-coupons-validate",
-                          "api-reference/v2/cart/delete-items",
                           "api-reference/v2/cart/get-items-count",
                           "api-reference/v2/cart/post-item-by-key",
                           "api-reference/v2/cart/delete-item-by-key",
                           "api-reference/v2/cart/put-item-by-key",
-                          "api-reference/v2/cart/get-cart-mini",
-                          "api-reference/v2/cart/post-add-fee",
-                          "api-reference/v2/cart/post-remove-fees",
-                          "api-reference/v2/cart/post-set-shipping-method",
                           "api-reference/v2/cart/get-totals",
                           "api-reference/v2/cart/post-cart-update"
-                        ]
-                      },
-                      {
-                        "group": "Checkout",
-                        "icon": "cash-register",
-                        "pages": [
-                          "api-reference/v2/checkout/post-checkout",
-                          "api-reference/v2/checkout/get-payment-methods"
                         ]
                       },
                       {
@@ -764,6 +307,7 @@
               },
               {
                 "tab": "CLI Reference",
+                "icon": "terminal",
                 "groups": [
                   {
                     "group": "CoCart CLI",
@@ -791,6 +335,7 @@
               },
               {
                 "tab": "Tutorials",
+                "icon": "graduation-cap",
                 "groups": [
                   {
                     "group": "Tutorials",
@@ -818,6 +363,7 @@
               },
               {
                 "tab": "Support Centre",
+                "icon": "question",
                 "groups": [
                   {
                     "group": "Contact us",
@@ -865,6 +411,458 @@
               },
               {
                 "tab": "What's New",
+                "icon": "clock-rotate-left",
+                "groups": [
+                  {
+                    "group": "Changelogs",
+                    "pages": [
+                      "updates/overview",
+                      "updates/documentation",
+                      "updates/core",
+                      "updates/jwt"
+                    ]
+                  },
+                  {
+                    "group": "Breaking Changes",
+                    "pages": [
+                      "breaking-changes/core-v5",
+                      "breaking-changes/core-v4"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anchor": "Feature requests",
+            "href": "https://cocartapi.com/suggest-a-feature/?ref=mintlify",
+            "icon": "bell-concierge"
+          },
+          {
+            "anchor": "Wall of Love",
+            "href": "https://cocartapi.com/wall-of-love/?ref=mintlify",
+            "icon": "heart"
+          }
+        ]
+      },
+      {
+        "version": "pre-release",
+        "anchors": [
+          {
+            "anchor": "Documentation",
+            "icon": "book",
+            "tabs": [
+              {
+                "tab": "Home",
+                "icon": "compass",
+                "pages": [
+                  "/"
+                ]
+              },
+              {
+                "tab": "User-Guides",
+                "icon": "book",
+                "groups": [
+                  {
+                    "group": "Overview",
+                    "pages": [
+                      "overview/pre-release/introduction",
+                      "overview/faq",
+                      "overview/standards",
+                      "overview/roadmap",
+                      "overview/security-policy"
+                    ]
+                  },
+                  {
+                    "group": "Getting Started",
+                    "pages": [
+                      "getting-started/wordpress-setup",
+                      {
+                        "group": "CoCart",
+                        "icon": "cart-shopping",
+                        "pages": [
+                          "getting-started/core/setup",
+                          "getting-started/core/quick-start"
+                        ]
+                      },
+                      {
+                        "group": "CoCart Plus",
+                        "icon": "cart-plus",
+                        "pages": [
+                          "getting-started/plus/setup"
+                        ]
+                      },
+                      {
+                        "group": "JWT Authentication",
+                        "icon": "hashtag",
+                        "pages": [
+                          "getting-started/jwt/setup",
+                          "getting-started/jwt/quick-start",
+                          "getting-started/jwt/concepts",
+                          "getting-started/jwt/advanced-configuration"
+                        ]
+                      },
+                      "getting-started/license-activation"
+                    ]
+                  },
+                  {
+                    "group": "Features",
+                    "pages": [
+                      "documentation/security",
+                      "documentation/learn/pre-release/batch-requests",
+                      "documentation/learn/force-permissions",
+                      "documentation/learn/pre-release/rate-limiting",
+                      "documentation/learn/pre-release/cors",
+                      "documentation/learn/pre-release/load-cart"
+                    ]
+                  },
+                  {
+                    "group": "Guides",
+                    "pages": [
+                      "documentation/developers/guides/guiding-principles",
+                      "documentation/developers/guides/jwt-token-checkup",
+                      "documentation/developers/guides/pre-release/extending-cart-creating-callbacks",
+                      "documentation/developers/guides/updating-cocart"
+                    ]
+                  },
+                  {
+                    "group": "Developers",
+                    "pages": [
+                      {
+                        "group": "Action hooks",
+                        "icon": "tag",
+                        "pages": [
+                          "documentation/developers/pre-release/actions",
+                          "documentation/developers/jwt/actions"
+                        ]
+                      },
+                      {
+                        "group": "Filters",
+                        "icon": "filter",
+                        "pages": [
+                          "documentation/developers/pre-release/filters",
+                          "documentation/developers/jwt/filters"
+                        ]
+                      },
+                      {
+                        "group": "Functions",
+                        "icon": "robot",
+                        "pages": [
+                          "documentation/developers/pre-release/functions"
+                        ]
+                      },
+                      "documentation/developers/contributing"
+                    ]
+                  },
+                  {
+                    "group": "Tools and Resources",
+                    "pages": [
+                      "documentation/tools",
+                      "documentation/resources",
+                      "documentation/wp-cli"
+                    ]
+                  },
+                  {
+                    "group": "Resources",
+                    "pages": [
+                      "resources/community",
+                      "resources/support-policy",
+                      "resources/opening-issues",
+                      "resources/backers"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "API Reference",
+                "icon": "code",
+                "groups": [
+                  {
+                    "group": "Overview",
+                    "pages": [
+                      "api-reference/pre-release/introduction",
+                      "api-reference/faq",
+                      "api-reference/playground",
+                      "api-reference/authentication"
+                    ]
+                  },
+                  {
+                    "group": "JWT Authentication",
+                    "pages": [
+                      "api-reference/jwt/refresh-token",
+                      "api-reference/jwt/validate-token"
+                    ]
+                  },
+                  {
+                    "group": "API v1 (Deprecated in future)",
+                    "pages": [
+                      "api-reference/v1/error-codes",
+                      {
+                        "group": "Cart",
+                        "icon": "cart-shopping",
+                        "pages": [
+                          "api-reference/v1/cart/get-cart",
+                          "api-reference/v1/cart/get-cart-in-session",
+                          "api-reference/v1/cart/get-cart-customer",
+                          "api-reference/v1/cart/add-item",
+                          "api-reference/v1/cart/update-item",
+                          "api-reference/v1/cart/remove-item",
+                          "api-reference/v1/cart/restore-item",
+                          "api-reference/v1/cart/clear-cart",
+                          "api-reference/v1/cart/count-items",
+                          "api-reference/v1/cart/calculate",
+                          "api-reference/v1/cart/totals",
+                          "api-reference/v1/cart/plus/get-shipping-methods",
+                          "api-reference/v1/cart/plus/set-shipping-method",
+                          "api-reference/v1/cart/plus/removed-items",
+                          "api-reference/v1/cart/plus/quantities",
+                          "api-reference/v1/cart/plus/get-payment-methods",
+                          "api-reference/v1/cart/plus/set-payment-method",
+                          "api-reference/v1/cart/plus/get-fees",
+                          "api-reference/v1/cart/plus/add-fee",
+                          "api-reference/v1/cart/plus/customer",
+                          "api-reference/v1/cart/plus/cross-sells",
+                          "api-reference/v1/cart/plus/get-applied-coupons",
+                          "api-reference/v1/cart/plus/check-coupons",
+                          "api-reference/v1/cart/plus/apply-coupon",
+                          "api-reference/v1/cart/plus/remove-coupon",
+                          "api-reference/v1/cart/plus/calculate-fees",
+                          "api-reference/v1/cart/plus/calculate-shipping",
+                          "api-reference/v1/cart/plus/get-totals-discount-coupon-tax",
+                          "api-reference/v1/cart/plus/get-totals-fee",
+                          "api-reference/v1/cart/plus/get-totals-fee-tax",
+                          "api-reference/v1/cart/plus/get-totals-shipping",
+                          "api-reference/v1/cart/plus/get-totals-shipping-tax",
+                          "api-reference/v1/cart/plus/get-totals-subtotal-tax",
+                          "api-reference/v1/cart/plus/get-totals-tax",
+                          "api-reference/v1/cart/plus/get-totals-total"
+                        ]
+                      },
+                      {
+                        "group": "Products",
+                        "icon": "shirt",
+                        "pages": [
+                          "api-reference/v1/products/products",
+                          "api-reference/v1/products/get-product",
+                          "api-reference/v1/products/get-variations",
+                          "api-reference/v1/products/get-variation",
+                          "api-reference/v1/products/categories",
+                          "api-reference/v1/products/tags",
+                          "api-reference/v1/products/attributes",
+                          "api-reference/v1/products/get-attribute",
+                          "api-reference/v1/products/attribute-terms",
+                          "api-reference/v1/products/get-attribute-term",
+                          "api-reference/v1/products/reviews",
+                          "api-reference/v1/products/get-review"
+                        ]
+                      },
+                      {
+                        "group": "User Management",
+                        "icon": "user",
+                        "pages": [
+                          "api-reference/v1/user/logout"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "API v2",
+                    "pages": [
+                      "api-reference/v2/error-codes",
+                      "api-reference/v2/variation-examples",
+                      {
+                        "group": "Cart",
+                        "icon": "cart-shopping",
+                        "pages": [
+                          "api-reference/v2/cart/pre-release/get-cart",
+                          "api-reference/v2/cart/pre-release/post-add-item",
+                          "api-reference/v2/cart/pre-release/post-add-items",
+                          "api-reference/v2/cart/pre-release/post-calculate",
+                          "api-reference/v2/cart/pre-release/post-clear",
+                          "api-reference/v2/cart/pre-release/post-apply-coupon",
+                          "api-reference/v2/cart/pre-release/get-coupons",
+                          "api-reference/v2/cart/pre-release/delete-coupons",
+                          "api-reference/v2/cart/pre-release/delete-coupons-by-code",
+                          "api-reference/v2/cart/pre-release/get-coupons-validate",
+                          "api-reference/v2/cart/pre-release/delete-items",
+                          "api-reference/v2/cart/pre-release/get-items-count",
+                          "api-reference/v2/cart/pre-release/post-item-by-key",
+                          "api-reference/v2/cart/pre-release/delete-item-by-key",
+                          "api-reference/v2/cart/pre-release/put-item-by-key",
+                          "api-reference/v2/cart/pre-release/get-cart-mini",
+                          "api-reference/v2/cart/pre-release/post-add-fee",
+                          "api-reference/v2/cart/pre-release/post-remove-fees",
+                          "api-reference/v2/cart/pre-release/post-set-shipping-method",
+                          "api-reference/v2/cart/pre-release/post-cart-update"
+                        ]
+                      },
+                      {
+                        "group": "Checkout",
+                        "icon": "cash-register",
+                        "pages": [
+                          "api-reference/v2/checkout/pre-release/post-checkout",
+                          "api-reference/v2/checkout/pre-release/get-payment-methods"
+                        ]
+                      },
+                      {
+                        "group": "Products",
+                        "icon": "shirt",
+                        "pages": [
+                          "api-reference/v2/products/pre-release/get-products"
+                        ]
+                      },
+                      {
+                        "group": "User Management",
+                        "icon": "user",
+                        "pages": [
+                          "api-reference/v2/user/post-login",
+                          "api-reference/v2/user/post-logout",
+                          "api-reference/v2/user/post-register"
+                        ]
+                      },
+                      {
+                        "group": "Store",
+                        "icon": "store",
+                        "pages": [
+                          "api-reference/v2/store/pre-release/get-store"
+                        ]
+                      },
+                      {
+                        "group": "Sessions",
+                        "icon": "database",
+                        "pages": [
+                          "api-reference/v2/sessions/list-sessions",
+                          "api-reference/v2/session/get-session",
+                          "api-reference/v2/session/delete-session"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "Plugins",
+                    "pages": [
+                      "api-reference/plugins/wc-name-your-price",
+                      "api-reference/plugins/wc-mix-and-match-products"
+                    ]
+                  },
+                  {
+                    "group": "Resources",
+                    "pages": [
+                      "resources/community",
+                      "resources/support-policy",
+                      "resources/opening-issues",
+                      "resources/backers"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "CLI Reference",
+                "icon": "terminal",
+                "groups": [
+                  {
+                    "group": "CoCart CLI",
+                    "pages": [
+                      "cli-reference/introduction",
+                      "cli-reference/cli-cart"
+                    ]
+                  },
+                  {
+                    "group": "Other CLI Commands",
+                    "pages": [
+                      "cli-reference/cli-jwt"
+                    ]
+                  },
+                  {
+                    "group": "Resources",
+                    "pages": [
+                      "resources/community",
+                      "resources/support-policy",
+                      "resources/opening-issues",
+                      "resources/backers"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "Tutorials",
+                "icon": "graduation-cap",
+                "groups": [
+                  {
+                    "group": "Tutorials",
+                    "pages": [
+                      "tutorials/postman",
+                      "tutorials/covert-cart-to-order"
+                    ]
+                  },
+                  {
+                    "group": "Tips and Tricks",
+                    "pages": [
+                      "tutorials/generate-image-dataurl"
+                    ]
+                  },
+                  {
+                    "group": "Resources",
+                    "pages": [
+                      "resources/community",
+                      "resources/support-policy",
+                      "resources/opening-issues",
+                      "resources/backers"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "Support Centre",
+                "icon": "question",
+                "groups": [
+                  {
+                    "group": "Contact us",
+                    "pages": [
+                      "knowledge-base/contact-us"
+                    ]
+                  },
+                  {
+                    "group": "Knowledge Base",
+                    "pages": [
+                      "knowledge-base/faq",
+                      "knowledge-base/security-practices",
+                      "knowledge-base/cart-key",
+                      "knowledge-base/adding-code",
+                      "knowledge-base/plugin-suggestions",
+                      "knowledge-base/nulled-plugins",
+                      "knowledge-base/wp-config"
+                    ]
+                  },
+                  {
+                    "group": "Troubleshooting",
+                    "pages": [
+                      "knowledge-base/troubleshoot/authentication",
+                      "knowledge-base/troubleshoot/jwt-authentication"
+                    ]
+                  },
+                  {
+                    "group": "Plugins",
+                    "pages": [
+                      "plugins/woocommerce-extensions",
+                      "plugins/suggestions",
+                      "plugins/incompatible"
+                    ]
+                  },
+                  {
+                    "group": "Resources",
+                    "pages": [
+                      "resources/community",
+                      "resources/support-policy",
+                      "resources/opening-issues",
+                      "resources/backers"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "What's New",
+                "icon": "clock-rotate-left",
                 "groups": [
                   {
                     "group": "Changelogs",
@@ -884,11 +882,6 @@
                 ]
               }
             ]
-          },
-          {
-            "anchor": "Community",
-            "href": "https://cocartapi.com/community/?ref=mintlify",
-            "icon": "discord"
           },
           {
             "anchor": "Feature requests",
@@ -931,12 +924,16 @@
   "navbar": {
     "links": [
       {
-        "label": "Discord",
-        "href": "https://cocartapi.com/community/?ref=mintlify"
-      },
-      {
         "label": "llms.txt",
         "href": "https://docs.cocartapi.com/llms.txt"
+      },
+      {
+        "label": "llms-full.txt",
+        "href": "https://docs.cocartapi.com/llms-full.txt"
+      },
+      {
+        "label": "Discord",
+        "href": "https://cocartapi.com/community/?ref=mintlify"
       }
     ],
     "primary": {
@@ -1025,23 +1022,19 @@
     ]
   },
   "banner": {
-    "content": "This documentation is a Work in Progress. There maybe content unfinished. Feedback is welcome."
+    "content": "Documentation is still being updated. Some content maybe unfinished.",
+    "dismissible": true
   },
   "contextual": {
     "options": [
       "copy",
       "view",
-      {
-        "title": "Suggest edits",
-        "description": "Edit page with your suggestion.",
-        "icon": "pencil",
-        "href": {
-          "base": "https://github.com/cocart-headless/cocart-api-documentation/edit/main/$path.md"
-        }
-      },
       "chatgpt",
       "claude",
       "perplexity",
+      "mcp",
+      "cursor",
+      "vscode",
       {
         "title": "Ask Gemini",
         "description": "Ask Google Gemini about the current page",
@@ -1057,5 +1050,12 @@
         }
       }
     ]
+  },
+  "errors": {
+    "404": {
+      "redirect": false,
+      "title": "I can't be found",
+      "description": "What ever **happened** to this _page_?"
+    }
   }
 }

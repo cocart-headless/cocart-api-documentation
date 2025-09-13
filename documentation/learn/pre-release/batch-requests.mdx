@@ -1,0 +1,141 @@
+---
+title: "Batch Requests"
+description: "Learn how to batch request from getting products to adding them to the cart"
+icon: "layer-group"
+tag: "Updated"
+robots: "noindex, follow"
+---
+
+<Note>
+    To use the premium batch request, you need [CoCart Plus or higher](https://cocartapi.com/pricing/). Otherwise feel free to [use the standard WordPress batch process](https://make.wordpress.org/core/2020/11/20/rest-api-batch-framework-in-wordpress-5-6/). Supports API v2 or higher.
+</Note>
+
+<Info>
+    It supports both authenticated users and guest customers.
+</Info>
+
+## How does it help cart batch requests?
+
+The [standard batch processing](https://make.wordpress.org/core/2020/11/20/rest-api-batch-framework-in-wordpress-5-6/) that WordPress supports is too problematic for developers when it comes to making cart requests.
+
+The reason is that once a batch request has completed, your getting the full response of the cart from each request. Which makes tracking and handling the data harder for your application because there is too much information to filter through. Seriously, if you try it yourself you would not want to use it.
+
+For cart batch requests, we took away the pain of having to track and merge data together for you so you get one complete up to date cart response (if all requests are successful).
+
+You should see multiple notices return for each of the requests. Will leave you to decide how you use them.
+
+## How do I use it?
+
+It’s very simple. Post your requests as you would do a standard WordPress batch request only you are using our special batch endpoint `wp-json/cocart/batch` instead.
+
+```json
+{
+    "requests": [
+        {
+            "method": "GET",
+            "path": "/cocart/v2/products"
+        },
+        {
+            "method": "POST",
+            "path": "/cocart/v2/cart/add-item",
+            "body": {
+                "id": "35",
+                "quantity": "2"
+            }
+        },
+        {
+            "method": "POST",
+            "path": "/cocart/v2/cart/add-item",
+            "body": {
+                "id": "36",
+                "quantity": "5"
+            }
+        }
+    ]
+}
+```
+
+## What about guest customers?
+
+Simply provide the cart key to identify the cart for the guest customer the same way you would for a singular cart endpoint.
+
+<Note>
+    If you used the standard batch process, you would have to apply the cart key to each request, which we don’t recommend.
+</Note>
+
+In the following request examples, you would replace `<cart_key>` that identifies the guest customers cart before sending the request:
+
+<CodeGroup>
+    ```bash cURL
+    curl -L 'https://example-store.com/wp-json/cocart/batch?cart_key=<cart_key>' \
+    -H 'Content-Type: application/json' \
+    -d '{
+        "requests": [
+            {
+                "method": "GET",
+                "path": "/cocart/v2/products"
+            },
+            {
+                "method": "POST",
+                "path": "/cocart/v2/cart/add-item",
+                "body": {
+                    "id": "35",
+                    "quantity": "2"
+                }
+            },
+            {
+                "method": "POST",
+                "path": "/cocart/v2/cart/add-item",
+                "body": {
+                    "id": "36",
+                    "quantity": "5"
+                }
+            }
+        ]
+    }'
+    ```
+
+    ```php PHP
+    <?php
+    $ch = curl_init();
+    
+    curl_setopt_array($ch, [
+        CURLOPT_URL => 'https://example-store.com/wp-json/cocart/batch?cart_key=<cart_key>'
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER => [
+            'Authorization: Basic ' . base64_encode($username . ':' . $password)
+        ]
+    ]);
+
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    
+    curl_close($ch);
+    ```
+
+    ```javascript Javascript
+    ```
+</CodeGroup>
+
+## What methods are supported?
+
+Batch requests work for the following methods: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`
+
+<Warning>
+    `GET` requests were never enabled for batching previously, but it works fine.
+    The main risk with batching `GET` endpoints is that it can be expensive to run if too many are called, so use it wisely.
+</Warning>
+
+You can filter the methods using `cocart_api_batch_request_methods`. An example of disabling `GET` requests if you don't plan on using them in batch requests.
+
+<Info>
+    Made available since v2.0.0
+</Info>
+
+```php
+add_filter( 'cocart_api_batch_request_methods', function( $methods ) {
+	$methods = array( 'POST', 'PUT', 'PATCH', 'DELETE' );
+
+	return $methods;
+}, 10, 1 );
+```

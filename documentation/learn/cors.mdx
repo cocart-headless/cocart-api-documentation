@@ -2,9 +2,7 @@
 title: "CORS for CoCart"
 sidebarTitle: "CORS"
 description: "Depending on your setup, you may need to enable CORS to gain access"
-icon: "globe"
-robots: "noindex, follow"
-tag: "Updated"
+icon: "door-open"
 ---
 
 <Info>
@@ -28,53 +26,7 @@ For added security when you go into production. Set the **Access-Control-Allow-O
 
 ## Single Domain Access
 
-Access via a single domain access should be enough.
-
 ```php
 <?php
 add_filter( 'cocart_allow_origin', function() { return 'https://example-store.com'; });
-```
-
-## Multiple Domain Access
-
-You can support many domains access using the `cocart_allowed_http_origins` filter.
-
-<Warning>
-    Do not use `cocart_allow_origin` filter at the same time as it will break.
-</Warning>
-
-| Parameter | Type | Description |
-| --------- | ---- | ----------- |
-| `$allowed_origins` | `string[]` | Array of default allowed HTTP origins. |
-
-```php
-<?php
-add_filter( 'cocart_allowed_http_origins', function( $allowed_origins ) {
-    $allowed_origins[] = 'https://example-store.com'; // Replace with your origin.
-
-    return $allowed_origins;
-} );
-```
-
-## Allowed Ports
-
-You can change the list of ports considered safe for accessing the REST API. The ports can also be restricted by the host and/or requested URL.
-
-<Note>
-    Default Ports: 80, 443, 8080
-</Note>
-
-| Parameter | Type | Description |
-| --------- | ---- | ----------- |
-| `$ports` | `int[]` | Array of integers for valid ports. |
-| `$host` | `string` | Host name of the requested URL. |
-| `$url` | `string` | Requested URL. |
-
-```php
-<?php
-add_filter( 'cocart_http_allowed_safe_ports', function( $ports, $host, $url ) {
-    $ports[] = 123; // Replace with port number to allow.
-
-    return $ports;
-} );
 ```

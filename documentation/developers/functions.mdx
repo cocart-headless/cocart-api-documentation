@@ -2,6 +2,7 @@
 title: "Functions available in the core of CoCart"
 sidebarTitle: "In Core"
 description: "Extend support for CoCart with these useful functions in your projects"
+robots: "noindex, follow"
 ---
 
 ## `cocart_maybe_show_results()`
@@ -10,7 +11,7 @@ Checks if the session table exists before returning results. Helps prevents any 
 **Returns**: `boolean Returns true or false if the session table exists.`
 
 - **Since**: 4.2.0 Introduced.
-- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/development/includes/cocart-core-functions.php#L112)
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php#L90)
 
 ---
 
@@ -20,7 +21,7 @@ Counts how many carts are going to expire within the next 6 hours.
 **Returns**: `int Number of carts expiring.`
 
 - **Since**: 4.2.0 Introduced.
-- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/development/includes/cocart-core-functions.php#L168)
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php#L146)
 
 ---
 
@@ -30,7 +31,7 @@ Counts how many carts are active.
 **Returns**: `int Number of carts active.`
 
 - **Since**: 4.2.0 Introduced.
-- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/development/includes/cocart-core-functions.php#L199)
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php#L177)
 
 ---
 
@@ -40,7 +41,7 @@ Counts how many carts have expired.
 **Returns**: `int Number of carts expired.`
 
 - **Since**: 4.2.0 Introduced.
-- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/development/includes/cocart-core-functions.php#L229)
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php#L207)
 
 ---
 
@@ -50,7 +51,7 @@ Counts how many carts were created via the web.
 **Returns**: `int Number of carts created via the web.`
 
 - **Since**: 4.2.0 Introduced.
-- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/development/includes/cocart-core-functions.php#L259)
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php#L237)
 
 ---
 
@@ -60,7 +61,7 @@ Counts how many carts were created via CoCart API.
 **Returns**: `int Number of carts created via CoCart API.`
 
 - **Since**: 4.2.0 Introduced.
-- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/development/includes/cocart-core-functions.php#L289)
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php#L267)
 
 ---
 
@@ -70,7 +71,7 @@ Counts how many carts were the source is other or unknown.
 **Returns**: `int Number of carts created via other or unknown.`
 
 - **Since**: 4.2.0 Introduced.
-- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/development/includes/cocart-core-functions.php#L319)
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php#L297)
 
 ---
 
@@ -84,50 +85,7 @@ Get min/max price meta query args.
 **Returns**: `array`
 
 - **Since**: 3.4.1 Introduced.
-- **Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/development/includes/cocart-rest-functions.php#L506)
-
----
-
-## `cocart_get_frontend_url()`
-Get the frontend URL.
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$settings` | `array` | CoCart settings passed. Empty by default. |
-
-**Returns**: `string`
-
-- **Since**: 5.0.0 Introduced.
-- **Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/development/includes/cocart-rest-functions.php#L633)
-
----
-
-## `cocart_is_wp_disabled_access()`
-Checks if WordPress has been disabled access.
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$settings` | `array` | CoCart settings passed. Default is 'no'. |
-
-**Returns**: `string`
-
-- **Since**: 5.0.0 Introduced.
-- **Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/development/includes/cocart-rest-functions.php#L667)
-
----
-
-## `cocart_get_permalink()`
-Returns the permalink for a page/post/product and replaces the frontend URL if set.
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$url` | `string` | Permalink of page/post/product. |
-| `$settings` | `array` | CoCart settings passed. Empty by default. |
-
-**Returns**: `string Permalink.`
-
-- **Since**: 5.0.0 Introduced.
-- **Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/development/includes/cocart-rest-functions.php#L697)
+- **Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-rest-functions.php#L520)
 
 ---
 

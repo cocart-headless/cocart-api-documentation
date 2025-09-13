@@ -3,7 +3,7 @@ title: "Extending Cart: Creating a Callback"
 sidebarTitle: "Creating a Callback"
 description: "Need to extend the cart to apply something unique?"
 icon: "cart-flatbed"
-robots: "noindex, follow"
+tag: "WIP"
 ---
 
 > Dev Note: Needs improving. Possibly a breakdown.
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Callback example class.
  */
-class My_Custom_CoCart_Callback extends CoCart_REST_Callback  {
+class My_Custom_CoCart_Callback extends CoCart_Cart_Extension_Callback {
 
 	/**
 	 * Callback name.
@@ -64,7 +64,7 @@ class My_Custom_CoCart_Callback extends CoCart_REST_Callback  {
 			}
 
 			if ( $cart_updated ) {
-				// $controller->calculate_totals( $request, true ); // Uncomment if you need to recalculate the cart totals.
+				// $this->recalculate_totals( $request, $controller ); // Uncomment if you need to recalculate the cart totals.
 
 				// Only returns success notice if there are no error notices. - Feel free to change the message response.
 				if ( 0 === wc_notice_count( 'error' ) ) {
@@ -86,19 +86,13 @@ return new My_Custom_CoCart_Callback();
 
 Simply load the class file created and hook the callback like so.
 
-<Warning>
-	If you registered a callback before with version 4 or lower of CoCart then you will need to register them again. We simplified the callback system to perform better in version 5.
-</Warning>
-
 ```php
-add_filter( 'cocart_rest_callbacks', 'register_my_custom_callback' );
+add_action( 'cocart_register_extension_callback', 'register_my_custom_callback' );
 
-function register_my_custom_callback( $callbacks ) {
-	include_once( dirname( __FILE__) . '/callback/my-custom-callback.php' );
+function register_my_custom_callback( $callback ) {
+  include_once( dirname( __FILE__) . '/callback/my-custom-callback.php' );
 
-	$callbacks[] = new My_Custom_CoCart_Callback();
-
-	return $callbacks;
+  $callback->register( new My_Custom_CoCart_Callback() );
 }
 ```
 

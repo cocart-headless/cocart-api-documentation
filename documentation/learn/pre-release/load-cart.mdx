@@ -1,0 +1,82 @@
+---
+title: "Load Cart"
+description: "Learn to load a cart session securely"
+icon: "arrow-right-arrow-left"
+robots: "noindex, follow"
+tag: "Updated"
+---
+
+<Info>
+    This feature is not part of the REST API. Do not treat it as such!
+</Info>
+
+<Warning>Please note: This version of the feature is for sites running versions of CoCart Core starting at v5. If you use this feature already it will break unless you follow the changes below, so check you are using the correct version before continuing with the documentation.</Warning>
+
+This feature is designed to load the customers cart over to the web version of your store.
+
+It allows both guest and registered customers to load their carts to continue shopping or checkout what they have in the cart added via your headless application without exposing login details.
+
+It's handy if you have not yet worked with payment gateway like _Stripe_ to handle the headless checkout.
+
+## Query properties
+
+| Query              | Type   | Description                                                                    |
+| ------------------ | ------ | ------------------------------------------------------------------------------ |
+| `cocart-load-cart` | string | Set the cart key of the cart you wish to load. **mandatory**                   |
+| `c_hash`           | string | The cart hash which represents the last data change of the cart. **mandatory** |
+
+To load the cart from session on your web store, you must use the properties above to query your website. You can query any page you prefer your customer to land on as the cart is loaded in the background.
+
+```
+https://your.store/checkout/?cocart-load-cart={cart_key}&c_hash={cart_hash}
+```
+
+<Note>
+    If a customer is already logged in via the web version of your store then **WooCommerce** will merge any items in the cart together with the items the guest customer has in cart.
+
+    If the same item already exists in cart, the quantity of that item will increase if stock is available.
+</Note>
+
+### FAQ
+
+<AccordionGroup>
+    <Accordion title="How does a registered customer load their cart without authenticating?">
+    To help customers skip the process of having to login again, we use the same two queries to validate with. For a registered user it allows the WordPress site setup to think they had gone through the login process and loads their shopping cart.
+
+    The cart key will be the user ID of the current user and the cart hash which represents the last data change of that cart.
+
+    <Note>
+        FYI: If a different customer is already logged in on the same device/browser by chance, they will be logged out first to prevent the cart session losing track.
+    </Note>
+
+    </Accordion>
+
+    <Accordion title="Can I change where to redirect customers should the cart fail to load?">
+    ```php
+    <?php
+    add_filter( 'cocart_load_cart_redirect_home', function() {
+        return 'https://www.duckduckgo.com' // Replace redirect URL here.
+    } );
+    ```
+    </Accordion>
+
+    <Accordion title="I want to change the query name">
+    ```php
+    <?php
+    add_filter( 'cocart_load_cart_query_name', function() {
+        return 'redpill'; // All im offering is the truth nothing more.
+    });
+    ```
+    </Accordion>
+
+    <Accordion title="I want this feature disabled. Do not need it.">
+    If you do not need or want to use WooCommerce native checkout then disable using this filter.
+
+    ```php
+    <?php
+    add_filter( 'cocart_disable_load_cart', function() {
+        return true;
+    });
+    ```
+    </Accordion>
+</AccordionGroup>

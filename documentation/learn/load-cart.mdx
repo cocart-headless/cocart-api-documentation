@@ -1,66 +1,58 @@
 ---
 title: "Load Cart"
-description: "Learn to load a cart session securely"
+description: "Learn to load a guest cart session securely"
 icon: "arrow-right-arrow-left"
-robots: "noindex, follow"
-tag: "Updated"
 ---
 
 <Info>
     This feature is not part of the REST API. Do not treat it as such!
 </Info>
 
-<Warning>Please note: This version of the feature is for sites running versions of CoCart Core starting at v5. If you use this feature already it will break unless you follow the changes below, so check you are using the correct version before continuing with the documentation.</Warning>
+This feature is designed to transfer the cart over to the web version of your store.
 
-This feature is designed to load the customers cart over to the web version of your store.
-
-It allows both guest and registered customers to load their carts to continue shopping or checkout what they have in the cart added via your headless application without exposing login details.
+It allows the guest customer to continue shopping or checkout what they already have in the cart added via your headless application.
 
 It's handy if you have not yet worked with payment gateway like _Stripe_ to handle the headless checkout.
 
+You can choose to override the cart (if anything is set) or merge the cart items together.
+
+<Note>
+    If a customer is logged in via the web version of your store then **WooCommerce** will then merge any items in the cart together with the items the guest customer has in cart.
+</Note>
+
+<Info>
+	FYI: It does not matter if your customer is logged in or not already via the web version of your store. Only the cart data will be set. Customer details are **not transferred**.
+</Info>
+
 ## Query properties
 
-| Query              | Type   | Description                                                                    |
-| ------------------ | ------ | ------------------------------------------------------------------------------ |
-| `cocart-load-cart` | string | Set the cart key of the cart you wish to load. **mandatory**                   |
-| `c_hash`           | string | The cart hash which represents the last data change of the cart. **mandatory** |
+| Query              | Type   | Description                                                                                       |
+| ------------------ | ------ | ------------------------------------------------------------------------------------------------- |
+| `cocart-load-cart` | string | Set the cart key of the cart you wish to load. **mandatory**                                      |
+| `notify`           | bool   | Set as true to notify customers once arrived on the web version of your store. _Default is false_ |
+| `keep-cart`        | bool   | Set as false to merge cart data. _Default is true_                                                |
 
 To load the cart from session on your web store, you must use the properties above to query your website. You can query any page you prefer your customer to land on as the cart is loaded in the background.
 
-```
-https://your.store/checkout/?cocart-load-cart={cart_key}&c_hash={cart_hash}
-```
+```https://example-store.com/checkout/?cocart-load-cart=bbfa8e97ac9cff4c861d62a109e83bb6```
 
-<Note>
-    If a customer is already logged in via the web version of your store then **WooCommerce** will merge any items in the cart together with the items the guest customer has in cart.
-
-    If the same item already exists in cart, the quantity of that item will increase if stock is available.
-</Note>
+<Info>
+    If the same item already exists in cart and you are merging the two carts together, that item will not change. It will not increase or decrease the quantity if the cart item key are the same.
+</Info>
 
 ### FAQ
 
 <AccordionGroup>
-    <Accordion title="How does a registered customer load their cart without authenticating?">
-    To help customers skip the process of having to login again, we use the same two queries to validate with. For a registered user it allows the WordPress site setup to think they had gone through the login process and loads their shopping cart.
+    <Accordion title="What happens if the cart does not load?">
+    Use the notice property to try loading the cart session again. This can be used also to debug why but normally this is because of two things.
 
-    The cart key will be the user ID of the current user and the cart hash which represents the last data change of that cart.
-
-    <Note>
-        FYI: If a different customer is already logged in on the same device/browser by chance, they will be logged out first to prevent the cart session losing track.
-    </Note>
-
-    </Accordion>
-
-    <Accordion title="Can I change where to redirect customers should the cart fail to load?">
-    ```php
-    <?php
-    add_filter( 'cocart_load_cart_redirect_home', function() {
-        return 'https://www.duckduckgo.com' // Replace redirect URL here.
-    } );
-    ```
+    1. The cart key was incorrect
+    2. The cart session has expired and is no longer in the database under that cart key.
     </Accordion>
 
     <Accordion title="I want to change the query name">
+    Use this filter to change the name.
+
     ```php
     <?php
     add_filter( 'cocart_load_cart_query_name', function() {

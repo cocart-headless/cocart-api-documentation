@@ -1,28 +1,21 @@
 ---
-title: "Batch Requests"
-description: "Learn how to batch request from getting products to adding them to the cart"
+title: "Batch Requests for the Cart"
+sidebarTitle: "Batch Requests"
+description: "Learn how to batch request the cart"
 icon: "layer-group"
-tag: "Updated"
-robots: "noindex, follow"
 ---
 
 <Note>
-    To use the premium batch request, you need [CoCart Plus or higher](https://cocartapi.com/pricing/). Otherwise feel free to [use the standard WordPress batch process](https://make.wordpress.org/core/2020/11/20/rest-api-batch-framework-in-wordpress-5-6/). Supports API v2 or higher.
+    To use the premium batch request for cart, you need [CoCart Plus or higher](https://cocartapi.com/pricing/). Otherwise feel free to [use the standard WordPress batch process](https://make.wordpress.org/core/2020/11/20/rest-api-batch-framework-in-wordpress-5-6/). Supports API v2 or higher.
 </Note>
 
-<Info>
-    It supports both authenticated users and guest customers.
-</Info>
+Make multiple cart requests and return 1 complete cart response. Sounds to good to be true but it is. The [standard batch processing](https://make.wordpress.org/core/2020/11/20/rest-api-batch-framework-in-wordpress-5-6/) that WordPress supports is too problematic for developers when it comes to using the cart data to present it.
 
-## How does it help cart batch requests?
+Seriously if you try it yourself, you would not want to use the standard way.
 
-The [standard batch processing](https://make.wordpress.org/core/2020/11/20/rest-api-batch-framework-in-wordpress-5-6/) that WordPress supports is too problematic for developers when it comes to making cart requests.
+We took away the pain of having to track and merge data together for you, so you can go about your programming with ease.
 
-The reason is that once a batch request has completed, your getting the full response of the cart from each request. Which makes tracking and handling the data harder for your application because there is too much information to filter through. Seriously, if you try it yourself you would not want to use it.
-
-For cart batch requests, we took away the pain of having to track and merge data together for you so you get one complete up to date cart response (if all requests are successful).
-
-You should see multiple notices return for each of the requests. Will leave you to decide how you use them.
+It supports both authenticated users and guest customers.
 
 ## How do I use it?
 
@@ -31,10 +24,6 @@ It’s very simple. Post your requests as you would do a standard WordPress batc
 ```json
 {
     "requests": [
-        {
-            "method": "GET",
-            "path": "/cocart/v2/products"
-        },
         {
             "method": "POST",
             "path": "/cocart/v2/cart/add-item",
@@ -71,10 +60,6 @@ In the following request examples, you would replace `<cart_key>` that identifie
     -H 'Content-Type: application/json' \
     -d '{
         "requests": [
-            {
-                "method": "GET",
-                "path": "/cocart/v2/products"
-            },
             {
                 "method": "POST",
                 "path": "/cocart/v2/cart/add-item",
@@ -117,25 +102,7 @@ In the following request examples, you would replace `<cart_key>` that identifie
     ```
 </CodeGroup>
 
-## What methods are supported?
+## The results
 
-Batch requests work for the following methods: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`
+The results is one complete cart response (if all requests are successful). You should see multiple notices return for each of the requests. Will leave you to decide how you use them.
 
-<Warning>
-    `GET` requests were never enabled for batching previously, but it works fine.
-    The main risk with batching `GET` endpoints is that it can be expensive to run if too many are called, so use it wisely.
-</Warning>
-
-You can filter the methods using `cocart_api_batch_request_methods`. An example of disabling `GET` requests if you don't plan on using them in batch requests.
-
-<Info>
-    Made available since v2.0.0
-</Info>
-
-```php
-add_filter( 'cocart_api_batch_request_methods', function( $methods ) {
-	$methods = array( 'POST', 'PUT', 'PATCH', 'DELETE' );
-
-	return $methods;
-}, 10, 1 );
-```

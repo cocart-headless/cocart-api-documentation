@@ -1,0 +1,186 @@
+---
+title: "Rate Limiting"
+description: "Control and prevent abuse from excessive calls."
+icon: "gauge-high"
+robots: "noindex, follow"
+tag: "Updated"
+---
+
+<Note>
+    Rate Limiting is only available with [CoCart Plus](https://cocartapi.com/pricing/).
+</Note>
+
+Popular stores can become the targets of malicious actors. One example of known abusive patterns is making many requests in a very short timeframe to try to overwhelm the store. 
+
+<Info>
+    Rate limiting is opt-in and is intended for advanced merchants and platforms.
+</Info>
+
+## What it does?
+
+Rate limiting is to prevent abuse on endpoints from excessive calls and performance degradation on the machine running the store.
+
+Limiting is based on user ID for registered users (logged in) and IP address for guest users (unauthenticated requests).
+
+It also offers standard support for running behind a proxy, load balancer, etc. This is also optional and is disabled by default.
+
+The rate limiting uses a modified `wc_rate_limit` table with an additional remaining column for tracking the request count in any given request window.
+
+## Limit information
+
+A default maximum of 25 requests can be made within a 10-second time frame. These can be changed through `cocart_api_rate_limit_options` filter.
+
+## Methods restricted by Rate Limiting
+
+`GET`, `POST`, `PUT`, `PATCH`, and `DELETE`
+
+## Enable Rate Limiting
+
+Developers can enable rate limiting in two ways.
+
+### Constants
+
+Set the following constants in your `wp-config.php`.
+
+```php
+define( 'COCART_RATE_LIMITING_ENABLED', true );
+if ( defined( 'COCART_RATE_LIMITING_ENABLED' ) && COCART_RATE_LIMITING_ENABLED ) {
+    define( 'COCART_RATE_LIMITING_PROXY_SUPPORT', false );
+    define( 'COCART_RATE_LIMITING_LIMIT', 25 );
+    define( 'COCART_RATE_LIMITING_SECONDS', 10 );
+}
+```
+
+### Using the `cocart_api_rate_limit_options` filter.
+
+<Note>
+    Filtering provides more defined control and takes precedence over any constants set in your `wp-config.php` file.
+</Note>
+
+```php
+add_filter( 'cocart_api_rate_limit_options', function() {
+    return [
+        'enabled' => true, // enables/disables Rate Limiting. Default: false
+        'proxy_support' => false, // enables/disables Proxy support. Default: false
+        'limit' => 25, // limit of request per timeframe. Default: 25
+        'seconds' => 10, // timeframe in seconds. Default: 10
+    ];
+} );
+```
+
+With this configuration, CoCart will block requests from a user ID or IP address if they’ve sent 25 requests or more within 10 seconds or less. The limit will be reset once the timeframe has expired.
+
+You can take it a step further by configuring for a specific endpoint while every other endpoint uses the same rate limit.
+
+```php
+add_filter( 'cocart_api_rate_limit_options', function( $default_options ) {
+    // If the cart is requested 3 times within 60 seconds. No need to keep checking the cart more than that, right?
+    if ( preg_match( '#/cocart/v2/cart#', $GLOBALS['wp']->query_vars['rest_route'] ) ) {
+        return [
+            'enabled' => true,
+            'proxy_support' => $default_options->proxy_support,
+            'limit' => 3,
+            'seconds' => 60
+        ];
+    }
+
+    // All other endpoints are rate limited to these conditions.
+    return [
+        'enabled' => true,
+        'proxy_support' => $default_options->proxy_support,
+        'limit' => 10,
+        'seconds' => 10
+    ];
+} );
+```
+
+## Supporting Proxies
+
+Like any mechanism that restricts usage to counter potential abuse of an API, this is a sensitive feature that should be used carefully.
+
+In a scenario where a store is behind another service layer (a proxy, load balancer, etc.), the developer should enable standard proxy support through the
+
+Otherwise rate limiting might be wrongly triggered and group-limit requests.
+
+## Proxy support
+
+For the `proxy_support` option to work properly, service layers (load balancer, cache service, CDNs, etc.) must be passing the originating IP supported through standard IP forwarding headers, namely:
+
+- `X_REAL_IP`|`CLIENT_IP` *Custom popular implementations that simplify obtaining the origin IP for the request*
+- `X_FORWARDED_FOR` *De-facto standard header for identifying the originating IP, [Documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-For)*
+- `X_FORWARDED` *[Documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Forwarded), [RFC 7239](https://datatracker.ietf.org/doc/html/rfc7239)*
+
+<Info>
+    This is disabled by default and may not be needed if you decide to provide your own [fingerprint ID](#fingerprint-id).
+</Info>
+
+## Limit usage information observability
+
+Current limit information can be observed via custom response headers:
+
+- `RateLimit-Limit` *Maximum requests per time frame.*
+- `RateLimit-Remaining` *Requests available during current time frame.*
+- `RateLimit-Retry-After` *Seconds until requests are unblocked again. Only shown when the limit is reached.*
+- `RateLimit-Reset` *Unix timestamp of next time frame reset.*
+
+### Response headers example
+
+```http
+RateLimit-Limit: 5
+RateLimit-Remaining: 0
+RateLimit-Retry-After: 28
+RateLimit-Reset: 1654880642
+```
+
+## Tracking Abuses
+
+Developers can use the `cocart_api_rate_limit_exceeded` action to track and handle instances of API abuse: 
+
+```php
+add_action(
+    'cocart_api_rate_limit_exceeded',
+    function ( $offending_ip ) { /* Custom tracking implementation */ }
+);
+```
+
+## Fingerprint ID
+
+<Info>
+    Fingerprint ID is supported since v2.0.0
+</Info>
+
+Common scenario of fraud checkouts and card-testing is always a problem such as getting hit with rotating IPs. To help account for that scenario, we made rate limiting more extensible so that you can provide a different trigger called a **Fingerprint**.
+
+You can use your own custom fingerprinting ID system using the filter `cocart_api_rate_limit_id`.
+
+```php
+add_filter( 'cocart_api_rate_limit_id', function() {
+    $user_agent      = isset( $_SERVER['HTTP_USER_AGENT'] ) ? wc_clean( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
+    $accept_language = isset( $_SERVER['HTTP_ACCEPT_LANGUAGE'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_ACCEPT_LANGUAGE'] ) ) : '';
+
+    return md5( $user_agent . $accept_language );
+} );
+```
+
+## Testing Guide
+
+### Without proxy support
+
+1. Enable Rate Limiting by using the [options filter](#enable-rate-limiting).
+2. In a short window, keep making API requests.
+3. Check that RateLimit-xxx headers change on each request.
+4. Check that once you've hit the limit, an error response is returned. You can modify the limits using the [options filter](#enable-rate-limiting) to make it easier to test.
+
+### With proxy support, do the same as before and
+
+1. Enable proxy support
+2. Make your requests with one of the following request headers containing always the same IP address:
+    - X-Real-IP or Client-IP
+    - [X-Forwarded-For](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-For)
+    - [Forwarded](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Forwarded)
+
+### User Facing Testing
+
+1. Enable Rate Limiting by using the [options filter](#enable-rate-limiting).
+2. Try to apply a coupon or access `/wp-json/cocart/v2/coupon` beyond current limits (currently 25 requests under 10 seconds)
+3. Ensure you get presented with an error "Too many requests. Please wait xx seconds before trying again."

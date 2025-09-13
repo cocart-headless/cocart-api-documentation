@@ -69,7 +69,7 @@ format_params() {
   local comment_block="$1"
   local has_params=0
   local output=""
-  
+
   while IFS= read -r line; do
     if [[ $line =~ \*[[:space:]]*@param[[:space:]]+([^[:space:]]+)[[:space:]]+(\$[^[:space:]]+)[[:space:]]+(.*) ]]; then
       if [ $has_params -eq 0 ]; then
@@ -82,7 +82,7 @@ format_params() {
       output+="| \`$var\` | \`$type\` | $desc |\n"
     fi
   done <<< "$comment_block"
-  
+
   if [ $has_params -eq 1 ]; then
     echo -e "$output"
   fi
@@ -93,7 +93,7 @@ extract_related() {
   local comment_block="$1"
   local output=""
   local has_related=0
-  
+
   while IFS= read -r line; do
     if [[ $line =~ \*[[:space:]]*@see[[:space:]]+([^[:space:]]+) ]]; then
       if [ $has_related -eq 0 ]; then
@@ -104,7 +104,7 @@ extract_related() {
       output+="- \`$related\`\n"
     fi
   done <<< "$comment_block"
-  
+
   if [ $has_related -eq 1 ]; then
     echo -e "$output"
   fi
@@ -114,7 +114,7 @@ extract_related() {
 generate_example() {
   local hook_name="$1"
   local params="$2"
-  
+
   if [[ -z "$params" ]]; then
     echo -e "**Usage**\n\`\`\`php\ndo_action( '$hook_name', function() {\n    // Your code here\n});\n\`\`\`"
     return
@@ -141,7 +141,7 @@ increment_counter() {
 echo "Scanning for CoCart-specific actions..."
 
 # Find both regular actions and deprecated actions
-(grep -rnE "(do_action|cocart_do_deprecated_action)\s*\(\s*['\"](cocart_[a-zA-Z0-9_\-]+)['\"]" "$CLONE_DIR" --include="*.php") | while IFS= read -r match; do
+grep -rnE "(do_action|cocart_do_deprecated_action)\s*\(\s*['\"](cocart_[a-zA-Z0-9_\-]+)['\"]" "$CLONE_DIR" --include="*.php" | while IFS= read -r match; do
   ACTION_NAME=$(echo "$match" | sed -nE "s/.*['\"](cocart_[a-zA-Z0-9_\-]+)['\"].*/\1/p")
   FILE_PATH=$(echo "$match" | cut -d: -f1)
   LINE_NUMBER=$(echo "$match" | cut -d: -f2)
@@ -150,7 +150,11 @@ echo "Scanning for CoCart-specific actions..."
   COMMENT_BLOCK=$(extract_comment_block "$FILE_PATH" "$LINE_NUMBER")
 
   # Check if this is a deprecated action
-  IS_DEPRECATED=$(echo "$match" | grep -c "cocart_do_deprecated_action")
+  IS_DEPRECATED=0
+  if [[ $(echo "$match" | grep -c "cocart_do_deprecated_action") -eq 1 ]] || \
+     [[ $(extract_comment_block "$FILE_PATH" "$LINE_NUMBER" | grep -c "@deprecated") -eq 1 ]]; then
+    IS_DEPRECATED=1
+  fi
 
   if [[ -z "$COMMENT_BLOCK" ]]; then
     increment_counter "${TEMP_COUNTS}.skipped"
@@ -172,9 +176,9 @@ echo "Scanning for CoCart-specific actions..."
 
   {
     echo "## \`$ACTION_NAME\`"
-    
+
     # Show deprecation notice if applicable
-    if [[ $IS_DEPRECATED -eq 1 || -n "$DEPRECATED" ]]; then
+    if [[ $IS_DEPRECATED -eq 1 ]]; then
       echo "<Warning>**Deprecated:** ${DEPRECATED:-This action is deprecated.}</Warning>"
       echo ""
     fi
