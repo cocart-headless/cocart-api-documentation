@@ -1,0 +1,490 @@
+---
+title: "Extending Cart: Creating a Callback"
+sidebarTitle: "Creating a Callback"
+description: "Need to extend the cart to apply something unique?"
+icon: "cart-flatbed"
+robots: "noindex, follow"
+---
+
+<Warning>
+This is the pre-release version with updated callback system for CoCart v5+. The registration method and base class are different from the stable version.
+</Warning>
+
+Cart callbacks allow you to extend CoCart's functionality by creating custom cart update operations. This tutorial shows you how to create, register, and use custom callbacks in **CoCart v5+ (pre-release)**.
+
+## Key Differences from Stable Version
+
+The pre-release version introduces several improvements:
+
+- **New base class**: `CoCart_REST_Callback` instead of `CoCart_Cart_Extension_Callback`
+- **Simplified registration**: Uses `cocart_rest_callbacks` filter instead of action hook
+- **Improved totals calculation**: Direct controller method `calculate_totals()`
+- **Better performance**: Streamlined callback system
+
+## What are Cart Callbacks?
+
+Cart callbacks are custom PHP classes that execute when the cart is updated via the `/wp-json/cocart/v2/cart/update` endpoint. They allow you to:
+
+- Apply discounts or loyalty points
+- Update cart metadata
+- Integrate with third-party services
+- Implement custom cart validation rules
+- Add special promotions or fees
+
+## Creating a Custom Callback (v5+ Method)
+
+Let's create a loyalty points callback using the new pre-release system:
+
+### Step 1: Basic Class Structure (v5+)
+
+<Note>
+Note the different base class: `CoCart_REST_Callback` instead of `CoCart_Cart_Extension_Callback`
+</Note>
+
+```php v5+ Basic Callback Structure
+<?php
+/**
+ * Loyalty Points Callback for CoCart v5+
+ */
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+class Loyalty_Points_CoCart_Callback extends CoCart_REST_Callback {
+
+    /**
+     * Callback name - this identifies your callback
+     */
+    protected $name = 'apply-loyalty-points';
+
+    // Callback method goes here...
+}
+```
+
+### Step 2: Input Validation (Same as Stable)
+
+The validation logic remains the same across versions:
+
+```php Input Validation
+public function callback( $request, $controller ) {
+    try {
+        // Safety check: Ensure cart has items
+        if ( $controller->is_completely_empty() ) {
+            throw new CoCart_Data_Exception(
+                'cocart_cart_empty',
+                __( 'Cart is empty. Please add items to cart first.', 'cart-rest-api-for-woocommerce' ),
+                404
+            );
+        }
+
+        // Extract custom data from request
+        $data = isset( $request['data'] ) ? $request['data'] : array();
+
+        // Validate required parameters
+        if ( empty( $data['points'] ) || ! is_numeric( $data['points'] ) ) {
+            throw new CoCart_Data_Exception(
+                'cocart_invalid_points',
+                __( 'Please provide a valid number of points to redeem.', 'cart-rest-api-for-woocommerce' ),
+                400
+            );
+        }
+
+        // Continue with callback logic...
+    } catch ( CoCart_Data_Exception $e ) {
+        return CoCart_Response::get_error_response(
+            $e->getErrorCode(),
+            $e->getMessage(),
+            $e->getCode(),
+            $e->getAdditionalData()
+        );
+    }
+}
+```
+
+### Step 3: Custom Logic Implementation
+
+The business logic implementation is identical to the stable version:
+
+```php Custom Logic Implementation
+// Inside the callback method, after validation...
+
+$points_to_redeem = intval( $data['points'] );
+$current_user = wp_get_current_user();
+$cart_updated = false;
+
+if ( $current_user->exists() ) {
+    // Get user's available points
+    $available_points = get_user_meta( $current_user->ID, 'loyalty_points', true );
+    $available_points = intval( $available_points );
+
+    // Check if user has enough points
+    if ( $available_points >= $points_to_redeem ) {
+        // Calculate discount (1 point = $0.10)
+        $discount_amount = $points_to_redeem * 0.10;
+
+        // Apply discount to cart
+        WC()->cart->add_fee(
+            sprintf( __( 'Loyalty Points Discount (%d points)', 'your-textdomain' ), $points_to_redeem ),
+            -$discount_amount
+        );
+
+        // Deduct points from user account
+        $new_points_balance = $available_points - $points_to_redeem;
+        update_user_meta( $current_user->ID, 'loyalty_points', $new_points_balance );
+
+        // Store redeemed points in session for reference
+        WC()->session->set( 'redeemed_loyalty_points', $points_to_redeem );
+
+        $cart_updated = true;
+
+        wc_add_notice(
+            sprintf(
+                __( 'Applied %d loyalty points for $%.2f discount. Remaining balance: %d points.', 'your-textdomain' ),
+                $points_to_redeem,
+                $discount_amount,
+                $new_points_balance
+            ),
+            'success'
+        );
+    } else {
+        throw new CoCart_Data_Exception(
+            'cocart_insufficient_points',
+            sprintf(
+                __( 'Insufficient points. You have %d points available.', 'your-textdomain' ),
+                $available_points
+            ),
+            400
+        );
+    }
+} else {
+    throw new CoCart_Data_Exception(
+        'cocart_authentication_required',
+        __( 'Please log in to redeem loyalty points.', 'your-textdomain' ),
+        401
+    );
+}
+```
+
+### Step 4: Totals Calculation (v5+ Method)
+
+<Warning>
+Note the different totals calculation method in v5+
+</Warning>
+
+```php v5+ Finalize Callback
+// After your custom logic...
+
+if ( $cart_updated ) {
+    // v5+ uses controller method directly
+    $controller->calculate_totals( $request, true );
+
+    // Add success notice only if no errors occurred
+    if ( 0 === wc_notice_count( 'error' ) ) {
+        // Custom success message already added above
+    }
+}
+
+return true;
+```
+
+### Complete v5+ Callback Class
+
+<details>
+<summary>Complete v5+ Loyalty Points Callback</summary>
+
+```php Complete v5+ Callback Class
+<?php
+/**
+ * Loyalty Points Callback for CoCart v5+
+ */
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+class Loyalty_Points_CoCart_Callback extends CoCart_REST_Callback {
+
+    protected $name = 'apply-loyalty-points';
+
+    public function callback( $request, $controller ) {
+        try {
+            if ( $controller->is_completely_empty() ) {
+                throw new CoCart_Data_Exception(
+                    'cocart_cart_empty',
+                    __( 'Cart is empty. Please add items to cart first.', 'cart-rest-api-for-woocommerce' ),
+                    404
+                );
+            }
+
+            $data = isset( $request['data'] ) ? $request['data'] : array();
+
+            if ( empty( $data['points'] ) || ! is_numeric( $data['points'] ) ) {
+                throw new CoCart_Data_Exception(
+                    'cocart_invalid_points',
+                    __( 'Please provide a valid number of points to redeem.', 'cart-rest-api-for-woocommerce' ),
+                    400
+                );
+            }
+
+            $points_to_redeem = intval( $data['points'] );
+            $current_user = wp_get_current_user();
+            $cart_updated = false;
+
+            if ( $current_user->exists() ) {
+                $available_points = get_user_meta( $current_user->ID, 'loyalty_points', true );
+                $available_points = intval( $available_points );
+
+                if ( $available_points >= $points_to_redeem ) {
+                    $discount_amount = $points_to_redeem * 0.10;
+
+                    WC()->cart->add_fee(
+                        sprintf( __( 'Loyalty Points Discount (%d points)', 'your-textdomain' ), $points_to_redeem ),
+                        -$discount_amount
+                    );
+
+                    $new_points_balance = $available_points - $points_to_redeem;
+                    update_user_meta( $current_user->ID, 'loyalty_points', $new_points_balance );
+                    WC()->session->set( 'redeemed_loyalty_points', $points_to_redeem );
+
+                    $cart_updated = true;
+
+                    wc_add_notice(
+                        sprintf(
+                            __( 'Applied %d loyalty points for $%.2f discount. Remaining balance: %d points.', 'your-textdomain' ),
+                            $points_to_redeem,
+                            $discount_amount,
+                            $new_points_balance
+                        ),
+                        'success'
+                    );
+                } else {
+                    throw new CoCart_Data_Exception(
+                        'cocart_insufficient_points',
+                        sprintf(
+                            __( 'Insufficient points. You have %d points available.', 'your-textdomain' ),
+                            $available_points
+                        ),
+                        400
+                    );
+                }
+            } else {
+                throw new CoCart_Data_Exception(
+                    'cocart_authentication_required',
+                    __( 'Please log in to redeem loyalty points.', 'your-textdomain' ),
+                    401
+                );
+            }
+
+            if ( $cart_updated ) {
+                // v5+ method for totals calculation
+                $controller->calculate_totals( $request, true );
+            }
+
+            return true;
+        } catch ( CoCart_Data_Exception $e ) {
+            return CoCart_Response::get_error_response(
+                $e->getErrorCode(),
+                $e->getMessage(),
+                $e->getCode(),
+                $e->getAdditionalData()
+            );
+        }
+    }
+}
+
+return new Loyalty_Points_CoCart_Callback();
+```
+
+</details>
+
+## Registering Your Callback (v5+ Method)
+
+<Warning>
+If you registered a callback before with version 4 or lower of CoCart, you will need to register them again. We simplified the callback system to perform better in version 5.
+</Warning>
+
+The v5+ registration system uses a **filter** instead of an action hook, making it simpler and more performant.
+
+### v5+ Registration Steps
+
+1. **Save your callback class** to a PHP file (e.g., `loyalty-points-callback.php`)
+2. **Include the file** in your theme or plugin
+3. **Register using the filter** `cocart_rest_callbacks`
+
+```php v5+ Registration Code
+add_filter( 'cocart_rest_callbacks', 'register_loyalty_points_callback_v5' );
+
+function register_loyalty_points_callback_v5( $callbacks ) {
+    // Load your callback class file
+    include_once( dirname( __FILE__) . '/callbacks/loyalty-points-callback.php' );
+
+    // Add callback to the array (simpler than v4 method)
+    $callbacks[] = new Loyalty_Points_CoCart_Callback();
+
+    return $callbacks;
+}
+```
+
+### Migration from v4 to v5+
+
+If you're upgrading from CoCart v4, here's what changes:
+
+<Tabs>
+  <Tab title="v4 Registration (Old)">
+    ```php v4 Method
+    add_action( 'cocart_register_extension_callback', 'register_callback' );
+
+    function register_callback( $callback ) {
+        include_once( dirname( __FILE__) . '/callback.php' );
+        $callback->register( new My_Callback() );
+    }
+    ```
+  </Tab>
+
+  <Tab title="v5+ Registration (New)">
+    ```php v5+ Method
+    add_filter( 'cocart_rest_callbacks', 'register_callback' );
+
+    function register_callback( $callbacks ) {
+        include_once( dirname( __FILE__) . '/callback.php' );
+        $callbacks[] = new My_Callback();
+        return $callbacks;
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Multiple Callbacks Registration
+
+You can register multiple callbacks in one function:
+
+```php Multiple Callbacks
+add_filter( 'cocart_rest_callbacks', 'register_all_my_callbacks' );
+
+function register_all_my_callbacks( $callbacks ) {
+    // Include all callback files
+    include_once( dirname( __FILE__) . '/callbacks/loyalty-points-callback.php' );
+    include_once( dirname( __FILE__) . '/callbacks/gift-card-callback.php' );
+    include_once( dirname( __FILE__) . '/callbacks/shipping-insurance-callback.php' );
+
+    // Register all callbacks
+    $callbacks[] = new Loyalty_Points_CoCart_Callback();
+    $callbacks[] = new Gift_Card_CoCart_Callback();
+    $callbacks[] = new Shipping_Insurance_CoCart_Callback();
+
+    return $callbacks;
+}
+```
+
+## Using Your Callback (Same as v4)
+
+The API usage remains **identical** to v4 - only the backend registration changes.
+
+### API Request Structure
+
+```bash v5+ Usage (Same as v4)
+curl --location --request POST 'https://example-store.com/wp-json/cocart/v2/cart/update' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer YOUR_JWT_TOKEN' \
+--data '{
+    "namespace": "apply-loyalty-points",
+    "data": {
+        "points": 50
+    }
+}'
+```
+
+### JavaScript Usage
+
+```javascript Frontend Integration (Same as v4)
+async function redeemLoyaltyPoints(points) {
+    try {
+        const response = await fetch('/wp-json/cocart/v2/cart/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${userToken}`
+            },
+            body: JSON.stringify({
+                namespace: 'apply-loyalty-points',
+                data: {
+                    points: points
+                }
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            console.log('Points redeemed successfully:', result);
+            updateCartDisplay(result);
+        } else {
+            console.error('Failed to redeem points:', result.message);
+            showErrorMessage(result.message);
+        }
+    } catch (error) {
+        console.error('Network error:', error);
+    }
+}
+
+// Usage remains the same
+redeemLoyaltyPoints(25);
+```
+
+## v5+ Performance Improvements
+
+The new callback system offers several advantages:
+
+### Improved Performance
+
+- **Reduced overhead**: Filter-based registration is more efficient
+- **Better memory usage**: Callbacks are loaded only when needed
+- **Faster initialization**: Streamlined callback discovery
+
+### Enhanced Developer Experience
+
+- **Simpler registration**: No need for complex callback objects
+- **Better debugging**: Clearer callback flow
+- **Easier testing**: Direct instantiation for unit tests
+
+### Backward Compatibility Considerations
+
+<Warning>
+v5+ callbacks are **not** backward compatible with v4. You must update your registration code when upgrading.
+</Warning>
+
+**What breaks:**
+- Registration method (action hook vs filter)
+- Base class name change
+- Totals calculation method
+
+**What stays the same:**
+- API endpoint usage
+- Callback `$name` property
+- Error handling patterns
+- Frontend integration code
+
+## Best Practices for v5+
+
+1. **Use the new filter registration** - Don't mix v4 and v5+ methods
+2. **Update base class inheritance** - Use `CoCart_REST_Callback`
+3. **Use controller totals method** - Call `$controller->calculate_totals()`
+4. **Test thoroughly after upgrade** - Verify all callbacks work as expected
+5. **Update documentation** - Inform users about the new registration method
+
+## Troubleshooting v5+ Specific Issues
+
+### Common Migration Issues
+
+1. **Callbacks not loading**: Check that you're using the `cocart_rest_callbacks` filter
+2. **Wrong base class**: Ensure you're extending `CoCart_REST_Callback`
+3. **Totals not calculating**: Use `$controller->calculate_totals()` instead of `$this->recalculate_totals()`
+4. **Mixed versions**: Don't use both v4 and v5+ registration methods
+
+### Debug v5+ Callbacks
+
+```php Debug Callback Registration
+add_filter( 'cocart_rest_callbacks', function( $callbacks ) {
+    error_log( 'Registered callbacks: ' . print_r( $callbacks, true ) );
+    return $callbacks;
+});
+```

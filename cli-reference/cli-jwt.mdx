@@ -79,13 +79,13 @@ wp cocart jwt list --page=2 --per-page=10
 Generates a new JWT token for a user.
 
 ```bash
-wp cocart jwt create --user_id=<id> [--user-agent=<user-agent>]
+wp cocart jwt create --user=<user> [--user-agent=<user-agent>]
 ```
 
 ### Arguments
 
-<ParamField path="user_id" type="int" required>
-    The user ID to generate the token for
+<ParamField path="user" type="string" required>
+    The user ID, email, or login to generate the token for
 </ParamField>
 
 <ParamField path="user-agent" type="string">
@@ -95,6 +95,36 @@ wp cocart jwt create --user_id=<id> [--user-agent=<user-agent>]
 **Examples:**
 
 ```bash
-wp cocart jwt create --user_id=123
-wp cocart jwt create --user_id=123 --user-agent="Custom User Agent"
+wp cocart jwt create --user=123
+wp cocart jwt create --user=admin@example.com --user-agent="Custom User Agent"
+```
+
+## Destroy tokens
+
+Destroys JWT tokens for a specific user.
+
+```bash
+wp cocart jwt destroy <user> [--pat=<pat_id>] [--force]
+```
+
+### Arguments
+
+<ParamField path="user" type="string" required>
+    The user ID, email, or login to destroy tokens for
+</ParamField>
+
+<ParamField path="pat" type="string">
+    Specific PAT token ID to destroy (optional)
+</ParamField>
+
+<ParamField path="force" type="bool">
+    Force destroy without confirmation (optional)
+</ParamField>
+
+**Examples:**
+
+```bash
+wp cocart jwt destroy 1
+wp cocart jwt destroy admin@example.com --force
+wp cocart jwt destroy username --pat=pat_abc123
 ```

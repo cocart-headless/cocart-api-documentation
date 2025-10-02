@@ -75,20 +75,18 @@
                     "group": "Features",
                     "pages": [
                       "documentation/security",
-                      "documentation/learn/batch-requests",
-                      "documentation/learn/force-permissions",
-                      "documentation/learn/rate-limiting",
-                      "documentation/learn/cors",
-                      "documentation/learn/load-cart"
+                      "documentation/batch-requests",
+                      "documentation/force-permissions",
+                      "documentation/rate-limiting",
+                      "documentation/cors",
+                      "documentation/load-cart"
                     ]
                   },
                   {
                     "group": "Guides",
                     "pages": [
-                      "documentation/developers/guides/guiding-principles",
-                      "documentation/developers/guides/jwt-token-checkup",
-                      "documentation/developers/guides/extending-cart-creating-callbacks",
-                      "documentation/developers/guides/updating-cocart"
+                      "documentation/guides/guiding-principles",
+                      "documentation/guides/updating-cocart"
                     ]
                   },
                   {
@@ -155,6 +153,7 @@
                   {
                     "group": "JWT Authentication",
                     "pages": [
+                      "getting-started/jwt/quick-start",
                       "api-reference/jwt/refresh-token",
                       "api-reference/jwt/validate-token"
                     ]
@@ -170,30 +169,30 @@
                           "api-reference/v1/cart/get-cart",
                           "api-reference/v1/cart/get-cart-in-session",
                           "api-reference/v1/cart/get-cart-customer",
-                          "api-reference/v1/cart/add-item",
-                          "api-reference/v1/cart/update-item",
-                          "api-reference/v1/cart/remove-item",
-                          "api-reference/v1/cart/restore-item",
-                          "api-reference/v1/cart/clear-cart",
-                          "api-reference/v1/cart/count-items",
-                          "api-reference/v1/cart/calculate",
-                          "api-reference/v1/cart/totals",
+                          "api-reference/v1/cart/post-add-item",
+                          "api-reference/v1/cart/post-update-item",
+                          "api-reference/v1/cart/delete-remove-item",
+                          "api-reference/v1/cart/put-restore-item",
+                          "api-reference/v1/cart/post-clear-cart",
+                          "api-reference/v1/cart/get-count-items",
+                          "api-reference/v1/cart/post-calculate",
+                          "api-reference/v1/cart/get-totals",
                           "api-reference/v1/cart/plus/get-shipping-methods",
-                          "api-reference/v1/cart/plus/set-shipping-method",
-                          "api-reference/v1/cart/plus/removed-items",
-                          "api-reference/v1/cart/plus/quantities",
+                          "api-reference/v1/cart/plus/post-set-shipping-method",
+                          "api-reference/v1/cart/plus/get-removed-items",
+                          "api-reference/v1/cart/plus/get-quantities",
                           "api-reference/v1/cart/plus/get-payment-methods",
-                          "api-reference/v1/cart/plus/set-payment-method",
+                          "api-reference/v1/cart/plus/post-set-payment-method",
                           "api-reference/v1/cart/plus/get-fees",
-                          "api-reference/v1/cart/plus/add-fee",
-                          "api-reference/v1/cart/plus/customer",
-                          "api-reference/v1/cart/plus/cross-sells",
+                          "api-reference/v1/cart/plus/post-add-fee",
+                          "api-reference/v1/cart/plus/get-customer",
+                          "api-reference/v1/cart/plus/get-cross-sells",
                           "api-reference/v1/cart/plus/get-applied-coupons",
-                          "api-reference/v1/cart/plus/check-coupons",
-                          "api-reference/v1/cart/plus/apply-coupon",
-                          "api-reference/v1/cart/plus/remove-coupon",
-                          "api-reference/v1/cart/plus/calculate-fees",
-                          "api-reference/v1/cart/plus/calculate-shipping",
+                          "api-reference/v1/cart/plus/get-check-coupons",
+                          "api-reference/v1/cart/plus/post-apply-coupon",
+                          "api-reference/v1/cart/plus/delete-remove-coupon",
+                          "api-reference/v1/cart/plus/post-calculate-fees",
+                          "api-reference/v1/cart/plus/post-calculate-shipping",
                           "api-reference/v1/cart/plus/get-totals-discount-coupon-tax",
                           "api-reference/v1/cart/plus/get-totals-fee",
                           "api-reference/v1/cart/plus/get-totals-fee-tax",
@@ -208,18 +207,18 @@
                         "group": "Products",
                         "icon": "shirt",
                         "pages": [
-                          "api-reference/v1/products/products",
+                          "api-reference/v1/products/get-products",
                           "api-reference/v1/products/get-product",
-                          "api-reference/v1/products/get-variations",
-                          "api-reference/v1/products/get-variation",
-                          "api-reference/v1/products/categories",
-                          "api-reference/v1/products/tags",
-                          "api-reference/v1/products/attributes",
-                          "api-reference/v1/products/get-attribute",
-                          "api-reference/v1/products/attribute-terms",
-                          "api-reference/v1/products/get-attribute-term",
-                          "api-reference/v1/products/reviews",
-                          "api-reference/v1/products/get-review"
+                          "api-reference/v1/products/get-product-variations",
+                          "api-reference/v1/products/get-product-variation",
+                          "api-reference/v1/products/get-product-categories",
+                          "api-reference/v1/products/get-product-tags",
+                          "api-reference/v1/products/get-product-attributes",
+                          "api-reference/v1/products/get-product-attribute",
+                          "api-reference/v1/products/get-product-attribute-terms",
+                          "api-reference/v1/products/get-product-attribute-term",
+                          "api-reference/v1/products/get-product-reviews",
+                          "api-reference/v1/products/get-product-review"
                         ]
                       },
                       {
@@ -257,7 +256,20 @@
                         "group": "Products",
                         "icon": "shirt",
                         "pages": [
-                          "api-reference/v2/products/get-products"
+                          "api-reference/v2/products/get-products",
+                          "api-reference/v2/products/get-product",
+                          "api-reference/v2/products/get-product-variations",
+                          "api-reference/v2/products/get-product-variation",
+                          "api-reference/v2/products/get-product-categories",
+                          "api-reference/v2/products/get-product-category-by-id",
+                          "api-reference/v2/products/get-product-tags",
+                          "api-reference/v2/products/get-product-tag-by-id",
+                          "api-reference/v2/products/get-product-attributes",
+                          "api-reference/v2/products/get-product-attribute-by-id",
+                          "api-reference/v2/products/get-product-attribute-terms",
+                          "api-reference/v2/products/get-product-attribute-term",
+                          "api-reference/v2/products/get-product-reviews",
+                          "api-reference/v2/products/get-product-review"
                         ]
                       },
                       {
@@ -265,8 +277,7 @@
                         "icon": "user",
                         "pages": [
                           "api-reference/v2/user/post-login",
-                          "api-reference/v2/user/post-logout",
-                          "api-reference/v2/user/post-register"
+                          "api-reference/v2/user/post-logout"
                         ]
                       },
                       {
@@ -280,9 +291,9 @@
                         "group": "Sessions",
                         "icon": "database",
                         "pages": [
-                          "api-reference/v2/sessions/list-sessions",
-                          "api-reference/v2/session/get-session",
-                          "api-reference/v2/session/delete-session"
+                          "api-reference/v2/sessions/get-sessions",
+                          "api-reference/v2/sessions/get-session",
+                          "api-reference/v2/sessions/delete-session"
                         ]
                       }
                     ]
@@ -312,8 +323,7 @@
                   {
                     "group": "CoCart CLI",
                     "pages": [
-                      "cli-reference/introduction",
-                      "cli-reference/cli-cart"
+                      "cli-reference/introduction"
                     ]
                   },
                   {
@@ -341,7 +351,10 @@
                     "group": "Tutorials",
                     "pages": [
                       "tutorials/postman",
-                      "tutorials/covert-cart-to-order"
+                      "tutorials/covert-cart-to-order",
+                      "tutorials/jwt-token-checkup",
+                      "tutorials/authentication-injection",
+                      "tutorials/extending-cart-creating-callbacks"
                     ]
                   },
                   {
@@ -509,20 +522,18 @@
                     "group": "Features",
                     "pages": [
                       "documentation/security",
-                      "documentation/learn/pre-release/batch-requests",
-                      "documentation/learn/force-permissions",
-                      "documentation/learn/pre-release/rate-limiting",
-                      "documentation/learn/pre-release/cors",
-                      "documentation/learn/pre-release/load-cart"
+                      "documentation/pre-release/batch-requests",
+                      "documentation/force-permissions",
+                      "documentation/pre-release/rate-limiting",
+                      "documentation/pre-release/cors",
+                      "documentation/pre-release/load-cart"
                     ]
                   },
                   {
                     "group": "Guides",
                     "pages": [
-                      "documentation/developers/guides/guiding-principles",
-                      "documentation/developers/guides/jwt-token-checkup",
-                      "documentation/developers/guides/pre-release/extending-cart-creating-callbacks",
-                      "documentation/developers/guides/updating-cocart"
+                      "documentation/guides/guiding-principles",
+                      "documentation/guides/updating-cocart"
                     ]
                   },
                   {
@@ -589,6 +600,7 @@
                   {
                     "group": "JWT Authentication",
                     "pages": [
+                      "getting-started/jwt/quick-start",
                       "api-reference/jwt/refresh-token",
                       "api-reference/jwt/validate-token"
                     ]
@@ -604,30 +616,30 @@
                           "api-reference/v1/cart/get-cart",
                           "api-reference/v1/cart/get-cart-in-session",
                           "api-reference/v1/cart/get-cart-customer",
-                          "api-reference/v1/cart/add-item",
-                          "api-reference/v1/cart/update-item",
-                          "api-reference/v1/cart/remove-item",
-                          "api-reference/v1/cart/restore-item",
-                          "api-reference/v1/cart/clear-cart",
-                          "api-reference/v1/cart/count-items",
-                          "api-reference/v1/cart/calculate",
-                          "api-reference/v1/cart/totals",
+                          "api-reference/v1/cart/post-add-item",
+                          "api-reference/v1/cart/post-update-item",
+                          "api-reference/v1/cart/delete-remove-item",
+                          "api-reference/v1/cart/put-restore-item",
+                          "api-reference/v1/cart/post-clear-cart",
+                          "api-reference/v1/cart/get-count-items",
+                          "api-reference/v1/cart/post-calculate",
+                          "api-reference/v1/cart/get-totals",
                           "api-reference/v1/cart/plus/get-shipping-methods",
-                          "api-reference/v1/cart/plus/set-shipping-method",
-                          "api-reference/v1/cart/plus/removed-items",
-                          "api-reference/v1/cart/plus/quantities",
+                          "api-reference/v1/cart/plus/post-set-shipping-method",
+                          "api-reference/v1/cart/plus/get-removed-items",
+                          "api-reference/v1/cart/plus/get-quantities",
                           "api-reference/v1/cart/plus/get-payment-methods",
-                          "api-reference/v1/cart/plus/set-payment-method",
+                          "api-reference/v1/cart/plus/post-set-payment-method",
                           "api-reference/v1/cart/plus/get-fees",
-                          "api-reference/v1/cart/plus/add-fee",
-                          "api-reference/v1/cart/plus/customer",
-                          "api-reference/v1/cart/plus/cross-sells",
+                          "api-reference/v1/cart/plus/post-add-fee",
+                          "api-reference/v1/cart/plus/get-customer",
+                          "api-reference/v1/cart/plus/get-cross-sells",
                           "api-reference/v1/cart/plus/get-applied-coupons",
-                          "api-reference/v1/cart/plus/check-coupons",
-                          "api-reference/v1/cart/plus/apply-coupon",
-                          "api-reference/v1/cart/plus/remove-coupon",
-                          "api-reference/v1/cart/plus/calculate-fees",
-                          "api-reference/v1/cart/plus/calculate-shipping",
+                          "api-reference/v1/cart/plus/get-check-coupons",
+                          "api-reference/v1/cart/plus/post-apply-coupon",
+                          "api-reference/v1/cart/plus/delete-remove-coupon",
+                          "api-reference/v1/cart/plus/post-calculate-fees",
+                          "api-reference/v1/cart/plus/post-calculate-shipping",
                           "api-reference/v1/cart/plus/get-totals-discount-coupon-tax",
                           "api-reference/v1/cart/plus/get-totals-fee",
                           "api-reference/v1/cart/plus/get-totals-fee-tax",
@@ -642,18 +654,18 @@
                         "group": "Products",
                         "icon": "shirt",
                         "pages": [
-                          "api-reference/v1/products/products",
+                          "api-reference/v1/products/get-products",
                           "api-reference/v1/products/get-product",
-                          "api-reference/v1/products/get-variations",
-                          "api-reference/v1/products/get-variation",
-                          "api-reference/v1/products/categories",
-                          "api-reference/v1/products/tags",
-                          "api-reference/v1/products/attributes",
-                          "api-reference/v1/products/get-attribute",
-                          "api-reference/v1/products/attribute-terms",
-                          "api-reference/v1/products/get-attribute-term",
-                          "api-reference/v1/products/reviews",
-                          "api-reference/v1/products/get-review"
+                          "api-reference/v1/products/get-product-variations",
+                          "api-reference/v1/products/get-product-variation",
+                          "api-reference/v1/products/get-product-categories",
+                          "api-reference/v1/products/get-product-tags",
+                          "api-reference/v1/products/get-product-attributes",
+                          "api-reference/v1/products/get-product-attribute",
+                          "api-reference/v1/products/get-product-attribute-terms",
+                          "api-reference/v1/products/get-product-attribute-term",
+                          "api-reference/v1/products/get-product-reviews",
+                          "api-reference/v1/products/get-product-review"
                         ]
                       },
                       {
@@ -708,7 +720,33 @@
                         "group": "Products",
                         "icon": "shirt",
                         "pages": [
-                          "api-reference/v2/products/pre-release/get-products"
+                          "api-reference/v2/products/pre-release/get-products",
+                          "api-reference/v2/products/get-product",
+                          "api-reference/v2/products/get-product-variations",
+                          "api-reference/v2/products/get-product-variation",
+                          "api-reference/v2/products/get-product-categories",
+                          "api-reference/v2/products/get-product-category-by-id",
+                          "api-reference/v2/products/get-product-tags",
+                          "api-reference/v2/products/get-product-tag-by-id",
+                          "api-reference/v2/products/get-product-attributes",
+                          "api-reference/v2/products/get-product-attribute-by-id",
+                          "api-reference/v2/products/get-product-attribute-terms",
+                          "api-reference/v2/products/get-product-attribute-term",
+                          "api-reference/v2/products/get-product-reviews",
+                          "api-reference/v2/products/get-product-review"
+                        ]
+                      },
+                      {
+                        "group": "My Account",
+                        "icon": "computer",
+                        "pages": [
+                          "api-reference/pre-release/my-account/get-my-account",
+                          "api-reference/pre-release/my-account/get-my-account-orders",
+                          "api-reference/pre-release/my-account/get-my-account-single-order",
+                          "api-reference/pre-release/my-account/get-my-account-downloads",
+                          "api-reference/pre-release/my-account/get-my-account-reviews",
+                          "api-reference/pre-release/my-account/get-my-account-subscriptions",
+                          "api-reference/pre-release/my-account/get-my-account-single-subscription"
                         ]
                       },
                       {
@@ -731,9 +769,9 @@
                         "group": "Sessions",
                         "icon": "database",
                         "pages": [
-                          "api-reference/v2/sessions/list-sessions",
-                          "api-reference/v2/session/get-session",
-                          "api-reference/v2/session/delete-session"
+                          "api-reference/v2/sessions/get-sessions",
+                          "api-reference/v2/sessions/get-session",
+                          "api-reference/v2/sessions/delete-session"
                         ]
                       }
                     ]
@@ -742,7 +780,8 @@
                     "group": "Plugins",
                     "pages": [
                       "api-reference/plugins/wc-name-your-price",
-                      "api-reference/plugins/wc-mix-and-match-products"
+                      "api-reference/plugins/wc-mix-and-match-products",
+                      "api-reference/plugins/two-factor-authentication"
                     ]
                   },
                   {
@@ -792,7 +831,22 @@
                     "group": "Tutorials",
                     "pages": [
                       "tutorials/postman",
-                      "tutorials/covert-cart-to-order"
+                      "tutorials/covert-cart-to-order",
+                      "tutorials/jwt-token-checkup",
+                      "tutorials/authentication-injection",
+                      "tutorials/pre-release/extending-cart-creating-callbacks"
+                    ]
+                  },
+                  {
+                    "group": "Checkout API",
+                    "icon": "cash-register",
+                    "pages": [
+                      "tutorials/pre-release/checkout-api",
+                      "tutorials/pre-release/consumer-key-setup",
+                      "tutorials/pre-release/checkout-payment-processing",
+                      "tutorials/pre-release/checkout-stripe",
+                      "tutorials/pre-release/checkout-paypal",
+                      "tutorials/pre-release/checkout-authorize-net"
                     ]
                   },
                   {
@@ -827,7 +881,7 @@
                     "pages": [
                       "knowledge-base/faq",
                       "knowledge-base/security-practices",
-                      "knowledge-base/cart-key",
+                      "knowledge-base/pre-release/cart-key",
                       "knowledge-base/adding-code",
                       "knowledge-base/plugin-suggestions",
                       "knowledge-base/nulled-plugins",
@@ -943,7 +997,9 @@
   },
   "seo": {
     "metatags": {
-      "robots": "noindex"
+      "robots": "index",
+      "description": "Decoupling WooCommerce for the modern storefront",
+      "keywords": "woocommerce, headless, api, rest api, cart, carts, ecommerce, wordpress, headless woocommerce, woocommerce cart, woocommerce carts, cocart, cocart api, cocart headless"
     },
     "indexing": "navigable"
   },
@@ -1029,6 +1085,28 @@
     "options": [
       "copy",
       "view",
+      {
+        "title": "Translate Page",
+        "description": "Translate this page with Google Translate",
+        "icon": "language",
+        "href": {
+          "base": "https://translate.google.com/translate",
+          "query": [
+            {
+              "key": "sl",
+              "value": "en"
+            },
+            {
+              "key": "tl",
+              "value": "auto"
+            },
+            {
+              "key": "u",
+              "value": "https://docs.cocartapi.com$path"
+            }
+          ]
+        }
+      },
       "chatgpt",
       "claude",
       "perplexity",

@@ -1,0 +1,750 @@
+---
+title: "Setting Up Consumer Keys"
+sidebarTitle: "Consumer Key Setup"
+description: "Complete guide to generating and configuring WooCommerce consumer keys for secure CoCart API access"
+icon: "key"
+tag: "WIP"
+robots: "noindex, follow"
+---
+
+<Note>
+    Consumer keys provide secure, authenticated access to the CoCart API. This guide covers setup and best practices for API authentication.
+</Note>
+
+## Overview
+
+CoCart uses WooCommerce's built-in consumer key/secret authentication system to provide secure API access. This OAuth 1.0a implementation ensures that only authorized applications can access your checkout API.
+
+## Why Consumer Keys?
+
+<CardGroup cols={2}>
+  <Card title="Security" icon="shield-check">
+    Prevents unauthorized access to your checkout API and customer data
+  </Card>
+
+  <Card title="Rate Limiting" icon="gauge-high">
+    Built-in request throttling and abuse protection per application
+  </Card>
+
+  <Card title="Audit Trail" icon="clipboard-list">
+    Track which applications are making requests and monitor usage
+  </Card>
+
+  <Card title="Granular Control" icon="sliders">
+    Different permission levels and access controls per application
+  </Card>
+</CardGroup>
+
+## Step 1: Generate Consumer Keys
+
+### Via WordPress Admin
+
+1. **Navigate to WooCommerce Settings**
+   ```
+   WooCommerce → Settings → Advanced → REST API
+   ```
+
+2. **Click "Add Key"**
+
+3. **Configure Key Settings**
+   - **Description**: Enter a meaningful name (e.g., "Mobile App - Production")
+   - **User**: Select a user account (typically an admin)
+   - **Permissions**: Choose appropriate level:
+     - `Read` - For read-only access (GET requests only)
+     - `Write` - For write access (POST, PUT, DELETE)
+     - `Read/Write` - Full access (recommended for checkout)
+
+4. **Generate and Save Keys**
+   - **Consumer Key**: Starts with `ck_` (public identifier)
+   - **Consumer Secret**: Starts with `cs_` (private secret)
+
+<Warning>
+Copy and securely store both keys immediately. The consumer secret cannot be retrieved again after this screen.
+</Warning>
+
+### Via WP-CLI
+
+```bash
+# Generate read/write API key
+wp wc api create --user=1 --description="CoCart Mobile App" --permissions=read_write
+
+# Generate read-only API key
+wp wc api create --user=1 --description="CoCart Analytics" --permissions=read
+```
+
+### Programmatically (PHP)
+
+```php
+// Generate consumer keys programmatically
+function generate_cocart_api_keys($description, $user_id, $permissions = 'read_write') {
+    global $wpdb;
+
+    $consumer_key = 'ck_' . wc_rand_hash();
+    $consumer_secret = 'cs_' . wc_rand_hash();
+
+    $data = array(
+        'user_id'         => $user_id,
+        'description'     => $description,
+        'permissions'     => $permissions,
+        'consumer_key'    => wc_api_hash($consumer_key),
+        'consumer_secret' => $consumer_secret,
+        'truncated_key'   => substr($consumer_key, -7),
+    );
+
+    $wpdb->insert(
+        $wpdb->prefix . 'woocommerce_api_keys',
+        $data,
+        array('%d', '%s', '%s', '%s', '%s', '%s')
+    );
+
+    return array(
+        'consumer_key'    => $consumer_key,
+        'consumer_secret' => $consumer_secret,
+        'key_id'         => $wpdb->insert_id
+    );
+}
+```
+
+## Step 2: Configure API Keys for Different Environments
+
+### Development Environment
+
+```javascript
+// Store in environment variables
+const config = {
+    consumer_key: process.env.COCART_DEV_CONSUMER_KEY,
+    consumer_secret: process.env.COCART_DEV_CONSUMER_SECRET,
+    api_url: 'https://dev.yourstore.com/wp-json/cocart/preview'
+};
+```
+
+### Production Environment
+
+```javascript
+// Use secure configuration management
+const config = {
+    consumer_key: process.env.COCART_PROD_CONSUMER_KEY,
+    consumer_secret: process.env.COCART_PROD_CONSUMER_SECRET,
+    api_url: 'https://yourstore.com/wp-json/cocart/preview'
+};
+```
+
+### Environment Variables (.env)
+
+```bash
+# Development
+COCART_DEV_CONSUMER_KEY=ck_dev_1234567890abcdef
+COCART_DEV_CONSUMER_SECRET=cs_dev_1234567890abcdef
+
+# Production
+COCART_PROD_CONSUMER_KEY=ck_prod_1234567890abcdef
+COCART_PROD_CONSUMER_SECRET=cs_prod_1234567890abcdef
+
+# API URLs
+COCART_DEV_API_URL=https://dev.yourstore.com/wp-json/cocart/preview
+COCART_PROD_API_URL=https://yourstore.com/wp-json/cocart/preview
+```
+
+## Step 3: Implement Authentication in Your Application
+
+### Basic Implementation
+
+```javascript
+class CoCartAPI {
+    constructor(config) {
+        this.consumerKey = config.consumer_key;
+        this.consumerSecret = config.consumer_secret;
+        this.baseURL = config.api_url;
+    }
+
+    async makeRequest(endpoint, options = {}) {
+        const url = new URL(`${this.baseURL}${endpoint}`);
+
+        // Add authentication parameters
+        url.searchParams.append('consumer_key', this.consumerKey);
+        url.searchParams.append('consumer_secret', this.consumerSecret);
+
+        const response = await fetch(url.toString(), {
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || `HTTP ${response.status}`);
+        }
+
+        return response.json();
+    }
+}
+
+// Usage
+const api = new CoCartAPI({
+    consumer_key: 'ck_1234567890abcdef',
+    consumer_secret: 'cs_1234567890abcdef',
+    api_url: '/wp-json/cocart/preview'
+});
+```
+
+### Advanced Implementation with OAuth Signature
+
+```javascript
+// Using oauth-1.0a library for proper OAuth implementation
+import OAuth from 'oauth-1.0a';
+import crypto from 'crypto';
+
+class SecureCoCartAPI {
+    constructor(config) {
+        this.oauth = OAuth({
+            consumer: {
+                key: config.consumer_key,
+                secret: config.consumer_secret
+            },
+            signature_method: 'HMAC-SHA1',
+            hash_function: (baseString, key) => {
+                return crypto.createHmac('sha1', key)
+                    .update(baseString)
+                    .digest('base64');
+            }
+        });
+
+        this.baseURL = config.api_url;
+    }
+
+    async makeRequest(endpoint, options = {}) {
+        const url = `${this.baseURL}${endpoint}`;
+        const method = options.method || 'GET';
+
+        // Generate OAuth authorization data
+        const requestData = {
+            url: url,
+            method: method
+        };
+
+        const authHeader = this.oauth.toHeader(this.oauth.authorize(requestData));
+
+        const response = await fetch(url, {
+            ...options,
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': authHeader.Authorization,
+                ...options.headers
+            }
+        });
+
+        return this.handleResponse(response);
+    }
+}
+```
+
+## Step 4: Handle Customer Authentication
+
+### For Registered Customers
+
+```javascript
+class CustomerCoCartAPI extends CoCartAPI {
+    constructor(config) {
+        super(config);
+        this.cartKey = config.cart_key;
+    }
+
+    async makeRequest(endpoint, options = {}) {
+        const url = new URL(`${this.baseURL}${endpoint}`);
+
+        // Add authentication
+        url.searchParams.append('consumer_key', this.consumerKey);
+        url.searchParams.append('consumer_secret', this.consumerSecret);
+
+        // Cart key contains customer context automatically
+        const headers = {
+            'Content-Type': 'application/json',
+            ...options.headers
+        };
+
+        if (this.cartKey) {
+            headers['Cart-Key'] = this.cartKey;
+        }
+
+        return super.makeRequest(endpoint, {
+            ...options,
+            url: url.toString(),
+            headers
+        });
+    }
+
+    // Update cart key when cart changes
+    updateCartKey(cartKey) {
+        this.cartKey = cartKey;
+    }
+}
+
+// Usage with cart context (automatically includes customer info)
+const customerAPI = new CustomerCoCartAPI({
+    consumer_key: 'ck_1234567890abcdef',
+    consumer_secret: 'cs_1234567890abcdef',
+    cart_key: 'user-cart-key-here', // Cart key includes customer context
+    api_url: '/wp-json/cocart/preview'
+});
+```
+
+### Dynamic Customer Handling
+
+```javascript
+// Handle login/logout events
+function handleUserLogin(newCartKey) {
+    // Update API instance with new cart key (contains customer context)
+    coCartAPI.updateCartKey(newCartKey);
+
+    // Refresh any cached data
+    refreshCheckoutData();
+}
+
+function handleUserLogout() {
+    // Switch to guest cart key or create new session
+    const guestCartKey = createGuestCartSession();
+    coCartAPI.updateCartKey(guestCartKey);
+
+    // Clear sensitive cached data
+    clearCustomerData();
+}
+
+// Helper function to create guest cart session
+function createGuestCartSession() {
+    // This would typically make a request to create a new cart
+    return 'guest-cart-key-' + generateUniqueId();
+}
+```
+
+## Step 5: Security Best Practices
+
+### Key Storage
+
+<AccordionGroup>
+  <Accordion title="Client-Side Applications">
+    **Never store consumer secrets in client-side code**
+
+    ```javascript
+    // ❌ DON'T DO THIS - Exposes secret to users
+    const config = {
+        consumer_key: 'ck_1234567890abcdef',
+        consumer_secret: 'cs_1234567890abcdef' // Visible in browser
+    };
+
+    // ✅ DO THIS - Use a backend proxy
+    const config = {
+        consumer_key: 'ck_1234567890abcdef',
+        // Consumer secret handled by your backend
+    };
+    ```
+  </Accordion>
+
+  <Accordion title="Server-Side Applications">
+    **Use environment variables or secure configuration**
+
+    ```php
+    // ✅ Good - Environment variables
+    $consumer_key = $_ENV['COCART_CONSUMER_KEY'];
+    $consumer_secret = $_ENV['COCART_CONSUMER_SECRET'];
+
+    // ✅ Good - WordPress options (if properly secured)
+    $consumer_key = get_option('cocart_consumer_key');
+    $consumer_secret = get_option('cocart_consumer_secret');
+    ```
+  </Accordion>
+
+  <Accordion title="Mobile Applications">
+    **Use secure storage mechanisms**
+
+    ```javascript
+    // React Native example with Keychain/Keystore
+    import { setInternetCredentials, getInternetCredentials } from 'react-native-keychain';
+
+    // Store securely
+    await setInternetCredentials('cocart-api', consumerKey, consumerSecret);
+
+    // Retrieve securely
+    const credentials = await getInternetCredentials('cocart-api');
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Key Rotation
+
+```javascript
+class RotatingKeyAPI extends CoCartAPI {
+    constructor(config) {
+        super(config);
+        this.backupKeys = config.backup_keys || [];
+    }
+
+    async makeRequest(endpoint, options = {}) {
+        try {
+            // Try primary keys first
+            return await super.makeRequest(endpoint, options);
+        } catch (error) {
+            if (error.status === 401 && this.backupKeys.length > 0) {
+                // Try backup keys if primary fails
+                return await this.tryBackupKeys(endpoint, options);
+            }
+            throw error;
+        }
+    }
+
+    async tryBackupKeys(endpoint, options) {
+        for (const backupKey of this.backupKeys) {
+            try {
+                // Temporarily use backup keys
+                const originalKey = this.consumerKey;
+                const originalSecret = this.consumerSecret;
+
+                this.consumerKey = backupKey.key;
+                this.consumerSecret = backupKey.secret;
+
+                const result = await super.makeRequest(endpoint, options);
+
+                // Restore original keys
+                this.consumerKey = originalKey;
+                this.consumerSecret = originalSecret;
+
+                return result;
+            } catch (backupError) {
+                continue; // Try next backup key
+            }
+        }
+        throw new Error('All authentication keys failed');
+    }
+}
+```
+
+## Step 6: Monitor and Manage API Keys
+
+### Key Usage Monitoring
+
+```sql
+-- Check API key usage
+SELECT
+    k.description,
+    k.permissions,
+    k.last_access,
+    COUNT(l.log_id) as request_count
+FROM wp_woocommerce_api_keys k
+LEFT JOIN wp_wc_webhooks_deliveries l ON k.key_id = l.webhook_id
+WHERE k.consumer_key LIKE 'ck_%'
+GROUP BY k.key_id;
+```
+
+### Automated Key Management
+
+```php
+// WordPress cron job for key management
+add_action('wp', 'schedule_api_key_cleanup');
+
+function schedule_api_key_cleanup() {
+    if (!wp_next_scheduled('cocart_cleanup_old_keys')) {
+        wp_schedule_event(time(), 'daily', 'cocart_cleanup_old_keys');
+    }
+}
+
+add_action('cocart_cleanup_old_keys', 'cleanup_unused_api_keys');
+
+function cleanup_unused_api_keys() {
+    global $wpdb;
+
+    // Disable keys not used in 90 days
+    $wpdb->query("
+        UPDATE {$wpdb->prefix}woocommerce_api_keys
+        SET permissions = 'disabled'
+        WHERE last_access < DATE_SUB(NOW(), INTERVAL 90 DAY)
+        AND permissions != 'disabled'
+    ");
+
+    // Log the cleanup
+    error_log('CoCart: Cleaned up unused API keys');
+}
+```
+
+## Troubleshooting
+
+### Common Issues
+
+<CardGroup cols={2}>
+  <Card title="401 Unauthorized" icon="lock">
+    **Causes:**
+    - Invalid consumer key/secret
+    - Key disabled or expired
+    - Incorrect permissions
+
+    **Solutions:**
+    - Verify key exists in WooCommerce
+    - Check key permissions
+    - Regenerate if necessary
+  </Card>
+
+  <Card title="403 Forbidden" icon="ban">
+    **Causes:**
+    - Read-only key used for write operations
+    - Cart session access violation
+    - Rate limiting triggered
+
+    **Solutions:**
+    - Check key permissions
+    - Verify cart key ownership
+    - Implement rate limit handling
+  </Card>
+
+  <Card title="Rate Limiting" icon="clock">
+    **Causes:**
+    - Too many requests per timeframe
+    - Shared keys across applications
+
+    **Solutions:**
+    - Implement request queuing
+    - Use separate keys per app
+    - Add retry logic with backoff
+  </Card>
+
+  <Card title="Key Exposure" icon="eye">
+    **Causes:**
+    - Keys in client-side code
+    - Keys in version control
+    - Insecure transmission
+
+    **Solutions:**
+    - Use backend proxy
+    - Environment variables
+    - HTTPS only
+  </Card>
+
+  <Card title="Payment Gateway Issues" icon="credit-card">
+    **Causes:**
+    - Gateway configuration mismatch
+    - Missing credentials
+    - Environment misalignment
+
+    **Solutions:**
+    - Use payment methods debug endpoint
+    - Verify gateway credentials match
+    - Check test vs production settings
+  </Card>
+</CardGroup>
+
+### Debug Mode
+
+```javascript
+class DebugCoCartAPI extends CoCartAPI {
+    constructor(config) {
+        super(config);
+        this.debug = config.debug || false;
+    }
+
+    async makeRequest(endpoint, options = {}) {
+        if (this.debug) {
+            console.group('CoCart API Request');
+            console.log('Endpoint:', endpoint);
+            console.log('Method:', options.method || 'GET');
+            console.log('Consumer Key:', this.consumerKey);
+            console.log('Options:', options);
+        }
+
+        try {
+            const result = await super.makeRequest(endpoint, options);
+
+            if (this.debug) {
+                console.log('Response:', result);
+                console.groupEnd();
+            }
+
+            return result;
+        } catch (error) {
+            if (this.debug) {
+                console.error('Error:', error);
+                console.groupEnd();
+            }
+            throw error;
+        }
+    }
+}
+```
+
+### Payment Gateway Debugging
+
+For admin users, the payment methods endpoint provides debug information to help understand gateway configurations:
+
+```javascript
+class AdminCoCartAPI extends CoCartAPI {
+    constructor(config) {
+        super(config);
+        this.isAdmin = config.is_admin || false;
+    }
+
+    /**
+     * Get payment methods with debug info (admin only)
+     */
+    async getPaymentMethodsWithDebug() {
+        if (!this.isAdmin) {
+            throw new Error('Debug information requires admin privileges');
+        }
+
+        const response = await this.makeRequest('/checkout/payment-methods', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${this.adminJwtToken}` // Admin JWT required
+            }
+        });
+
+        return response;
+    }
+
+    /**
+     * Log debug information for payment methods
+     */
+    async debugPaymentMethods() {
+        try {
+            const methods = await this.getPaymentMethodsWithDebug();
+
+            console.group('Payment Methods Debug');
+            console.log('Available Methods:', methods.payment_methods);
+
+            if (methods.debug_info) {
+                console.group('Gateway Debug Information');
+                console.warn('🚨 Debug info - DO NOT use in production');
+
+                Object.entries(methods.debug_info.payment_context).forEach(([gateway, config]) => {
+                    console.group(`${gateway.toUpperCase()} Configuration`);
+                    console.log('Gateway Config:', config);
+                    console.groupEnd();
+                });
+
+                console.groupEnd();
+            }
+
+            console.groupEnd();
+        } catch (error) {
+            console.error('Payment methods debug failed:', error);
+        }
+    }
+}
+
+// Usage for admin debugging
+const adminAPI = new AdminCoCartAPI({
+    consumer_key: 'ck_admin_key',
+    consumer_secret: 'cs_admin_secret',
+    cart_key: 'admin-cart-key',
+    is_admin: true,
+    admin_jwt_token: 'admin_jwt_token_here',
+    api_url: '/wp-json/cocart/preview'
+});
+
+// Debug payment gateway configurations
+await adminAPI.debugPaymentMethods();
+```
+
+**Example Debug Response:**
+```json
+{
+  "payment_methods": {
+    "stripe": {
+      "id": "stripe",
+      "title": "Credit Card",
+      "enabled": true
+    },
+    "paypal": {
+      "id": "paypal",
+      "title": "PayPal",
+      "enabled": true
+    }
+  },
+  "debug_info": {
+    "payment_context": {
+      "stripe": {
+        "publishable_key": "pk_test_xxx",
+        "webhook_endpoint": "/wc-api/stripe",
+        "gateway_mode": "test"
+      },
+      "paypal": {
+        "client_id": "paypal_client_id_xxx",
+        "environment": "sandbox"
+      }
+    },
+    "note": "Debug information - DO NOT use in production"
+  }
+}
+```
+
+<Warning>
+**Important Security Notes:**
+- Debug information is only available to users with `manage_options` capability
+- Debug info should never be used in production applications
+- Use this only for development, testing, and troubleshooting gateway configurations
+- Ensure your admin JWT tokens are properly secured
+</Warning>
+
+## Integration Examples
+
+### WordPress Plugin
+
+```php
+// Add consumer key settings to admin
+class CoCart_Admin_Settings {
+    public function add_settings_fields() {
+        add_settings_field(
+            'cocart_consumer_key',
+            __('Consumer Key', 'cocart'),
+            array($this, 'consumer_key_field'),
+            'cocart-settings'
+        );
+
+        add_settings_field(
+            'cocart_consumer_secret',
+            __('Consumer Secret', 'cocart'),
+            array($this, 'consumer_secret_field'),
+            'cocart-settings'
+        );
+    }
+
+    public function consumer_key_field() {
+        $value = get_option('cocart_consumer_key');
+        echo '<input type="text" name="cocart_consumer_key" value="' . esc_attr($value) . '" class="regular-text" />';
+        echo '<p class="description">' . __('WooCommerce API consumer key for CoCart authentication.', 'cocart') . '</p>';
+    }
+}
+```
+
+### React/Next.js Integration
+
+```javascript
+// components/CoCartProvider.js
+import { createContext, useContext, useState } from 'react';
+
+const CoCartContext = createContext();
+
+export function CoCartProvider({ children }) {
+    const [api] = useState(() => new CoCartAPI({
+        consumer_key: process.env.NEXT_PUBLIC_COCART_CONSUMER_KEY,
+        consumer_secret: process.env.COCART_CONSUMER_SECRET, // Server-side only
+        api_url: process.env.NEXT_PUBLIC_COCART_API_URL
+    }));
+
+    return (
+        <CoCartContext.Provider value={api}>
+            {children}
+        </CoCartContext.Provider>
+    );
+}
+
+export const useCoCart = () => {
+    const context = useContext(CoCartContext);
+    if (!context) {
+        throw new Error('useCoCart must be used within CoCartProvider');
+    }
+    return context;
+};
+```
+
+<Note>
+Remember to never expose consumer secrets in client-side applications. Use backend proxies or server-side rendering to handle secret authentication securely.
+</Note>

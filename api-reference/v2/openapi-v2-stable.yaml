@@ -1,0 +1,4611 @@
+openapi: 3.0.3
+
+info:
+  title: CoCart - Cart API v2
+  version: 4.6.0
+  description: |
+    CoCart REST API v2 for managing shopping carts, products, and store functionality.
+    Compared to API v1, this version provides enhanced endpoints for cart operations, product management,
+    and administrative functions with improved response structures and better error handling.
+  termsOfService: http://cocartapi.com/terms-of-conditions-polar/
+  contact:
+    email: support@cocartapi.com
+  license:
+    name: GNU General Public License v3.0
+    url: http://www.gnu.org/licenses/gpl-3.0.html
+
+externalDocs:
+  description: Find out more about CoCart API
+  url: https://docs.cocartapi.com
+
+servers:
+  - url: "{protocol}://{host}/wp-json/cocart/v2"
+    description: API v2
+    variables:
+      protocol:
+        enum: [http, https]
+        default: https
+      host:
+        default: example-store.com
+        description: Your store domain
+
+tags:
+  - name: cart
+    description: Operations for managing the shopping cart
+  - name: cart-items
+    description: Operations for managing cart items
+  - name: cart-calculate
+    description: Operations for calculating cart totals
+  - name: products
+    description: Operations for browsing and retrieving product information
+  - name: product-attributes
+    description: Operations for retrieving product attributes and attribute terms
+  - name: product-categories
+    description: Operations for browsing and filtering product categories
+  - name: product-tags
+    description: Operations for browsing and filtering product tags
+  - name: product-reviews
+    description: Operations for retrieving product reviews and ratings
+  - name: product-variations
+    description: Operations for retrieving variable product variations
+  - name: admin-sessions
+    description: Administrative operations for managing cart sessions
+  - name: authentication
+    description: Operations for user authentication
+  - name: store
+    description: Operations for retrieving store information and configuration
+
+paths:
+  /cart:
+    get:
+      tags:
+        - cart
+      summary: Get cart contents
+      description: |
+        Gets the cart contents including items, totals, and customer information.
+      parameters:
+        - name: cart_key
+          in: query
+          description: Unique identifier for the cart/customer.
+          schema:
+            type: string
+          required: false
+        - name: fields
+          in: query
+          description: Specify each parent field you want to request separated by (,) in the response before the data is fetched.
+          schema:
+            type: string
+          required: false
+        - name: default
+          in: query
+          description: Return the default cart data if set to true.
+          schema:
+            type: boolean
+            default: false
+          required: false
+        - name: thumb
+          in: query
+          description: True if you want to return the URL of the featured product image for each item in the cart.
+          schema:
+            type: boolean
+            default: true
+          required: false
+      responses:
+        "200":
+          description: Cart retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartV2"
+              example:
+                cart_hash: "e629fa6598d732768f7c726b4b621285"
+                cart_key: "cb7a23af96a3f23af3c28a8b4b8c6d5e"
+                currency:
+                  currency_code: "USD"
+                  currency_symbol: "$"
+                  currency_symbol_pos: "left"
+                  currency_minor_unit: 2
+                  currency_decimal_separator: "."
+                  currency_thousand_separator: ","
+                  currency_prefix: "$"
+                  currency_suffix: ""
+                customer:
+                  billing_address:
+                    billing_first_name: "John"
+                    billing_last_name: "Doe"
+                    billing_company: "Acme Corporation"
+                    billing_country: "US"
+                    billing_address_1: "123 Main Street"
+                    billing_address_2: "Suite 100"
+                    billing_postcode: "90210"
+                    billing_city: "Beverly Hills"
+                    billing_state: "CA"
+                    billing_phone: "+1-555-123-4567"
+                    billing_email: "john.doe@example.com"
+                  shipping_address:
+                    shipping_first_name: "John"
+                    shipping_last_name: "Doe"
+                    shipping_company: "Acme Corporation"
+                    shipping_country: "US"
+                    shipping_address_1: "123 Main Street"
+                    shipping_address_2: "Suite 100"
+                    shipping_postcode: "90210"
+                    shipping_city: "Beverly Hills"
+                    shipping_state: "CA"
+                items:
+                  d6b3e8e5a1b0c6e4f2a3b1d8c5e6f9a2:
+                    item_key: "d6b3e8e5a1b0c6e4f2a3b1d8c5e6f9a2"
+                    id: 145
+                    name: "Wireless Bluetooth Headphones"
+                    title: "Wireless Bluetooth Headphones"
+                    price: "$18.00"
+                    quantity:
+                      value: 2
+                      min_purchase: 1
+                      max_purchase: -1
+                    totals:
+                      subtotal: 36.00
+                      subtotal_tax: 3.60
+                      total: 36.00
+                      tax: 3.60
+                    slug: "wireless-bluetooth-headphones"
+                    meta:
+                      product_type: "simple"
+                      sku: "WBH-001"
+                      dimensions:
+                        length: ""
+                        width: ""
+                        height: ""
+                        unit: "cm"
+                      weight: "0.5"
+                      variation: {}
+                    backorders: "no"
+                    cart_item_data: {}
+                    featured_image: "https://example-store.com/wp-content/uploads/2024/03/headphones-blue.jpg"
+                  f3a8b2c6d5e9f1a4b7c0d3e6f9a2b5c8:
+                    item_key: "f3a8b2c6d5e9f1a4b7c0d3e6f9a2b5c8"
+                    id: 289
+                    name: "Premium Cotton T-Shirt - Large, Navy Blue"
+                    title: "Premium Cotton T-Shirt"
+                    price: "$80.00"
+                    quantity:
+                      value: 1
+                      min_purchase: 1
+                      max_purchase: 100
+                    totals:
+                      subtotal: 80.00
+                      subtotal_tax: 8.00
+                      total: 80.00
+                      tax: 8.00
+                    slug: "premium-cotton-tshirt"
+                    meta:
+                      product_type: "variation"
+                      sku: "PCT-LG-NB"
+                      dimensions:
+                        length: "25"
+                        width: "20"
+                        height: "2"
+                        unit: "cm"
+                      weight: "0.2"
+                      variation:
+                        attribute_pa_size: "Large"
+                        attribute_pa_color: "Navy Blue"
+                    backorders: "no"
+                    cart_item_data: {}
+                    featured_image: "https://example-store.com/wp-content/uploads/2024/03/tshirt-navy.jpg"
+                item_count: 3
+                items_weight: 1.5
+                coupons:
+                  - coupon: "SUMMER20"
+                    label: "Summer Sale 20% Off"
+                    saving: "$23.20"
+                    saving_html: "<strong>$23.20</strong>"
+                needs_payment: true
+                needs_shipping: true
+                shipping:
+                  total_packages: 1
+                  show_package_details: true
+                  has_calculated_shipping: true
+                  packages:
+                    default:
+                      package_name: "Shipping"
+                      rates:
+                        flat_rate_1:
+                          key: "flat_rate:1"
+                          method_id: "flat_rate"
+                          instance_id: 1
+                          label: "Flat Rate"
+                          cost: "10.00"
+                          html: "Flat Rate: $10.00"
+                          taxes: "1.00"
+                          chosen_method: true
+                        free_shipping_2:
+                          key: "free_shipping:2"
+                          method_id: "free_shipping"
+                          instance_id: 2
+                          label: "Free Shipping"
+                          cost: "0.00"
+                          html: "Free Shipping"
+                          taxes: "0.00"
+                          chosen_method: false
+                      package_details: "Shipped from Main Warehouse"
+                      index: 0
+                      chosen_method: "flat_rate:1"
+                      formatted_destination: "Beverly Hills, CA 90210, US"
+                fees:
+                  - name: "Gift Wrapping"
+                    amount: 5.00
+                    taxable: true
+                    tax_class: "standard"
+                    total: 5.00
+                    tax: 0.50
+                taxes:
+                  - rate_id: 1
+                    label: "Sales Tax"
+                    compound: false
+                    tax_total: "13.10"
+                    shipping_tax_total: "1.00"
+                totals:
+                  subtotal: "116.00"
+                  subtotal_tax: "11.60"
+                  shipping_total: "10.00"
+                  shipping_tax: "1.00"
+                  shipping_taxes: [1.00]
+                  discount_total: "23.20"
+                  discount_tax: "0.00"
+                  cart_contents_total: "92.80"
+                  cart_contents_tax: "11.10"
+                  cart_contents_taxes: [11.10]
+                  fee_total: "5.00"
+                  fee_tax: "0.50"
+                  fee_taxes: [0.50]
+                  total: "119.40"
+                  total_tax: "13.60"
+                removed_items: []
+                cross_sells:
+                  - id: 312
+                    product_name: "Wireless Charging Pad"
+                    product_title: "Wireless Charging Pad"
+                    price: "$29.99"
+                    regular_price: "$39.99"
+                    sale_price: "$29.99"
+                    product_image: "https://example-store.com/wp-content/uploads/2024/03/charging-pad.jpg"
+                  - id: 445
+                    product_name: "Phone Case - Universal"
+                    product_title: "Phone Case - Universal"
+                    price: "$15.99"
+                    regular_price: "$15.99"
+                    sale_price: ""
+                    product_image: "https://example-store.com/wp-content/uploads/2024/03/phone-case.jpg"
+                extensions: {}
+        "400":
+          description: Bad request - invalid parameters provided.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_parameter"
+                message: "Invalid cart_key parameter."
+                data:
+                  status: 400
+        "404":
+          description: Cart not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_cart_not_found"
+                message: "Cart not found."
+                data:
+                  status: 404
+
+  /cart/add-item:
+    post:
+      tags:
+        - cart-items
+      summary: Add item to cart
+      description: |
+        Adds a single product item to the customer's cart.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  description: Unique identifier for the product or variation ID.
+                  type: string
+                quantity:
+                  description: Quantity of this item to add to the cart.
+                  type: string
+                  default: "1"
+                variation:
+                  description: Variable attributes that identify the variation of the item.
+                  type: object
+                item_data:
+                  description: Additional item data passed to make item unique.
+                  type: object
+                email:
+                  description: Set the customers billing email address.
+                  type: string
+                  format: email
+                phone:
+                  description: Set the customers billing phone number.
+                  type: string
+                price:
+                  description: Overrides the general or sale price with a custom price for the item if set.
+                  type: string
+                return_item:
+                  description: Returns the item details once added.
+                  type: boolean
+                  default: false
+              required:
+                - id
+                - quantity
+      responses:
+        "200":
+          description: Item added to cart successfully.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/CartV2"
+                    title: Default
+                    description: Returns a full updated cart response.
+                  - $ref: "#/components/schemas/CartItem"
+                    title: Item Only
+                    description: Returns just the added item when return_item is true.
+              examples:
+                default:
+                  summary: Full Cart Response
+                  description: Returns complete cart when `return_item` is false or not provided (default behavior)
+                  value:
+                    cart_hash: "e629fa6598d732768f7c726b4b621285"
+                    cart_key: "cb7a23af96a3f23af3c28a8b4b8c6d5e"
+                    currency:
+                      currency_code: "USD"
+                      currency_symbol: "$"
+                      currency_symbol_pos: "left"
+                      currency_minor_unit: 2
+                      currency_decimal_separator: "."
+                      currency_thousand_separator: ","
+                      currency_prefix: "$"
+                      currency_suffix: ""
+                    customer:
+                      billing_address:
+                        billing_first_name: ""
+                        billing_last_name: ""
+                        billing_company: ""
+                        billing_country: ""
+                        billing_address_1: ""
+                        billing_address_2: ""
+                        billing_postcode: ""
+                        billing_city: ""
+                        billing_state: ""
+                        billing_phone: ""
+                        billing_email: ""
+                      shipping_address:
+                        shipping_first_name: ""
+                        shipping_last_name: ""
+                        shipping_company: ""
+                        shipping_country: ""
+                        shipping_address_1: ""
+                        shipping_address_2: ""
+                        shipping_postcode: ""
+                        shipping_city: ""
+                        shipping_state: ""
+                    items:
+                      a3c5e7f9b1d3e5f7a9b1c3d5e7f9a1b3:
+                        item_key: "a3c5e7f9b1d3e5f7a9b1c3d5e7f9a1b3"
+                        id: 145
+                        name: "Wireless Bluetooth Headphones"
+                        title: "Wireless Bluetooth Headphones"
+                        price: "$18.00"
+                        quantity:
+                          value: 1
+                          min_purchase: 1
+                          max_purchase: -1
+                        totals:
+                          subtotal: 18.00
+                          subtotal_tax: 0
+                          total: 18.00
+                          tax: 0
+                        slug: "wireless-bluetooth-headphones"
+                        meta:
+                          product_type: "simple"
+                          sku: "WBH-001"
+                          dimensions:
+                            length: ""
+                            width: ""
+                            height: ""
+                            unit: "cm"
+                          weight: "0.5"
+                          variation: {}
+                        backorders: "no"
+                        cart_item_data: {}
+                        featured_image: "https://example-store.com/wp-content/uploads/2024/03/headphones-blue.jpg"
+                    item_count: 1
+                    items_weight: 0.5
+                    coupons: []
+                    needs_payment: true
+                    needs_shipping: true
+                    shipping:
+                      total_packages: 0
+                      show_package_details: true
+                      has_calculated_shipping: false
+                      packages: []
+                    fees: []
+                    taxes: []
+                    totals:
+                      subtotal: "18.00"
+                      subtotal_tax: "0.00"
+                      fee_total: "0.00"
+                      fee_tax: "0.00"
+                      discount_total: "0.00"
+                      discount_tax: "0.00"
+                      shipping_total: "0.00"
+                      shipping_tax: "0.00"
+                      total: "18.00"
+                      total_tax: "0.00"
+                    removed_items: []
+                    cross_sells: []
+                    notices:
+                      success:
+                        - "Wireless Bluetooth Headphones has been added to your cart."
+                item only:
+                  summary: Single Item Response
+                  description: Returns just the added item when return_item is true
+                  value:
+                    item_key: "a3c5e7f9b1d3e5f7a9b1c3d5e7f9a1b3"
+                    id: 145
+                    name: "Wireless Bluetooth Headphones"
+                    title: "Wireless Bluetooth Headphones"
+                    price: "$18.00"
+                    quantity:
+                      value: 1
+                      min_purchase: 1
+                      max_purchase: -1
+                    totals:
+                      subtotal: 18.00
+                      subtotal_tax: 1.80
+                      total: 18.00
+                      tax: 1.80
+                    slug: "wireless-bluetooth-headphones"
+                    meta:
+                      product_type: "simple"
+                      sku: "WBH-001"
+                      dimensions:
+                        length: ""
+                        width: ""
+                        height: ""
+                        unit: "cm"
+                      weight: "0.5"
+                      variation: {}
+                    backorders: "no"
+                    cart_item_data: {}
+                    featured_image: "https://example-store.com/wp-content/uploads/2024/03/headphones-blue.jpg"
+        "400":
+          description: Bad request - invalid parameters or product not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_product_id"
+                message: "Invalid product ID provided."
+                data:
+                  status: 400
+        "403":
+          description: Cannot add product to cart.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_cannot_add_to_cart"
+                message: "This product cannot be added to the cart."
+                data:
+                  status: 403
+        "404":
+          description: Product not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_product_not_found"
+                message: "Product not found."
+                data:
+                  status: 404
+
+  /cart/add-items:
+    post:
+      tags:
+        - cart-items
+      summary: Add multiple items to cart
+      description: |
+        Adds multiple product items to the customer's cart in a single request.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  description: Array of items to add to the cart.
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        description: Unique identifier for the product or variation ID.
+                        type: string
+                      quantity:
+                        description: Quantity of this item to add to the cart.
+                        type: string
+                        default: "1"
+                      variation:
+                        description: Variable attributes that identify the variation of the item.
+                        type: object
+                      item_data:
+                        description: Additional item data passed to make item unique.
+                        type: object
+                    required:
+                      - id
+                      - quantity
+                email:
+                  description: Set the customers billing email address.
+                  type: string
+                  format: email
+                phone:
+                  description: Set the customers billing phone number.
+                  type: string
+                return_items:
+                  description: Returns the items details once added.
+                  type: boolean
+                  default: false
+              required:
+                - items
+      responses:
+        "200":
+          description: Items added to cart successfully.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: array
+                    description: Returns array of added items when return_items is true.
+                    items:
+                      $ref: "#/components/schemas/CartItem"
+                  - $ref: "#/components/schemas/CartV2"
+                    description: Returns full cart when return_items is false or not provided.
+        "400":
+          description: Bad request - invalid parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_items"
+                message: "Invalid items array provided."
+                data:
+                  status: 400
+        "403":
+          description: One or more products cannot be added to cart.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_cannot_add_items"
+                message: "One or more products cannot be added to the cart."
+                data:
+                  status: 403
+
+  /cart/item/{item_key}:
+    get:
+      tags:
+        - cart-items
+      summary: Get cart item
+      description: |
+        Gets a specific item from the cart by its key.
+      parameters:
+        - name: item_key
+          in: path
+          description: Unique identifier for the cart item.
+          required: true
+          schema:
+            type: string
+            pattern: '^[\w-]{32}$'
+      responses:
+        "200":
+          description: Cart item retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartItem"
+              example:
+                item_key: "d6b3e8e5a1b0c6e4f2a3b1d8c5e6f9a2"
+                id: 145
+                name: "Wireless Bluetooth Headphones"
+                title: "Wireless Bluetooth Headphones"
+                price: "$18.00"
+                quantity:
+                  value: 2
+                  min_purchase: 1
+                  max_purchase: -1
+                totals:
+                  subtotal: 36.00
+                  subtotal_tax: 3.60
+                  total: 36.00
+                  tax: 3.60
+                slug: "wireless-bluetooth-headphones"
+                meta:
+                  product_type: "simple"
+                  sku: "WBH-001"
+                  dimensions:
+                    length: ""
+                    width: ""
+                    height: ""
+                    unit: "cm"
+                  weight: "0.5"
+                  variation: {}
+                backorders: "no"
+                cart_item_data: {}
+                featured_image: "https://example-store.com/wp-content/uploads/2024/03/headphones-blue.jpg"
+        "400":
+          description: Bad request - invalid item key format.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_item_key"
+                message: "Invalid item key format."
+                data:
+                  status: 400
+        "404":
+          description: Cart item not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_item_not_found"
+                message: "Cart item not found."
+                data:
+                  status: 404
+
+    post:
+      tags:
+        - cart-items
+      summary: Update cart item
+      description: |
+        Updates the quantity or other properties of a specific item in the customer's cart.
+        By default returns the updated cart contents. Set return_status=true to get a status message with quantity info.
+      parameters:
+        - name: item_key
+          in: path
+          description: Unique identifier for the cart item.
+          required: true
+          schema:
+            type: string
+            pattern: '^[\w-]{32}$'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                quantity:
+                  description: Quantity of this item to update to.
+                  type: string
+                return_status:
+                  description: Returns a message and quantity value after updating item in cart.
+                  type: boolean
+                  default: false
+              required:
+                - quantity
+      responses:
+        "200":
+          description: Cart item updated successfully.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/CartV2"
+                  - type: object
+                    title: Status Message
+                    properties:
+                      message:
+                        type: string
+                        example: "Quantity for Product Name has been updated."
+                      quantity:
+                        type: integer
+                        example: 3
+        "400":
+          description: Bad request - invalid parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_quantity"
+                message: "Invalid quantity provided."
+                data:
+                  status: 400
+        "404":
+          description: Cart item not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_item_not_found"
+                message: "Cart item not found."
+                data:
+                  status: 404
+
+    put:
+      tags:
+        - cart-items
+      summary: Restore cart item
+      description: |
+        Restores a previously removed item back to the customer's cart.
+        By default returns the updated cart contents. Set return_item=true to get just the restored item details.
+      parameters:
+        - name: item_key
+          in: path
+          description: Unique identifier for the cart item.
+          required: true
+          schema:
+            type: string
+            pattern: '^[\w-]{32}$'
+        - name: return_item
+          in: query
+          description: Returns the item details once restored.
+          schema:
+            type: boolean
+            default: false
+          required: false
+      responses:
+        "200":
+          description: Cart item restored successfully.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/CartV2"
+                  - $ref: "#/components/schemas/CartItem"
+        "400":
+          description: Bad request - invalid item key format.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_item_key"
+                message: "Invalid item key format."
+                data:
+                  status: 400
+        "403":
+          description: Unable to restore item to the cart.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_cannot_restore_item"
+                message: "Unable to restore this item to the cart."
+                data:
+                  status: 403
+        "404":
+          description: Cart item not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_item_not_found"
+                message: "Cart item not found in removed items."
+                data:
+                  status: 404
+
+    delete:
+      tags:
+        - cart-items
+      summary: Remove cart item
+      description: |
+        Removes a specific item from the customer's cart.
+        By default returns the updated cart contents. Set return_status=true to get just a removal message.
+      parameters:
+        - name: item_key
+          in: path
+          description: Unique identifier for the cart item.
+          required: true
+          schema:
+            type: string
+            pattern: '^[\w-]{32}$'
+        - name: return_status
+          in: query
+          description: Returns a message after removing item from cart.
+          schema:
+            type: boolean
+            default: false
+          required: false
+      responses:
+        "200":
+          description: Cart item removed successfully.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/CartV2"
+                  - type: string
+                    example: "Product Name has been removed from cart."
+        "400":
+          description: Bad request - invalid item key format.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_item_key"
+                message: "Invalid item key format."
+                data:
+                  status: 400
+        "404":
+          description: Cart item not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_item_not_found"
+                message: "Cart item not found."
+                data:
+                  status: 404
+
+  /cart/items:
+    get:
+      tags:
+        - cart-items
+      summary: Get all cart items
+      description: |
+        Gets all items in the customer's cart.
+      parameters:
+        - name: cart_key
+          in: query
+          description: Unique identifier for the cart/customer.
+          schema:
+            type: string
+          required: false
+        - name: thumb
+          in: query
+          description: Returns the URL of the product image thumbnail.
+          schema:
+            type: boolean
+            default: true
+          required: false
+      responses:
+        "200":
+          description: Cart items retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: "#/components/schemas/CartItem"
+              example:
+                d6b3e8e5a1b0c6e4f2a3b1d8c5e6f9a2:
+                  item_key: "d6b3e8e5a1b0c6e4f2a3b1d8c5e6f9a2"
+                  id: 145
+                  name: "Wireless Bluetooth Headphones"
+                  title: "Wireless Bluetooth Headphones"
+                  price: "$18.00"
+                  quantity:
+                    value: 2
+                    min_purchase: 1
+                    max_purchase: -1
+                  totals:
+                    subtotal: 36.00
+                    subtotal_tax: 3.60
+                    total: 36.00
+                    tax: 3.60
+                  slug: "wireless-bluetooth-headphones"
+                  meta:
+                    product_type: "simple"
+                    sku: "WBH-001"
+                    dimensions:
+                      length: ""
+                      width: ""
+                      height: ""
+                      unit: "cm"
+                    weight: "0.5"
+                    variation: {}
+                  backorders: "no"
+                  cart_item_data: {}
+                  featured_image: "https://example-store.com/wp-content/uploads/2024/03/headphones-blue.jpg"
+                f3a8b2c6d5e9f1a4b7c0d3e6f9a2b5c8:
+                  item_key: "f3a8b2c6d5e9f1a4b7c0d3e6f9a2b5c8"
+                  id: 289
+                  name: "Premium Cotton T-Shirt - Large, Navy Blue"
+                  title: "Premium Cotton T-Shirt"
+                  price: "$80.00"
+                  quantity:
+                    value: 1
+                    min_purchase: 1
+                    max_purchase: 100
+                  totals:
+                    subtotal: 80.00
+                    subtotal_tax: 8.00
+                    total: 80.00
+                    tax: 8.00
+                  slug: "premium-cotton-tshirt"
+                  meta:
+                    product_type: "variation"
+                    sku: "PCT-LG-NB"
+                    dimensions:
+                      length: "25"
+                      width: "20"
+                      height: "2"
+                      unit: "cm"
+                    weight: "0.2"
+                    variation:
+                      attribute_pa_size: "Large"
+                      attribute_pa_color: "Navy Blue"
+                  backorders: "no"
+                  cart_item_data: {}
+                  featured_image: "https://example-store.com/wp-content/uploads/2024/03/tshirt-navy.jpg"
+        "400":
+          description: Bad request - invalid parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_parameter"
+                message: "Invalid parameter provided."
+                data:
+                  status: 400
+        "404":
+          description: No items found in cart.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_no_items"
+                message: "No items found in cart."
+                data:
+                  status: 404
+
+  /cart/items/count:
+    get:
+      tags:
+        - cart-items
+      summary: Count cart items
+      description: |
+        Returns the count of items in the customer's cart.
+      parameters:
+        - name: return
+          in: query
+          description: Return count as a string or array format.
+          schema:
+            type: string
+            enum: [numeric]
+          required: false
+      responses:
+        "200":
+          description: Cart item count retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: integer
+                description: Number of items in the cart.
+                example: 5
+        "400":
+          description: Bad request - invalid parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_parameter"
+                message: "Invalid return format parameter."
+                data:
+                  status: 400
+
+  /cart/clear:
+    post:
+      tags:
+        - cart
+      summary: Clear cart
+      description: |
+        Removes all items from the customer's cart.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                keep_removed_items:
+                  description: Keeps removed items in session when clearing the cart.
+                  type: boolean
+                  default: false
+      responses:
+        "200":
+          description: Cart cleared successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartV2"
+        "400":
+          description: Bad request - invalid parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_parameter"
+                message: "Invalid parameter provided."
+                data:
+                  status: 400
+        "406":
+          description: Cart clearing failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_clear_cart_failed"
+                message: "Clearing the cart failed."
+                data:
+                  status: 406
+
+  /cart/update:
+    post:
+      tags:
+        - cart
+      summary: Update cart
+      description: |
+        Updates multiple cart items or properties at once.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                namespace:
+                  description: Namespace used to ensure the data in the request is routed appropriately.
+                  type: string
+                items:
+                  description: Items to update in the cart.
+                  type: object
+                  additionalProperties:
+                    type: object
+                    properties:
+                      quantity:
+                        type: string
+                data:
+                  description: Additional data to pass.
+                  type: object
+              required:
+                - namespace
+      responses:
+        "200":
+          description: Cart updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartV2"
+        "400":
+          description: Bad request - invalid parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_parameter"
+                message: "Invalid parameter provided."
+                data:
+                  status: 400
+
+  /cart/totals:
+    get:
+      tags:
+        - cart-calculate
+      summary: Get cart totals
+      description: |
+        Retrieves the cart totals including subtotal, taxes, shipping, and discounts.
+      parameters:
+        - name: html
+          in: query
+          description: Returns the totals pre-formatted.
+          schema:
+            type: boolean
+            default: false
+          required: false
+      responses:
+        "200":
+          description: Cart totals retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TotalsResponse"
+              example:
+                subtotal: "116.00"
+                subtotal_tax: "11.60"
+                shipping_total: "10.00"
+                shipping_tax: "1.00"
+                shipping_taxes: [1.00]
+                discount_total: "23.20"
+                discount_tax: "0.00"
+                cart_contents_total: "92.80"
+                cart_contents_tax: "11.10"
+                cart_contents_taxes: [11.10]
+                fee_total: "5.00"
+                fee_tax: "0.50"
+                fee_taxes: [0.50]
+                total: "119.40"
+                total_tax: "13.60"
+        "400":
+          description: Bad request - invalid parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_parameter"
+                message: "Invalid parameter provided."
+                data:
+                  status: 400
+
+  /cart/calculate:
+    post:
+      tags:
+        - cart-calculate
+      summary: Calculate cart totals
+      description: |
+        Calculates the cart totals including taxes, shipping, and discounts.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                return_totals:
+                  description: Returns the cart totals once calculated.
+                  type: boolean
+                  default: false
+      responses:
+        "200":
+          description: Cart totals calculated successfully.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/CartTotals"
+                    description: Cart totals when return_totals is true.
+                  - $ref: "#/components/schemas/CartV2"
+                    description: Full cart when return_totals is false or not provided.
+        "400":
+          description: Bad request - invalid parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_parameter"
+                message: "Invalid parameter provided."
+                data:
+                  status: 400
+
+  /products:
+    get:
+      tags:
+        - products
+      summary: Get products
+      description: |
+        Gets a list of products with optional filtering and pagination.
+      parameters:
+        - name: page
+          in: query
+          description: Current page of the collection.
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Maximum number of items to return per page.
+          schema:
+            type: integer
+            default: 10
+            maximum: 100
+        - name: search
+          in: query
+          description: Limit results to those matching a search string.
+          schema:
+            type: string
+        - name: category
+          in: query
+          description: Limit results to products in specific categories.
+          schema:
+            type: string
+        - name: tag
+          in: query
+          description: Limit results to products with specific tags.
+          schema:
+            type: string
+        - name: type
+          in: query
+          description: Limit results to products of specific type.
+          schema:
+            type: string
+            enum: [simple, grouped, external, variable]
+        - name: featured
+          in: query
+          description: Limit results to featured products.
+          schema:
+            type: boolean
+        - name: on_sale
+          in: query
+          description: Limit results to products on sale.
+          schema:
+            type: boolean
+        - name: min_price
+          in: query
+          description: Limit results to products with price greater than or equal to this value.
+          schema:
+            type: string
+        - name: max_price
+          in: query
+          description: Limit results to products with price less than or equal to this value.
+          schema:
+            type: string
+        - name: stock_status
+          in: query
+          description: Limit results to products with specified stock status.
+          schema:
+            type: string
+            enum: [instock, outofstock, onbackorder]
+        - name: orderby
+          in: query
+          description: Sort products by field.
+          schema:
+            type: string
+            enum: [date, id, include, title, slug, price, popularity, rating, menu_order, alphabetical, reverse_alpha, relevance, rand, by_stock, review_count, on_sale_first, featured_first, price_asc, price_desc, sales]
+            default: date
+        - name: order
+          in: query
+          description: Sort order.
+          schema:
+            type: string
+            enum: [ASC, DESC]
+            default: DESC
+        - name: slug
+          in: query
+          description: Limit result set to products with a specific slug.
+          schema:
+            type: string
+        - name: after
+          in: query
+          description: Limit response to products created after a given ISO8601 compliant date.
+          schema:
+            type: string
+            format: date-time
+        - name: before
+          in: query
+          description: Limit response to products created before a given ISO8601 compliant date.
+          schema:
+            type: string
+            format: date-time
+        - name: sku
+          in: query
+          description: Limit result set to products with specific SKU(s). Use commas to separate.
+          schema:
+            type: string
+        - name: hide_free
+          in: query
+          description: Limit result set to hide free products.
+          schema:
+            type: boolean
+            default: false
+        - name: category_operator
+          in: query
+          description: Operator to compare product category terms.
+          schema:
+            type: string
+            enum: [in, not_in, and]
+            default: in
+        - name: tag_operator
+          in: query
+          description: Operator to compare product tags.
+          schema:
+            type: string
+            enum: [in, not_in, and]
+            default: in
+        - name: brand
+          in: query
+          description: Limit result set to products assigned a set of brand IDs or slugs, separated by commas.
+          schema:
+            type: string
+        - name: brand_operator
+          in: query
+          description: Operator to compare product brand terms.
+          schema:
+            type: string
+            enum: [in, not_in, and]
+            default: in
+        - name: show_reviews
+          in: query
+          description: Returns product reviews for all products or an individual product.
+          schema:
+            type: boolean
+            default: false
+        - name: return_variations
+          in: query
+          description: Returns all variations for variable products.
+          schema:
+            type: boolean
+            default: false
+        - name: attribute_relation
+          in: query
+          description: The logical relationship between attributes when filtering across multiple at once.
+          schema:
+            type: string
+            enum: [in, and]
+            default: and
+        - name: catalog_visibility
+          in: query
+          description: Determines if hidden or visible catalog products are shown.
+          schema:
+            type: string
+            enum: [any, visible, catalog, search, hidden]
+            default: visible
+        - name: rating
+          in: query
+          description: Limit result set to products with a certain average rating.
+          schema:
+            type: array
+            items:
+              type: integer
+              enum: [1, 2, 3, 4, 5]
+        - name: offset
+          in: query
+          description: Offset the result set by a specific number of items.
+          schema:
+            type: integer
+        - name: include
+          in: query
+          description: Limit result set to specific IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: exclude
+          in: query
+          description: Ensure result set excludes specific IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: parent
+          in: query
+          description: Limit result set to those of particular parent IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: parent_exclude
+          in: query
+          description: Limit result set to exclude particular parent IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+      responses:
+        "200":
+          description: Products retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductsResponse"
+              example:
+                products:
+                  - id: 145
+                    parent_id: 0
+                    name: "Wireless Bluetooth Headphones"
+                    type: "simple"
+                    slug: "wireless-bluetooth-headphones"
+                    permalink: "https://example-store.com/product/wireless-bluetooth-headphones/"
+                    sku: "WBH-2024-BLU"
+                    description: "<p>Experience premium sound quality with our wireless Bluetooth headphones.</p>"
+                    short_description: "<p>Premium wireless headphones with active noise cancellation.</p>"
+                    dates:
+                      created: "2024-03-15T10:30:00"
+                      created_gmt: "2024-03-15T14:30:00"
+                      modified: "2024-09-20T14:22:00"
+                      modified_gmt: "2024-09-20T18:22:00"
+                    featured: true
+                    prices:
+                      price: "18.00"
+                      regular_price: "24.00"
+                      sale_price: "18.00"
+                      price_range: null
+                      on_sale: true
+                      date_on_sale:
+                        from: "2024-09-01T00:00:00"
+                        from_gmt: "2024-09-01T04:00:00"
+                        to: "2024-12-31T23:59:59"
+                        to_gmt: "2024-12-31T03:59:59"
+                      currency:
+                        currency_code: "USD"
+                        currency_symbol: "$"
+                        currency_minor_unit: 2
+                        currency_decimal_separator: "."
+                        currency_thousand_separator: ","
+                        currency_prefix: "$"
+                        currency_suffix: ""
+                    hidden_conditions:
+                      virtual: false
+                      downloadable: false
+                      manage_stock: true
+                      sold_individually: false
+                      reviews_allowed: true
+                      shipping_required: true
+                    average_rating: "4.7"
+                    review_count: 89
+                    rating_count: 89
+                    rated_out_of: "5"
+                    images:
+                      - id: 891
+                        src:
+                          thumbnail: "https://example-store.com/wp-content/uploads/2024/03/headphones-blue-150x150.jpg"
+                          medium: "https://example-store.com/wp-content/uploads/2024/03/headphones-blue-300x300.jpg"
+                          large: "https://example-store.com/wp-content/uploads/2024/03/headphones-blue-1024x1024.jpg"
+                          full: "https://example-store.com/wp-content/uploads/2024/03/headphones-blue.jpg"
+                        name: "headphones-blue"
+                        alt: "Wireless Bluetooth Headphones in Blue"
+                        position: 0
+                        featured: true
+                    categories:
+                      - id: 15
+                        name: "Electronics"
+                        slug: "electronics"
+                        rest_url: "https://example-store.com/wp-json/cocart/v2/products/categories/15"
+                    tags:
+                      - id: 42
+                        name: "Wireless"
+                        slug: "wireless"
+                        rest_url: "https://example-store.com/wp-json/cocart/v2/products/tags/42"
+                    attributes: []
+                    default_attributes: []
+                    variations: []
+                    grouped_products: []
+                    stock:
+                      is_in_stock: true
+                      stock_quantity: 87
+                      stock_status: "instock"
+                      backorders: "no"
+                      backorders_allowed: false
+                      backordered: false
+                      low_stock_amount: null
+                    weight:
+                      value: "0.75"
+                      unit: "kg"
+                    dimensions:
+                      length: "8"
+                      width: "7"
+                      height: "3.5"
+                      unit: "cm"
+                    reviews: []
+                    related:
+                      - id: 156
+                        name: "Wireless Earbuds"
+                        permalink: "https://example-store.com/product/wireless-earbuds/"
+                        price: "12.00"
+                        add_to_cart:
+                          text: "Add to cart"
+                          description: "Add to cart description"
+                          rest_url: "https://example-store.com/wp-json/cocart/v2/cart/add-item?id=156&quantity=1"
+                        rest_url: "https://example-store.com/wp-json/cocart/v2/products/156"
+                    upsells: []
+                    cross_sells: []
+                    total_sales: 342
+                    external_url: ""
+                    button_text: ""
+                    add_to_cart:
+                      text: "Add to cart"
+                      description: "Simple product"
+                      has_options: false
+                      is_purchasable: true
+                      purchase_quantity:
+                        min_purchase: 1
+                        max_purchase: 87
+                      rest_url: "https://example-store.com/wp-json/cocart/v2/cart/add-item?id=145&quantity=1"
+                    meta_data: []
+                page: 1
+                total_pages: 5
+                total_products: 42
+        "400":
+          description: Bad request - invalid parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_parameter"
+                message: "Invalid parameter provided."
+                data:
+                  status: 400
+
+  /products/{id}:
+    get:
+      tags:
+        - products
+      summary: Get single product
+      description: |
+        Gets a single product by ID or SKU.
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier for the product (ID or SKU).
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Product retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+              example:
+                id: 278
+                parent_id: 0
+                name: "Premium Cotton T-Shirt"
+                type: "variable"
+                slug: "premium-cotton-t-shirt"
+                permalink: "https://example-store.com/product/premium-cotton-t-shirt/"
+                sku: "PCT-2024"
+                description: "<p>Soft, breathable premium cotton t-shirt perfect for everyday wear.</p>"
+                short_description: "<p>Comfortable premium cotton t-shirt in various sizes and colors.</p>"
+                dates:
+                  created: "2024-02-10T09:15:00"
+                  created_gmt: "2024-02-10T13:15:00"
+                  modified: "2024-09-18T11:45:00"
+                  modified_gmt: "2024-09-18T15:45:00"
+                featured: false
+                prices:
+                  price: "25.00"
+                  regular_price: "25.00"
+                  sale_price: ""
+                  price_range:
+                    min: "25.00"
+                    max: "35.00"
+                  on_sale: false
+                  date_on_sale:
+                    from: null
+                    from_gmt: null
+                    to: null
+                    to_gmt: null
+                  currency:
+                    currency_code: "USD"
+                    currency_symbol: "$"
+                    currency_minor_unit: 2
+                    currency_decimal_separator: "."
+                    currency_thousand_separator: ","
+                    currency_prefix: "$"
+                    currency_suffix: ""
+                hidden_conditions:
+                  virtual: false
+                  downloadable: false
+                  manage_stock: false
+                  sold_individually: false
+                  reviews_allowed: true
+                  shipping_required: true
+                average_rating: "4.8"
+                review_count: 234
+                rating_count: 234
+                rated_out_of: "5"
+                images:
+                  - id: 723
+                    src:
+                      thumbnail: "https://example-store.com/wp-content/uploads/2024/02/tshirt-white-150x150.jpg"
+                      medium: "https://example-store.com/wp-content/uploads/2024/02/tshirt-white-300x300.jpg"
+                      large: "https://example-store.com/wp-content/uploads/2024/02/tshirt-white-1024x1024.jpg"
+                      full: "https://example-store.com/wp-content/uploads/2024/02/tshirt-white.jpg"
+                    name: "tshirt-white"
+                    alt: "Premium Cotton T-Shirt in White"
+                    position: 0
+                    featured: true
+                  - id: 724
+                    src:
+                      thumbnail: "https://example-store.com/wp-content/uploads/2024/02/tshirt-black-150x150.jpg"
+                      medium: "https://example-store.com/wp-content/uploads/2024/02/tshirt-black-300x300.jpg"
+                      large: "https://example-store.com/wp-content/uploads/2024/02/tshirt-black-1024x1024.jpg"
+                      full: "https://example-store.com/wp-content/uploads/2024/02/tshirt-black.jpg"
+                    name: "tshirt-black"
+                    alt: "Premium Cotton T-Shirt in Black"
+                    position: 1
+                    featured: false
+                categories:
+                  - id: 23
+                    name: "Clothing"
+                    slug: "clothing"
+                    rest_url: "https://example-store.com/wp-json/cocart/v2/products/categories/23"
+                  - id: 28
+                    name: "T-Shirts"
+                    slug: "t-shirts"
+                    rest_url: "https://example-store.com/wp-json/cocart/v2/products/categories/28"
+                tags:
+                  - id: 51
+                    name: "Cotton"
+                    slug: "cotton"
+                    rest_url: "https://example-store.com/wp-json/cocart/v2/products/tags/51"
+                  - id: 89
+                    name: "Casual"
+                    slug: "casual"
+                    rest_url: "https://example-store.com/wp-json/cocart/v2/products/tags/89"
+                attributes:
+                  attribute_size:
+                    id: 1
+                    name: "Size"
+                    position: 0
+                    is_attribute_visible: true
+                    used_for_variation: true
+                    options:
+                      small: "Small"
+                      medium: "Medium"
+                      large: "Large"
+                      x-large: "X-Large"
+                  attribute_color:
+                    id: 2
+                    name: "Color"
+                    position: 1
+                    is_attribute_visible: true
+                    used_for_variation: true
+                    options:
+                      white: "White"
+                      black: "Black"
+                      navy-blue: "Navy Blue"
+                      gray: "Gray"
+                default_attributes:
+                  attribute_size:
+                    id: 1
+                    name: "Size"
+                    option:
+                      medium: "Medium"
+                  attribute_color:
+                    id: 2
+                    name: "Color"
+                    option:
+                      white: "White"
+                variations:
+                  - id: 289
+                    sku: "PCT-2024-SM-WHT"
+                    description: "Small White T-Shirt"
+                    attributes:
+                      attribute_size: "small"
+                      attribute_color: "white"
+                    featured_image:
+                      thumbnail: "https://example-store.com/wp-content/uploads/2024/02/tshirt-white-150x150.jpg"
+                      medium: "https://example-store.com/wp-content/uploads/2024/02/tshirt-white-300x300.jpg"
+                      large: "https://example-store.com/wp-content/uploads/2024/02/tshirt-white-1024x1024.jpg"
+                      full: "https://example-store.com/wp-content/uploads/2024/02/tshirt-white.jpg"
+                    prices:
+                      price: "25.00"
+                      regular_price: "25.00"
+                      sale_price: ""
+                      on_sale: false
+                      date_on_sale:
+                        from: null
+                        from_gmt: null
+                        to: null
+                        to_gmt: null
+                      currency:
+                        currency_code: "USD"
+                        currency_symbol: "$"
+                        currency_minor_unit: 2
+                        currency_decimal_separator: "."
+                        currency_thousand_separator: ","
+                        currency_prefix: "$"
+                        currency_suffix: ""
+                    stock:
+                      is_in_stock: true
+                      stock_quantity: 50
+                      stock_status: "instock"
+                      backorders: "no"
+                      backorders_allowed: false
+                      backordered: false
+                      low_stock_amount: null
+                    add_to_cart:
+                      is_purchasable: true
+                      purchase_quantity:
+                        min_purchase: 1
+                        max_purchase: 50
+                      rest_url: "https://example-store.com/wp-json/cocart/v2/cart/add-item?id=289&quantity=1&variation[attribute_size]=small&variation[attribute_color]=white"
+                  - id: 290
+                    sku: "PCT-2024-LG-BLK"
+                    description: "Large Black T-Shirt"
+                    attributes:
+                      attribute_size: "large"
+                      attribute_color: "black"
+                    featured_image:
+                      thumbnail: "https://example-store.com/wp-content/uploads/2024/02/tshirt-black-150x150.jpg"
+                      medium: "https://example-store.com/wp-content/uploads/2024/02/tshirt-black-300x300.jpg"
+                      large: "https://example-store.com/wp-content/uploads/2024/02/tshirt-black-1024x1024.jpg"
+                      full: "https://example-store.com/wp-content/uploads/2024/02/tshirt-black.jpg"
+                    prices:
+                      price: "28.00"
+                      regular_price: "28.00"
+                      sale_price: ""
+                      on_sale: false
+                      date_on_sale:
+                        from: null
+                        from_gmt: null
+                        to: null
+                        to_gmt: null
+                      currency:
+                        currency_code: "USD"
+                        currency_symbol: "$"
+                        currency_minor_unit: 2
+                        currency_decimal_separator: "."
+                        currency_thousand_separator: ","
+                        currency_prefix: "$"
+                        currency_suffix: ""
+                    stock:
+                      is_in_stock: true
+                      stock_quantity: 35
+                      stock_status: "instock"
+                      backorders: "no"
+                      backorders_allowed: false
+                      backordered: false
+                      low_stock_amount: null
+                    add_to_cart:
+                      is_purchasable: true
+                      purchase_quantity:
+                        min_purchase: 1
+                        max_purchase: 35
+                      rest_url: "https://example-store.com/wp-json/cocart/v2/cart/add-item?id=290&quantity=1&variation[attribute_size]=large&variation[attribute_color]=black"
+                grouped_products: []
+                stock:
+                  is_in_stock: true
+                  stock_quantity: null
+                  stock_status: "instock"
+                  backorders: "no"
+                  backorders_allowed: false
+                  backordered: false
+                  low_stock_amount: null
+                weight:
+                  value: "0.2"
+                  unit: "kg"
+                dimensions:
+                  length: "12"
+                  width: "10"
+                  height: "1"
+                  unit: "cm"
+                reviews: []
+                related:
+                  - id: 301
+                    name: "Classic Polo Shirt"
+                    permalink: "https://example-store.com/product/classic-polo-shirt/"
+                    price: "32.00"
+                    add_to_cart:
+                      text: "Select options"
+                      description: "Variable product"
+                      rest_url: "https://example-store.com/wp-json/cocart/v2/cart/add-item?id=301&quantity=1"
+                    rest_url: "https://example-store.com/wp-json/cocart/v2/products/301"
+                upsells: []
+                cross_sells: []
+                total_sales: 567
+                external_url: ""
+                button_text: ""
+                add_to_cart:
+                  text: "Select options"
+                  description: "Variable product"
+                  has_options: true
+                  is_purchasable: true
+                  purchase_quantity: {}
+                  rest_url: "https://example-store.com/wp-json/cocart/v2/cart/add-item?id=278&quantity=1"
+                meta_data: []
+        "400":
+          description: Bad request - invalid product ID or SKU.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_product_id"
+                message: "Invalid product ID or SKU provided."
+                data:
+                  status: 400
+        "404":
+          description: Product not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_product_not_found"
+                message: "Product not found."
+                data:
+                  status: 404
+
+  /products/attributes:
+    get:
+      tags:
+        - product-attributes
+      summary: Get product attributes
+      description: |
+        Gets a list of product attributes.
+      responses:
+        "200":
+          description: Product attributes retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductAttribute"
+              example:
+                - id: 1
+                  name: "Size"
+                  position: 0
+                  visible: true
+                  variation: true
+                  options: ["Small", "Medium", "Large", "X-Large", "2X-Large"]
+                - id: 2
+                  name: "Color"
+                  position: 1
+                  visible: true
+                  variation: true
+                  options: ["Red", "Blue", "Green", "Black", "White", "Navy Blue", "Gray"]
+                - id: 3
+                  name: "Material"
+                  position: 2
+                  visible: true
+                  variation: false
+                  options: ["Cotton", "Polyester", "Wool", "Silk"]
+        "400":
+          description: Bad request - invalid parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_parameter"
+                message: "Invalid parameter provided."
+                data:
+                  status: 400
+
+  /products/attributes/{id}:
+    get:
+      tags:
+        - product-attributes
+      summary: Get single product attribute
+      description: |
+        Gets a single product attribute by ID.
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier for the attribute.
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Product attribute retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductAttribute"
+        "400":
+          description: Bad request - invalid attribute ID.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_attribute_id"
+                message: "Invalid attribute ID provided."
+                data:
+                  status: 400
+        "404":
+          description: Product attribute not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_attribute_not_found"
+                message: "Product attribute not found."
+                data:
+                  status: 404
+
+  /products/attributes/{id}/terms:
+    get:
+      tags:
+        - product-attributes
+      summary: Get product attribute terms
+      description: |
+        Gets terms for a specific product attribute.
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier for the attribute.
+          required: true
+          schema:
+            type: integer
+        - name: page
+          in: query
+          description: Current page of the collection.
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Maximum number of items to return per page.
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Product attribute terms retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductAttributeTerm"
+              example:
+                - id: 23
+                  name: "Small"
+                  slug: "small"
+                  description: "Small size"
+                  menu_order: 0
+                  count: 45
+                - id: 24
+                  name: "Medium"
+                  slug: "medium"
+                  description: "Medium size"
+                  menu_order: 1
+                  count: 78
+                - id: 25
+                  name: "Large"
+                  slug: "large"
+                  description: "Large size"
+                  menu_order: 2
+                  count: 67
+                - id: 26
+                  name: "X-Large"
+                  slug: "x-large"
+                  description: "Extra large size"
+                  menu_order: 3
+                  count: 42
+        "400":
+          description: Bad request - invalid parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_parameter"
+                message: "Invalid parameter provided."
+                data:
+                  status: 400
+        "404":
+          description: Product attribute not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_attribute_not_found"
+                message: "Product attribute not found."
+                data:
+                  status: 404
+
+  /products/attributes/{attribute_id}/terms/{id}:
+    get:
+      tags:
+        - product-attributes
+      summary: Get single product attribute term
+      description: |
+        Gets a single term for a specific product attribute.
+      parameters:
+        - name: attribute_id
+          in: path
+          description: Unique identifier for the attribute.
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          description: Unique identifier for the attribute term.
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Product attribute term retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductAttributeTerm"
+        "400":
+          description: Bad request - invalid attribute or term ID.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_id"
+                message: "Invalid attribute or term ID provided."
+                data:
+                  status: 400
+        "404":
+          description: Product attribute or term not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_term_not_found"
+                message: "Product attribute term not found."
+                data:
+                  status: 404
+
+  /products/categories:
+    get:
+      tags:
+        - product-categories
+      summary: Get product categories
+      description: |
+        Gets a list of product categories.
+      parameters:
+        - name: page
+          in: query
+          description: Current page of the collection.
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Maximum number of items to return per page.
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          description: Limit results to those matching a search string.
+          schema:
+            type: string
+        - name: exclude
+          in: query
+          description: Ensure result set excludes specific IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: include
+          in: query
+          description: Limit result set to specific IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: order
+          in: query
+          description: Sort order.
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+        - name: orderby
+          in: query
+          description: Sort categories by field.
+          schema:
+            type: string
+            enum: [id, include, name, slug, term_group, description, count]
+            default: name
+        - name: parent
+          in: query
+          description: Limit results to categories with a specific parent.
+          schema:
+            type: integer
+        - name: hide_empty
+          in: query
+          description: Whether to hide categories with no products.
+          schema:
+            type: boolean
+            default: false
+        - name: slug
+          in: query
+          description: Limit result set to categories with specific slug(s).
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "200":
+          description: Product categories retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductCategory"
+              example:
+                - id: 15
+                  name: "Electronics"
+                  slug: "electronics"
+                  description: "Electronic devices and accessories for modern living"
+                  display: "default"
+                  image:
+                    id: 234
+                    date_created: "2024-01-10T08:00:00"
+                    date_modified: "2024-01-10T08:00:00"
+                    src: "https://example-store.com/wp-content/uploads/2024/01/electronics-category.jpg"
+                    name: "electronics-category"
+                    alt: "Electronics Category"
+                  menu_order: 0
+                  count: 156
+                - id: 23
+                  name: "Clothing"
+                  slug: "clothing"
+                  description: "Fashion and apparel for all occasions"
+                  display: "default"
+                  image:
+                    id: 345
+                    date_created: "2024-01-12T09:30:00"
+                    date_modified: "2024-01-12T09:30:00"
+                    src: "https://example-store.com/wp-content/uploads/2024/01/clothing-category.jpg"
+                    name: "clothing-category"
+                    alt: "Clothing Category"
+                  menu_order: 1
+                  count: 284
+                - id: 28
+                  name: "T-Shirts"
+                  slug: "t-shirts"
+                  description: "Comfortable t-shirts in various styles"
+                  display: "default"
+                  image: null
+                  menu_order: 0
+                  count: 89
+        "400":
+          description: Bad request - invalid parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_parameter"
+                message: "Invalid parameter provided."
+                data:
+                  status: 400
+
+  /products/categories/{id}:
+    get:
+      tags:
+        - product-categories
+      summary: Get single product category
+      description: |
+        Gets a single product category by ID.
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier for the category.
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Product category retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductCategory"
+        "400":
+          description: Bad request - invalid category ID.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_category_id"
+                message: "Invalid category ID provided."
+                data:
+                  status: 400
+        "404":
+          description: Product category not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_category_not_found"
+                message: "Product category not found."
+                data:
+                  status: 404
+
+  /products/tags:
+    get:
+      tags:
+        - product-tags
+      summary: Get product tags
+      description: |
+        Gets a list of product tags.
+      parameters:
+        - name: page
+          in: query
+          description: Current page of the collection.
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Maximum number of items to return per page.
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          description: Limit results to those matching a search string.
+          schema:
+            type: string
+        - name: exclude
+          in: query
+          description: Ensure result set excludes specific IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: include
+          in: query
+          description: Limit result set to specific IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: order
+          in: query
+          description: Sort order.
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+        - name: orderby
+          in: query
+          description: Sort tags by field.
+          schema:
+            type: string
+            enum: [id, include, name, slug, term_group, description, count]
+            default: name
+        - name: offset
+          in: query
+          description: Offset the result set by a specific number of items.
+          schema:
+            type: integer
+        - name: slug
+          in: query
+          description: Limit result set to tags with specific slug(s).
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "200":
+          description: Product tags retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductTag"
+              example:
+                - id: 42
+                  name: "Wireless"
+                  slug: "wireless"
+                  description: "Products with wireless connectivity"
+                  count: 89
+                - id: 51
+                  name: "Cotton"
+                  slug: "cotton"
+                  description: "Products made with cotton material"
+                  count: 156
+                - id: 67
+                  name: "Audio"
+                  slug: "audio"
+                  description: "Audio equipment and accessories"
+                  count: 124
+                - id: 89
+                  name: "Casual"
+                  slug: "casual"
+                  description: "Casual wear and lifestyle products"
+                  count: 213
+        "400":
+          description: Bad request - invalid parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_parameter"
+                message: "Invalid parameter provided."
+                data:
+                  status: 400
+
+  /products/tags/{id}:
+    get:
+      tags:
+        - product-tags
+      summary: Get single product tag
+      description: |
+        Gets a single product tag by ID.
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier for the tag.
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Product tag retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductTag"
+        "400":
+          description: Bad request - invalid tag ID.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_tag_id"
+                message: "Invalid tag ID provided."
+                data:
+                  status: 400
+        "404":
+          description: Product tag not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_tag_not_found"
+                message: "Product tag not found."
+                data:
+                  status: 404
+
+  /products/reviews:
+    get:
+      tags:
+        - product-reviews
+      summary: Get product reviews
+      description: |
+        Gets a list of product reviews.
+      parameters:
+        - name: page
+          in: query
+          description: Current page of the collection.
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Maximum number of items to return per page.
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          description: Limit results to those matching a search string.
+          schema:
+            type: string
+        - name: product
+          in: query
+          description: Limit results to reviews for specific products.
+          schema:
+            type: array
+            items:
+              type: integer
+      responses:
+        "200":
+          description: Product reviews retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductReview"
+              example:
+                - id: 567
+                  date_created: "2024-09-15T14:30:22"
+                  date_created_gmt: "2024-09-15T18:30:22"
+                  product_id: 145
+                  status: "approved"
+                  reviewer: "Sarah Johnson"
+                  reviewer_email: "sarah.j@example.com"
+                  review: "These headphones are absolutely fantastic! The sound quality is crystal clear and the noise cancellation works incredibly well. Battery life is even better than advertised. Highly recommend for anyone looking for premium wireless headphones."
+                  rating: 5
+                  verified: true
+                - id: 589
+                  date_created: "2024-09-18T09:15:45"
+                  date_created_gmt: "2024-09-18T13:15:45"
+                  product_id: 145
+                  status: "approved"
+                  reviewer: "Mike Chen"
+                  reviewer_email: "m.chen@example.com"
+                  review: "Great headphones overall. Sound quality is excellent and very comfortable to wear for long periods. Only minor issue is they're a bit bulky for travel, but that's expected with over-ear headphones. Still giving 5 stars!"
+                  rating: 5
+                  verified: true
+                - id: 612
+                  date_created: "2024-09-22T16:42:10"
+                  date_created_gmt: "2024-09-22T20:42:10"
+                  product_id: 278
+                  status: "approved"
+                  reviewer: "Emma Wilson"
+                  reviewer_email: "emma.w@example.com"
+                  review: "Love this t-shirt! The cotton is so soft and the fit is perfect. Washes well and doesn't shrink. I've already ordered it in three more colors."
+                  rating: 5
+                  verified: true
+        "400":
+          description: Bad request - invalid parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_parameter"
+                message: "Invalid parameter provided."
+                data:
+                  status: 400
+
+  /products/{id}/variations:
+    get:
+      tags:
+        - product-variations
+      summary: Get product variations
+      description: |
+        Gets variations for a variable product.
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier for the variable product.
+          required: true
+          schema:
+            type: integer
+        - name: page
+          in: query
+          description: Current page of the collection.
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Maximum number of items to return per page.
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Product variations retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductVariation"
+              example:
+                - id: 289
+                  parent_id: 278
+                  name: "Premium Cotton T-Shirt - Large, Navy Blue"
+                  slug: "premium-cotton-t-shirt-large-navy-blue"
+                  permalink: "https://example-store.com/product/premium-cotton-t-shirt/?attribute_pa_size=large&attribute_pa_color=navy-blue"
+                  sku: "PCT-2024-L-NAVY"
+                  description: "Premium Cotton T-Shirt in Large, Navy Blue"
+                  dates:
+                    created: "2024-02-10T09:15:00"
+                    created_gmt: "2024-02-10T14:15:00"
+                    modified: "2024-09-18T11:45:00"
+                    modified_gmt: "2024-09-18T16:45:00"
+                  featured: false
+                  prices:
+                    price: "80.00"
+                    regular_price: "80.00"
+                    sale_price: ""
+                    price_range: null
+                    on_sale: false
+                    date_on_sale:
+                      from: null
+                      from_gmt: null
+                      to: null
+                      to_gmt: null
+                    currency:
+                      code: "USD"
+                      symbol: "$"
+                      position: "left"
+                      decimal_separator: "."
+                      thousand_separator: ","
+                      decimals: 2
+                  hidden_conditions:
+                    virtual: false
+                    downloadable: false
+                    manage_stock: true
+                    sold_individually: false
+                    shipping_required: true
+                  images:
+                    - id: 724
+                      src:
+                        thumbnail: "https://example-store.com/wp-content/uploads/2024/02/tshirt-navy-150x150.jpg"
+                        medium: "https://example-store.com/wp-content/uploads/2024/02/tshirt-navy-300x300.jpg"
+                        large: "https://example-store.com/wp-content/uploads/2024/02/tshirt-navy-600x600.jpg"
+                        full: "https://example-store.com/wp-content/uploads/2024/02/tshirt-navy.jpg"
+                      name: "tshirt-navy"
+                      alt: "Premium Cotton T-Shirt in Navy Blue"
+                      position: 0
+                      featured: true
+                  categories:
+                    - id: 15
+                      name: "Clothing"
+                      slug: "clothing"
+                      rest_url: "https://example-store.com/wp-json/cocart/v2/products/categories/15"
+                    - id: 22
+                      name: "T-Shirts"
+                      slug: "t-shirts"
+                      rest_url: "https://example-store.com/wp-json/cocart/v2/products/categories/22"
+                  tags:
+                    - id: 8
+                      name: "Premium"
+                      slug: "premium"
+                      rest_url: "https://example-store.com/wp-json/cocart/v2/products/tags/8"
+                  attributes:
+                    - id: 1
+                      name: "Size"
+                      position: 0
+                      visible: true
+                      variation: true
+                      options: ["Large"]
+                    - id: 2
+                      name: "Color"
+                      position: 1
+                      visible: true
+                      variation: true
+                      options: ["Navy Blue"]
+                  stock:
+                    is_in_stock: true
+                    stock_quantity: 45
+                    stock_status: "instock"
+                    backorders: "no"
+                    backorders_allowed: false
+                    backordered: false
+                    low_stock_amount: null
+                  weight:
+                    value: "0.2"
+                    unit: "kg"
+                  dimensions:
+                    length: "12"
+                    width: "10"
+                    height: "1"
+                    unit: "cm"
+                  total_sales: 156
+                  add_to_cart:
+                    text: "Add to cart"
+                    description: "Add Premium Cotton T-Shirt - Large, Navy Blue to your cart"
+                    is_purchasable: true
+                    purchase_quantity:
+                      min_purchase: 1
+                      max_purchase: 45
+                    rest_url: "https://example-store.com/wp-json/cocart/v2/cart/add-item"
+                  meta_data:
+                    - key: "_fabric"
+                      value: "100% Cotton"
+                - id: 290
+                  parent_id: 278
+                  name: "Premium Cotton T-Shirt - Medium, White"
+                  slug: "premium-cotton-t-shirt-medium-white"
+                  permalink: "https://example-store.com/product/premium-cotton-t-shirt/?attribute_pa_size=medium&attribute_pa_color=white"
+                  sku: "PCT-2024-M-WHT"
+                  description: "Premium Cotton T-Shirt in Medium, White"
+                  dates:
+                    created: "2024-02-10T09:15:00"
+                    created_gmt: "2024-02-10T14:15:00"
+                    modified: "2024-09-18T11:45:00"
+                    modified_gmt: "2024-09-18T16:45:00"
+                  featured: false
+                  prices:
+                    price: "25.00"
+                    regular_price: "30.00"
+                    sale_price: "25.00"
+                    price_range: null
+                    on_sale: true
+                    date_on_sale:
+                      from: "2024-09-01T00:00:00"
+                      from_gmt: "2024-09-01T05:00:00"
+                      to: "2024-10-31T23:59:59"
+                      to_gmt: "2024-11-01T04:59:59"
+                    currency:
+                      code: "USD"
+                      symbol: "$"
+                      position: "left"
+                      decimal_separator: "."
+                      thousand_separator: ","
+                      decimals: 2
+                  hidden_conditions:
+                    virtual: false
+                    downloadable: false
+                    manage_stock: true
+                    sold_individually: false
+                    shipping_required: true
+                  images:
+                    - id: 723
+                      src:
+                        thumbnail: "https://example-store.com/wp-content/uploads/2024/02/tshirt-white-150x150.jpg"
+                        medium: "https://example-store.com/wp-content/uploads/2024/02/tshirt-white-300x300.jpg"
+                        large: "https://example-store.com/wp-content/uploads/2024/02/tshirt-white-600x600.jpg"
+                        full: "https://example-store.com/wp-content/uploads/2024/02/tshirt-white.jpg"
+                      name: "tshirt-white"
+                      alt: "Premium Cotton T-Shirt in White"
+                      position: 0
+                      featured: true
+                  categories:
+                    - id: 15
+                      name: "Clothing"
+                      slug: "clothing"
+                      rest_url: "https://example-store.com/wp-json/cocart/v2/products/categories/15"
+                    - id: 22
+                      name: "T-Shirts"
+                      slug: "t-shirts"
+                      rest_url: "https://example-store.com/wp-json/cocart/v2/products/categories/22"
+                  tags:
+                    - id: 8
+                      name: "Premium"
+                      slug: "premium"
+                      rest_url: "https://example-store.com/wp-json/cocart/v2/products/tags/8"
+                  attributes:
+                    - id: 1
+                      name: "Size"
+                      position: 0
+                      visible: true
+                      variation: true
+                      options: ["Medium"]
+                    - id: 2
+                      name: "Color"
+                      position: 1
+                      visible: true
+                      variation: true
+                      options: ["White"]
+                  stock:
+                    is_in_stock: true
+                    stock_quantity: 78
+                    stock_status: "instock"
+                    backorders: "no"
+                    backorders_allowed: false
+                    backordered: false
+                    low_stock_amount: null
+                  weight:
+                    value: "0.2"
+                    unit: "kg"
+                  dimensions:
+                    length: "12"
+                    width: "10"
+                    height: "1"
+                    unit: "cm"
+                  total_sales: 243
+                  add_to_cart:
+                    text: "Add to cart"
+                    description: "Add Premium Cotton T-Shirt - Medium, White to your cart"
+                    is_purchasable: true
+                    purchase_quantity:
+                      min_purchase: 1
+                      max_purchase: 78
+                    rest_url: "https://example-store.com/wp-json/cocart/v2/cart/add-item"
+                  meta_data:
+                    - key: "_fabric"
+                      value: "100% Cotton"
+        "400":
+          description: Bad request - invalid product ID or parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_parameter"
+                message: "Invalid product ID or parameter provided."
+                data:
+                  status: 400
+        "404":
+          description: Product not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_product_not_found"
+                message: "Product not found or is not a variable product."
+                data:
+                  status: 404
+
+  /products/{id}/variations/{variation_id}:
+    get:
+      tags:
+        - product-variations
+      summary: Get single product variation
+      description: |
+        Gets a single variation for a variable product.
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier for the variable product.
+          required: true
+          schema:
+            type: integer
+        - name: variation_id
+          in: path
+          description: Unique identifier for the variation.
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Product variation retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductVariation"
+              example:
+                id: 289
+                parent_id: 278
+                name: "Premium Cotton T-Shirt - Large, Navy Blue"
+                slug: "premium-cotton-t-shirt-large-navy-blue"
+                permalink: "https://example-store.com/product/premium-cotton-t-shirt/?attribute_pa_size=large&attribute_pa_color=navy-blue"
+                sku: "PCT-2024-L-NAVY"
+                description: "Premium Cotton T-Shirt in Large, Navy Blue"
+                dates:
+                  created: "2024-02-10T09:15:00"
+                  created_gmt: "2024-02-10T14:15:00"
+                  modified: "2024-09-18T11:45:00"
+                  modified_gmt: "2024-09-18T16:45:00"
+                featured: false
+                prices:
+                  price: "80.00"
+                  regular_price: "80.00"
+                  sale_price: ""
+                  price_range: null
+                  on_sale: false
+                  date_on_sale:
+                    from: null
+                    from_gmt: null
+                    to: null
+                    to_gmt: null
+                  currency:
+                    code: "USD"
+                    symbol: "$"
+                    position: "left"
+                    decimal_separator: "."
+                    thousand_separator: ","
+                    decimals: 2
+                hidden_conditions:
+                  virtual: false
+                  downloadable: false
+                  manage_stock: true
+                  sold_individually: false
+                  shipping_required: true
+                images:
+                  - id: 724
+                    src:
+                      thumbnail: "https://example-store.com/wp-content/uploads/2024/02/tshirt-navy-150x150.jpg"
+                      medium: "https://example-store.com/wp-content/uploads/2024/02/tshirt-navy-300x300.jpg"
+                      large: "https://example-store.com/wp-content/uploads/2024/02/tshirt-navy-600x600.jpg"
+                      full: "https://example-store.com/wp-content/uploads/2024/02/tshirt-navy.jpg"
+                    name: "tshirt-navy"
+                    alt: "Premium Cotton T-Shirt in Navy Blue"
+                    position: 0
+                    featured: true
+                categories:
+                  - id: 15
+                    name: "Clothing"
+                    slug: "clothing"
+                    rest_url: "https://example-store.com/wp-json/cocart/v2/products/categories/15"
+                  - id: 22
+                    name: "T-Shirts"
+                    slug: "t-shirts"
+                    rest_url: "https://example-store.com/wp-json/cocart/v2/products/categories/22"
+                tags:
+                  - id: 8
+                    name: "Premium"
+                    slug: "premium"
+                    rest_url: "https://example-store.com/wp-json/cocart/v2/products/tags/8"
+                attributes:
+                  - id: 1
+                    name: "Size"
+                    position: 0
+                    visible: true
+                    variation: true
+                    options: ["Large"]
+                  - id: 2
+                    name: "Color"
+                    position: 1
+                    visible: true
+                    variation: true
+                    options: ["Navy Blue"]
+                stock:
+                  is_in_stock: true
+                  stock_quantity: 45
+                  stock_status: "instock"
+                  backorders: "no"
+                  backorders_allowed: false
+                  backordered: false
+                  low_stock_amount: null
+                weight:
+                  value: "0.2"
+                  unit: "kg"
+                dimensions:
+                  length: "12"
+                  width: "10"
+                  height: "1"
+                  unit: "cm"
+                total_sales: 156
+                add_to_cart:
+                  text: "Add to cart"
+                  description: "Add Premium Cotton T-Shirt - Large, Navy Blue to your cart"
+                  is_purchasable: true
+                  purchase_quantity:
+                    min_purchase: 1
+                    max_purchase: 45
+                  rest_url: "https://example-store.com/wp-json/cocart/v2/cart/add-item"
+                meta_data:
+                  - key: "_fabric"
+                    value: "100% Cotton"
+        "400":
+          description: Bad request - invalid product or variation ID.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_id"
+                message: "Invalid product or variation ID provided."
+                data:
+                  status: 400
+        "404":
+          description: Product or variation not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_variation_not_found"
+                message: "Product variation not found."
+                data:
+                  status: 404
+
+  /sessions:
+    get:
+      tags:
+        - admin-sessions
+      summary: Get cart sessions
+      description: Gets a list of cart sessions for administrative purposes.
+      parameters:
+        - name: page
+          in: query
+          description: Current page of the collection.
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Maximum number of items to return per page.
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Cart sessions retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CartSession"
+              example:
+                - session_key: "cb7a23af96a3f23af3c28a8b4b8c6d5e"
+                  cart:
+                    d6b3e8e5a1b0c6e4f2a3b1d8c5e6f9a2:
+                      key: "d6b3e8e5a1b0c6e4f2a3b1d8c5e6f9a2"
+                      product_id: 145
+                      variation_id: 0
+                      quantity: 2
+                      line_total: 36.00
+                      line_tax: 3.60
+                  customer:
+                    billing_email: "john.doe@example.com"
+                    billing_first_name: "John"
+                    billing_last_name: "Doe"
+                  session_expiry: "2024-10-15T18:30:00"
+                - session_key: "f8d9e1a2b3c4d5e6f7a8b9c0d1e2f3a4"
+                  cart:
+                    a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6:
+                      key: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"
+                      product_id: 278
+                      variation_id: 289
+                      quantity: 1
+                      line_total: 80.00
+                      line_tax: 8.00
+                  customer:
+                    billing_email: "jane.smith@example.com"
+                    billing_first_name: "Jane"
+                    billing_last_name: "Smith"
+                  session_expiry: "2024-10-16T12:15:00"
+        "400":
+          description: Bad request - invalid parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_parameter"
+                message: "Invalid parameter provided."
+                data:
+                  status: 400
+        "401":
+          description: Unauthorized - authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_unauthorized"
+                message: "Authentication required to access sessions."
+                data:
+                  status: 401
+        "403":
+          description: Forbidden - insufficient permissions.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_forbidden"
+                message: "You do not have permission to access sessions."
+                data:
+                  status: 403
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+
+  /sessions/{id}:
+    get:
+      tags:
+        - admin-sessions
+      summary: Get cart session
+      description: Gets a specific cart session by session key.
+      parameters:
+        - name: id
+          in: path
+          description: Unique session key for the cart session.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Cart session retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartSession"
+        "400":
+          description: Bad request - invalid session ID.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_session_id"
+                message: "Invalid session ID provided."
+                data:
+                  status: 400
+        "401":
+          description: Unauthorized - authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_unauthorized"
+                message: "Authentication required to access this session."
+                data:
+                  status: 401
+        "403":
+          description: Forbidden - insufficient permissions.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_forbidden"
+                message: "You do not have permission to access this session."
+                data:
+                  status: 403
+        "404":
+          description: Cart session not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_session_not_found"
+                message: "Cart session not found."
+                data:
+                  status: 404
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+
+    delete:
+      tags:
+        - admin-sessions
+      summary: Delete cart session
+      description: Deletes a specific cart session by session key.
+      parameters:
+        - name: id
+          in: path
+          description: Unique session key for the cart session.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Cart session deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted:
+                    type: boolean
+                    example: true
+        "400":
+          description: Bad request - invalid session ID.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_session_id"
+                message: "Invalid session ID provided."
+                data:
+                  status: 400
+        "401":
+          description: Unauthorized - authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_unauthorized"
+                message: "Authentication required to delete sessions."
+                data:
+                  status: 401
+        "403":
+          description: Forbidden - insufficient permissions.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_forbidden"
+                message: "You do not have permission to delete sessions."
+                data:
+                  status: 403
+        "404":
+          description: Cart session not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_session_not_found"
+                message: "Cart session not found."
+                data:
+                  status: 404
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+
+  /login:
+    post:
+      tags:
+        - authentication
+      summary: Login user
+      description: Logs in a user and creates a session.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  description: Username or email address.
+                  type: string
+                password:
+                  description: User password.
+                  type: string
+              required:
+                - username
+                - password
+      responses:
+        "200":
+          description: User logged in successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+              example:
+                user_id: "42"
+                first_name: "John"
+                last_name: "Doe"
+                display_name: "John Doe"
+                role: "Customer"
+                avatar_urls:
+                  "24": "https://secure.gravatar.com/avatar/example?s=24&d=mm&r=g"
+                  "48": "https://secure.gravatar.com/avatar/example?s=48&d=mm&r=g"
+                  "96": "https://secure.gravatar.com/avatar/example?s=96&d=mm&r=g"
+                email: "john.doe@example.com"
+                extras: {}
+                dev_note: "Don't forget to store the users login information in order to authenticate all other routes with CoCart."
+        "400":
+          description: Bad request - invalid credentials.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_invalid_credentials"
+                message: "Invalid username or password."
+                data:
+                  status: 400
+        "403":
+          description: Authentication failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_authentication_failed"
+                message: "Authentication failed. Please check your credentials."
+                data:
+                  status: 403
+
+  /logout:
+    post:
+      tags:
+        - authentication
+      summary: Logout user
+      description: Logs out the current user and destroys the session.
+      responses:
+        "200":
+          description: User logged out successfully.
+          content:
+            application/json:
+              schema:
+                type: boolean
+                example: true
+        "400":
+          description: Bad request - logout failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_logout_failed"
+                message: "Logout failed."
+                data:
+                  status: 400
+
+  /store:
+    get:
+      tags:
+        - store
+      summary: Get store information
+      description: |
+        Gets general store information including routes and configuration.
+      responses:
+        "200":
+          description: Store information retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreInfo"
+              example:
+                version: "4.6.0"
+                title: "Example Store"
+                description: "Your trusted online retailer for electronics, clothing, and more"
+                home_url: "https://example-store.com"
+                language: "en_US"
+                gmt_offset: "-5"
+                timezone_string: "America/New_York"
+                store_address:
+                  address: "123 Commerce Street"
+                  address_2: "Suite 500"
+                  city: "New York"
+                  state: "NY"
+                  postcode: "10001"
+                  country: "US"
+                routes:
+                  "/cart": "Manage shopping cart"
+                  "/cart/add-item": "Add item to cart"
+                  "/cart/items": "Get cart items"
+                  "/products": "Browse products"
+                  "/products/categories": "Browse product categories"
+                  "/login": "User authentication"
+                  "/logout": "User logout"
+      security:
+        - {}
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: |
+        Basic authentication with username and password.
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Bearer token authentication (JWT). Optional for cart and products endpoints.
+        When provided by customers, enables enhanced functionality like persistent carts and user-specific data.
+        Required only for admin operations like managing cart sessions.
+
+  schemas:
+    CartV2:
+      type: object
+      description: Complete cart object with enhanced v2 structure.
+      properties:
+        cart_hash:
+          type: string
+          description: Unique cart hash.
+        cart_key:
+          type: string
+          description: Unique cart key for the customer.
+        currency:
+          $ref: "#/components/schemas/Currency"
+        customer:
+          $ref: "#/components/schemas/Customer"
+        items:
+          type: object
+          description: Cart items indexed by item key.
+          additionalProperties:
+            $ref: "#/components/schemas/CartItem"
+        item_count:
+          type: integer
+          description: Total number of items in cart.
+        items_weight:
+          type: number
+          description: Total weight of all items.
+        coupons:
+          type: array
+          description: Applied coupons.
+          items:
+            $ref: "#/components/schemas/AppliedCoupon"
+        needs_payment:
+          type: boolean
+          description: Whether the cart needs payment.
+        needs_shipping:
+          type: boolean
+          description: Whether the cart needs shipping.
+        shipping:
+          $ref: "#/components/schemas/Shipping"
+        fees:
+          type: array
+          description: Cart fees.
+          items:
+            $ref: "#/components/schemas/CartFee"
+        taxes:
+          type: array
+          description: Cart taxes.
+          items:
+            $ref: "#/components/schemas/CartTax"
+        totals:
+          $ref: "#/components/schemas/CartTotals"
+        removed_items:
+          type: array
+          description: Recently removed items that can be restored.
+          items:
+            $ref: "#/components/schemas/RemovedItem"
+        cross_sells:
+          type: array
+          description: Cross-sell products.
+          items:
+            $ref: "#/components/schemas/CrossSellItem"
+        notices:
+          type: object
+          description: Cart notices and messages.
+          additionalProperties: true
+        extensions:
+          type: object
+          description: Additional data from extensions.
+          additionalProperties: true
+
+    CartItem:
+      type: object
+      properties:
+        item_key:
+          type: string
+          description: Unique identifier for the item within the cart.
+        id:
+          type: integer
+          description: Product ID.
+        name:
+          type: string
+          description: Product name.
+        title:
+          type: string
+          description: Product title.
+        price:
+          type: string
+          description: Current product price.
+        quantity:
+          type: object
+          description: Quantity information for this item.
+          properties:
+            value:
+              type: number
+              description: Current quantity of the item in the cart.
+            min_purchase:
+              type: number
+              description: Minimum quantity that can be purchased.
+            max_purchase:
+              type: number
+              description: Maximum quantity that can be purchased.
+        totals:
+          type: object
+          description: Item totals.
+          properties:
+            subtotal:
+              type: number
+              description: Line subtotal (before discounts).
+            subtotal_tax:
+              type: number
+              description: Line subtotal tax.
+            total:
+              type: number
+              description: Line total (after discounts).
+            tax:
+              type: number
+              description: Line total tax.
+        slug:
+          type: string
+          description: Product slug.
+        meta:
+          type: object
+          description: Item metadata.
+          properties:
+            product_type:
+              type: string
+              description: Product type.
+            sku:
+              type: string
+              description: Product SKU.
+            dimensions:
+              type: object
+              description: Product dimensions.
+              properties:
+                length:
+                  type: string
+                  description: Product length.
+                width:
+                  type: string
+                  description: Product width.
+                height:
+                  type: string
+                  description: Product height.
+                unit:
+                  type: string
+                  description: Dimension unit.
+            weight:
+              type: string
+              description: Product weight.
+            variation:
+              description: Chosen attributes (for variations).
+              oneOf:
+                - type: object
+                  additionalProperties:
+                    type: string
+                - type: array
+                  items:
+                    type: string
+          additionalProperties: true
+        backorders:
+          type: string
+          description: Backorder status.
+        cart_item_data:
+          type: object
+          description: Custom cart item data.
+          additionalProperties: true
+        featured_image:
+          type: string
+          description: Product featured image URL.
+
+    Currency:
+      type: object
+      properties:
+        currency_code:
+          type: string
+          description: Currency code.
+        currency_symbol:
+          type: string
+          description: Currency symbol.
+        currency_symbol_pos:
+          type: string
+          description: Currency symbol position.
+        currency_minor_unit:
+          type: integer
+          description: Currency minor unit.
+        currency_decimal_separator:
+          type: string
+          description: Currency decimal separator.
+        currency_thousand_separator:
+          type: string
+          description: Currency thousand separator.
+        currency_prefix:
+          type: string
+          description: Currency prefix.
+        currency_suffix:
+          type: string
+          description: Currency suffix.
+
+    Customer:
+      type: object
+      properties:
+        billing_address:
+          $ref: "#/components/schemas/BillingAddress"
+        shipping_address:
+          $ref: "#/components/schemas/ShippingAddress"
+
+    BillingAddress:
+      type: object
+      properties:
+        billing_first_name:
+          type: string
+        billing_last_name:
+          type: string
+        billing_company:
+          type: string
+        billing_country:
+          type: string
+        billing_address_1:
+          type: string
+        billing_address_2:
+          type: string
+        billing_postcode:
+          type: string
+        billing_city:
+          type: string
+        billing_state:
+          type: string
+        billing_phone:
+          type: string
+        billing_email:
+          type: string
+
+    ShippingAddress:
+      type: object
+      properties:
+        shipping_first_name:
+          type: string
+        shipping_last_name:
+          type: string
+        shipping_company:
+          type: string
+        shipping_country:
+          type: string
+        shipping_address_1:
+          type: string
+        shipping_address_2:
+          type: string
+        shipping_postcode:
+          type: string
+        shipping_city:
+          type: string
+        shipping_state:
+          type: string
+
+    Shipping:
+      type: object
+      properties:
+        total_packages:
+          type: integer
+          description: Number of shipping packages.
+        show_package_details:
+          type: boolean
+          description: Whether to show package details.
+        has_calculated_shipping:
+          type: boolean
+          description: Whether shipping has been calculated.
+        packages:
+          type: object
+          description: Shipping packages.
+          additionalProperties:
+            $ref: "#/components/schemas/ShippingPackage"
+
+    ShippingPackage:
+      type: object
+      properties:
+        package_name:
+          type: string
+          description: Package name.
+        rates:
+          type: object
+          description: Available shipping rates.
+          additionalProperties:
+            $ref: "#/components/schemas/ShippingRate"
+        package_details:
+          type: string
+          description: Package details.
+        index:
+          type: integer
+          description: Package index.
+        chosen_method:
+          type: string
+          description: Chosen shipping method.
+        formatted_destination:
+          type: string
+          description: Formatted destination address.
+
+    ShippingRate:
+      type: object
+      properties:
+        key:
+          type: string
+        method_id:
+          type: string
+        instance_id:
+          type: integer
+        label:
+          type: string
+        cost:
+          type: string
+        html:
+          type: string
+        taxes:
+          type: string
+        chosen_method:
+          type: boolean
+
+    CartTotals:
+      type: object
+      properties:
+        subtotal:
+          type: string
+          description: Cart subtotal.
+        subtotal_tax:
+          type: string
+          description: Cart subtotal tax.
+        shipping_total:
+          type: string
+          description: Shipping total.
+        shipping_tax:
+          type: string
+          description: Shipping tax.
+        shipping_taxes:
+          type: array
+          items:
+            type: number
+        discount_total:
+          type: string
+          description: Discount total.
+        discount_tax:
+          type: string
+          description: Discount tax.
+        cart_contents_total:
+          type: string
+          description: Cart contents total.
+        cart_contents_tax:
+          type: string
+          description: Cart contents tax.
+        cart_contents_taxes:
+          type: array
+          items:
+            type: number
+        fee_total:
+          type: string
+          description: Fee total.
+        fee_tax:
+          type: string
+          description: Fee tax.
+        fee_taxes:
+          type: array
+          items:
+            type: number
+        total:
+          type: string
+          description: Cart total.
+        total_tax:
+          type: string
+          description: Total tax.
+
+    CartFee:
+      type: object
+      properties:
+        name:
+          type: string
+        amount:
+          type: number
+        taxable:
+          type: boolean
+        tax_class:
+          type: string
+        total:
+          type: number
+        tax:
+          type: number
+
+    CartTax:
+      type: object
+      properties:
+        rate_id:
+          type: integer
+        label:
+          type: string
+        compound:
+          type: boolean
+        tax_total:
+          type: string
+        shipping_tax_total:
+          type: string
+
+    AppliedCoupon:
+      type: object
+      properties:
+        coupon:
+          type: string
+        label:
+          type: string
+        saving:
+          type: string
+        saving_html:
+          type: string
+
+    RemovedItem:
+      type: object
+      properties:
+        key:
+          type: string
+        product_id:
+          type: integer
+        quantity:
+          type: integer
+        name:
+          type: string
+
+    CrossSellItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        product_name:
+          type: string
+        product_title:
+          type: string
+        price:
+          type: string
+        regular_price:
+          type: string
+        sale_price:
+          type: string
+        product_image:
+          type: string
+
+    TotalsResponse:
+      allOf:
+        - $ref: "#/components/schemas/CartTotals"
+
+    CalculateResponse:
+      allOf:
+        - $ref: "#/components/schemas/CartTotals"
+
+    ProductsResponse:
+      type: object
+      description: CoCart v2 Products collection response with pagination
+      properties:
+        products:
+          type: array
+          description: Array of products
+          items:
+            $ref: "#/components/schemas/Product"
+        page:
+          type: integer
+          description: Current page number
+        total_pages:
+          type: integer
+          description: Total number of pages
+        total_products:
+          type: integer
+          description: Total number of products
+
+    Product:
+      type: object
+      description: CoCart v2 Product object with custom structure
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the product
+        parent_id:
+          type: integer
+          description: Product parent ID
+        name:
+          type: string
+          description: Product name
+        type:
+          type: string
+          description: Product type
+          enum: [simple, grouped, external, variable]
+        slug:
+          type: string
+          description: Product slug
+        permalink:
+          type: string
+          description: Product URL
+        sku:
+          type: string
+          description: Unique identifier (SKU)
+        description:
+          type: string
+          description: Product description
+        short_description:
+          type: string
+          description: Product short description
+        dates:
+          type: object
+          description: Product dates
+          properties:
+            created:
+              type: string
+              format: date-time
+              description: Date created in local time
+            created_gmt:
+              type: string
+              format: date-time
+              description: Date created in GMT
+            modified:
+              type: string
+              format: date-time
+              description: Date modified in local time
+            modified_gmt:
+              type: string
+              format: date-time
+              description: Date modified in GMT
+        featured:
+          type: boolean
+          description: Whether the product is featured
+        prices:
+          type: object
+          description: Product pricing information
+          properties:
+            price:
+              type: string
+              description: Current product price
+            regular_price:
+              type: string
+              description: Product regular price
+            sale_price:
+              type: string
+              description: Product sale price (empty string if not on sale)
+            price_range:
+              type: object
+              description: Price range for variable products (null for non-variable products)
+              nullable: true
+            on_sale:
+              type: boolean
+              description: Whether the product is on sale
+            date_on_sale:
+              type: object
+              description: Sale date information
+              properties:
+                from:
+                  type: string
+                  format: date-time
+                  nullable: true
+                  description: Sale start date in local time
+                from_gmt:
+                  type: string
+                  format: date-time
+                  nullable: true
+                  description: Sale start date in GMT
+                to:
+                  type: string
+                  format: date-time
+                  nullable: true
+                  description: Sale end date in local time
+                to_gmt:
+                  type: string
+                  format: date-time
+                  nullable: true
+                  description: Sale end date in GMT
+            currency:
+              $ref: "#/components/schemas/Currency"
+        hidden_conditions:
+          type: object
+          description: Product conditional flags
+          properties:
+            virtual:
+              type: boolean
+              description: Whether the product is virtual
+            downloadable:
+              type: boolean
+              description: Whether the product is downloadable
+            manage_stock:
+              type: boolean
+              description: Whether stock is managed at product level
+            sold_individually:
+              type: boolean
+              description: Whether only one item can be bought in a single order
+            reviews_allowed:
+              type: boolean
+              description: Whether reviews are allowed
+            shipping_required:
+              type: boolean
+              description: Whether the product needs to be shipped
+        average_rating:
+          type: string
+          description: Average rating
+        review_count:
+          type: integer
+          description: Number of reviews
+        rating_count:
+          type: integer
+          description: Number of ratings
+        rated_out_of:
+          type: string
+          description: Maximum rating value (formatted)
+        images:
+          type: array
+          description: Product images
+          items:
+            $ref: "#/components/schemas/ProductImage"
+        categories:
+          type: array
+          description: Product categories
+          items:
+            $ref: "#/components/schemas/ProductCategory"
+        tags:
+          type: array
+          description: Product tags
+          items:
+            $ref: "#/components/schemas/ProductTag"
+        attributes:
+          type: array
+          description: Product attributes
+          items:
+            $ref: "#/components/schemas/ProductAttribute"
+        default_attributes:
+          type: array
+          description: Default variation attributes
+          items:
+            $ref: "#/components/schemas/ProductDefaultAttribute"
+        variations:
+          type: array
+          description: Full variation objects (not just IDs)
+          items:
+            $ref: "#/components/schemas/ProductVariation"
+        grouped_products:
+          type: array
+          description: Grouped product IDs
+          items:
+            type: integer
+        stock:
+          type: object
+          description: Stock information
+          properties:
+            is_in_stock:
+              type: boolean
+              description: Whether the product is in stock
+            stock_quantity:
+              type: integer
+              nullable: true
+              description: Stock quantity (null if not managing stock)
+            stock_status:
+              type: string
+              description: Stock status
+              enum: [instock, outofstock, onbackorder]
+            backorders:
+              type: string
+              description: If managing stock, this controls if backorders are allowed
+              enum: [no, notify, yes]
+            backorders_allowed:
+              type: boolean
+              description: Whether backorders are allowed
+            backordered:
+              type: boolean
+              description: Whether the product is on backorder
+            low_stock_amount:
+              type: integer
+              nullable: true
+              description: Low stock threshold amount
+        weight:
+          type: object
+          description: Product weight
+          properties:
+            value:
+              type: string
+              nullable: true
+              description: Weight value
+            unit:
+              type: string
+              description: Weight unit (kg, g, lbs, oz, etc.)
+        dimensions:
+          type: object
+          description: Product dimensions
+          properties:
+            length:
+              type: string
+              nullable: true
+              description: Length value
+            width:
+              type: string
+              nullable: true
+              description: Width value
+            height:
+              type: string
+              nullable: true
+              description: Height value
+            unit:
+              type: string
+              description: Dimension unit (cm, m, in, etc.)
+        reviews:
+          type: array
+          description: Product reviews (populated when show_reviews parameter is true)
+          items:
+            $ref: "#/components/schemas/ProductReview"
+        related:
+          type: array
+          description: Related products with basic information
+          items:
+            $ref: "#/components/schemas/ConnectedProduct"
+        upsells:
+          type: array
+          description: Upsell products with basic information
+          items:
+            $ref: "#/components/schemas/ConnectedProduct"
+        cross_sells:
+          type: array
+          description: Cross-sell products with basic information
+          items:
+            $ref: "#/components/schemas/ConnectedProduct"
+        total_sales:
+          type: integer
+          description: Total number of sales
+        external_url:
+          type: string
+          description: External product URL (for external product type)
+        button_text:
+          type: string
+          description: External product button text (for external product type)
+        add_to_cart:
+          type: object
+          description: Add to cart information (CoCart-specific)
+          properties:
+            text:
+              type: string
+              description: Add to cart button text
+            description:
+              type: string
+              description: Add to cart description
+            has_options:
+              type: boolean
+              description: Whether the product has options
+            is_purchasable:
+              type: boolean
+              description: Whether the product is purchasable
+            purchase_quantity:
+              type: object
+              description: Purchase quantity limits
+              properties:
+                min_purchase:
+                  type: integer
+                  description: Minimum purchase quantity
+                max_purchase:
+                  type: integer
+                  description: Maximum purchase quantity allowed
+            rest_url:
+              type: string
+              description: REST URL for adding this product to cart
+        meta_data:
+          type: array
+          description: Meta data
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              value:
+                type: string
+
+    ProductDownload:
+      type: object
+      properties:
+        id:
+          type: string
+          description: File ID.
+        name:
+          type: string
+          description: File name.
+        file:
+          type: string
+          description: File URL.
+
+    ProductDimensions:
+      type: object
+      properties:
+        length:
+          type: string
+          description: Product length.
+        width:
+          type: string
+          description: Product width.
+        height:
+          type: string
+          description: Product height.
+
+    ProductCategory:
+      type: object
+      description: CoCart v2 Product Category
+      properties:
+        id:
+          type: integer
+          description: Category ID
+        name:
+          type: string
+          description: Category name
+        slug:
+          type: string
+          description: Category slug
+        rest_url:
+          type: string
+          description: REST URL for this category
+
+    ProductTag:
+      type: object
+      description: CoCart v2 Product Tag
+      properties:
+        id:
+          type: integer
+          description: Tag ID
+        name:
+          type: string
+          description: Tag name
+        slug:
+          type: string
+          description: Tag slug
+        rest_url:
+          type: string
+          description: REST URL for this tag
+
+    ProductImage:
+      type: object
+      description: CoCart v2 Product Image with multiple size URLs
+      properties:
+        id:
+          type: integer
+          description: Image ID
+        src:
+          type: object
+          description: Image URLs in different sizes
+          additionalProperties:
+            type: string
+            description: URL for specific image size (thumbnail, medium, large, full, etc.)
+        name:
+          type: string
+          description: Image name
+        alt:
+          type: string
+          description: Image alternative text
+        position:
+          type: integer
+          description: Image position in gallery
+        featured:
+          type: boolean
+          description: Whether this is the featured image
+
+    ProductAttribute:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Attribute ID.
+        name:
+          type: string
+          description: Attribute name.
+        position:
+          type: integer
+          description: Attribute position.
+        visible:
+          type: boolean
+          description: Define if the attribute is visible on the "Additional information" tab in the product's page.
+        variation:
+          type: boolean
+          description: Define if the attribute can be used as variation.
+        options:
+          type: array
+          description: List of available term names of the attribute.
+          items:
+            type: string
+
+    ProductDefaultAttribute:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Attribute ID.
+        name:
+          type: string
+          description: Attribute name.
+        option:
+          type: string
+          description: Selected attribute term name.
+
+    ProductAttributeTerm:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the resource.
+        name:
+          type: string
+          description: Term name.
+        slug:
+          type: string
+          description: An alphanumeric identifier for the resource unique to its type.
+        description:
+          type: string
+          description: HTML description of the resource.
+        menu_order:
+          type: integer
+          description: Menu order, used to custom sort the resource.
+        count:
+          type: integer
+          description: Number of published products for the resource.
+
+    ProductReview:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the resource.
+        date_created:
+          type: string
+          format: date-time
+          description: The date the review was created.
+        date_created_gmt:
+          type: string
+          format: date-time
+          description: The date the review was created, as GMT.
+        product_id:
+          type: integer
+          description: Unique identifier for the product that the review belongs to.
+        status:
+          type: string
+          description: Status of the review.
+        reviewer:
+          type: string
+          description: Name of the reviewer.
+        reviewer_email:
+          type: string
+          description: Email of the reviewer.
+        review:
+          type: string
+          description: The content of the review.
+        rating:
+          type: integer
+          description: Review rating (0 to 5).
+        verified:
+          type: boolean
+          description: Shows if the reviewer bought the product or not.
+
+    ProductVariation:
+      type: object
+      description: |
+        CoCart v2 Product Variation object. Variations use the same structure as Product objects,
+        but with the following fields removed: type, short_description, hidden_conditions.reviews_allowed,
+        average_rating, review_count, rating_count, rated_out_of, reviews, default_attributes,
+        variations, grouped_products, related, upsells, cross_sells, external_url, button_text,
+        and add_to_cart.has_options.
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the variation
+        parent_id:
+          type: integer
+          description: Product parent ID (the variable product this variation belongs to)
+        name:
+          type: string
+          description: Variation name
+        slug:
+          type: string
+          description: Variation slug
+        permalink:
+          type: string
+          description: Variation URL
+        sku:
+          type: string
+          description: Unique identifier (SKU)
+        description:
+          type: string
+          description: Variation description
+        dates:
+          type: object
+          description: Variation dates
+          properties:
+            created:
+              type: string
+              format: date-time
+              description: Date created in local time
+            created_gmt:
+              type: string
+              format: date-time
+              description: Date created in GMT
+            modified:
+              type: string
+              format: date-time
+              description: Date modified in local time
+            modified_gmt:
+              type: string
+              format: date-time
+              description: Date modified in GMT
+        featured:
+          type: boolean
+          description: Whether the variation is featured
+        prices:
+          type: object
+          description: Variation pricing information
+          properties:
+            price:
+              type: string
+              description: Current variation price
+            regular_price:
+              type: string
+              description: Variation regular price
+            sale_price:
+              type: string
+              description: Variation sale price (empty string if not on sale)
+            price_range:
+              type: object
+              description: Price range (null for variations)
+              nullable: true
+            on_sale:
+              type: boolean
+              description: Whether the variation is on sale
+            date_on_sale:
+              type: object
+              description: Sale date information
+              properties:
+                from:
+                  type: string
+                  format: date-time
+                  nullable: true
+                  description: Sale start date in local time
+                from_gmt:
+                  type: string
+                  format: date-time
+                  nullable: true
+                  description: Sale start date in GMT
+                to:
+                  type: string
+                  format: date-time
+                  nullable: true
+                  description: Sale end date in local time
+                to_gmt:
+                  type: string
+                  format: date-time
+                  nullable: true
+                  description: Sale end date in GMT
+            currency:
+              $ref: "#/components/schemas/Currency"
+        hidden_conditions:
+          type: object
+          description: Variation conditional flags (note reviews_allowed is not present)
+          properties:
+            virtual:
+              type: boolean
+              description: Whether the variation is virtual
+            downloadable:
+              type: boolean
+              description: Whether the variation is downloadable
+            manage_stock:
+              type: boolean
+              description: Whether stock is managed at variation level
+            sold_individually:
+              type: boolean
+              description: Whether only one item can be bought in a single order
+            shipping_required:
+              type: boolean
+              description: Whether the variation needs to be shipped
+        images:
+          type: array
+          description: Variation images
+          items:
+            $ref: "#/components/schemas/ProductImage"
+        categories:
+          type: array
+          description: Product categories (inherited from parent)
+          items:
+            $ref: "#/components/schemas/ProductCategory"
+        tags:
+          type: array
+          description: Product tags (inherited from parent)
+          items:
+            $ref: "#/components/schemas/ProductTag"
+        attributes:
+          type: array
+          description: Variation attributes
+          items:
+            $ref: "#/components/schemas/ProductAttribute"
+        stock:
+          type: object
+          description: Stock information
+          properties:
+            is_in_stock:
+              type: boolean
+              description: Whether the variation is in stock
+            stock_quantity:
+              type: integer
+              nullable: true
+              description: Stock quantity (null if not managing stock)
+            stock_status:
+              type: string
+              description: Stock status
+              enum: [instock, outofstock, onbackorder]
+            backorders:
+              type: string
+              description: If managing stock, this controls if backorders are allowed
+              enum: [no, notify, yes]
+            backorders_allowed:
+              type: boolean
+              description: Whether backorders are allowed
+            backordered:
+              type: boolean
+              description: Whether the variation is on backorder
+            low_stock_amount:
+              type: integer
+              nullable: true
+              description: Low stock threshold amount
+        weight:
+          type: object
+          description: Variation weight
+          properties:
+            value:
+              type: string
+              nullable: true
+              description: Weight value
+            unit:
+              type: string
+              description: Weight unit (kg, g, lbs, oz, etc.)
+        dimensions:
+          type: object
+          description: Variation dimensions
+          properties:
+            length:
+              type: string
+              nullable: true
+              description: Length value
+            width:
+              type: string
+              nullable: true
+              description: Width value
+            height:
+              type: string
+              nullable: true
+              description: Height value
+            unit:
+              type: string
+              description: Dimension unit (cm, m, in, etc.)
+        total_sales:
+          type: integer
+          description: Total number of sales for this variation
+        add_to_cart:
+          type: object
+          description: Add to cart information (note has_options is not present)
+          properties:
+            text:
+              type: string
+              description: Add to cart button text
+            description:
+              type: string
+              description: Add to cart description
+            is_purchasable:
+              type: boolean
+              description: Whether the variation is purchasable
+            purchase_quantity:
+              type: object
+              description: Purchase quantity limits
+              properties:
+                min_purchase:
+                  type: integer
+                  description: Minimum purchase quantity
+                max_purchase:
+                  type: integer
+                  description: Maximum purchase quantity allowed
+            rest_url:
+              type: string
+              description: REST URL for adding this variation to cart
+        meta_data:
+          type: array
+          description: Meta data
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              value:
+                type: string
+
+    ConnectedProduct:
+      type: object
+      description: CoCart v2 Connected Product (used for related, upsells, cross-sells)
+      properties:
+        id:
+          type: integer
+          description: Product ID
+        name:
+          type: string
+          description: Product name
+        permalink:
+          type: string
+          description: Product URL
+        price:
+          type: string
+          description: Product price
+        add_to_cart:
+          type: object
+          description: Add to cart information
+          properties:
+            text:
+              type: string
+              description: Add to cart button text
+            description:
+              type: string
+              description: Add to cart description
+            rest_url:
+              type: string
+              description: REST URL for adding this product to cart
+        rest_url:
+          type: string
+          description: REST URL for this product
+
+    ProductVariationAttribute:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Attribute ID.
+        name:
+          type: string
+          description: Attribute name.
+        option:
+          type: string
+          description: Selected attribute term name.
+
+    CartSession:
+      type: object
+      properties:
+        session_key:
+          type: string
+          description: Unique session key.
+        cart:
+          type: object
+          description: Cart data for this session.
+        customer:
+          type: object
+          description: Customer data for this session.
+        session_expiry:
+          type: string
+          format: date-time
+          description: Session expiry date.
+
+    LoginResponse:
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: Unique ID of the user on the site.
+        first_name:
+          type: string
+          description: The first name of the user (if any).
+        last_name:
+          type: string
+          description: The last name of the user (if any).
+        display_name:
+          type: string
+          description: The display name of the user (if any).
+        role:
+          type: string
+          description: The role type assigned to the user.
+        avatar_urls:
+          type: object
+          description: The avatar URLs of the user for each avatar size registered.
+          additionalProperties:
+            type: string
+        email:
+          type: string
+          description: The email address of the user.
+        extras:
+          type: object
+          description: Extra details added via the filter.
+          additionalProperties: true
+        dev_note:
+          type: string
+          description: A message to developers.
+
+    StoreInfo:
+      type: object
+      properties:
+        version:
+          type: string
+          description: CoCart version.
+        title:
+          type: string
+          description: Store title.
+        description:
+          type: string
+          description: Store description.
+        home_url:
+          type: string
+          description: Store home URL.
+        language:
+          type: string
+          description: Store language.
+        gmt_offset:
+          type: string
+          description: GMT offset.
+        timezone_string:
+          type: string
+          description: Timezone string.
+        store_address:
+          type: object
+          description: Store address information.
+        routes:
+          type: object
+          description: Available API routes.
+          additionalProperties: true
+
+    ErrorResponse:
+      type: object
+      description: Standard error response structure.
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code.
+          example: "cocart_invalid_parameter"
+        message:
+          type: string
+          description: Human-readable error message.
+          example: "Invalid parameter provided."
+        data:
+          type: object
+          description: Additional error data.
+          properties:
+            status:
+              type: integer
+              description: HTTP status code.
+              example: 400
+            params:
+              type: object
+              description: Parameter-specific error details.
+              additionalProperties: true
+          additionalProperties: true

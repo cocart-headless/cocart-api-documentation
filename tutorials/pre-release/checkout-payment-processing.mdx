@@ -1,0 +1,697 @@
+---
+title: "Payment Processing Fundamentals"
+sidebarTitle: "Payment Processing"
+description: "Understand payment method data structures, security patterns, and common integration approaches for checkout"
+icon: "credit-card"
+tag: "WIP"
+robots: "noindex, follow"
+---
+
+<Note>
+    This guide covers general payment processing concepts with CoCart Preview API. For specific gateway implementations, see our dedicated tutorials.
+</Note>
+
+## Overview
+
+The CoCart Checkout API supports various payment processing patterns, from simple server-side methods to complex client-side integrations. Understanding these fundamentals will help you implement any payment gateway effectively.
+
+## Payment Method Types
+
+### Server-Side Payment Methods
+
+These payment methods process entirely on the server and require minimal client-side code:
+
+<CardGroup cols={2}>
+  <Card title="Bank Transfer (BACS)" icon="building-columns">
+    Customer transfers money directly to your bank account
+  </Card>
+
+  <Card title="Check Payments" icon="money-check">
+    Customer mails a physical check for the order
+  </Card>
+
+  <Card title="Cash on Delivery" icon="hand-holding-dollar">
+    Payment collected when the order is delivered
+  </Card>
+
+  <Card title="Cryptocurrency" icon="bitcoin">
+    Various crypto payment gateways (BitPay, Coinbase, etc.)
+  </Card>
+</CardGroup>
+
+**Implementation**: Simply pass the payment method ID - no additional payment data required.
+
+```javascript
+const checkoutData = {
+    billing_address: billingAddress,
+    payment_method: 'bacs', // or 'cheque', 'cod', etc.
+    shipping_method: 'flat_rate:1'
+};
+```
+
+### Client-Side Payment Methods
+
+These require customer interaction and client-side processing before checkout:
+
+<CardGroup cols={2}>
+  <Card title="Credit Card Gateways" icon="credit-card">
+    Stripe, Square, Authorize.Net - require card tokenization
+  </Card>
+
+  <Card title="Digital Wallets" icon="wallet">
+    PayPal, Apple Pay, Google Pay - handle payment authorization
+  </Card>
+
+  <Card title="Buy Now, Pay Later" icon="calendar-days">
+    Klarna, Afterpay, Sezzle - require payment plan setup
+  </Card>
+
+  <Card title="Bank Payments" icon="university">
+    ACH, SEPA, Open Banking - require bank authorization
+  </Card>
+</CardGroup>
+
+**Implementation**: Requires direct gateway SDK integration, payment tokenization, and payment reference submission.
+
+## Payment Processing Approaches
+
+### Production Implementation (Recommended)
+
+For production applications, use direct gateway integration:
+
+<Tabs>
+  <Tab title="Credit Card Processing">
+    ```javascript
+    // Example: Stripe integration
+    const stripe = Stripe('pk_live_your_publishable_key'); // Match WooCommerce settings
+
+    // 1. Create payment method using gateway SDK
+    const {paymentMethod, error} = await stripe.createPaymentMethod({
+        type: 'card',
+        card: cardElement,
+        billing_details: billingData
+    });
+
+    if (error) {
+        throw new Error(error.message);
+    }
+
+    // 2. Submit checkout with payment method reference
+    const response = await fetch('/wp-json/cocart/preview/checkout', {
+        method: 'PUT',
+        headers: {
+            'Cart-Key': cartKey,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            billing_address: billingData,
+            payment_method: 'stripe',
+            payment_method_data: {
+                payment_method: paymentMethod.id // Only the reference
+            }
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error('Checkout failed');
+    }
+
+    return response.json();
+    ```
+  </Tab>
+
+  <Tab title="Digital Wallet Processing">
+    ```javascript
+    // Example: PayPal integration
+    paypal.Buttons({
+        createOrder: function(data, actions) {
+            const cartTotal = await getCartTotal();
+
+            return actions.order.create({
+                purchase_units: [{
+                    amount: {
+                        value: cartTotal.total,
+                        currency_code: cartTotal.currency
+                    }
+                }]
+            });
+        },
+
+        onApprove: async function(data, actions) {
+            const order = await actions.order.capture();
+
+            // Submit to CoCart with PayPal order data
+            const response = await fetch('/wp-json/cocart/preview/checkout', {
+                method: 'PUT',
+                headers: {
+                    'Cart-Key': cartKey,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    billing_address: billingData,
+                    payment_method: 'paypal',
+                    payment_method_data: {
+                        paypal_order_id: order.id,
+                        transaction_id: order.purchase_units[0].payments.captures[0].id
+                    }
+                })
+            });
+
+            return response.json();
+        }
+    }).render('#paypal-button-container');
+    ```
+  </Tab>
+
+  <Tab title="Server-Side Processing">
+    ```javascript
+    // Example: Bank transfer, check payments, etc.
+    const response = await fetch('/wp-json/cocart/preview/checkout', {
+        method: 'PUT',
+        headers: {
+            'Cart-Key': cartKey,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            billing_address: billingData,
+            payment_method: 'bacs', // or 'cheque', 'cod'
+            // No payment_method_data needed for server-side methods
+        })
+    });
+
+    return response.json();
+    ```
+  </Tab>
+</Tabs>
+
+### Development and Debugging
+
+For development purposes, admin users can access payment gateway debug information:
+
+```javascript
+// Admin-only: Get payment methods with debug info
+const response = await fetch('/wp-json/cocart/preview/checkout/payment-methods', {
+    headers: {
+        'Authorization': `Bearer ${adminJwtToken}`, // Admin user required
+        'Cart-Key': cartKey
+    }
+});
+
+const data = await response.json();
+
+if (data.debug_info) {
+    console.group('Gateway Debug Information');
+    console.warn('🚨 Debug info - DO NOT use in production');
+
+    Object.entries(data.debug_info.payment_context).forEach(([gateway, config]) => {
+        console.log(`${gateway}:`, config);
+    });
+
+    console.groupEnd();
+}
+```
+
+<Warning>
+Debug information is only available to users with `manage_options` capability and should never be used in production applications.
+</Warning>
+
+## Payment Method Data Structures
+
+Understanding how to structure payment data for different gateway types:
+
+### Credit Card Gateways
+
+For tokenized card payments (Stripe, Authorize.Net, Square):
+
+```javascript
+{
+    billing_address: { /* customer billing data */ },
+    payment_method: 'stripe',
+    payment_method_data: {
+        payment_method: 'pm_1234567890abcdef', // Stripe payment method ID
+        // OR for Authorize.Net:
+        // payment_nonce: 'nonce_from_acceptjs',
+        // OR for Square:
+        // source_id: 'source_id_from_square_sdk'
+    }
+}
+```
+
+### Digital Wallets
+
+For wallet-based payments (PayPal, Apple Pay, Google Pay):
+
+```javascript
+{
+    billing_address: { /* customer billing data */ },
+    payment_method: 'paypal',
+    payment_method_data: {
+        paypal_order_id: 'PAYPAL_ORDER_123',
+        paypal_payer_id: 'PAYER_ID_456',
+        transaction_id: 'TXN_789'
+    }
+}
+```
+
+### Server-Side Methods
+
+For methods processed entirely server-side:
+
+```javascript
+{
+    billing_address: { /* customer billing data */ },
+    payment_method: 'bacs', // or 'cheque', 'cod'
+    // No payment_method_data needed
+}
+```
+
+## Payment Method Configuration
+
+### Gateway Credential Alignment
+
+**Critical**: Frontend SDK credentials must match WooCommerce gateway settings:
+
+<CardGroup cols={2}>
+  <Card title="Stripe" icon="stripe">
+    **Frontend**: `Stripe('pk_live_abc123')`
+    **WooCommerce**: Same publishable key in Stripe settings
+  </Card>
+
+  <Card title="PayPal" icon="paypal">
+    **Frontend**: `client: {live: 'client_id_123'}`
+    **WooCommerce**: Same client ID in PayPal settings
+  </Card>
+
+  <Card title="Authorize.Net" icon="credit-card">
+    **Frontend**: `clientKey: 'public_key_123'`
+    **WooCommerce**: Same public client key in Auth.Net settings
+  </Card>
+
+  <Card title="Square" icon="square">
+    **Frontend**: `applicationId: 'app_id_123'`
+    **WooCommerce**: Same application ID in Square settings
+  </Card>
+</CardGroup>
+
+## Checkout Request Structure
+
+### Complete Checkout Example
+
+```javascript
+const checkoutData = {
+    // Required customer information
+    billing_address: {
+        first_name: "John",
+        last_name: "Doe",
+        email: "john@example.com",
+        address_1: "123 Main St",
+        city: "Anytown",
+        state: "CA",
+        postcode: "12345",
+        country: "US",
+        phone: "555-1234" // Optional but recommended
+    },
+
+    // Optional shipping address (if different from billing)
+    shipping_address: {
+        first_name: "John",
+        last_name: "Doe",
+        address_1: "456 Work St",
+        city: "Anytown",
+        state: "CA",
+        postcode: "12345",
+        country: "US"
+    },
+
+    payment_method: "stripe", // Gateway ID
+    shipping_method: "flat_rate:1", // Optional
+
+    // Gateway-specific payment data
+    payment_data: {
+        // See gateway-specific examples below
+    }
+};
+```
+
+### Gateway-Specific Payment Data
+
+<Tabs>
+  <Tab title="Stripe">
+    ```javascript
+    payment_data: {
+        payment_intent_id: "pi_1234567890",
+        payment_method_id: "pm_1234567890",
+        client_secret: "pi_1234567890_secret_xyz",
+
+        // Optional fields
+        receipt_email: "customer@example.com",
+        setup_future_usage: "off_session", // For saving payment methods
+        metadata: {
+            order_type: "online",
+            customer_notes: "Rush delivery"
+        }
+    }
+    ```
+  </Tab>
+
+  <Tab title="PayPal">
+    ```javascript
+    payment_data: {
+        paypal_order_id: "ORDER123456789",
+        paypal_payer_id: "PAYER123456789",
+        transaction_id: "TXN123456789",
+        payer_email: "customer@example.com",
+        payment_status: "COMPLETED",
+        gross_amount: "29.99",
+        currency: "USD",
+        payment_fee: "1.17" // Optional
+    }
+    ```
+  </Tab>
+
+  <Tab title="Square">
+    ```javascript
+    payment_data: {
+        source_id: "CARD_SOURCE_ID",
+        verification_token: "VERIFICATION_TOKEN",
+        billing_contact: {
+            given_name: "John",
+            family_name: "Doe",
+            email: "john@example.com"
+        },
+
+        // Optional fields
+        reference_id: "order_ref_123",
+        note: "Online order payment"
+    }
+    ```
+  </Tab>
+
+  <Tab title="Authorize.Net">
+    ```javascript
+    payment_data: {
+        data_descriptor: "COMMON.ACCEPT.INAPP.PAYMENT",
+        data_value: "eyJjb2RlIjoiNTBfMl8wNjAwMDUyN...",
+
+        // Optional fields for reference
+        card_last_four: "4242",
+        card_type: "visa",
+        expiry_month: "12",
+        expiry_year: "2025"
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Common Integration Patterns
+
+### Pattern 1: Simple Server-Side Payment
+
+For payment methods that don't require client-side processing:
+
+```javascript
+async function processSimplePayment(billingAddress, paymentMethod) {
+    const cartKey = localStorage.getItem('cart_key');
+
+    const response = await fetch('/wp-json/cocart/preview/checkout', {
+        method: 'PUT',
+        headers: {
+            'Cart-Key': cartKey,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            billing_address: billingAddress,
+            payment_method: paymentMethod // e.g., 'bacs', 'cheque', 'cod'
+        })
+    });
+
+    return handleCheckoutResponse(response);
+}
+```
+
+### Pattern 2: Token-Based Payment
+
+For gateways that tokenize payment methods:
+
+```javascript
+async function processTokenBasedPayment(billingAddress, paymentMethod, paymentToken) {
+    const cartKey = localStorage.getItem('cart_key');
+
+    const response = await fetch('/wp-json/cocart/preview/checkout', {
+        method: 'PUT',
+        headers: {
+            'Cart-Key': cartKey,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            billing_address: billingAddress,
+            payment_method: paymentMethod,
+            payment_data: {
+                token: paymentToken,
+                // Add other gateway-specific fields
+            }
+        })
+    });
+
+    return handleCheckoutResponse(response);
+}
+```
+
+### Pattern 3: Multi-Step Payment Flow
+
+For complex payment flows with multiple client-server interactions:
+
+```javascript
+async function processMultiStepPayment(billingAddress, paymentMethod) {
+    try {
+        // Step 1: Create payment context
+        const context = await createPaymentContext(paymentMethod);
+
+        // Step 2: Initialize client-side payment processing
+        const paymentResult = await initializePaymentGateway(context);
+
+        // Step 3: Collect payment information from user
+        const paymentData = await collectPaymentData(paymentResult);
+
+        // Step 4: Process payment with gateway
+        const processedPayment = await processPaymentWithGateway(paymentData);
+
+        // Step 5: Submit checkout with payment data
+        const checkoutResult = await submitCheckout(billingAddress, paymentMethod, processedPayment);
+
+        return checkoutResult;
+
+    } catch (error) {
+        console.error('Multi-step payment error:', error);
+        throw error;
+    }
+}
+```
+
+## Error Handling
+
+### Common Error Types
+
+<CardGroup cols={2}>
+  <Card title="Validation Errors" icon="triangle-exclamation">
+    Missing required fields, invalid data formats
+  </Card>
+
+  <Card title="Payment Errors" icon="credit-card">
+    Declined cards, insufficient funds, gateway issues
+  </Card>
+
+  <Card title="Network Errors" icon="wifi">
+    Timeout, connection issues, server errors
+  </Card>
+
+  <Card title="Business Logic Errors" icon="store">
+    Out of stock, invalid shipping, cart changes
+  </Card>
+</CardGroup>
+
+### Error Response Structure
+
+```json
+{
+    "code": "cocart_payment_failed",
+    "message": "Payment processing failed",
+    "data": {
+        "status": 400,
+        "error_type": "payment_error",
+        "gateway_error": {
+            "code": "card_declined",
+            "message": "Your card was declined",
+            "decline_code": "insufficient_funds"
+        }
+    }
+}
+```
+
+### Error Handling Implementation
+
+```javascript
+async function handleCheckoutResponse(response) {
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new CheckoutError(result);
+    }
+
+    return result;
+}
+
+class CheckoutError extends Error {
+    constructor(errorResponse) {
+        super(errorResponse.message || 'Checkout failed');
+        this.code = errorResponse.code;
+        this.data = errorResponse.data;
+        this.status = errorResponse.data?.status || 400;
+    }
+
+    isPaymentError() {
+        return this.data?.error_type === 'payment_error';
+    }
+
+    isValidationError() {
+        return this.data?.error_type === 'validation_error';
+    }
+
+    getGatewayError() {
+        return this.data?.gateway_error;
+    }
+
+    getDisplayMessage() {
+        // Return user-friendly error message
+        const gatewayError = this.getGatewayError();
+
+        if (gatewayError) {
+            switch (gatewayError.code) {
+                case 'card_declined':
+                    return 'Your card was declined. Please try a different payment method.';
+                case 'insufficient_funds':
+                    return 'Insufficient funds. Please check your account balance.';
+                case 'expired_card':
+                    return 'Your card has expired. Please use a different card.';
+                default:
+                    return gatewayError.message || this.message;
+            }
+        }
+
+        return this.message;
+    }
+}
+```
+
+## Best Practices
+
+### Security
+
+<AccordionGroup>
+  <Accordion title="Client-Side Security">
+    - Never expose secret keys in client-side code
+    - Use HTTPS for all API requests
+    - Validate all input data on both client and server
+    - Implement proper CORS policies
+    - Use Content Security Policy (CSP) headers
+  </Accordion>
+
+  <Accordion title="PCI Compliance">
+    - Never store credit card numbers
+    - Use gateway tokenization for card storage
+    - Implement proper data encryption
+    - Follow PCI DSS requirements
+    - Regular security audits and testing
+  </Accordion>
+</AccordionGroup>
+
+### Performance
+
+<AccordionGroup>
+  <Accordion title="Client-Side Performance">
+    - Load payment SDKs asynchronously
+    - Cache payment contexts when possible
+    - Minimize API calls during checkout
+    - Implement proper loading states
+    - Use request timeouts
+  </Accordion>
+
+  <Accordion title="Server-Side Performance">
+    - Cache payment method configurations
+    - Use database transactions for checkout
+    - Implement proper error logging
+    - Monitor gateway response times
+    - Set up proper webhook handling
+  </Accordion>
+</AccordionGroup>
+
+### User Experience
+
+<AccordionGroup>
+  <Accordion title="Form Design">
+    - Use progressive disclosure for complex forms
+    - Implement real-time validation
+    - Provide clear error messages
+    - Support keyboard navigation
+    - Test with screen readers
+  </Accordion>
+
+  <Accordion title="Payment Flow">
+    - Show clear progress indicators
+    - Handle payment redirects gracefully
+    - Provide payment method options
+    - Support guest and registered users
+    - Implement proper success/failure flows
+  </Accordion>
+</AccordionGroup>
+
+## Testing Strategies
+
+### Development Testing
+
+```javascript
+// Mock payment context for testing
+const mockPaymentContext = {
+    gateway_id: 'stripe',
+    title: 'Credit Card (Test)',
+    cart_total: '29.99',
+    currency: 'USD',
+    client_secret: 'pi_test_1234567890_secret_test',
+    public_key: 'pk_test_1234567890'
+};
+
+// Test payment processing with mock data
+async function testPaymentProcessing() {
+    try {
+        const result = await processCheckout({
+            billing_address: getMockBillingAddress(),
+            payment_method: 'stripe',
+            payment_data: getMockPaymentData()
+        });
+
+        console.log('Test checkout successful:', result);
+    } catch (error) {
+        console.error('Test checkout failed:', error);
+    }
+}
+```
+
+### Integration Testing
+
+- Test with gateway sandbox/test environments
+- Verify webhook endpoint functionality
+- Test error scenarios and edge cases
+- Validate payment data structure
+- Test across different browsers and devices
+
+### Production Monitoring
+
+- Monitor checkout success/failure rates
+- Track gateway response times
+- Log payment errors for analysis
+- Set up alerts for critical failures
+- Monitor webhook delivery status
+
+<Note>
+Remember that payment processing involves sensitive financial data. Always prioritize security, follow industry best practices, and thoroughly test your implementation before going live.
+</Note>

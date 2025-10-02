@@ -1,0 +1,62 @@
+---
+title: "Cart Key"
+description: "Understand what the cart key is and how to use it."
+icon: "key"
+robots: "noindex, follow"
+tag: "Updated"
+---
+
+## What is a Cart Key?
+
+The cart key is a unique identifier for the cart session and is used to retrieve the cart data from the database when making requests to the Cart API.
+
+<Note>
+    It is important to note that the cart key is not the same as the user ID, but it can be related to the user ID if the user is authenticated.
+</Note>
+
+When a user adds items to their cart or makes changes to it such as removing items, applying coupons, and updating quantities, the cart key is used to store the cart data in the database.
+
+<Warning>
+    If you try to identify a registered user via the cart key then you will be asked to authenticate as that user instead.
+</Warning>
+
+## Finding the Cart Key
+
+You can find the cart key in two places. Either returned in the cart response called `cart_key` or via the returned headers called `Cart-Key`. 
+
+## Using the Cart Key
+
+Once you have the cart key, you can then use it to set the `cart_key` as a global parameter with any of the Cart API routes to load that cart or pass it as a header.
+
+<Tip>
+    The use of the cart key is only for guest customers. If you are authenticating the cart API then you will not need to set the cart key as it will be set automatically for you.
+</Tip>
+
+Without the cart key set for other Cart API routes, any requests made will not be applied to the appropriate cart session. This is partially important when adding, updating or removing items to and from the cart as such. The same for coupons, fees and other cart related requests made.
+
+<Warning>
+    The <code>cart_key</code> parameter is a global parameter so it must be queried instead of being added as body parameter. Otherwise it will not update the appropriate cart and will assume you are creating a new session.
+</Warning>
+
+## Creating a Cart Key Manually
+
+You can create your own cart key but, it cannot be longer than **42 characters** as that is the limit for storing the key in the database.
+
+### HTTP request ###
+
+<Info>
+    /wp-json/cocart/v2/cart?cart_key=mycartkey123
+</Info>
+
+<Note>
+    If you do create your own cart key, it is best that you do so when adding the first item to the cart in order to update the correct cart from the start.
+</Note>
+
+## Troubleshoot
+
+<AccordionGroup>
+    <Accordion title="Why am I NOT seeing the 'Cart-Key' header returning?">
+        If the header is not returning then you will need to enable CORS so that the header is exposed.
+    </Accordion>
+
+</AccordionGroup>

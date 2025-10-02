@@ -1,0 +1,201 @@
+openapi: 3.0.3
+
+info:
+    title: CoCart - Products API v2
+    description: Decouple your WooCommerce store with ease with our developer friendly REST API extension.
+    termsOfService: http://cocartapi.com/terms-of-conditions-polar/
+    contact:
+        email: support@cocartapi.com
+    license:
+        name: GNU General Public License v3.0
+        url: http://www.gnu.org/licenses/gpl-3.0.html
+    version: "4.4" # Version of core plugin the spec was last updated from.
+
+externalDocs:
+    description: Find out more about CoCart API
+    url: https://docs.cocartapi.com
+
+security:
+    - {}
+    - basicAuth: []
+    - bearerAuth: []
+
+servers:
+    - url: "{protocol}://{host}/wp-json/cocart/v2"
+      description: API v2
+      variables:
+          protocol:
+              enum: [http, https]
+              default: https
+          host:
+              default: example-store.com
+              description: Your store domain
+
+tags:
+    - name: shipping
+      description: Operations for managing shipping methods and rates
+
+components:
+    securitySchemes:
+        basicAuth:
+            type: http
+            scheme: basic
+            description: Basic authentication with username and password
+        bearerAuth:
+            type: http
+            scheme: bearer
+            description: Bearer authentication with JWT token
+            bearerFormat: JWT
+
+    schemas:
+        Error:
+            type: object
+            properties:
+                code:
+                    type: string
+                message:
+                    type: string
+                status:
+                    type: integer
+                data:
+                    type: object
+
+        ProductShippingPackage:
+            type: object
+            properties:
+                rates:
+                    type: object
+                    additionalProperties:
+                        type: object
+                        properties:
+                            key:
+                                type: string
+                                description: Shipping rate key
+                            method_id:
+                                type: string
+                                description: Shipping method ID
+                            instance_id:
+                                type: integer
+                                description: Shipping method instance ID
+                            label:
+                                type: string
+                                description: Shipping method label
+                            cost:
+                                type: string
+                                description: Shipping method cost
+                            html:
+                                type: string
+                                description: Formatted shipping method label
+                            taxes:
+                                type: string
+                                description: Shipping method taxes
+                            meta_data:
+                                type: array
+                                items:
+                                    type: object
+                                description: Shipping method meta data
+                formatted_destination:
+                    type: string
+                    description: Formatted shipping destination address
+
+        ProductShippingRatesResponse:
+            type: object
+            properties:
+                item_key:
+                    type: string
+                    description: Unique key generated for the item
+                id:
+                    type: integer
+                    description: Product ID
+                parent_id:
+                    type: integer
+                    description: Parent product ID if variation
+                name:
+                    type: string
+                    description: Product name
+                type:
+                    type: string
+                    description: Product type
+                item_match:
+                    type: boolean
+                    description: Whether the generated item key matches the cart item key
+                packages:
+                    type: object
+                    additionalProperties:
+                        $ref: "#/components/schemas/ProductShippingPackage"
+
+    responses:
+        Error400:
+            description: Bad request
+            content:
+                application/json:
+                    schema:
+                        $ref: "#/components/schemas/Error"
+
+        Error404:
+            description: Not found
+            content:
+                application/json:
+                    schema:
+                        $ref: "#/components/schemas/Error"
+
+paths:
+    /products/{id}/shipping-rates:
+        get:
+            tags:
+                - shipping
+            summary: Get shipping rates for a specific product (CoCart Plus v2+ required)
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  description: Unique identifier for the product or variation ID
+                  schema:
+                      type: string
+                - name: quantity
+                  in: query
+                  required: false
+                  description: Quantity of this item to calculate shipping for
+                  schema:
+                      type: string
+                      default: "1"
+                - name: variation
+                  in: query
+                  required: false
+                  description: Variable attributes that identify the variation of the item
+                  schema:
+                      type: object
+                      additionalProperties:
+                          type: string
+                - name: item_data
+                  in: query
+                  required: false
+                  description: Additional item data passed to make item unique
+                  schema:
+                      type: object
+                      additionalProperties: true
+            responses:
+                "200":
+                    description: Shipping rates calculated successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ProductShippingRatesResponse"
+                "403":
+                    description: External or grouped products not allowed
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"
+                "404":
+                    description: Product not found or invalid
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"
+                "500":
+                    description: Failed to calculate shipping rates
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"

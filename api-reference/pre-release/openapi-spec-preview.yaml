@@ -1,0 +1,1869 @@
+openapi: 3.0.3
+
+info:
+  title: CoCart Preview API
+  description: |
+    CoCart Preview provides enhanced REST API endpoints for WooCommerce headless e-commerce solutions.
+    This API extends CoCart with additional functionality for checkout, customer account management, and order handling.
+
+    ## Authentication
+
+    The API supports multiple authentication methods:
+    - **Cart Key**: For guest customers, pass the cart key via `Cart-Key` header or `cart_key` parameter
+    - **Basic Auth**: For registered customers using username/password
+    - **JWT**: For registered customers using JWT tokens (requires JWT plugin)
+    - **Session**: For logged-in WordPress users
+
+    ## Base URL
+
+    All API endpoints are prefixed with `/wp-json/cocart/preview/`
+
+    ## Response Format
+
+    All responses follow the CoCart standard format with consistent error handling and data structure.
+  termsOfService: http://cocartapi.com/terms-of-conditions-polar/
+  contact:
+      email: support@cocartapi.com
+  license:
+      name: GNU General Public License v3.0
+      url: http://www.gnu.org/licenses/gpl-3.0.html
+
+externalDocs:
+    description: Find out more about CoCart API
+    url: https://docs.cocartapi.com
+
+security:
+  - CartKey: []
+  - basicAuth: []
+  - bearerAuth: []
+
+servers:
+    - url: "{protocol}://{host}/wp-json/cocart/preview"
+      description: API Preview
+      variables:
+          protocol:
+              enum: [http, https]
+              default: https
+          host:
+              default: example-store.com
+              description: Your store domain
+
+tags:
+  - name: Checkout
+    description: Complete checkout process including payment and order creation
+  - name: My Account
+    description: Customer account information and profile management
+  - name: My Address
+    description: Customer billing and shipping address management
+  - name: My Orders
+    description: Customer order history and details
+  - name: My Downloads
+    description: Customer digital downloads
+  - name: My Subscriptions
+    description: Customer subscription management
+
+paths:
+  /checkout:
+    get:
+      tags:
+        - Checkout
+      summary: Get checkout data
+      description: Retrieve current checkout information including cart contents, totals, addresses, and available shipping/payment methods
+      operationId: getCheckoutData
+      responses:
+        '200':
+          description: Checkout data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckoutData'
+              examples:
+                checkoutData:
+                  $ref: '#/components/examples/CheckoutDataExample'
+        '400':
+          description: Bad request - cart key required or cart is empty
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Checkout
+      summary: Update checkout data
+      description: Update checkout information such as billing/shipping addresses, payment method, or shipping method
+      operationId: updateCheckoutData
+      requestBody:
+        description: Checkout data to update
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckoutUpdateRequest'
+      responses:
+        '200':
+          description: Checkout data updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "Checkout data updated successfully"
+        '400':
+          description: Bad request - invalid data provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Checkout
+      summary: Process checkout
+      description: Complete the checkout process, create order, and process payment
+      operationId: processCheckout
+      requestBody:
+        description: Checkout completion data
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckoutProcessRequest'
+      responses:
+        '200':
+          description: Checkout processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckoutProcessResponse'
+              examples:
+                checkoutProcessed:
+                  $ref: '#/components/examples/CheckoutProcessResponseExample'
+        '400':
+          description: Bad request - validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /checkout/payment-methods:
+    get:
+      tags:
+        - Checkout
+      summary: Get available payment methods
+      description: Retrieve all available payment gateways with their configuration hints
+      operationId: getPaymentMethods
+      responses:
+        '200':
+          description: Payment methods retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethods'
+              examples:
+                paymentMethods:
+                  $ref: '#/components/examples/PaymentMethodsExample'
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /checkout/payment-context:
+    post:
+      tags:
+        - Checkout
+      summary: Create payment context
+      description: Create a secure payment context for client-side payment processing
+      operationId: createPaymentContext
+      requestBody:
+        description: Payment method for context creation
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentContextRequest'
+      responses:
+        '200':
+          description: Payment context created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentContext'
+              examples:
+                paymentContext:
+                  $ref: '#/components/examples/PaymentContextExample'
+        '400':
+          description: Bad request - invalid payment method or empty cart
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /my-account:
+    get:
+      tags:
+        - My Account
+      summary: Get customer account details
+      description: Retrieve customer account information including profile data and order statistics
+      operationId: getMyAccount
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Account details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerAccount'
+              examples:
+                customerAccount:
+                  $ref: '#/components/examples/CustomerAccountExample'
+        '403':
+          description: Forbidden - user must be logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - My Account
+      summary: Update customer account
+      description: Update customer account information including name, email, and password
+      operationId: updateMyAccount
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      requestBody:
+        description: Account data to update
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountUpdateRequest'
+      responses:
+        '200':
+          description: Account updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "Account details updated successfully"
+        '400':
+          description: Bad request - validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - user must be logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /my-account/address:
+    get:
+      tags:
+        - My Address
+      summary: Get customer addresses
+      description: Retrieve customer billing and shipping addresses
+      operationId: getMyAddresses
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Addresses retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerAddresses'
+              examples:
+                addresses:
+                  value:
+                    billing:
+                      first_name: "John"
+                      last_name: "Doe"
+                      company: ""
+                      address_1: "123 Main St"
+                      address_2: "Apt 4B"
+                      city: "Anytown"
+                      state: "CA"
+                      postcode: "12345"
+                      country: "US"
+                      phone: "+1234567890"
+                      email: "john@example.com"
+                    shipping:
+                      first_name: "John"
+                      last_name: "Doe"
+                      company: ""
+                      address_1: "123 Main St"
+                      address_2: "Apt 4B"
+                      city: "Anytown"
+                      state: "CA"
+                      postcode: "12345"
+                      country: "US"
+        '403':
+          description: Forbidden - user must be logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /my-account/orders:
+    get:
+      tags:
+        - My Orders
+      summary: Get customer orders
+      description: Retrieve customer order history with pagination
+      operationId: getMyOrders
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: The pagination of orders to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 1
+        - name: per_page
+          in: query
+          description: Limit amount of orders to return per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+        - name: order
+          in: query
+          description: Order sort attribute ascending or descending
+          required: false
+          schema:
+            type: string
+            enum: [ASC, DESC]
+            default: DESC
+      responses:
+        '200':
+          description: Orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerOrders'
+              examples:
+                customerOrders:
+                  $ref: '#/components/examples/CustomerOrdersExample'
+        '403':
+          description: Forbidden - user must be logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /my-account/orders/{id}:
+    get:
+      tags:
+        - My Orders
+      summary: Get specific order details
+      description: Retrieve detailed information about a specific customer order
+      operationId: getMyOrder
+      security:
+        - {}
+        - basicAuth: []
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier for the order
+          required: true
+          schema:
+            type: integer
+        - name: email
+          in: query
+          description: The orders billing email address
+          required: false
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: Order details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerOrder'
+              examples:
+                customerOrder:
+                  $ref: '#/components/examples/CustomerOrderExample'
+        '403':
+          description: Forbidden - user must be logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /my-account/orders/{id}/downloads:
+    get:
+      tags:
+        - My Orders
+      summary: Get order downloads
+      description: Retrieve downloadable items from a specific order
+      operationId: getMyOrderDownloads
+      security:
+        - {}
+        - basicAuth: []
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier for the order
+          required: true
+          schema:
+            type: integer
+        - name: email
+          in: query
+          description: The orders billing email address
+          required: false
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: Order downloads retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerDownloads'
+              examples:
+                downloads:
+                  $ref: '#/components/examples/CustomerDownloadsExample'
+        '403':
+          description: Forbidden - user must be logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Order not found or no downloads available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /my-account/downloads:
+    get:
+      tags:
+        - My Downloads
+      summary: Get customer downloads
+      description: Retrieve all available downloads for the customer
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      operationId: getMyDownloads
+      responses:
+        '200':
+          description: Downloads retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerDownloads'
+              examples:
+                downloads:
+                  $ref: '#/components/examples/CustomerDownloadsExample'
+        '403':
+          description: Forbidden - user must be logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /my-account/subscriptions:
+    get:
+      tags:
+        - My Subscriptions
+      summary: Get customer subscriptions
+      description: Retrieve customer subscription list with pagination
+      operationId: getMySubscriptions
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: The pagination of subscriptions to return
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Limit of subscriptions to return per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: order
+          in: query
+          description: Order sort attribute ascending or descending
+          required: false
+          schema:
+            type: string
+            enum: [ASC, DESC]
+            default: DESC
+      responses:
+        '200':
+          description: Subscriptions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerSubscriptions'
+              examples:
+                subscriptions:
+                  $ref: '#/components/examples/CustomerSubscriptionsExample'
+        '403':
+          description: Forbidden - user must be logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /my-account/subscriptions/{id}:
+    get:
+      tags:
+        - My Subscriptions
+      summary: Get specific subscription details
+      description: Retrieve detailed information about a specific customer subscription
+      operationId: getMySubscription
+      security:
+        - {}
+        - basicAuth: []
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier for the subscription
+          required: true
+          schema:
+            type: integer
+        - name: email
+          in: query
+          description: The subscription billing email address
+          required: false
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: Subscription details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerSubscription'
+              examples:
+                subscription:
+                  $ref: '#/components/examples/CustomerSubscriptionExample'
+        '403':
+          description: Forbidden - user must be logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Subscription not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    CartKey:
+      type: apiKey
+      in: header
+      name: Cart-Key
+      description: Cart key for guest customers
+    basicAuth:
+      type: http
+      scheme: basic
+      description: WordPress username and password
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Bearer authentication with JWT token
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Error code identifier
+        message:
+          type: string
+          description: Human-readable error message
+        data:
+          type: object
+          description: Additional error data
+          properties:
+            status:
+              type: integer
+              description: HTTP status code
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          description: Success message
+
+    BillingAddress:
+      type: object
+      properties:
+        first_name:
+          type: string
+          description: First name
+        last_name:
+          type: string
+          description: Last name
+        company:
+          type: string
+          description: Company name
+        address_1:
+          type: string
+          description: Address line 1
+        address_2:
+          type: string
+          description: Address line 2
+        city:
+          type: string
+          description: City name
+        state:
+          type: string
+          description: State/County
+        postcode:
+          type: string
+          description: Postal code
+        country:
+          type: string
+          description: Country code
+        phone:
+          type: string
+          description: Phone number
+        email:
+          type: string
+          format: email
+          description: Email address
+
+    ShippingAddress:
+      type: object
+      properties:
+        first_name:
+          type: string
+          description: First name
+        last_name:
+          type: string
+          description: Last name
+        company:
+          type: string
+          description: Company name
+        address_1:
+          type: string
+          description: Address line 1
+        address_2:
+          type: string
+          description: Address line 2
+        city:
+          type: string
+          description: City name
+        state:
+          type: string
+          description: State/County
+        postcode:
+          type: string
+          description: Postal code
+        country:
+          type: string
+          description: Country code
+
+    CartItem:
+      type: object
+      properties:
+        key:
+          type: string
+          description: Cart item key
+        product_id:
+          type: integer
+          description: Product ID
+        variation_id:
+          type: integer
+          description: Variation ID (if applicable)
+        quantity:
+          type: integer
+          description: Item quantity
+        line_total:
+          type: string
+          description: Line total amount
+        line_subtotal:
+          type: string
+          description: Line subtotal amount
+        product_name:
+          type: string
+          description: Product name
+        product_title:
+          type: string
+          description: Product title
+        product_price:
+          type: string
+          description: Product price
+
+    CartTotals:
+      type: object
+      properties:
+        subtotal:
+          type: string
+          description: Cart subtotal
+        subtotal_tax:
+          type: string
+          description: Cart subtotal tax
+        shipping_total:
+          type: string
+          description: Shipping total
+        shipping_tax:
+          type: string
+          description: Shipping tax
+        discount_total:
+          type: string
+          description: Discount total
+        discount_tax:
+          type: string
+          description: Discount tax
+        cart_contents_total:
+          type: string
+          description: Cart contents total
+        cart_contents_tax:
+          type: string
+          description: Cart contents tax
+        fee_total:
+          type: string
+          description: Fee total
+        fee_tax:
+          type: string
+          description: Fee tax
+        total:
+          type: string
+          description: Grand total
+        total_tax:
+          type: string
+          description: Total tax
+
+    ShippingMethod:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Shipping method ID
+        label:
+          type: string
+          description: Shipping method label
+        cost:
+          type: string
+          description: Shipping cost
+        method_id:
+          type: string
+          description: Base method ID
+        instance_id:
+          type: string
+          description: Method instance ID
+
+    PaymentMethodConfig:
+      type: object
+      properties:
+        test_mode:
+          type: boolean
+          description: Whether gateway is in test mode
+        is_connected:
+          type: boolean
+          description: Whether gateway is properly configured
+        supports_tokenization:
+          type: boolean
+          description: Whether gateway supports tokenization
+        supports_refunds:
+          type: boolean
+          description: Whether gateway supports refunds
+        supports_subscriptions:
+          type: boolean
+          description: Whether gateway supports subscriptions
+        requires_billing_address:
+          type: boolean
+          description: Whether gateway requires billing address
+
+    PaymentMethod:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Payment method ID
+        title:
+          type: string
+          description: Payment method title
+        description:
+          type: string
+          description: Payment method description
+        supports:
+          type: array
+          items:
+            type: string
+          description: Supported features
+        has_fields:
+          type: boolean
+          description: Whether method has input fields
+        order_button_text:
+          type: string
+          description: Order button text
+        method_title:
+          type: string
+          description: Method title
+        method_description:
+          type: string
+          description: Method description
+        config:
+          $ref: '#/components/schemas/PaymentMethodConfig'
+
+    CheckoutData:
+      type: object
+      properties:
+        cart_key:
+          type: string
+          description: Unique identifier for the cart session
+          nullable: true
+        cart_hash:
+          type: string
+          description: MD5 hash of cart contents
+        customer_id:
+          type: integer
+          description: Customer ID, if logged in
+        billing_address:
+          $ref: '#/components/schemas/BillingAddress'
+        shipping_address:
+          $ref: '#/components/schemas/ShippingAddress'
+        cart_contents:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/CartItem'
+          description: Cart contents with product details
+        cart_totals:
+          $ref: '#/components/schemas/CartTotals'
+        shipping_methods:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ShippingMethod'
+          description: Available shipping methods
+        needs_payment:
+          type: boolean
+          description: Whether the cart needs payment
+        needs_shipping:
+          type: boolean
+          description: Whether the cart needs shipping
+        payment_method:
+          type: string
+          description: Selected payment method
+
+    CheckoutUpdateRequest:
+      type: object
+      properties:
+        billing_address:
+          $ref: '#/components/schemas/BillingAddress'
+        shipping_address:
+          $ref: '#/components/schemas/ShippingAddress'
+        payment_method:
+          type: string
+          description: Payment method ID
+        shipping_method:
+          type: string
+          description: Shipping method ID
+
+    CheckoutProcessRequest:
+      type: object
+      required:
+        - billing_address
+      properties:
+        billing_address:
+          $ref: '#/components/schemas/BillingAddress'
+        shipping_address:
+          $ref: '#/components/schemas/ShippingAddress'
+        payment_method:
+          type: string
+          description: Payment method ID
+        shipping_method:
+          type: string
+          description: Shipping method ID
+
+    CheckoutProcessResponse:
+      type: object
+      properties:
+        order_id:
+          type: integer
+          description: Created order ID
+        status:
+          type: string
+          description: Order status
+        order_key:
+          type: string
+          description: Order key
+        order_number:
+          type: string
+          description: Order number
+        payment_result:
+          type: object
+          properties:
+            payment_status:
+              type: string
+              enum: [success, failed, no_payment_required]
+            redirect_url:
+              type: string
+              format: uri
+              description: Redirect URL after payment
+            message:
+              type: string
+              description: Payment message
+        customer_id:
+          type: integer
+          description: Customer ID
+        billing_address:
+          $ref: '#/components/schemas/BillingAddress'
+        shipping_address:
+          $ref: '#/components/schemas/ShippingAddress'
+        cart_key:
+          type: string
+          nullable: true
+          description: Cart key (null after successful checkout)
+
+    PaymentMethods:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/PaymentMethod'
+
+    PaymentContextRequest:
+      type: object
+      required:
+        - payment_method
+      properties:
+        payment_method:
+          type: string
+          description: Payment method ID
+
+    PaymentContext:
+      type: object
+      properties:
+        gateway_id:
+          type: string
+          description: Payment gateway ID
+        title:
+          type: string
+          description: Payment gateway title
+        cart_total:
+          type: string
+          description: Cart total amount
+        currency:
+          type: string
+          description: Currency code
+        client_secret:
+          type: string
+          description: Client secret for payment processing (if applicable)
+        payment_intent_id:
+          type: string
+          description: Payment intent ID (if applicable)
+        public_key:
+          type: string
+          description: Public key for client-side processing (if applicable)
+
+    CustomerAccount:
+      type: object
+      properties:
+        user:
+          type: object
+          description: User account information
+          properties:
+            id:
+              type: integer
+              description: Unique identifier for the user
+              readOnly: true
+            date_registered:
+              type: string
+              format: date-time
+              description: User registration date
+              readOnly: true
+            email:
+              type: string
+              format: email
+              description: Email address
+              readOnly: true
+            first_name:
+              type: string
+              description: First name
+              readOnly: true
+            last_name:
+              type: string
+              description: Last name
+              readOnly: true
+            display_name:
+              type: string
+              description: Display name
+              readOnly: true
+            addresses:
+              type: object
+              description: Customer addresses
+              readOnly: true
+              properties:
+                billing:
+                  $ref: '#/components/schemas/BillingAddress'
+                shipping:
+                  $ref: '#/components/schemas/ShippingAddress'
+            orders_count:
+              type: integer
+              description: Total number of orders
+              readOnly: true
+            total_spent:
+              type: string
+              description: Total amount spent
+              readOnly: true
+            is_paying_customer:
+              type: boolean
+              description: Whether the customer has made any purchase
+              readOnly: true
+            avatar_url:
+              type: string
+              format: uri
+              description: Avatar URL
+              readOnly: true
+        recent_order:
+          type: object
+          description: Most recent order information
+          readOnly: true
+          properties:
+            order_id:
+              type: integer
+              nullable: true
+              description: Most recent order ID
+            order_date:
+              type: string
+              nullable: true
+              format: date-time
+              description: Most recent order date
+            order_data:
+              type: string
+              format: uri
+              description: Link to order details
+        meta:
+          type: object
+          description: Additional customer metadata
+          readOnly: true
+          properties:
+            is_customer_outside_base:
+              type: boolean
+              description: Whether the customer is outside the base location
+            is_vat_exempt:
+              type: boolean
+              description: Whether the customer is VAT exempt
+        extensions:
+          type: object
+          description: Extension data
+          readOnly: true
+          additionalProperties: true
+
+    AccountUpdateRequest:
+      type: object
+      required:
+        - account_first_name
+        - account_last_name
+        - account_display_name
+        - account_email
+      properties:
+        account_first_name:
+          type: string
+          description: First name
+        account_last_name:
+          type: string
+          description: Last name
+        account_display_name:
+          type: string
+          description: Display name
+        account_email:
+          type: string
+          format: email
+          description: Email address
+        password_current:
+          type: string
+          description: Current password (required if changing password)
+        password_1:
+          type: string
+          description: New password
+        password_2:
+          type: string
+          description: Confirm new password (must match password_1)
+
+    CustomerAddresses:
+      type: object
+      properties:
+        billing:
+          $ref: '#/components/schemas/BillingAddress'
+        shipping:
+          $ref: '#/components/schemas/ShippingAddress'
+
+    Pagination:
+      type: object
+      properties:
+        previous:
+          type: string
+          format: uri
+          description: Previous page URL
+        next:
+          type: string
+          format: uri
+          description: Next page URL
+
+    OrderAction:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          description: Action URL
+        name:
+          type: string
+          description: Action name
+
+    OrderSummary:
+      type: object
+      properties:
+        order_id:
+          type: integer
+          description: Order ID
+        order_status:
+          type: string
+          description: Order status
+        order_date:
+          type: string
+          description: Order date
+        item_count:
+          type: integer
+          description: Number of items in order
+        order_total:
+          type: string
+          description: Order total
+        order_actions:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/OrderAction'
+
+    CustomerOrders:
+      type: object
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderSummary'
+          description: List of customer orders
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+          description: Pagination information
+
+    OrderItem:
+      type: object
+      properties:
+        item_id:
+          type: integer
+          description: Item ID
+        product_id:
+          type: integer
+          description: Product ID
+        variation_id:
+          oneOf:
+            - type: integer
+            - type: string
+          description: Variation ID (integer for existing variations, string for deleted variations)
+        product_image:
+          type: string
+          format: uri
+          description: Product image URL
+        product_name:
+          type: string
+          description: Product name
+        product_title:
+          type: string
+          description: Product title
+        product_type:
+          type: string
+          description: Product type
+        sku:
+          type: string
+          description: Product SKU
+        quantity:
+          type: string
+          description: Item quantity
+        subtotal:
+          type: string
+          description: Item subtotal
+        purchase_note:
+          type: string
+          description: Purchase note
+        refunded_qty:
+          type: string
+          description: Refunded quantity
+        meta:
+          type: object
+          description: Item metadata
+        link:
+          type: string
+          format: uri
+          description: Link to product
+
+    OrderTotal:
+      type: object
+      properties:
+        label:
+          type: string
+          description: Total label
+        value:
+          type: string
+          description: Total value
+
+    OrderNote:
+      type: object
+      properties:
+        date:
+          type: string
+          description: Note date
+        note:
+          type: string
+          description: Note content
+
+    CustomerOrder:
+      type: object
+      properties:
+        order_id:
+          type: integer
+          description: Order ID
+        order_number:
+          type: string
+          description: Order number
+        order_parent:
+          type: integer
+          description: Parent order ID
+        order_date:
+          type: string
+          description: Order date
+        order_status:
+          type: string
+          description: Order status
+        order_currency:
+          type: string
+          description: Order currency
+        billing_address:
+          type: string
+          description: Formatted billing address as comma-separated string (br tags replaced with commas)
+        shipping_address:
+          type: string
+          description: Formatted shipping address as comma-separated string (br tags replaced with commas)
+        phone:
+          type: string
+          description: Phone number
+        email:
+          type: string
+          format: email
+          description: Email address
+        ship_to_billing:
+          type: boolean
+          description: Whether shipping to billing address
+        items:
+          type: array
+          description: List of order items (converted from object to array)
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        totals:
+          type: object
+          description: Order totals with renamed keys (cart_subtotal→subtotal, order_subtotal→total)
+          additionalProperties:
+            $ref: '#/components/schemas/OrderTotal'
+        order_note:
+          type: string
+          description: Customer order note
+        order_notes:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderNote'
+        downloads:
+          type: array
+          items:
+            $ref: '#/components/schemas/DownloadItem'
+        order_actions:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/OrderAction'
+
+    DownloadItem:
+      type: object
+      properties:
+        product_name:
+          type: string
+          description: Product name
+        download_name:
+          type: string
+          description: Download name
+        file:
+          type: string
+          format: uri
+          description: Download URL
+        downloads_remaining:
+          type: string
+          description: Downloads remaining
+        download_expires:
+          type: string
+          description: Download expiration date
+
+    CustomerDownloads:
+      type: array
+      items:
+        $ref: '#/components/schemas/DownloadItem'
+
+    SubscriptionSummary:
+      type: object
+      properties:
+        order_id:
+          type: integer
+          description: Parent order ID
+          example: 456
+        subscription_number:
+          type: string
+          description: Subscription number with hash prefix
+          example: "#789"
+        subscription_status:
+          type: string
+          description: Subscription status name
+          example: "Active"
+        next_payment:
+          type: string
+          description: Next payment date formatted for display
+          example: "January 15, 2025"
+        subscription_total:
+          type: string
+          description: Subscription total amount formatted
+          example: "$29.99"
+        is_manual:
+          type: boolean
+          description: Whether subscription requires manual renewal
+          example: false
+
+    CustomerSubscriptions:
+      type: object
+      properties:
+        subscriptions:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/SubscriptionSummary'
+          description: Object with subscription IDs as keys
+          example:
+            "789":
+              order_id: 456
+              subscription_number: "#789"
+              subscription_status: "Active"
+              next_payment: "January 15, 2025"
+              subscription_total: "$29.99"
+              is_manual: false
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    DateInfo:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Date field title
+          example: "Next payment date"
+        value:
+          type: string
+          description: Date field value
+          example: "January 15, 2025"
+
+    PaymentInfo:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Payment field title
+          example: "Payment"
+        value:
+          type: string
+          description: Payment field value
+          example: "Credit Card (Stripe)"
+
+    CustomerSubscription:
+      type: object
+      properties:
+        subscription_number:
+          type: string
+          description: Subscription number
+          example: "789"
+        parent_order:
+          type: string
+          description: Parent order ID
+          example: "456"
+        order:
+          type: string
+          format: uri
+          description: Link to parent order
+          example: "https://example.com/wp-json/cocart/preview/my-orders/456"
+        subscription_status:
+          type: string
+          description: Subscription status
+          example: "Active"
+        is_manual:
+          type: boolean
+          description: Whether subscription requires manual renewal
+          example: false
+        start_date:
+          $ref: '#/components/schemas/DateInfo'
+        last_order_date_created:
+          $ref: '#/components/schemas/DateInfo'
+        next_payment:
+          $ref: '#/components/schemas/DateInfo'
+        end_date:
+          $ref: '#/components/schemas/DateInfo'
+        trial_end:
+          $ref: '#/components/schemas/DateInfo'
+        payment:
+          $ref: '#/components/schemas/PaymentInfo'
+        billing_address:
+          type: string
+          description: Formatted billing address as comma-separated string
+          example: "John Doe, 123 Main St, Anytown, CA, 12345, US"
+        shipping_address:
+          type: string
+          description: Formatted shipping address as comma-separated string
+          example: "John Doe, 123 Main St, Anytown, CA, 12345, US"
+        notes:
+          type: array
+          description: Customer-facing subscription notes
+          items:
+            $ref: '#/components/schemas/OrderNote'
+        actions:
+          type: object
+          description: Available subscription actions (view, suspend, reactivate, cancel, etc.)
+          additionalProperties:
+            $ref: '#/components/schemas/OrderAction'
+
+  examples:
+    CheckoutDataExample:
+      value:
+        cart_key: "abc123def456"
+        cart_hash: "d41d8cd98f00b204e9800998ecf8427e"
+        customer_id: 123
+        billing_address:
+          first_name: "John"
+          last_name: "Doe"
+          email: "john@example.com"
+          phone: "+1234567890"
+          address_1: "123 Main St"
+          address_2: "Apt 4B"
+          city: "Anytown"
+          state: "CA"
+          postcode: "12345"
+          country: "US"
+          company: ""
+        shipping_address:
+          first_name: "John"
+          last_name: "Doe"
+          address_1: "123 Main St"
+          address_2: "Apt 4B"
+          city: "Anytown"
+          state: "CA"
+          postcode: "12345"
+          country: "US"
+          company: ""
+        cart_contents:
+          "c4ca4238a0b923820dcc509a6f75849b":
+            key: "c4ca4238a0b923820dcc509a6f75849b"
+            product_id: 456
+            variation_id: 0
+            quantity: 2
+            product_name: "Premium T-Shirt"
+            product_title: "Premium T-Shirt"
+            product_price: "$19.99"
+            line_total: "39.98"
+            line_subtotal: "39.98"
+        cart_totals:
+          subtotal: "39.98"
+          subtotal_tax: "0.00"
+          shipping_total: "5.00"
+          shipping_tax: "0.00"
+          discount_total: "0.00"
+          discount_tax: "0.00"
+          cart_contents_total: "39.98"
+          cart_contents_tax: "0.00"
+          fee_total: "0.00"
+          fee_tax: "0.00"
+          total: "44.98"
+          total_tax: "0.00"
+        shipping_methods:
+          "flat_rate:1":
+            id: "flat_rate:1"
+            label: "Flat Rate"
+            cost: "5.00"
+            method_id: "flat_rate"
+            instance_id: "1"
+        needs_payment: true
+        needs_shipping: true
+        payment_method: "stripe"
+
+    CustomerAccountExample:
+      value:
+        user:
+          id: 123
+          date_registered: "2024-01-15T10:30:00"
+          email: "john@example.com"
+          first_name: "John"
+          last_name: "Doe"
+          display_name: "John Doe"
+          addresses:
+            billing:
+              first_name: "John"
+              last_name: "Doe"
+              company: ""
+              address_1: "123 Main St"
+              address_2: "Apt 4B"
+              city: "Anytown"
+              state: "CA"
+              postcode: "12345"
+              country: "US"
+              phone: "+1234567890"
+              email: "john@example.com"
+            shipping:
+              first_name: "John"
+              last_name: "Doe"
+              company: ""
+              address_1: "123 Main St"
+              address_2: "Apt 4B"
+              city: "Anytown"
+              state: "CA"
+              postcode: "12345"
+              country: "US"
+          orders_count: 15
+          total_spent: "$1,234.56"
+          is_paying_customer: true
+          avatar_url: "https://secure.gravatar.com/avatar/abc123?s=96&d=mm&r=g"
+        recent_order:
+          order_id: 789
+          order_date: "2024-12-15T14:20:00"
+          order_data: "https://example.com/wp-json/cocart/preview/my-account/orders/789"
+        meta:
+          is_customer_outside_base: false
+          is_vat_exempt: false
+        extensions: {}
+
+    CustomerOrdersExample:
+      value:
+        orders:
+          - order_id: 789
+            order_status: "Completed"
+            order_date: "December 15, 2024, 2:20 pm"
+            item_count: 3
+            order_total: "$89.97"
+            order_actions:
+              view:
+                url: "https://example.com/wp-json/cocart/preview/my-account/orders/789"
+                label: "View"
+          - order_id: 788
+            order_status: "Processing"
+            order_date: "December 10, 2024, 10:15 am"
+            item_count: 1
+            order_total: "$29.99"
+            order_actions:
+              view:
+                url: "https://example.com/wp-json/cocart/preview/my-account/orders/788"
+                label: "View"
+        pagination:
+          previous: null
+          next: "https://example.com/wp-json/cocart/preview/my-account/orders?page=2"
+
+    CustomerOrderExample:
+      value:
+        order_id: 789
+        order_number: "789"
+        order_parent: 0
+        order_date: "December 15, 2024, 2:20 pm"
+        order_status: "Completed"
+        order_currency: "USD"
+        billing_address: "John Doe, 123 Main St, Apt 4B, Anytown, CA, 12345, US"
+        shipping_address: "John Doe, 123 Main St, Apt 4B, Anytown, CA, 12345, US"
+        phone: "+1234567890"
+        email: "john@example.com"
+        ship_to_billing: false
+        items:
+          - item_id: 1
+            product_id: 456
+            variation_id: 0
+            product_image: "https://example.com/wp-content/uploads/product.jpg"
+            product_name: "Premium T-Shirt"
+            product_title: "Premium T-Shirt"
+            product_type: "simple"
+            sku: "TSHIRT-001"
+            quantity: "2"
+            subtotal: "$39.98"
+            purchase_note: ""
+            refunded_qty: "0"
+            meta: {}
+            link: "https://example.com/wp-json/cocart/preview/products/456"
+        totals:
+          subtotal:
+            label: "Subtotal"
+            value: "$39.98"
+          shipping:
+            label: "Shipping"
+            value: "$5.00"
+          total:
+            label: "Total"
+            value: "$44.98"
+        order_note: "Please leave at the door"
+        order_notes:
+          - date: "December 15, 2024, 2:25 pm"
+            note: "Your order has been shipped"
+        downloads: []
+        order_actions:
+          view:
+            url: "https://example.com/wp-json/cocart/preview/my-account/orders/789"
+            name: "View"
+
+    CustomerSubscriptionsExample:
+      value:
+        subscriptions:
+          "123":
+            order_id: 456
+            subscription_number: "#123"
+            subscription_status: "Active"
+            next_payment: "January 15, 2025"
+            subscription_total: "$29.99"
+            is_manual: false
+          "124":
+            order_id: 457
+            subscription_number: "#124"
+            subscription_status: "On hold"
+            next_payment: "N/A"
+            subscription_total: "$19.99"
+            is_manual: false
+        pagination:
+          previous: null
+          next: null
+
+    CustomerSubscriptionExample:
+      value:
+        subscription_number: "123"
+        parent_order: "456"
+        order: "https://example.com/wp-json/cocart/preview/my-account/orders/456"
+        subscription_status: "Active"
+        is_manual: false
+        start_date:
+          title: "Start date"
+          value: "December 15, 2024"
+        last_order_date_created:
+          title: "Last order date"
+          value: "December 15, 2024"
+        next_payment:
+          title: "Next payment date"
+          value: "January 15, 2025"
+        end_date:
+          title: "End date"
+          value: "N/A"
+        trial_end:
+          title: "Trial end date"
+          value: "N/A"
+        payment:
+          title: "Payment"
+          value: "Credit Card (Stripe)"
+        billing_address: "John Doe, 123 Main St, Apt 4B, Anytown, CA, 12345, US"
+        shipping_address: "John Doe, 123 Main St, Apt 4B, Anytown, CA, 12345, US"
+        notes:
+          - date: "December 15, 2024, 2:30pm"
+            note: "Subscription activated successfully"
+        actions:
+          suspend:
+            url: "https://example.com/wp-json/cocart/preview/my-account/subscriptions/123/on-hold"
+            name: "Suspend"
+          cancel:
+            url: "https://example.com/wp-json/cocart/preview/my-account/subscriptions/123/cancelled"
+            name: "Cancel"
+
+    CustomerDownloadsExample:
+      value:
+        - product_name: "Premium E-Book"
+          download_name: "premium-ebook.pdf"
+          file: "https://example.com/wp-content/uploads/woocommerce_uploads/premium-ebook.pdf"
+          downloads_remaining: "5"
+          download_expires: "January 30, 2025"
+        - product_name: "Video Course"
+          download_name: "course-video-1.mp4"
+          file: "https://example.com/wp-content/uploads/woocommerce_uploads/course-video-1.mp4"
+          downloads_remaining: "Unlimited"
+          download_expires: "Never"
+
+    PaymentMethodsExample:
+      value:
+        stripe:
+          id: "stripe"
+          title: "Credit Card (Stripe)"
+          description: "Pay securely with your credit card"
+          supports:
+            - "products"
+            - "refunds"
+            - "subscriptions"
+          has_fields: true
+          order_button_text: "Pay Now"
+          method_title: "Stripe"
+          method_description: "Accept credit card payments via Stripe"
+          config:
+            test_mode: true
+            is_connected: true
+            supports_tokenization: true
+            supports_refunds: true
+            supports_subscriptions: true
+            requires_billing_address: true
+        paypal:
+          id: "paypal"
+          title: "PayPal"
+          description: "Pay via PayPal"
+          supports:
+            - "products"
+            - "refunds"
+          has_fields: false
+          order_button_text: "Proceed to PayPal"
+          method_title: "PayPal"
+          method_description: "Accept payments via PayPal"
+          config:
+            test_mode: false
+            is_connected: true
+            supports_tokenization: false
+            supports_refunds: true
+            supports_subscriptions: false
+            requires_billing_address: false
+
+    PaymentContextExample:
+      value:
+        gateway_id: "stripe"
+        title: "Credit Card (Stripe)"
+        cart_total: "44.98"
+        currency: "USD"
+        client_secret: "pi_abc123_secret_xyz789"
+        payment_intent_id: "pi_abc123"
+        public_key: "pk_test_abc123xyz789"
+
+    CheckoutProcessResponseExample:
+      value:
+        order_id: 789
+        status: "processing"
+        order_key: "wc_order_abc123xyz"
+        order_number: "789"
+        payment_result:
+          payment_status: "success"
+          redirect_url: "https://example.com/checkout/order-received/789/?key=wc_order_abc123xyz"
+          message: "Payment successful"
+        customer_id: 123
+        billing_address:
+          first_name: "John"
+          last_name: "Doe"
+          email: "john@example.com"
+          phone: "+1234567890"
+          address_1: "123 Main St"
+          address_2: "Apt 4B"
+          city: "Anytown"
+          state: "CA"
+          postcode: "12345"
+          country: "US"
+          company: ""
+        shipping_address:
+          first_name: "John"
+          last_name: "Doe"
+          address_1: "123 Main St"
+          address_2: "Apt 4B"
+          city: "Anytown"
+          state: "CA"
+          postcode: "12345"
+          country: "US"
+          company: ""
+        cart_key: null
+
+    ErrorExample:
+      value:
+        code: "cocart_checkout_empty_cart"
+        message: "Cannot checkout with empty cart."
+        data:
+          status: 400

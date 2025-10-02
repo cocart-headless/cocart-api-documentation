@@ -236,3 +236,23 @@ add_filter( 'cocart_jwt_auth_token_prefix', function( $prefix ) {
     return 'cocart_';
 }, 10, 2);
 ```
+
+### `cocart_jwt_auth_max_user_tokens`
+
+<Info>
+    Made available since v3.0.0
+</Info>
+
+Allows changing the maximum number of tokens a user can have. Default is 5 tokens.
+
+```php
+add_filter( 'cocart_jwt_auth_max_user_tokens', function( $max_tokens, $user ) {
+    // Allow administrators to have more tokens
+    if ( in_array( 'administrator', $user->roles ) ) {
+        return 20;
+    }
+
+    // Limit regular users to 3 tokens
+    return 3;
+}, 10, 2);
+```

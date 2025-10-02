@@ -1,0 +1,484 @@
+---
+title: "Extending Cart: Creating a Callback"
+sidebarTitle: "Creating a Callback"
+description: "Need to extend the cart to apply something unique?"
+icon: "cart-flatbed"
+---
+
+Cart callbacks allow you to extend CoCart's functionality by creating custom cart update operations. This tutorial shows you how to create, register, and use custom callbacks to add unique features to your cart.
+
+## What are Cart Callbacks?
+
+Cart callbacks are custom PHP classes that execute when the cart is updated via the `/wp-json/cocart/v2/cart/update` endpoint. They allow you to:
+
+- Apply discounts or loyalty points
+- Update cart metadata
+- Integrate with third-party services
+- Implement custom cart validation rules
+- Add special promotions or fees
+
+## Creating a Custom Callback
+
+Let's create a loyalty points callback as a practical example. We'll break this down into manageable steps:
+
+### Step 1: Basic Class Structure
+
+First, create the basic callback class structure:
+
+```php Basic Callback Structure
+<?php
+/**
+ * Loyalty Points Callback for CoCart
+ */
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+class Loyalty_Points_CoCart_Callback extends CoCart_Cart_Extension_Callback {
+
+    /**
+     * Callback name - this identifies your callback
+     */
+    protected $name = 'apply-loyalty-points';
+
+    // Callback method goes here...
+}
+```
+
+<Note>
+The `$name` property is crucial - it's used as the `namespace` parameter when calling your callback via the API.
+</Note>
+
+### Step 2: Input Validation and Safety Checks
+
+Add the main callback method with proper validation:
+
+```php Input Validation
+public function callback( $request, $controller ) {
+    try {
+        // Safety check: Ensure cart has items
+        if ( $controller->is_completely_empty() ) {
+            throw new CoCart_Data_Exception(
+                'cocart_cart_empty',
+                __( 'Cart is empty. Please add items to cart first.', 'cart-rest-api-for-woocommerce' ),
+                404
+            );
+        }
+
+        // Extract custom data from request
+        $data = isset( $request['data'] ) ? $request['data'] : array();
+
+        // Validate required parameters
+        if ( empty( $data['points'] ) || ! is_numeric( $data['points'] ) ) {
+            throw new CoCart_Data_Exception(
+                'cocart_invalid_points',
+                __( 'Please provide a valid number of points to redeem.', 'cart-rest-api-for-woocommerce' ),
+                400
+            );
+        }
+
+        // Continue with callback logic...
+    } catch ( CoCart_Data_Exception $e ) {
+        return CoCart_Response::get_error_response(
+            $e->getErrorCode(),
+            $e->getMessage(),
+            $e->getCode(),
+            $e->getAdditionalData()
+        );
+    }
+}
+```
+
+### Step 3: Implementing Your Custom Logic
+
+Add your specific functionality within the callback:
+
+```php Custom Logic Implementation
+// Inside the callback method, after validation...
+
+$points_to_redeem = intval( $data['points'] );
+$current_user = wp_get_current_user();
+$cart_updated = false;
+
+if ( $current_user->exists() ) {
+    // Get user's available points
+    $available_points = get_user_meta( $current_user->ID, 'loyalty_points', true );
+    $available_points = intval( $available_points );
+
+    // Check if user has enough points
+    if ( $available_points >= $points_to_redeem ) {
+        // Calculate discount (1 point = $0.10)
+        $discount_amount = $points_to_redeem * 0.10;
+
+        // Apply discount to cart
+        WC()->cart->add_fee(
+            sprintf( __( 'Loyalty Points Discount (%d points)', 'your-textdomain' ), $points_to_redeem ),
+            -$discount_amount
+        );
+
+        // Deduct points from user account
+        $new_points_balance = $available_points - $points_to_redeem;
+        update_user_meta( $current_user->ID, 'loyalty_points', $new_points_balance );
+
+        // Store redeemed points in session for reference
+        WC()->session->set( 'redeemed_loyalty_points', $points_to_redeem );
+
+        $cart_updated = true;
+
+        wc_add_notice(
+            sprintf(
+                __( 'Applied %d loyalty points for $%.2f discount. Remaining balance: %d points.', 'your-textdomain' ),
+                $points_to_redeem,
+                $discount_amount,
+                $new_points_balance
+            ),
+            'success'
+        );
+    } else {
+        throw new CoCart_Data_Exception(
+            'cocart_insufficient_points',
+            sprintf(
+                __( 'Insufficient points. You have %d points available.', 'your-textdomain' ),
+                $available_points
+            ),
+            400
+        );
+    }
+} else {
+    throw new CoCart_Data_Exception(
+        'cocart_authentication_required',
+        __( 'Please log in to redeem loyalty points.', 'your-textdomain' ),
+        401
+    );
+}
+```
+
+### Step 4: Finalize and Calculate Totals
+
+Complete the callback with proper totals calculation:
+
+```php Finalize Callback
+// After your custom logic...
+
+if ( $cart_updated ) {
+    // Recalculate cart totals to include your changes
+    $this->recalculate_totals( $request, $controller );
+
+    // Add success notice only if no errors occurred
+    if ( 0 === wc_notice_count( 'error' ) ) {
+        // Custom success message already added above
+    }
+}
+
+return true;
+```
+
+### Complete Callback Class
+
+Here's the complete loyalty points callback:
+
+<details>
+<summary>Complete Loyalty Points Callback</summary>
+
+```php Complete Callback Class
+<?php
+/**
+ * Loyalty Points Callback for CoCart
+ */
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+class Loyalty_Points_CoCart_Callback extends CoCart_Cart_Extension_Callback {
+
+    protected $name = 'apply-loyalty-points';
+
+    public function callback( $request, $controller ) {
+        try {
+            if ( $controller->is_completely_empty() ) {
+                throw new CoCart_Data_Exception(
+                    'cocart_cart_empty',
+                    __( 'Cart is empty. Please add items to cart first.', 'cart-rest-api-for-woocommerce' ),
+                    404
+                );
+            }
+
+            $data = isset( $request['data'] ) ? $request['data'] : array();
+
+            if ( empty( $data['points'] ) || ! is_numeric( $data['points'] ) ) {
+                throw new CoCart_Data_Exception(
+                    'cocart_invalid_points',
+                    __( 'Please provide a valid number of points to redeem.', 'cart-rest-api-for-woocommerce' ),
+                    400
+                );
+            }
+
+            $points_to_redeem = intval( $data['points'] );
+            $current_user = wp_get_current_user();
+            $cart_updated = false;
+
+            if ( $current_user->exists() ) {
+                $available_points = get_user_meta( $current_user->ID, 'loyalty_points', true );
+                $available_points = intval( $available_points );
+
+                if ( $available_points >= $points_to_redeem ) {
+                    $discount_amount = $points_to_redeem * 0.10;
+
+                    WC()->cart->add_fee(
+                        sprintf( __( 'Loyalty Points Discount (%d points)', 'your-textdomain' ), $points_to_redeem ),
+                        -$discount_amount
+                    );
+
+                    $new_points_balance = $available_points - $points_to_redeem;
+                    update_user_meta( $current_user->ID, 'loyalty_points', $new_points_balance );
+                    WC()->session->set( 'redeemed_loyalty_points', $points_to_redeem );
+
+                    $cart_updated = true;
+
+                    wc_add_notice(
+                        sprintf(
+                            __( 'Applied %d loyalty points for $%.2f discount. Remaining balance: %d points.', 'your-textdomain' ),
+                            $points_to_redeem,
+                            $discount_amount,
+                            $new_points_balance
+                        ),
+                        'success'
+                    );
+                } else {
+                    throw new CoCart_Data_Exception(
+                        'cocart_insufficient_points',
+                        sprintf(
+                            __( 'Insufficient points. You have %d points available.', 'your-textdomain' ),
+                            $available_points
+                        ),
+                        400
+                    );
+                }
+            } else {
+                throw new CoCart_Data_Exception(
+                    'cocart_authentication_required',
+                    __( 'Please log in to redeem loyalty points.', 'your-textdomain' ),
+                    401
+                );
+            }
+
+            if ( $cart_updated ) {
+                $this->recalculate_totals( $request, $controller );
+            }
+
+            return true;
+        } catch ( CoCart_Data_Exception $e ) {
+            return CoCart_Response::get_error_response(
+                $e->getErrorCode(),
+                $e->getMessage(),
+                $e->getCode(),
+                $e->getAdditionalData()
+            );
+        }
+    }
+}
+
+return new Loyalty_Points_CoCart_Callback();
+```
+
+</details>
+
+## Registering Your Callback
+
+Once you've created your callback class, you need to register it with CoCart. This tells CoCart that your callback is available for use.
+
+### Registration Steps
+
+1. **Save your callback class** to a PHP file (e.g., `loyalty-points-callback.php`)
+2. **Include the file** in your theme or plugin
+3. **Register the callback** using the CoCart action hook
+
+```php Registration Code
+add_action( 'cocart_register_extension_callback', 'register_loyalty_points_callback' );
+
+function register_loyalty_points_callback( $callback ) {
+    // Load your callback class file
+    include_once( dirname( __FILE__) . '/callbacks/loyalty-points-callback.php' );
+
+    // Register the callback instance
+    $callback->register( new Loyalty_Points_CoCart_Callback() );
+}
+```
+
+### Where to Place Registration Code
+
+You can place this registration code in:
+
+- **Your theme's functions.php file**
+- **A custom plugin file**
+- **Your site's wp-config.php file** (not recommended)
+
+<Warning>
+If you place the code in your theme's functions.php, remember that changing themes will disable your callback.
+</Warning>
+
+## Using Your Callback
+
+Once registered, you can call your callback via the CoCart update endpoint. Here's how to use our loyalty points example:
+
+### API Request Structure
+
+```bash Basic Usage
+curl --location --request POST 'https://example-store.com/wp-json/cocart/v2/cart/update' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer YOUR_JWT_TOKEN' \
+--data '{
+    "namespace": "apply-loyalty-points",
+    "data": {
+        "points": 50
+    }
+}'
+```
+
+### JavaScript Usage
+
+```javascript Frontend Integration
+async function redeemLoyaltyPoints(points) {
+    try {
+        const response = await fetch('/wp-json/cocart/v2/cart/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${userToken}`
+            },
+            body: JSON.stringify({
+                namespace: 'apply-loyalty-points',
+                data: {
+                    points: points
+                }
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            console.log('Points redeemed successfully:', result);
+            // Update cart display with new totals
+            updateCartDisplay(result);
+        } else {
+            console.error('Failed to redeem points:', result.message);
+            showErrorMessage(result.message);
+        }
+    } catch (error) {
+        console.error('Network error:', error);
+    }
+}
+
+// Usage
+redeemLoyaltyPoints(25); // Redeem 25 points
+```
+
+### Response Examples
+
+**Success Response:**
+```json Success
+{
+    "cart_hash": "abc123def456",
+    "cart_key": "user_cart_key",
+    "currency": {
+        "currency_code": "USD",
+        "currency_symbol": "$"
+    },
+    "totals": {
+        "subtotal": "50.00",
+        "discount_total": "2.50",
+        "total": "47.50"
+    },
+    "notices": [
+        {
+            "notice": "Applied 25 loyalty points for $2.50 discount. Remaining balance: 75 points.",
+            "type": "success"
+        }
+    ]
+}
+```
+
+**Error Response:**
+```json Error - Insufficient Points
+{
+    "code": "cocart_insufficient_points",
+    "message": "Insufficient points. You have 15 points available.",
+    "data": {
+        "status": 400
+    }
+}
+```
+
+## Additional Callback Examples
+
+Here are some other practical callback ideas you can implement:
+
+### Gift Card Redemption
+
+```php Gift Card Example
+protected $name = 'redeem-gift-card';
+
+// In callback method:
+$gift_card_code = sanitize_text_field( $data['gift_card_code'] );
+$gift_card = get_gift_card_by_code( $gift_card_code );
+
+if ( $gift_card && $gift_card->is_valid() ) {
+    $discount = min( $gift_card->get_balance(), WC()->cart->get_subtotal() );
+    WC()->cart->add_fee( 'Gift Card Discount', -$discount );
+    $gift_card->deduct_balance( $discount );
+}
+```
+
+### Shipping Insurance
+
+```php Shipping Insurance Example
+protected $name = 'add-shipping-insurance';
+
+// In callback method:
+if ( isset( $data['add_insurance'] ) && $data['add_insurance'] ) {
+    $insurance_cost = WC()->cart->get_subtotal() * 0.02; // 2% of subtotal
+    WC()->cart->add_fee( 'Shipping Insurance', $insurance_cost );
+    WC()->session->set( 'has_shipping_insurance', true );
+}
+```
+
+### Custom Product Bundling
+
+```php Product Bundle Example
+protected $name = 'apply-bundle-discount';
+
+// In callback method:
+$bundle_items = $data['bundle_items'];
+if ( count( $bundle_items ) >= 3 ) {
+    $bundle_discount = WC()->cart->get_subtotal() * 0.15; // 15% bundle discount
+    WC()->cart->add_fee( 'Bundle Discount (3+ items)', -$bundle_discount );
+}
+```
+
+## Best Practices
+
+1. **Always validate input data** - Never trust user input
+2. **Use proper error handling** - Throw CoCart_Data_Exception for consistent error responses
+3. **Check authentication when needed** - Verify user permissions for sensitive operations
+4. **Recalculate totals** - Always call `$this->recalculate_totals()` after making changes
+5. **Provide clear feedback** - Use WooCommerce notices to inform users of what happened
+6. **Test thoroughly** - Test all success and error scenarios
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Callback not found**: Check that your namespace matches the `$name` property
+2. **Class not loaded**: Ensure your include path is correct
+3. **Authentication errors**: Verify user login status for user-specific callbacks
+4. **Totals not updating**: Make sure you're calling `recalculate_totals()`
+
+### Debug Mode
+
+Enable debug mode to see detailed error messages:
+
+```php Debug Mode
+// Add to wp-config.php
+define( 'WP_DEBUG', true );
+define( 'WP_DEBUG_LOG', true );
+```

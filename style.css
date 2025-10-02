@@ -85,7 +85,7 @@ body, input, #category-select, .dropdown-item, #table-of-contents {
 
     #page-context-menu-button {
         & span {
-            display: none;
+            text-indent: -9999px;
         }
     }
 }

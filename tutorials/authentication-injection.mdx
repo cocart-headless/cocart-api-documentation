@@ -1,0 +1,915 @@
+---
+title: "Authentication Injection with CoCart"
+sidebarTitle: "Authentication Injection"
+description: "Learn how to intervene CoCart's authentication"
+icon: "syringe"
+---
+
+<Note>
+    This guide only works if you have CoCart v4.8 and up installed.
+</Note>
+
+## What is authentication injection?
+
+Authentication injection refers to the ability to insert custom authentication logic into the existing login process. This allows developers to implement additional security measures, such as custom validation rules, external system integration, role-based access control, or comprehensive logging mechanisms, without modifying the core authentication flow.
+
+## Overview
+
+CoCart's authentication injection system is built around a series of hooks (filters and actions) that allow you to customize the login process.
+
+These hooks provide entry points to modify the behavior of authentication, enabling you to add layers of security or integrate with external systems.
+
+## Available Hooks
+
+Each hook is documented below with its description, parameters, and practical usage examples.
+
+### `cocart_login_permission_callback`
+
+<Info>
+    Made available since v4.8.0
+</Info>
+
+Allows you to modify the permission result after basic authentication. This is the primary hook for adding custom validation, external system checks, or role-based access control.
+
+<CodeGroup>
+
+```php Basic Implementation
+add_filter( 'cocart_login_permission_callback', function( $permission, $current_user, $request, $endpoint ) {
+    // Your additional authentication logic here
+    return $permission; // or return WP_Error to deny access
+}, 10, 4 );
+```
+
+```php Advanced Example
+add_filter( 'cocart_login_permission_callback', 'my_advanced_auth_check', 10, 4 );
+function my_advanced_auth_check( $permission, $current_user, $request, $endpoint ) {
+    if ( true !== $permission ) {
+        return $permission;
+    }
+
+    // Example: Check user capabilities
+    if ( ! user_can( $current_user, 'access_api' ) ) {
+        return new WP_Error(
+            'cocart_insufficient_permissions',
+            'User lacks required permissions for API access',
+            array( 'status' => 403 )
+        );
+    }
+
+    return $permission;
+}
+```
+
+</CodeGroup>
+
+<ParamField query="permission" type="boolean|WP_Error">
+  Current permission status (true after basic auth)
+</ParamField>
+
+<ParamField query="current_user" type="WP_User">
+  The authenticated user object
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  The current REST API request
+</ParamField>
+
+<ParamField query="endpoint" type="string">
+  The endpoint being accessed ('login')
+</ParamField>
+
+<ResponseField name="Return Values" type="boolean|WP_Error">
+  <Expandable title="Return Options">
+    <ResponseField name="true" type="boolean">
+      Allow login to proceed
+    </ResponseField>
+    <ResponseField name="WP_Error" type="object">
+      Deny login with specific error message and data
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### `cocart_login_permission_granted`
+
+<Info>
+    Made available since v4.8.0
+</Info>
+
+Fires when login permission is successfully granted. Perfect for audit logging and post-authentication tasks.
+
+<CodeGroup>
+    ```php Basic Logging
+    add_action( 'cocart_login_permission_granted', function( $current_user, $request, $endpoint ) {
+        // Log successful authentication
+        error_log("Login granted for user: {$current_user->ID}");
+    }, 10, 3 );
+    ```
+
+    ```php Advanced Audit Logging
+    add_action( 'cocart_login_permission_granted', 'comprehensive_audit_log', 10, 3 );
+
+    function comprehensive_audit_log( $current_user, $request, $endpoint ) {
+        $ip_address = CoCart_Authentication::get_ip_address();
+        $user_agent = $request->get_header( 'user_agent' );
+
+        // Log to custom table or external service
+        wp_insert_post( array(
+            'post_type' => 'auth_log',
+            'post_status' => 'private',
+            'post_title' => "Login: {$current_user->user_login}",
+            'meta_input' => array(
+                'user_id' => $current_user->ID,
+                'ip_address' => $ip_address,
+                'user_agent' => $user_agent,
+                'endpoint' => $endpoint,
+                'timestamp' => current_time( 'mysql' )
+            )
+        ) );
+    }
+    ```
+</CodeGroup>
+
+<ParamField query="current_user" type="WP_User">
+  The authenticated user object
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  The current REST API request
+</ParamField>
+
+<ParamField query="endpoint" type="string">
+  The endpoint being accessed ('login')
+</ParamField>
+
+### `cocart_login_secure_auth_methods`
+
+<Info>
+    Made available since v4.8.0
+</Info>
+
+Allows customizing which authentication methods skip additional checks (like custom validation or external system verification).
+
+<CodeGroup>
+    ```php Add Custom Method
+    add_filter( 'cocart_login_secure_auth_methods', function( $secure_methods, $current_method ) {
+        // Add custom secure authentication methods
+        $secure_methods[] = 'custom_oauth';
+        return $secure_methods;
+    }, 10, 2 );
+    ```
+
+    ```php Remove JWT Security
+    add_filter( 'cocart_login_secure_auth_methods', function( $secure_methods, $current_method ) {
+        // Force additional checks even with JWT tokens
+        $secure_methods = array_diff( $secure_methods, array( 'jwt' ) );
+        return $secure_methods;
+    }, 10, 2 );
+    ```
+</CodeGroup>
+
+<ParamField query="secure_methods" type="array">
+  Array of authentication methods considered secure (default: ['jwt', 'api_key'])
+</ParamField>
+
+<ParamField query="current_method" type="string">
+  The current authentication method being used
+</ParamField>
+
+### `cocart_login_collection_params`
+
+<Info>
+    Made available since v4.8.0
+</Info>
+
+Allows you to add additional parameters to the login endpoint for custom authentication data.
+
+<CodeGroup>
+
+```php Add Custom Auth Parameters
+add_filter( 'cocart_login_collection_params', function( $additional_params ) {
+    $additional_params['department_code'] = array(
+        'description' => 'Employee department code',
+        'type' => 'string',
+        'required' => false,
+        'sanitize_callback' => 'sanitize_text_field',
+    );
+
+    $additional_params['license_key'] = array(
+        'description' => 'Application license key',
+        'type' => 'string',
+        'pattern' => '^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$',
+    );
+
+    return $additional_params;
+} );
+```
+
+```php Add Custom Auth Fields
+add_filter( 'cocart_login_collection_params', function( $additional_params ) {
+    $additional_params['device_id'] = array(
+        'description' => 'Unique device identifier',
+        'type' => 'string',
+        'required' => false,
+    );
+
+    $additional_params['app_version'] = array(
+        'description' => 'Application version',
+        'type' => 'string',
+        'pattern' => '^[0-9]+\.[0-9]+\.[0-9]+$',
+    );
+
+    return $additional_params;
+} );
+```
+
+</CodeGroup>
+
+<ParamField query="additional_params" type="array">
+  Array of additional parameters to add to the login endpoint
+</ParamField>
+
+
+## API Usage Examples
+
+<Tabs>
+  <Tab title="cURL">
+    <Accordion title="Standard Login">
+      ```bash
+      curl -X POST "https://yoursite.com/wp-json/cocart/v2/login" \
+        -H "Authorization: Basic $(echo -n 'username:password' | base64)" \
+        -H "Content-Type: application/json"
+      ```
+    </Accordion>
+
+    <Accordion title="Login with Custom Headers">
+      ```bash
+      curl -X POST "https://yoursite.com/wp-json/cocart/v2/login" \
+        -H "Authorization: Basic $(echo -n 'username:password' | base64)" \
+        -H "Content-Type: application/json" \
+        -H "X-Client-ID: mobile-app" \
+        -H "X-App-Version: 1.2.3"
+      ```
+    </Accordion>
+
+    <Accordion title="Login with Device Registration">
+      ```bash
+      curl -X POST "https://yoursite.com/wp-json/cocart/v2/login" \
+        -H "Authorization: Basic $(echo -n 'username:password' | base64)" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "device_id": "mobile-app-12345",
+          "app_version": "2.1.0"
+        }'
+      ```
+    </Accordion>
+
+    <Accordion title="Using JWT Token (bypasses additional checks)">
+      ```bash
+      curl -X POST "https://yoursite.com/wp-json/cocart/v2/login" \
+        -H "Authorization: Bearer your-jwt-token-here" \
+        -H "Content-Type: application/json"
+      ```
+    </Accordion>
+  </Tab>
+
+  <Tab title="PHP">
+    <Accordion title="Standard Login Request">
+      ```php
+      $credentials = base64_encode('username:password');
+
+      $response = wp_remote_post( 'https://yoursite.com/wp-json/cocart/v2/login', array(
+          'headers' => array(
+              'Authorization' => 'Basic ' . $credentials,
+              'Content-Type' => 'application/json',
+          ),
+          'timeout' => 30,
+      ) );
+
+      if ( is_wp_error( $response ) ) {
+          // Handle error
+          echo 'Error: ' . $response->get_error_message();
+      } else {
+          $body = wp_remote_retrieve_body( $response );
+          $data = json_decode( $body, true );
+
+          if ( isset( $data['jwt_token'] ) ) {
+              // Store JWT token for future requests
+              $jwt_token = $data['jwt_token'];
+          }
+      }
+      ```
+    </Accordion>
+
+    <Accordion title="Login with Custom Headers">
+      ```php
+      $credentials = base64_encode('username:password');
+
+      $response = wp_remote_post( 'https://yoursite.com/wp-json/cocart/v2/login', array(
+          'headers' => array(
+              'Authorization' => 'Basic ' . $credentials,
+              'Content-Type' => 'application/json',
+              'X-Client-ID' => 'mobile-app',
+              'X-App-Version' => '1.2.3',
+          ),
+          'timeout' => 30,
+      ) );
+
+      $body = wp_remote_retrieve_body( $response );
+      $data = json_decode( $body, true );
+
+      if ( isset( $data['code'] ) && $data['code'] === 'cocart_unsupported_version' ) {
+          // Handle version requirement
+          echo 'API version not supported. Please update your app.';
+      } elseif ( isset( $data['jwt_token'] ) ) {
+          // Login successful
+          $jwt_token = $data['jwt_token'];
+      }
+      ```
+    </Accordion>
+  </Tab>
+
+  <Tab title="JavaScript">
+    <Accordion title="Standard Login with Fetch API">
+      ```javascript
+      const credentials = btoa('username:password');
+
+      fetch('https://yoursite.com/wp-json/cocart/v2/login', {
+          method: 'POST',
+          headers: {
+              'Authorization': `Basic ${credentials}`,
+              'Content-Type': 'application/json',
+          },
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.jwt_token) {
+              // Store JWT token
+              localStorage.setItem('cocart_token', data.jwt_token);
+              console.log('Login successful');
+          } else if (data.code === 'cocart_unsupported_version') {
+              // Handle version requirement
+              handleVersionUpdate(data);
+          }
+      })
+      .catch(error => {
+          console.error('Login error:', error);
+      });
+      ```
+    </Accordion>
+
+    <Accordion title="Login with Device Registration">
+      ```javascript
+      const credentials = btoa('username:password');
+
+      fetch('https://yoursite.com/wp-json/cocart/v2/login', {
+          method: 'POST',
+          headers: {
+              'Authorization': `Basic ${credentials}`,
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+              'device_id': 'mobile-app-12345',
+              'app_version': '2.1.0'
+          })
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.jwt_token) {
+              localStorage.setItem('cocart_token', data.jwt_token);
+              console.log('Device login successful');
+          } else if (data.code === 'cocart_device_not_registered') {
+              console.error('Device not registered for this account');
+          }
+      })
+      .catch(error => {
+          console.error('Device login error:', error);
+      });
+      ```
+    </Accordion>
+
+    <Accordion title="Using Stored JWT Token">
+      ```javascript
+      const jwtToken = localStorage.getItem('cocart_token');
+
+      fetch('https://yoursite.com/wp-json/cocart/v2/login', {
+          method: 'POST',
+          headers: {
+              'Authorization': `Bearer ${jwtToken}`,
+              'Content-Type': 'application/json',
+          },
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.jwt_token) {
+              // Token is valid, login successful
+              console.log('JWT login successful');
+          }
+      })
+      .catch(error => {
+          // Token might be expired, redirect to login
+          console.error('JWT login error:', error);
+      });
+      ```
+    </Accordion>
+  </Tab>
+</Tabs>
+
+### Response Examples
+
+<CardGroup cols={2}>
+  <Card title="Successful Login" icon="check-circle" color="#16a34a">
+    ```json
+    {
+        "success": true,
+        "data": {
+            "jwt_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+            "refresh_token": "abc123def456...",
+            "user_id": 123,
+            "user_email": "user@example.com",
+            "user_display_name": "John Doe"
+        }
+    }
+    ```
+  </Card>
+
+  <Card title="Unsupported Version" icon="triangle-exclamation" color="#f59e0b">
+    ```json
+    {
+        "code": "cocart_unsupported_version",
+        "message": "Unsupported API version",
+        "data": {
+            "status": 400,
+            "requested_version": "1.0",
+            "supported_versions": ["2.0", "2.1", "2.2"]
+        }
+    }
+    ```
+  </Card>
+
+  <Card title="Device Not Registered" icon="mobile-screen" color="#dc2626">
+    ```json
+    {
+        "code": "cocart_device_not_registered",
+        "message": "This device is not registered for this account",
+        "data": {
+            "status": 403,
+            "device_registration_required": true
+        }
+    }
+    ```
+  </Card>
+
+  <Card title="Rate Limited" icon="clock" color="#6b7280">
+    ```json
+    {
+        "code": "cocart_rate_limited",
+        "message": "Too many login attempts. Please try again later.",
+        "data": {
+            "status": 429,
+            "retry_after": 3600
+        }
+    }
+    ```
+  </Card>
+</CardGroup>
+
+## Authentication Flow
+
+<Tabs>
+  <Tab title="First-Time Login (Basic Auth + Custom Validation)">
+    <Steps>
+      <Step title="Initial Authentication">
+        User provides username/password via Basic Auth
+      </Step>
+      <Step title="Basic Validation">
+        Basic authentication succeeds → user authenticated
+      </Step>
+      <Step title="Permission Callback">
+        Permission callback runs → detects `basic_auth` method
+      </Step>
+      <Step title="Custom Validation">
+        Custom filters execute → check for additional requirements (device, etc.)
+      </Step>
+      <Step title="Additional Data Prompt">
+        If additional data required → returns error with specific requirements
+      </Step>
+      <Step title="Validation Success">
+        User provides required data → validation succeeds
+      </Step>
+      <Step title="JWT Token Issued">
+        Successful login response includes JWT token for future requests (if active)
+      </Step>
+    </Steps>
+  </Tab>
+
+  <Tab title="Subsequent Requests (JWT Token)">
+    <Steps>
+      <Step title="JWT Authentication">
+        User provides JWT token via Bearer Authorization
+      </Step>
+      <Step title="JWT Validation">
+        JWT authentication succeeds → user authenticated
+      </Step>
+      <Step title="Permission Check">
+        Permission callback runs → detects `jwt` method
+      </Step>
+      <Step title="Skip Additional Checks">
+        Custom filters SKIPPED → secure authentication method bypasses additional checks
+      </Step>
+      <Step title="Immediate Success">
+        Login succeeds immediately → no additional validation required
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Advanced Configuration
+
+### Customizing Secure Authentication Methods
+
+You can modify which authentication methods skip additional checks like custom validation:
+
+```php
+add_filter( 'cocart_login_secure_auth_methods', 'my_secure_auth_methods', 10, 2 );
+
+function my_secure_auth_methods( $secure_methods, $current_method ) {
+    // Add custom secure authentication methods
+    $secure_methods[] = 'custom_oauth';
+
+    // Remove JWT from secure methods (force additional validation even with JWT)
+    $secure_methods = array_diff( $secure_methods, array( 'jwt' ) );
+
+    return $secure_methods;
+}
+```
+
+### Custom Authentication Provider
+
+Create a custom authentication provider that integrates with external systems:
+
+```php
+add_filter( 'cocart_login_permission_callback', 'custom_ldap_auth', 10, 4 );
+
+function custom_ldap_auth( $permission, $current_user, $request, $endpoint ) {
+    if ( true !== $permission ) {
+        return $permission;
+    }
+
+    // Check if LDAP authentication is required for this user
+    $require_ldap = get_user_meta( $current_user->ID, 'require_ldap_auth', true );
+
+    if ( $require_ldap ) {
+        $ldap_token = $request->get_param( 'ldap_token' );
+
+        if ( empty( $ldap_token ) ) {
+            return new WP_Error(
+                'cocart_ldap_required',
+                'LDAP authentication required',
+                array( 'status' => 400, 'ldap_required' => true )
+            );
+        }
+
+        // Validate with LDAP server
+        if ( ! validate_ldap_token( $current_user->user_login, $ldap_token ) ) {
+            return new WP_Error(
+                'cocart_ldap_invalid',
+                'Invalid LDAP credentials',
+                array( 'status' => 401 )
+            );
+        }
+    }
+
+    return $permission;
+}
+```
+
+## Implementation Guidelines
+
+1. **Always check the current permission status first** - If it's already an error, don't override it
+2. **Respect secure authentication methods** - Use the `cocart_login_secure_auth_methods` filter appropriately
+3. **Provide clear error messages** - Include helpful information in error responses
+4. **Use appropriate HTTP status codes** - 400 for missing required data, 401 for invalid credentials
+5. **Include metadata in error responses** - Help clients understand what's needed
+6. **Implement rate limiting** - Protect against brute force attacks
+7. **Log security events** - Use the permission granted action for audit trails
+8. **Validate all inputs** - Sanitize and validate all request parameters
+9. **Follow WordPress coding standards** - Maintain consistency with WordPress conventions
+
+## Security Best Practices
+
+<Warning>
+    Always validate user input and implement proper error handling when extending authentication.
+</Warning>
+
+- **Validate all input parameters** - Use WordPress sanitization functions like `sanitize_text_field()`
+- **Always check the permission status first** - Return early if permission is already denied
+- **Use appropriate HTTP status codes** - 400 for bad requests, 401 for authentication failures, 403 for insufficient permissions
+- **Log security events** - Use the `cocart_login_permission_granted` action for audit trails
+
+## Testing Your Implementation
+
+### Simple Test Filter
+
+Test the authentication injection mechanism with a basic filter:
+
+```php
+// Simple test filter for development
+add_filter( 'cocart_login_permission_callback', 'test_auth_injection', 10, 4 );
+
+function test_auth_injection( $permission, $user, $request, $endpoint ) {
+    if ( true !== $permission ) {
+        return $permission;
+    }
+
+    $test_param = $request->get_param( 'test_auth' );
+
+    if ( 'allow' !== $test_param ) {
+        return new WP_Error(
+            'test_auth_required',
+            'Add test_auth=allow parameter for testing',
+            array( 'status' => 400 )
+        );
+    }
+
+    return true;
+}
+```
+
+### Test with cURL
+
+```bash
+# This should fail
+curl -X POST "https://yoursite.com/wp-json/cocart/v2/login" \
+  -H "Authorization: Basic $(echo -n 'username:password' | base64)" \
+  -H "Content-Type: application/json"
+
+# This should succeed
+curl -X POST "https://yoursite.com/wp-json/cocart/v2/login" \
+  -H "Authorization: Basic $(echo -n 'username:password' | base64)" \
+  -H "Content-Type: application/json" \
+  -d '{"test_auth": "allow"}'
+```
+
+## Common Use Cases
+
+These examples demonstrate practical implementations of authentication injection for common security requirements.
+
+<CardGroup cols={2}>
+  <Card title="Single Sign-On (SSO)" icon="link" href="#sso-integration">
+    Integrate with external SSO providers like SAML, OAuth, or LDAP for seamless authentication
+  </Card>
+  <Card title="Role-Based Auth" icon="users" href="#role-based-authentication">
+    Add extra verification for specific user roles, capabilities, or department restrictions
+  </Card>
+  <Card title="Device Registration" icon="mobile" href="#device-registration">
+    Require device registration and management for enhanced mobile security
+  </Card>
+  <Card title="Geolocation Blocking" icon="globe" href="#geolocation-blocking">
+    Restrict access based on geographic location with country-level controls
+  </Card>
+  <Card title="Time-Based Access" icon="clock" href="#time-based-access">
+    Control access based on business hours, maintenance windows, or schedules
+  </Card>
+  <Card title="Custom Headers" icon="code" href="#custom-headers">
+    Validate custom headers for API versioning, client identification, or feature flags
+  </Card>
+</CardGroup>
+
+<AccordionGroup>
+  <Accordion title="SSO Integration" icon="link">
+    ```php
+    add_filter( 'cocart_login_permission_callback', 'sso_integration', 10, 4 );
+    function sso_integration( $permission, $current_user, $request, $endpoint ) {
+        if ( true !== $permission ) {
+            return $permission;
+        }
+
+        $sso_token = $request->get_param( 'sso_token' );
+        if ( ! empty( $sso_token ) ) {
+            // Validate SSO token with external provider
+            $sso_valid = validate_sso_token( $sso_token, $current_user->user_email );
+
+            if ( ! $sso_valid ) {
+                return new WP_Error(
+                    'cocart_sso_invalid',
+                    'Invalid SSO token',
+                    array( 'status' => 401 )
+                );
+            }
+        }
+
+        return $permission;
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Role-Based Authentication" icon="users">
+    ```php
+    add_filter( 'cocart_login_permission_callback', 'role_based_auth', 10, 4 );
+    function role_based_auth( $permission, $current_user, $request, $endpoint ) {
+        if ( true !== $permission ) {
+            return $permission;
+        }
+
+        // Require additional verification for admin users
+        if ( in_array( 'administrator', $current_user->roles ) ) {
+            $admin_code = $request->get_param( 'admin_verification_code' );
+
+            if ( empty( $admin_code ) ) {
+                return new WP_Error(
+                    'cocart_admin_verification_required',
+                    'Additional verification required for admin users',
+                    array( 'status' => 400, 'admin_verification_required' => true )
+                );
+            }
+
+            if ( ! verify_admin_code( $current_user->ID, $admin_code ) ) {
+                return new WP_Error(
+                    'cocart_admin_verification_invalid',
+                    'Invalid admin verification code',
+                    array( 'status' => 401 )
+                );
+            }
+        }
+
+        return $permission;
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Device Registration" icon="mobile">
+    ```php
+    add_filter( 'cocart_login_permission_callback', 'device_registration_check', 10, 4 );
+    function device_registration_check( $permission, $current_user, $request, $endpoint ) {
+        if ( true !== $permission ) {
+            return $permission;
+        }
+
+        $device_id = $request->get_param( 'device_id' );
+        $user_agent = $request->get_header( 'user_agent' );
+
+        if ( empty( $device_id ) ) {
+            return new WP_Error(
+                'cocart_device_id_required',
+                'Device ID is required for authentication',
+                array( 'status' => 400 )
+            );
+        }
+
+        // Check if device is registered for this user
+        $registered_devices = get_user_meta( $current_user->ID, 'registered_devices', true ) ?: array();
+
+        if ( ! in_array( $device_id, $registered_devices ) ) {
+            return new WP_Error(
+                'cocart_device_not_registered',
+                'This device is not registered for this account',
+                array( 'status' => 403, 'device_registration_required' => true )
+            );
+        }
+
+        return $permission;
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Geolocation Blocking" icon="globe">
+    ```php
+    add_filter( 'cocart_login_permission_callback', 'geolocation_check', 10, 4 );
+    function geolocation_check( $permission, $current_user, $request, $endpoint ) {
+        if ( true !== $permission ) {
+            return $permission;
+        }
+
+        $ip_address = CoCart_Authentication::get_ip_address();
+        $country_code = get_country_from_ip( $ip_address );
+
+        // Block certain countries
+        $blocked_countries = array( 'CN', 'RU', 'KP' );
+        $allowed_countries = get_option( 'allowed_countries', array( 'US', 'CA', 'GB', 'AU' ) );
+
+        if ( in_array( $country_code, $blocked_countries ) ) {
+            return new WP_Error(
+                'cocart_geo_blocked',
+                'Access from your location is not permitted',
+                array( 'status' => 403, 'country_code' => $country_code )
+            );
+        }
+
+        // Optional: Only allow specific countries
+        if ( ! empty( $allowed_countries ) && ! in_array( $country_code, $allowed_countries ) ) {
+            return new WP_Error(
+                'cocart_geo_restricted',
+                'Access is restricted to approved regions only',
+                array( 'status' => 403, 'country_code' => $country_code )
+            );
+        }
+
+        return $permission;
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Time-Based Access" icon="clock">
+    ```php
+    add_filter( 'cocart_login_permission_callback', 'time_based_access', 10, 4 );
+    function time_based_access( $permission, $current_user, $request, $endpoint ) {
+        if ( true !== $permission ) {
+            return $permission;
+        }
+
+        $current_time = current_time( 'H:i' );
+        $current_day = current_time( 'w' ); // 0 = Sunday, 6 = Saturday
+
+        // Get user-specific access hours
+        $access_schedule = get_user_meta( $current_user->ID, 'access_schedule', true );
+
+        if ( ! empty( $access_schedule ) ) {
+            $allowed = false;
+
+            // Check if current time falls within allowed schedule
+            if ( isset( $access_schedule[ $current_day ] ) ) {
+                $day_schedule = $access_schedule[ $current_day ];
+
+                foreach ( $day_schedule as $time_slot ) {
+                    if ( $current_time >= $time_slot['start'] && $current_time <= $time_slot['end'] ) {
+                        $allowed = true;
+                        break;
+                    }
+                }
+            }
+
+            if ( ! $allowed ) {
+                $next_available = get_next_available_time( $access_schedule );
+
+                return new WP_Error(
+                    'cocart_time_restricted',
+                    'Access is not permitted at this time',
+                    array(
+                        'status' => 403,
+                        'current_time' => $current_time,
+                        'next_available' => $next_available
+                    )
+                );
+            }
+        }
+
+        return $permission;
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Custom Headers" icon="code">
+    ```php
+    add_filter( 'cocart_login_permission_callback', 'validate_custom_headers', 10, 4 );
+    function validate_custom_headers( $permission, $current_user, $request, $endpoint ) {
+        if ( true !== $permission ) {
+            return $permission;
+        }
+
+        // Validate client identifier
+        $client_id = $request->get_header( 'X-Client-ID' );
+        $app_version = $request->get_header( 'X-App-Version' );
+
+        if ( ! empty( $client_id ) ) {
+            $client_config = get_client_configuration( $client_id );
+
+            if ( ! $client_config ) {
+                return new WP_Error(
+                    'cocart_unknown_client',
+                    'Unknown client identifier.',
+                    array( 'status' => 400 )
+                );
+            }
+
+            // Check minimum app version requirements
+            if ( ! empty( $app_version ) && ! empty( $client_config['min_version'] ) ) {
+                if ( version_compare( $app_version, $client_config['min_version'], '<' ) ) {
+                    return new WP_Error(
+                        'cocart_outdated_client',
+                        'Client version is outdated and no longer supported.',
+                        array(
+                            'status' => 426,
+                            'current_version' => $app_version,
+                            'minimum_version' => $client_config['min_version']
+                        )
+                    );
+                }
+            }
+
+            // Store client info for logging
+            update_user_meta( $current_user->ID, 'last_client_info', array(
+                'client_id' => $client_id,
+                'app_version' => $app_version,
+                'login_time' => current_time( 'mysql' )
+            ) );
+        }
+
+        return $permission;
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+<Note>
+All authentication extensions follow WordPress coding standards and integrate seamlessly with CoCart's existing authentication system. The examples above demonstrate practical implementations for common security requirements.
+</Note>

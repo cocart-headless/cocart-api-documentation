@@ -3,16 +3,17 @@ title: "Action hooks available in the core of CoCart"
 sidebarTitle: "In Core"
 description: "Trigger an action when these hooks are called"
 tag: "WIP"
-robots: "noindex, follow"
 ---
 
-Each action hook is documented below with its description and usage example.
+<Info>
+  Each action hook is documented below with its description and usage example.
+</Info>
 
 ## Installation Hooks
 
 ### `cocart_init`
 
-Fires once CoCart has finished loading.
+Fires once the CoCart plugin has finished loading.
 
 <Info>
     Made available since v3.0.0
@@ -25,7 +26,7 @@ add_action( 'cocart_init', function() {
 });
 ```
 
-**Defined in**: [`includes/class-cocart.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/class-cocart.php#L142)
+[Search `cocart_init` in repository](https://github.com/co-cart/co-cart/search?q=cocart_init&type=code)
 
 ---
 
@@ -44,7 +45,7 @@ add_action( 'cocart_updated', function() {
 });
 ```
 
-**Defined in**: [`includes/classes/class-cocart-install.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/class-cocart-install.php#L78)
+[Search `cocart_updated` in repository](https://github.com/co-cart/co-cart/search?q=cocart_updated&type=code)
 
 ---
 
@@ -63,7 +64,7 @@ add_action( 'cocart_installed', function() {
 });
 ```
 
-**Defined in**: [`includes/classes/class-cocart-install.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/class-cocart-install.php#L256)
+[Search `cocart_installed` in repository](https://github.com/co-cart/co-cart/search?q=cocart_installed&type=code)
 
 ---
 
@@ -72,6 +73,10 @@ add_action( 'cocart_installed', function() {
 ### `cocart_after_session_saved_data`
 
 Fires after session data is saved.
+
+<Info>
+    Made available since v4.2.0
+</Info>
 
 **Parameters**
 
@@ -91,10 +96,6 @@ Fires after session data is saved.
   Cart source.
 </ParamField>
 
-<Info>
-    Made available since v4.2.0
-</Info>
-
 **Usage**
 ```php
 add_action( 'cocart_after_session_saved_data', function() {
@@ -102,7 +103,7 @@ add_action( 'cocart_after_session_saved_data', function() {
 }, 10 );
 ```
 
-**Defined in**: [`includes/classes/class-cocart-session-handler.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/class-cocart-session-handler.php#L382)
+[Search `cocart_after_session_saved_data` in repository](https://github.com/co-cart/co-cart/search?q=cocart_after_session_saved_data&type=code)
 
 ---
 
@@ -121,7 +122,7 @@ add_action( 'cocart_load_cart_override', function() {
 });
 ```
 
-**Defined in**: [`includes/classes/class-cocart-session.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/class-cocart-session.php#L254)
+[Search `cocart_load_cart_override` in repository](https://github.com/co-cart/co-cart/search?q=cocart_load_cart_override&type=code)
 
 ---
 
@@ -140,7 +141,7 @@ add_action( 'cocart_load_cart', function() {
 });
 ```
 
-**Defined in**: [`includes/classes/class-cocart-session.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/class-cocart-session.php#L276)
+[Search `cocart_load_cart` in repository](https://github.com/co-cart/co-cart/search?q=cocart_load_cart&type=code)
 
 ---
 
@@ -148,15 +149,15 @@ add_action( 'cocart_load_cart', function() {
 
 Fires once a cart has loaded. Can be used to trigger a webhook.
 
+<Info>
+    Made available since v3.8.0
+</Info>
+
 **Parameters**
 
 <ParamField path="cart_key" type="string">
   The cart key.
 </ParamField>
-
-<Info>
-    Made available since v3.8.0
-</Info>
 
 **Usage**
 ```php
@@ -165,7 +166,7 @@ add_action( 'cocart_cart_loaded', function() {
 }, 10 );
 ```
 
-**Defined in**: [`includes/classes/class-cocart-session.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/class-cocart-session.php#L336)
+[Search `cocart_cart_loaded` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cart_loaded&type=code)
 
 ---
 
@@ -175,6 +176,10 @@ add_action( 'cocart_cart_loaded', function() {
 
 Fires before the cart has updated via a callback, but before cart totals are re-calculated.
 
+<Info>
+    Made available since v4.1.0
+</Info>
+
 **Parameters**
 
 <ParamField path="request" type="WP_REST_Request">
@@ -184,10 +189,6 @@ Fires before the cart has updated via a callback, but before cart totals are re-
 <ParamField path="controller" type="object">
   The cart controller.
 </ParamField>
-
-<Info>
-    Made available since v4.1.0
-</Info>
 
 **Usage**
 ```php
@@ -196,13 +197,17 @@ add_action( 'cocart_update_cart_before_totals', function() {
 }, 10 );
 ```
 
-**Defined in**: [`includes/abstracts/abstract-cocart-extension-callback.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/abstracts/abstract-cocart-extension-callback.php#L85)
+[Search `cocart_update_cart_before_totals` in repository](https://github.com/co-cart/co-cart/search?q=cocart_update_cart_before_totals&type=code)
 
 ---
 
 ### `cocart_update_cart_after_totals`
 
 Fires after the cart has updated via a callback and the cart totals are re-calculated.
+
+<Info>
+    Made available since v4.1.0
+</Info>
 
 **Parameters**
 
@@ -214,10 +219,6 @@ Fires after the cart has updated via a callback and the cart totals are re-calcu
   The cart controller.
 </ParamField>
 
-<Info>
-    Made available since v4.1.0
-</Info>
-
 **Usage**
 ```php
 add_action( 'cocart_update_cart_after_totals', function() {
@@ -225,7 +226,7 @@ add_action( 'cocart_update_cart_after_totals', function() {
 }, 10 );
 ```
 
-**Defined in**: [`includes/abstracts/abstract-cocart-extension-callback.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/abstracts/abstract-cocart-extension-callback.php#L98)
+[Search `cocart_update_cart_after_totals` in repository](https://github.com/co-cart/co-cart/search?q=cocart_update_cart_after_totals&type=code)
 
 ---
 
@@ -234,6 +235,10 @@ add_action( 'cocart_update_cart_after_totals', function() {
 ### `cocart_item_added_updated_in_cart`
 
 Fires if item was added again to the cart but updated the quantity.
+
+<Info>
+    Made available since v2.1.0
+</Info>
 
 **Parameters**
 
@@ -249,10 +254,6 @@ Fires if item was added again to the cart but updated the quantity.
   New quantity of the item.
 </ParamField>
 
-<Info>
-    Made available since v2.1.0
-</Info>
-
 **Usage**
 ```php
 add_action( 'cocart_item_added_updated_in_cart', function() {
@@ -260,13 +261,17 @@ add_action( 'cocart_item_added_updated_in_cart', function() {
 }, 10 );
 ```
 
-**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-add-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-add-item-controller.php#L259)
+[Search `cocart_item_added_updated_in_cart` in repository](https://github.com/co-cart/co-cart/search?q=cocart_item_added_updated_in_cart&type=code)
 
 ---
 
 ### `cocart_item_added_to_cart`
 
 Fires once an item has been added to cart.
+
+<Info>
+    Made available since v2.1.0
+</Info>
 
 **Parameters**
 
@@ -278,10 +283,6 @@ Fires once an item has been added to cart.
   Item added to cart.
 </ParamField>
 
-<Info>
-    Made available since v2.1.0
-</Info>
-
 **Usage**
 ```php
 add_action( 'cocart_item_added_to_cart', function() {
@@ -289,7 +290,7 @@ add_action( 'cocart_item_added_to_cart', function() {
 }, 10 );
 ```
 
-**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-add-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-add-item-controller.php#L280)
+[Search `cocart_item_added_to_cart` in repository](https://github.com/co-cart/co-cart/search?q=cocart_item_added_to_cart&type=code)
 
 ---
 
@@ -297,15 +298,15 @@ add_action( 'cocart_item_added_to_cart', function() {
 
 Fires when an item is removed from the cart.
 
+<Info>
+    Made available since v2.0.0
+</Info>
+
 **Parameters**
 
 <ParamField path="current_data" type="array">
   The cart item data.
 </ParamField>
-
-<Info>
-    Made available since v2.0.0
-</Info>
 
 **Usage**
 ```php
@@ -314,7 +315,7 @@ add_action( 'cocart_item_removed', function() {
 }, 10 );
 ```
 
-**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L141)
+[Search `cocart_item_removed` in repository](https://github.com/co-cart/co-cart/search?q=cocart_item_removed&type=code)
 
 ---
 
@@ -322,15 +323,15 @@ add_action( 'cocart_item_removed', function() {
 
 Fires when an item is restored to the cart.
 
+<Info>
+    Made available since v2.0.0
+</Info>
+
 **Parameters**
 
 <ParamField path="current_data" type="array">
   The cart item data.
 </ParamField>
-
-<Info>
-    Made available since v2.0.0
-</Info>
 
 **Usage**
 ```php
@@ -339,13 +340,17 @@ add_action( 'cocart_item_restored', function() {
 }, 10 );
 ```
 
-**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L219)
+[Search `cocart_item_restored` in repository](https://github.com/co-cart/co-cart/search?q=cocart_item_restored&type=code)
 
 ---
 
 ### `cocart_item_quantity_changed`
 
 Fires when the quantity of an item in the cart is changed.
+
+<Info>
+    Made available since v2.0.0
+</Info>
 
 **Parameters**
 
@@ -357,10 +362,6 @@ Fires when the quantity of an item in the cart is changed.
   Item data.
 </ParamField>
 
-<Info>
-    Made available since v2.0.0
-</Info>
-
 **Usage**
 ```php
 add_action( 'cocart_item_quantity_changed', function() {
@@ -368,7 +369,7 @@ add_action( 'cocart_item_quantity_changed', function() {
 }, 10 );
 ```
 
-**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-item-controller.php#L392)
+[Search `cocart_item_quantity_changed` in repository](https://github.com/co-cart/co-cart/search?q=cocart_item_quantity_changed&type=code)
 
 ---
 
@@ -389,7 +390,7 @@ add_action( 'cocart_before_cart_emptied', function() {
 });
 ```
 
-**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-clear-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-clear-cart-controller.php#L71)
+[Search `cocart_before_cart_emptied` in repository](https://github.com/co-cart/co-cart/search?q=cocart_before_cart_emptied&type=code)
 
 ---
 
@@ -408,7 +409,7 @@ add_action( 'cocart_cart_emptied', function() {
 });
 ```
 
-**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-clear-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-clear-cart-controller.php#L114)
+[Search `cocart_cart_emptied` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cart_emptied&type=code)
 
 ---
 
@@ -427,7 +428,7 @@ add_action( 'cocart_cart_cleared', function() {
 });
 ```
 
-**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-clear-cart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-clear-cart-controller.php#L122)
+[Search `cocart_cart_cleared` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cart_cleared&type=code)
 
 ---
 
@@ -435,15 +436,15 @@ add_action( 'cocart_cart_cleared', function() {
 
 Fires when the cart is retrieved.
 
+<Info>
+    Made available since v2.0.0
+</Info>
+
 **Parameters**
 
 <ParamField path="cart_contents" type="array">
   Cart contents.
 </ParamField>
-
-<Info>
-    Made available since v2.0.0
-</Info>
 
 **Usage**
 ```php
@@ -452,7 +453,7 @@ add_action( 'cocart_get_cart', function() {
 }, 10 );
 ```
 
-**Defined in**: [`includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/cart/class-cocart-controller.php#L131)
+[Search `cocart_get_cart` in repository](https://github.com/co-cart/co-cart/search?q=cocart_get_cart&type=code)
 
 ---
 
@@ -462,15 +463,15 @@ add_action( 'cocart_get_cart', function() {
 
 Fires when an extension callback is registered.
 
+<Info>
+    Made available since v3.1.0
+</Info>
+
 **Parameters**
 
 <ParamField path="cart_extension" type="CoCart_Cart_Extension">
   Instance of the CoCart_Cart_Extension class which exposes the CoCart_Cart_Extension::register() method.
 </ParamField>
-
-<Info>
-    Made available since v3.1.0
-</Info>
 
 **Usage**
 ```php
@@ -479,7 +480,7 @@ add_action( 'cocart_register_extension_callback', function() {
 }, 10 );
 ```
 
-**Defined in**: [`includes/classes/rest-api/class-cocart-cart-extension.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/class-cocart-cart-extension.php#L62)
+[Search `cocart_register_extension_callback` in repository](https://github.com/co-cart/co-cart/search?q=cocart_register_extension_callback&type=code)
 
 ---
 
@@ -488,6 +489,10 @@ add_action( 'cocart_register_extension_callback', function() {
 ### `cocart_insert_product_review`
 
 Fires after a comment is created via the REST API.
+
+<Info>
+    Made available since v2.0.0
+</Info>
 
 **Parameters**
 
@@ -503,10 +508,6 @@ Fires after a comment is created via the REST API.
   True when creating a comment, false when updating.
 </ParamField>
 
-<Info>
-    Made available since v2.0.0
-</Info>
-
 **Usage**
 ```php
 add_action( 'cocart_insert_product_review', function() {
@@ -514,7 +515,7 @@ add_action( 'cocart_insert_product_review', function() {
 }, 10 );
 ```
 
-**Defined in**: [`includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/controllers/v1/products/class-cocart-product-reviews-controller.php#L433)
+[Search `cocart_insert_product_review` in repository](https://github.com/co-cart/co-cart/search?q=cocart_insert_product_review&type=code)
 
 ---
 
@@ -537,6 +538,6 @@ add_action( 'cocart_update_cart_before_totals', function() {
 });
 ```
 
-**Defined in**: [`includes/classes/rest-api/callbacks/update-cart.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/classes/rest-api/callbacks/update-cart.php#L118)
+[Search `cocart_update_cart_before_totals` in repository](https://github.com/co-cart/co-cart/search?q=cocart_update_cart_before_totals&type=code)
 
 ---

@@ -77,4 +77,31 @@ add_action( 'cocart_jwt_auth_token_deleted', function( $user_id ) {
 }, 10, 2 );
 ```
 
+## Authentication Events
+
+### `cocart_jwt_auth_authenticated`
+
+<Info>
+    Made available since v3.0.0
+</Info>
+
+Fires when a user is authenticated via JWT token.
+
+```php
+add_action( 'cocart_jwt_auth_authenticated', function( $user ) {
+    // Send admin notification for VIP customers
+    if ( in_array( 'vip_customer', $user->roles ) ) {
+        wp_mail(
+            get_option( 'admin_email' ),
+            'VIP Customer Login',
+            "VIP customer {$user->display_name} has logged in via API."
+        );
+    }
+
+    // Track API usage analytics
+    $usage_count = get_user_meta( $user->ID, 'api_usage_count', true );
+    update_user_meta( $user->ID, 'api_usage_count', intval( $usage_count ) + 1 );
+} );
+```
+
 > All actions follow WordPress coding standards and can be used with the standard add_action() function. The examples above show practical implementations for each action.
