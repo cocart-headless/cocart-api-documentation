@@ -1,0 +1,486 @@
+---
+title: "Setting Up Astro"
+sidebarTitle: "Astro Setup"
+description: "Learn how to set up an Astro project for your headless WooCommerce store"
+tag: "WIP"
+robots: "noindex, follow"
+---
+
+# Introduction
+
+[Astro](https://astro.build) is a modern web framework that delivers fast, content-focused websites. It's perfect for building headless storefronts with CoCart because of its excellent performance, flexibility, and support for multiple frameworks.
+
+This guide will walk you through setting up an Astro project configured to work with CoCart API.
+
+## Why Astro for Headless Commerce?
+
+- **Fast by default** - Ships zero JavaScript by default, loading JS only when needed
+- **Framework agnostic** - Use React, Vue, Svelte, or vanilla JavaScript
+- **SEO friendly** - Server-side rendering and static site generation
+- **Island architecture** - Interactive components only where needed
+- **Great DX** - Hot module replacement and TypeScript support
+
+## Prerequisites
+
+- Node.js 18.17.1 or higher
+- A WordPress site with WooCommerce installed
+- CoCart plugin installed and activated
+- Basic knowledge of JavaScript and command line
+
+## Creating a New Astro Project
+
+Create a new Astro project using the official CLI:
+
+```bash
+npm create astro@latest my-headless-store
+```
+
+When prompted, choose the following options:
+
+- **How would you like to start?** → Empty
+- **Install dependencies?** → Yes
+- **Initialize git repository?** → Yes (recommended)
+- **TypeScript?** → Yes (recommended) or No
+
+Navigate to your project:
+
+```bash
+cd my-headless-store
+```
+
+## Installing Tailwind CSS
+
+Most UI component libraries (including OxbowUI) use Tailwind CSS. Install it using Astro's integration:
+
+```bash
+npx astro add tailwind
+```
+
+This will:
+- Install Tailwind CSS and its dependencies
+- Create a `tailwind.config.mjs` file
+- Update your Astro configuration
+- Add necessary imports
+
+## Project Structure
+
+Your Astro project should have this structure:
+
+```
+my-headless-store/
+├── src/
+│   ├── components/     # Reusable components
+│   ├── layouts/        # Page layouts
+│   ├── pages/          # Routes (file-based routing)
+│   ├── lib/            # Utility functions and API clients
+│   └── styles/         # Global styles
+├── public/             # Static assets
+├── astro.config.mjs    # Astro configuration
+├── tailwind.config.mjs # Tailwind configuration
+├── package.json
+└── tsconfig.json       # TypeScript config (if using TS)
+```
+
+Create the necessary folders:
+
+```bash
+mkdir -p src/components src/lib src/layouts
+```
+
+## Creating the CoCart API Client
+
+Create a centralized API client to interact with CoCart. Create `src/lib/cocart.js`:
+
+<Info>
+  We are currently building out this client, so for now just make standard fetch requests to the CoCart API endpoints as needed.
+</Info>
+
+```javascript
+const STORE_URL = import.meta.env.PUBLIC_STORE_URL || 'https://yourstore.com';
+const API_BASE = `${STORE_URL}/wp-json/cocart/v2`;
+
+/**
+ * Fetch products from CoCart API
+ * @param {Object} params - Query parameters
+ * @returns {Promise<Array>} Products array
+ */
+export async function getProducts(params = {}) {
+  const queryParams = new URLSearchParams({
+    per_page: params.per_page || 12,
+    page: params.page || 1,
+    ...params
+  });
+
+  try {
+    const response = await fetch(`${API_BASE}/products?${queryParams}`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return [];
+  }
+}
+
+/**
+ * Get a single product by ID
+ * @param {string|number} productId - Product ID
+ * @returns {Promise<Object>} Product object
+ */
+export async function getProduct(productId) {
+  try {
+    const response = await fetch(`${API_BASE}/products/${productId}`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    return null;
+  }
+}
+
+/**
+ * Add item to cart
+ * @param {string} productId - Product ID
+ * @param {number} quantity - Quantity to add
+ * @param {Object} options - Additional options (variation_id, cart_item_data, etc.)
+ * @returns {Promise<Object>} Cart response
+ */
+export async function addToCart(productId, quantity = 1, options = {}) {
+  try {
+    const response = await fetch(`${API_BASE}/cart/add-item`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: productId,
+        quantity: quantity,
+        ...options
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error adding to cart:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get current cart
+ * @param {string} cartKey - Optional cart key
+ * @returns {Promise<Object>} Cart object
+ */
+export async function getCart(cartKey = null) {
+  const url = cartKey
+    ? `${API_BASE}/cart?cart_key=${cartKey}`
+    : `${API_BASE}/cart`;
+
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching cart:', error);
+    return null;
+  }
+}
+
+/**
+ * Update cart item quantity
+ * @param {string} itemKey - Cart item key
+ * @param {number} quantity - New quantity
+ * @returns {Promise<Object>} Updated cart
+ */
+export async function updateCartItem(itemKey, quantity) {
+  try {
+    const response = await fetch(`${API_BASE}/cart/item/${itemKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ quantity })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating cart item:', error);
+    throw error;
+  }
+}
+
+/**
+ * Remove item from cart
+ * @param {string} itemKey - Cart item key
+ * @returns {Promise<Object>} Updated cart
+ */
+export async function removeCartItem(itemKey) {
+  try {
+    const response = await fetch(`${API_BASE}/cart/item/${itemKey}`, {
+      method: 'DELETE'
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error removing cart item:', error);
+    throw error;
+  }
+}
+```
+
+## Environment Configuration
+
+Create a `.env` file in your project root:
+
+```bash
+PUBLIC_STORE_URL=https://yourstore.com
+```
+
+<Note>
+Variables prefixed with `PUBLIC_` are exposed to the client-side code. Be careful not to expose sensitive data.
+</Note>
+
+Add `.env` to your `.gitignore`:
+
+```bash
+echo ".env" >> .gitignore
+```
+
+Create a `.env.example` for your team:
+
+```bash
+# .env.example
+PUBLIC_STORE_URL=https://yourstore.com
+```
+
+## Creating a Base Layout
+
+Create a base layout at `src/layouts/Layout.astro`:
+
+```astro
+---
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = "Your headless WooCommerce store" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+  </head>
+  <body class="bg-white dark:bg-zinc-900">
+    <slot />
+  </body>
+</html>
+```
+
+## Adding AlpineJS for Interactivity
+
+If you plan to use interactive components (like OxbowUI), install AlpineJS:
+
+```bash
+npm install alpinejs
+```
+
+You can initialize it globally in your layout or per-component. For global initialization, update your layout:
+
+```astro
+---
+// src/layouts/Layout.astro
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = "Your headless WooCommerce store" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+  </head>
+  <body class="bg-white dark:bg-zinc-900">
+    <slot />
+
+    <script>
+      import Alpine from 'alpinejs';
+      window.Alpine = Alpine;
+      Alpine.start();
+    </script>
+  </body>
+</html>
+```
+
+<Note>
+  Alternatively, you can use AlpineJS via CDN by adding this to your `<head>`:
+</Note>
+
+```html
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+```
+
+## Creating API Endpoints
+
+Astro supports API routes for server-side operations. Create API endpoints for cart operations.
+
+Create `src/pages/api/cart/add.js`:
+
+```javascript
+import { addToCart } from '../../../lib/cocart';
+
+export async function POST({ request }) {
+  try {
+    const body = await request.json();
+    const { id, quantity = 1, ...options } = body;
+
+    const result = await addToCart(id, quantity, options);
+
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+  }
+}
+```
+
+## Testing Your Setup
+
+Create a test page at `src/pages/index.astro`:
+
+```astro
+---
+import Layout from '../layouts/Layout.astro';
+import { getProducts } from '../lib/cocart';
+
+const products = await getProducts({ per_page: 3 });
+---
+
+<Layout title="My Headless Store">
+  <main class="container mx-auto px-4 py-12">
+    <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-8">
+      Welcome to Your Headless Store
+    </h1>
+
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {products.map((product) => (
+        <div class="border rounded-lg p-4">
+          <h2 class="font-semibold">{product.name}</h2>
+          <p class="text-zinc-600">{product.prices.currency_symbol}{product.prices.price}</p>
+        </div>
+      ))}
+    </div>
+  </main>
+</Layout>
+```
+
+## Running Your Project
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Visit `http://localhost:4321` to see your store.
+
+## Building for Production
+
+Build your site for production:
+
+```bash
+npm run build
+```
+
+Preview the production build:
+
+```bash
+npm run preview
+```
+
+## Deployment Options
+
+Astro sites can be deployed to various platforms:
+
+- **Vercel** - Zero configuration deployment
+- **Netlify** - Easy deployment with built-in features
+- **Cloudflare Pages** - Global edge network
+- **GitHub Pages** - Free hosting for static sites
+- **Your own server** - Deploy the `dist` folder
+
+## Next Steps
+
+Now that your Astro project is set up with CoCart:
+
+1. [Build product listings with OxbowUI components](./oxbowui-product-list)
+2. Add shopping cart functionality
+3. Implement checkout flow
+4. Add user authentication
+5. Optimize for performance and SEO
+
+## Troubleshooting
+
+### CORS Errors
+
+If you encounter CORS errors, you may need to configure WordPress to allow cross-origin requests. See [CORS documentation](../../documentation/cors).
+
+### API Connection Issues
+
+1. Verify your `PUBLIC_STORE_URL` is correct
+2. Ensure CoCart is installed and activated
+3. Check that WooCommerce is configured properly
+4. Test API endpoints directly in your browser or Postman
+
+## Resources
+
+- [Astro Documentation](https://docs.astro.build)
+- [CoCart API Reference](../../api-reference/introduction)
+- [Tailwind CSS Documentation](https://tailwindcss.com)
+- [AlpineJS Documentation](https://alpinejs.dev)

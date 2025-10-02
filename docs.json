@@ -358,6 +358,20 @@
                     ]
                   },
                   {
+                    "group": "Framework Integrations",
+                    "icon": "code",
+                    "pages": [
+                      {
+                        "group": "Astro",
+                        "icon": "rocket",
+                        "pages": [
+                          "tutorials/astro/setup",
+                          "tutorials/astro/oxbowui-product-list"
+                        ]
+                      }
+                    ]
+                  },
+                  {
                     "group": "Tips and Tricks",
                     "pages": [
                       "tutorials/generate-image-dataurl"
@@ -847,6 +861,20 @@
                       "tutorials/pre-release/checkout-stripe",
                       "tutorials/pre-release/checkout-paypal",
                       "tutorials/pre-release/checkout-authorize-net"
+                    ]
+                  },
+                  {
+                    "group": "Framework Integrations",
+                    "icon": "code",
+                    "pages": [
+                      {
+                        "group": "Astro",
+                        "icon": "rocket",
+                        "pages": [
+                          "tutorials/astro/setup",
+                          "tutorials/astro/oxbowui-product-list"
+                        ]
+                      }
                     ]
                   },
                   {
