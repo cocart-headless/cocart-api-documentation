@@ -538,6 +538,7 @@
                       "documentation/security",
                       "documentation/pre-release/batch-requests",
                       "documentation/force-permissions",
+                      "documentation/pre-release/auto-address",
                       "documentation/pre-release/rate-limiting",
                       "documentation/pre-release/cors",
                       "documentation/pre-release/load-cart"
@@ -726,8 +727,13 @@
                         "group": "Checkout",
                         "icon": "cash-register",
                         "pages": [
-                          "api-reference/v2/checkout/pre-release/post-checkout",
-                          "api-reference/v2/checkout/pre-release/get-payment-methods"
+                          "api-reference/pre-release/checkout/get-checkout",
+                          "api-reference/pre-release/checkout/post-checkout",
+                          "api-reference/pre-release/checkout/put-checkout",
+                          "api-reference/pre-release/checkout/get-payment-methods",
+                          "api-reference/pre-release/checkout/post-payment-context",
+                          "api-reference/pre-release/checkout/get-address-search",
+                          "api-reference/pre-release/checkout/get-address-details"
                         ]
                       },
                       {
@@ -755,12 +761,20 @@
                         "icon": "computer",
                         "pages": [
                           "api-reference/pre-release/my-account/get-my-account",
+                          "api-reference/pre-release/my-account/post-my-account",
                           "api-reference/pre-release/my-account/get-my-account-orders",
                           "api-reference/pre-release/my-account/get-my-account-single-order",
+                          "api-reference/pre-release/my-account/get-my-account-single-order-downloads",
                           "api-reference/pre-release/my-account/get-my-account-downloads",
                           "api-reference/pre-release/my-account/get-my-account-reviews",
                           "api-reference/pre-release/my-account/get-my-account-subscriptions",
-                          "api-reference/pre-release/my-account/get-my-account-single-subscription"
+                          "api-reference/pre-release/my-account/get-my-account-single-subscription",
+                          "api-reference/pre-release/my-account/post-subscription-renew",
+                          "api-reference/pre-release/my-account/post-subscription-on-hold",
+                          "api-reference/pre-release/my-account/post-subscription-reactivate",
+                          "api-reference/pre-release/my-account/post-subscription-resubscribe",
+                          "api-reference/pre-release/my-account/post-subscription-cancel",
+                          "api-reference/pre-release/my-account/post-subscription-payment-method"
                         ]
                       },
                       {
@@ -848,7 +862,8 @@
                       "tutorials/covert-cart-to-order",
                       "tutorials/jwt-token-checkup",
                       "tutorials/authentication-injection",
-                      "tutorials/pre-release/extending-cart-creating-callbacks"
+                      "tutorials/pre-release/extending-cart-creating-callbacks",
+                      "tutorials/pre-release/address-provider"
                     ]
                   },
                   {

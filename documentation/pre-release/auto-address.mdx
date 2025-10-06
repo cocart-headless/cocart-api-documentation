@@ -1,0 +1,78 @@
+---
+title: "Auto Address"
+description: "Provide real-time address suggestions for customers during checkout, improving data accuracy and user experience."
+icon: "location-pin"
+tag: "New"
+robots: "noindex, follow"
+---
+
+<Note>
+    Auto Address is only available with [CoCart Plus](https://cocartapi.com/pricing/).
+</Note>
+
+<Info>
+    Provider selection is handled automatically server-side based on configuration and country. Developers configure the provider(s) during setup, and the API automatically selects the appropriate provider. The `provider` field in responses is informational only - customers use it to pass back to the details endpoint.
+</Info>
+
+## Providers
+
+These are the currently supported address providers:
+
+### Google Places API
+
+Provides global address autocomplete using Google's Places API.
+
+**Configuration:**
+
+Add to your `wp-config.php` file:
+
+```php
+define( 'COCART_GOOGLE_PLACES_API_KEY', 'your-api-key-here' );
+```
+
+**Requirements:**
+
+- Google Cloud Platform account
+- Places API enabled
+- Valid API key
+
+**Supported Countries:** All
+
+### SmartyStreets
+
+Provides US address validation and autocomplete using SmartyStreets API.
+
+**Configuration:**
+
+Add to your `wp-config.php` file:
+
+```php
+define( 'COCART_SMARTYSTREETS_AUTH_ID', 'your-auth-id' );
+define( 'COCART_SMARTYSTREETS_AUTH_TOKEN', 'your-auth-token' );
+```
+
+**Requirements:**
+
+- SmartyStreets account
+- Auth ID and Auth Token
+
+**Supported Countries:** US only
+
+<Info>
+    You can create your own custom address provider if these are not the ones you want to use. See the [Custom Address Provider](../tutorials/pre-release/address-provider/) guide for details.
+</Info>
+
+## Best Practices
+
+1. **Debounce input** - Wait 300-500ms after user stops typing before searching
+2. **Handle errors gracefully** - Provide fallback to manual entry
+3. **Cache results** - Consider caching suggestions client-side
+4. **Validate addresses** - Always validate the final address before checkout
+5. **Store provider ID** - Save the provider ID from search results to use in the details request
+
+## Performance Considerations
+
+- Minimum query length enforced (3 characters) to reduce unnecessary API calls
+- Provider is automatically selected server-side based on country and configuration
+- Results are not cached server-side to ensure fresh data
+- Consider implementing client-side caching and debouncing

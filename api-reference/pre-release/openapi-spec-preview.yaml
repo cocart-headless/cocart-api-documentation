@@ -245,6 +245,121 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /address/search:
+    get:
+      tags:
+        - Checkout
+      summary: Search for address suggestions
+      description: Search for address suggestions using an autocomplete provider during checkout
+      operationId: searchAddresses
+      parameters:
+        - name: query
+          in: query
+          description: Search query string (minimum 3 characters)
+          required: true
+          schema:
+            type: string
+            minLength: 3
+        - name: country
+          in: query
+          description: ISO 3166-1 alpha-2 country code to limit search results
+          required: false
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 2
+        - name: type
+          in: query
+          description: Address type for the search context
+          required: false
+          schema:
+            type: string
+            enum: [billing, shipping]
+            default: billing
+      responses:
+        '200':
+          description: Address suggestions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressSearchResponse'
+              examples:
+                addressSearch:
+                  $ref: '#/components/examples/AddressSearchExample'
+        '400':
+          description: Bad request - invalid query or country not supported
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error - no provider available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /address/details:
+    get:
+      tags:
+        - Checkout
+      summary: Get full address details
+      description: Retrieve complete address details for a selected suggestion from address search
+      operationId: getAddressDetails
+      parameters:
+        - name: address_id
+          in: query
+          description: Address ID from search results
+          required: true
+          schema:
+            type: string
+        - name: provider
+          in: query
+          description: Provider ID from search response
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Address details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressDetailsResponse'
+              examples:
+                addressDetails:
+                  $ref: '#/components/examples/AddressDetailsExample'
+        '400':
+          description: Bad request - missing address_id parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Address not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error - no provider available or invalid address
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /my-account:
     get:
       tags:
@@ -628,6 +743,266 @@ paths:
                   $ref: '#/components/examples/CustomerSubscriptionExample'
         '403':
           description: Forbidden - user must be logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Subscription not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /my-account/subscriptions/{id}/renew-{action}:
+    post:
+      tags:
+        - Subscriptions
+      summary: Toggle auto-renewal for subscription
+      description: Enable or disable automatic renewal for a subscription
+      operationId: toggleSubscriptionAutoRenew
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Subscription ID
+          required: true
+          schema:
+            type: integer
+        - name: action
+          in: path
+          description: Action to perform (enable or disable)
+          required: true
+          schema:
+            type: string
+            enum: [enable, disable]
+      responses:
+        '200':
+          description: Auto-renewal toggled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionActionResponse'
+        '400':
+          description: Bad request - invalid action
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - cannot toggle auto-renewal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Subscription not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /my-account/subscriptions/{id}/on-hold:
+    post:
+      tags:
+        - Subscriptions
+      summary: Suspend subscription
+      description: Put a subscription on hold
+      operationId: suspendSubscription
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Subscription ID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Subscription suspended successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionActionResponse'
+        '403':
+          description: Forbidden - cannot suspend subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Subscription not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /my-account/subscriptions/{id}/reactivate:
+    post:
+      tags:
+        - Subscriptions
+      summary: Reactivate subscription
+      description: Reactivate an on-hold subscription, optionally using a saved payment token
+      operationId: reactivateSubscription
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Subscription ID
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: Optional payment token for payment processing
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionReactivateRequest'
+      responses:
+        '200':
+          description: Subscription reactivated or payment required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionActionResponse'
+        '400':
+          description: Bad request - invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - cannot reactivate subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Subscription not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /my-account/subscriptions/{id}/resubscribe:
+    post:
+      tags:
+        - Subscriptions
+      summary: Resubscribe to subscription
+      description: Create a new subscription based on an expired or cancelled subscription
+      operationId: resubscribeSubscription
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Original subscription ID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Resubscription order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionActionResponse'
+        '403':
+          description: Forbidden - cannot resubscribe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Subscription not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /my-account/subscriptions/{id}/cancel:
+    post:
+      tags:
+        - Subscriptions
+      summary: Cancel subscription
+      description: Cancel an active subscription
+      operationId: cancelSubscription
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Subscription ID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Subscription cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionActionResponse'
+        '403':
+          description: Forbidden - cannot cancel subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Subscription not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /my-account/subscriptions/{id}/payment-method:
+    post:
+      tags:
+        - Subscriptions
+      summary: Update subscription payment method
+      description: Update the payment method for a subscription using a saved payment token
+      operationId: updateSubscriptionPaymentMethod
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Subscription ID
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        description: Payment method details
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionPaymentMethodRequest'
+      responses:
+        '200':
+          description: Payment method updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionActionResponse'
+        '400':
+          description: Bad request - invalid payment method or token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - cannot update payment method
           content:
             application/json:
               schema:
@@ -1047,6 +1422,91 @@ components:
         public_key:
           type: string
           description: Public key for client-side processing (if applicable)
+
+    AddressProvider:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Provider identifier
+        name:
+          type: string
+          description: Provider display name
+
+    AddressMatchedSubstring:
+      type: object
+      properties:
+        offset:
+          type: integer
+          description: Starting position of the matched substring
+        length:
+          type: integer
+          description: Length of the matched substring
+
+    AddressSuggestion:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the address suggestion
+        label:
+          type: string
+          description: Display label for the address suggestion
+        matched_substrings:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddressMatchedSubstring'
+          description: Portions of the label that match the query
+
+    AddressSearchResponse:
+      type: object
+      properties:
+        suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddressSuggestion'
+          description: List of address suggestions
+        count:
+          type: integer
+          description: Total number of suggestions returned
+        provider:
+          $ref: '#/components/schemas/AddressProvider'
+        search_country:
+          type: string
+          description: Country code used for the search
+        query:
+          type: string
+          description: Original search query
+
+    AddressDetail:
+      type: object
+      properties:
+        address_1:
+          type: string
+          description: Address line 1
+        address_2:
+          type: string
+          description: Address line 2
+        city:
+          type: string
+          description: City name
+        state:
+          type: string
+          description: State or county code
+        postcode:
+          type: string
+          description: Postal code
+        country:
+          type: string
+          description: ISO 3166-1 alpha-2 country code
+
+    AddressDetailsResponse:
+      type: object
+      properties:
+        address:
+          $ref: '#/components/schemas/AddressDetail'
+        provider:
+          $ref: '#/components/schemas/AddressProvider'
 
     CustomerAccount:
       type: object
@@ -1523,6 +1983,76 @@ components:
           additionalProperties:
             $ref: '#/components/schemas/OrderAction'
 
+
+    SubscriptionActionResponse:
+      type: object
+      properties:
+        subscription_id:
+          type: integer
+          description: Subscription ID
+        subscription_status:
+          type: string
+          description: Current subscription status
+        requires_payment:
+          type: boolean
+          description: Whether payment is required
+        payment_processed:
+          type: boolean
+          description: Whether payment was processed
+        payment_method:
+          type: string
+          description: Payment method display name
+        is_manual:
+          type: string
+          enum: ["true", "false"]
+          description: Whether subscription is manual renewal
+        payment_token:
+          $ref: '#/components/schemas/PaymentToken'
+        available_tokens:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentToken'
+          description: Available payment tokens for the customer
+        can_use_token:
+          type: boolean
+          description: Whether saved tokens can be used
+        checkout_url:
+          type: string
+          format: uri
+          description: Checkout API URL for payment
+        order_id:
+          type: integer
+          description: Order ID requiring payment
+        order_key:
+          type: string
+          description: Order key for payment
+        order_total:
+          type: string
+          description: Order total amount
+        message:
+          type: string
+          description: Action result message
+
+    SubscriptionReactivateRequest:
+      type: object
+      properties:
+        token_id:
+          type: integer
+          description: Payment token ID to use for payment (if required)
+
+    SubscriptionPaymentMethodRequest:
+      type: object
+      required:
+        - payment_method
+      properties:
+        payment_method:
+          type: string
+          description: Payment gateway ID
+          example: "stripe"
+        token_id:
+          type: integer
+          description: Payment token ID (for saved payment methods)
+
   examples:
     CheckoutDataExample:
       value:
@@ -1825,6 +2355,39 @@ components:
         client_secret: "pi_abc123_secret_xyz789"
         payment_intent_id: "pi_abc123"
         public_key: "pk_test_abc123xyz789"
+
+    AddressSearchExample:
+      value:
+        suggestions:
+          - id: "ChIJN1t_tDeuEmsRUsoyG83frY4"
+            label: "123 Main Street, Anytown, CA 12345, USA"
+            matched_substrings:
+              - offset: 0
+                length: 3
+          - id: "ChIJP3Sa8ziYEmsRUKgyFmh9AQM"
+            label: "123 Main Avenue, Anytown, CA 12346, USA"
+            matched_substrings:
+              - offset: 0
+                length: 3
+        count: 2
+        provider:
+          id: "google"
+          name: "Google Places"
+        search_country: "US"
+        query: "123"
+
+    AddressDetailsExample:
+      value:
+        address:
+          address_1: "123 Main Street"
+          address_2: ""
+          city: "Anytown"
+          state: "CA"
+          postcode: "12345"
+          country: "US"
+        provider:
+          id: "google"
+          name: "Google Places"
 
     CheckoutProcessResponseExample:
       value:

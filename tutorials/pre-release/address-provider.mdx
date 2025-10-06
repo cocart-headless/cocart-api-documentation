@@ -1,0 +1,78 @@
+---
+title: "Custom Address Provider"
+sidebarTitle: "Custom Address Provider"
+description: "Learn how to extend your own auto-address provider"
+icon: "location-pin"
+tag: "NEW"
+robots: "noindex, follow"
+---
+
+<Note>
+    This guide covers a CoCart Preview feature "[Auto Address](/documentation/pre-release/auto-address)".
+</Note>
+
+You can create a custom address provider by extending the abstract base class:
+
+1. **Creating a Provider Class:**
+
+```php
+class My_Custom_Provider extends CoCart_Abstract_Address_Provider {
+
+    public function __construct() {
+        $this->id = 'my_provider';
+        $this->name = 'My Provider';
+        $this->branding_html = '<span>Powered by My Service</span>';
+    }
+
+    public function search( $query, $country, $type ) {
+        // Implement your search logic
+        // Return array of suggestions
+        return [
+            [
+                'id' => 'unique_id',
+                'label' => 'Display text',
+                'matched_substrings' => [ // Optional
+                    [
+                        'offset' => 0,
+                        'length' => strlen($query)
+                    ]
+                ]
+            ]
+        ];
+    }
+
+    public function select( $address_id ) {
+        // Implement your address retrieval logic
+        // Return WooCommerce address format
+        return [
+            'address_1' => '',
+            'address_2' => '',
+            'city' => '',
+            'state' => '',
+            'postcode' => '',
+            'country' => '',
+        ];
+    }
+
+    public function can_search( $country ) {
+        // Return true if your provider supports this country
+        return true;
+    }
+
+    public function get_supported_countries() {
+        // Optional: Return array of supported country codes
+        // Return empty array for all countries
+        return []; // or ['US', 'CA', 'GB']
+    }
+}
+```
+
+2. **Registering the Provider:**
+
+```php
+add_filter( 'cocart_address_autocomplete_providers', function( $providers ) {
+    $providers[] = new My_Custom_Provider();
+
+return $providers;
+} );
+```

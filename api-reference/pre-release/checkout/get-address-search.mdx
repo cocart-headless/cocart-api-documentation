@@ -1,0 +1,24 @@
+---
+title: "Search for Address Suggestions"
+openapi: "../openapi-spec-preview.yaml GET /address/search"
+tag: "New"
+robots: "noindex, follow"
+---
+
+<Warning>
+    This endpoint is currently shown as a preview of what's currently in development and is subject to change.
+</Warning>
+
+<Info>
+    Provider selection is handled automatically server-side based on configuration and country. The API automatically selects the appropriate provider, but you can set the `provider` field when passed back to the details endpoint.
+</Info>
+
+## Country Detection Logic
+
+When no country is explicitly provided, the API uses this fallback order:
+
+1. Explicitly provided `country` parameter
+2. Customer's existing billing/shipping address (for logged-in users)
+3. Cart session country (if previously set)
+4. Store's default base country
+5. 'US' as ultimate fallback
