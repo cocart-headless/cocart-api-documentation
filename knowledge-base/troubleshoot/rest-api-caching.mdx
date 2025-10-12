@@ -10,6 +10,75 @@ icon: "database"
     Improper caching configuration can cause CoCart to serve stale cart data, especially for unauthorized/guest requests. This guide helps you configure caching correctly.
 </Warning>
 
+## Quick Troubleshooting Checklist
+
+Before diving into detailed configurations, identify your issue:
+
+<CardGroup cols={2}>
+    <Card title="Cart Not Updating" icon="cart-shopping" color="#ea5a0c">
+        **Problem:** REST API responses are being cached
+
+        **Quick Fixes:**
+        - Check response headers show `Cache-Control: no-cache`
+        - Clear all caches (site, object, CDN)
+        - Configure cache exclusions for `/wp-json/cocart/`
+
+        [Jump to Testing →](#testing-your-configuration)
+    </Card>
+
+    <Card title="Users See Same Cart" icon="users" color="#0285c7">
+        **Problem:** Cached responses served to multiple users
+
+        **Quick Fixes:**
+        - Verify each user has unique cart key
+        - Add cache exclusions for CoCart routes
+        - Check CDN isn't caching API responses
+
+        [Jump to Configuration →](#configuration-by-host)
+    </Card>
+
+    <Card title="Slow Performance" icon="gauge-high" color="#16a34a">
+        **Problem:** May be performance-related, not caching
+
+        **Quick Checks:**
+        - Is object cache enabled?
+        - Are product endpoints cached?
+        - Is database optimized?
+
+        [Jump to Performance →](#performance-impact)
+    </Card>
+
+    <Card title="Session Expires Early" icon="clock-rotate-left" color="#dc2626">
+        **Problem:** Session data cleared from object cache
+
+        **Quick Fixes:**
+        - Add session groups to non-persistent groups
+        - Check `cocart_cart_expiration` filter
+
+        [Jump to Object Cache →](#configuration-by-host)
+    </Card>
+
+    <Card title="Cache Errors" icon="triangle-exclamation" color="#ca8a04">
+        **Problem:** Caching plugin conflicts
+
+        **Quick Fixes:**
+        - Check for conflicting caching plugins
+        - Configure plugin exclusions
+
+        [Jump to Plugins →](#common-caching-plugin-configurations)
+    </Card>
+
+    <Card title="Multisite Issues" icon="sitemap" color="#9333ea">
+        **Problem:** Cross-site cache contamination
+
+        **Quick Fixes:**
+        - Configure unique cache keys per site
+        - Set `WP_CACHE_KEY_SALT` properly
+
+        [Jump to Multisite →](#wordpress-multisite-considerations)
+    </Card>
+</CardGroup>
+
 ## Why REST API Caching Matters
 
 CoCart relies on dynamic REST API responses to manage shopping carts in real-time. When hosting providers like WP Engine and Pantheon implement object caching or page caching, these systems can cache API responses, causing several issues:
@@ -21,12 +90,62 @@ CoCart relies on dynamic REST API responses to manage shopping carts in real-tim
 
 ## How CoCart Handles Caching
 
-CoCart implements several caching strategies internally:
+<Info>
+    CoCart automatically implements intelligent caching with different strategies for different endpoint types.
+</Info>
 
-1. **Cart Cache Group**: Uses `COCART_CART_CACHE_GROUP` constant for WooCommerce cart caching
-2. **Session Management**: Cookie-less session handling that's concurrency-safe
-3. **Dynamic Responses**: All cart endpoints return dynamic data that should never be cached
-4. **No-Cache Headers**: CoCart sends appropriate cache control headers for REST API responses
+<Steps>
+    <Step title="Cart & Checkout Endpoints" icon="ban">
+        **Never Cached** - CoCart sends no-cache headers automatically
+
+        ```http
+        Cache-Control: no-cache, must-revalidate, max-age=0, no-store
+        Pragma: no-cache
+        Expires: Thu, 01-Jan-70 00:00:01 GMT
+        ```
+
+        **Applies to:**
+        - `/wp-json/cocart/v1/cart*` - All cart operations
+        - `/wp-json/cocart/v2/cart*` - All cart operations
+        - Checkout endpoints
+        - Session management
+        - Login/logout
+
+        <Warning>
+        These endpoints contain user-specific data and must never be cached.
+        </Warning>
+    </Step>
+
+    <Step title="Product Endpoints" icon="check">
+        **Safe to Cache** - CoCart allows caching with `Last-Modified` headers
+
+        ```http
+        Cache-Control: public, max-age=3600
+        Last-Modified: Thu, 29-July-25 14:05:30 GMT
+        ```
+
+        **Applies to:**
+        - `/wp-json/cocart/v1/products`
+        - `/wp-json/cocart/v2/products`
+
+        <Tip>
+        Product data is shared across users and rarely changes - perfect for caching!
+        </Tip>
+    </Step>
+
+    <Step title="Session Management" icon="database">
+        **Optimized for Performance**
+
+        - Cookie-less session handling
+        - Concurrency-safe operations
+        - Smart WordPress object cache usage
+        - Automatic session cleanup
+    </Step>
+</Steps>
+
+<Warning>
+    **The Problem:** Hosting providers and CDNs sometimes **ignore** these cache headers and cache everything anyway. This guide shows you how to configure your infrastructure to respect CoCart's cache directives.
+</Warning>
 
 ## Common Issues with Managed Hosts
 
@@ -58,7 +177,7 @@ CoCart implements several caching strategies internally:
     <Accordion title="WP Engine Configuration">
         ### Exclude CoCart Routes from Cache
 
-        WP Engine caches REST API responses by default. You need to exclude CoCart routes from the cache.
+        WP Engine caches REST API responses by default, even when CoCart sends proper no-cache headers. You need to explicitly exclude CoCart routes from WP Engine's cache.
 
         **Via WP Engine User Portal** (Recommended):
 
@@ -69,59 +188,45 @@ CoCart implements several caching strategies internally:
            - `/wp-json/cocart/v1/`
            - `/wp-json/cocart/v2/`
 
-        <Note>
-            WP Engine requires cache exclusions to be configured through their User Portal or by contacting support. Programmatic filter hooks for cache exclusions are not publicly documented.
-        </Note>
-
-        **Via REST API Headers**:
-
-        Use WordPress core filters to set proper cache headers:
-
-        ```php
-        <?php
-        /**
-         * Set no-cache headers for CoCart on WP Engine
-         *
-         * @see https://developer.wordpress.org/reference/hooks/rest_post_dispatch/
-         */
-        add_filter( 'rest_post_dispatch', function( $response, $server, $request ) {
-            $route = $request->get_route();
-
-            if ( strpos( $route, '/cocart/' ) !== false ) {
-                $response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
-                $response->header( 'Pragma', 'no-cache' );
-                $response->header( 'Expires', '0' );
-            }
-
-            return $response;
-        }, 10, 3 );
-        ```
+        <Warning>
+            WP Engine requires cache exclusions to be configured through their User Portal or by contacting support. There are no publicly documented programmatic filter hooks for cache exclusions.
+        </Warning>
 
         ### Object Cache Configuration
 
-        Use WordPress core functions to exclude cache groups:
+        If using WP Engine's object cache, exclude session cache groups:
 
         ```php
         <?php
         /**
-         * Exclude cart data from persistent object cache
+         * Exclude cart session data from persistent object cache
+         *
+         * @see https://developer.wordpress.org/reference/functions/wp_cache_add_non_persistent_groups/
          */
         wp_cache_add_non_persistent_groups( array(
             'wc_session_id',
             'cocart_session',
         ) );
         ```
+
+        <Tip>
+            Add this code to your theme's `functions.php` or a custom plugin. This ensures session data is not cached in Redis/Memcached.
+        </Tip>
     </Accordion>
 
     <Accordion title="Pantheon Configuration">
         ### Advanced Page Cache Configuration
 
-        Pantheon uses the Pantheon Advanced Page Cache plugin. Configure it to exclude CoCart:
+        Pantheon uses the Pantheon MU Plugin to manage cache headers. Configure it to prevent caching of CoCart routes:
 
         ```php
         <?php
         /**
-         * Exclude CoCart from Pantheon page cache
+         * Set cache max-age to 0 for CoCart routes
+         *
+         * This tells Pantheon to send cache headers with max-age=0,
+         * effectively preventing caching while still sending proper
+         * cache control headers to downstream caches.
          *
          * @see https://github.com/pantheon-systems/pantheon-mu-plugin
          */
@@ -134,6 +239,10 @@ CoCart implements several caching strategies internally:
             return $max_age;
         });
         ```
+
+        <Note>
+            **Why not use `pantheon_skip_cache_control`?** That filter completely disables Pantheon from sending cache headers. We want Pantheon to send headers (with max-age=0), so downstream caches and CDNs know not to cache. Using `pantheon_cache_default_max_age` is the correct approach.
+        </Note>
 
         ### Object Cache Pro Configuration
 
@@ -165,64 +274,20 @@ CoCart implements several caching strategies internally:
         });
         ```
 
-        ### REST API Cache Headers
-
-        Ensure proper cache headers for REST API:
-
-        ```php
-        <?php
-        /**
-         * Set proper cache headers for CoCart REST API
-         *
-         * @see https://developer.wordpress.org/reference/hooks/rest_post_dispatch/
-         */
-        add_filter( 'rest_post_dispatch', function( $response, $server, $request ) {
-            $route = $request->get_route();
-
-            // Check if this is a CoCart route
-            if ( strpos( $route, '/cocart/' ) !== false ) {
-                $response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
-                $response->header( 'Pragma', 'no-cache' );
-                $response->header( 'Expires', '0' );
-            }
-
-            return $response;
-        }, 10, 3 );
-        ```
+        <Note>
+            CoCart already sends proper no-cache headers for all cart endpoints. The configurations above are usually sufficient for Pantheon hosting.
+        </Note>
     </Accordion>
 
     <Accordion title="Other Managed Hosts (Kinsta, Flywheel, etc.)">
-        ### General Configuration
+        ### Cache Exclusions
 
-        Most managed WordPress hosts have similar caching mechanisms. Use this general configuration:
+        Most managed WordPress hosts require you to configure cache exclusions through their control panel or support. Contact your host's support and request exclusions for:
 
-        ```php
-        <?php
-        /**
-         * Universal REST API cache exclusion for CoCart
-         *
-         * @see https://developer.wordpress.org/reference/hooks/rest_post_dispatch/
-         */
-        add_filter( 'rest_post_dispatch', function( $response, $server, $request ) {
-            $route = $request->get_route();
+        - `/wp-json/cocart/v1/`
+        - `/wp-json/cocart/v2/`
 
-            // Exclude CoCart routes from cache
-            if ( strpos( $route, '/cocart/' ) !== false ) {
-
-                // Set no-cache headers
-                $response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
-                $response->header( 'Pragma', 'no-cache' );
-                $response->header( 'Expires', '0' );
-
-                // Prevent proxy caching
-                $response->header( 'Surrogate-Control', 'no-store' );
-            }
-
-            return $response;
-        }, 10, 3 );
-        ```
-
-        ### Object Cache Exclusions
+        ### Object Cache Configuration
 
         For Redis or Memcached-based object caching:
 
@@ -238,6 +303,10 @@ CoCart implements several caching strategies internally:
             'cocart_session',
         ) );
         ```
+
+        <Note>
+            CoCart already sends proper no-cache headers. If you're still experiencing caching issues after configuring object cache exclusions, contact your host's support to add page cache exclusions for CoCart routes.
+        </Note>
     </Accordion>
 
     <Accordion title="Custom CDN Configuration">
@@ -261,53 +330,326 @@ CoCart implements several caching strategies internally:
     </Accordion>
 </AccordionGroup>
 
+## Common Caching Plugin Configurations
+
+If you're running a WordPress caching plugin, you need to configure it to exclude CoCart routes. Here are configurations for popular plugins:
+
+<AccordionGroup>
+    <Accordion title="WP Rocket">
+        **Version:** 3.0+
+
+        **Exclude CoCart from Page Cache**
+
+        Go to **Settings → WP Rocket → Advanced Rules** and add to "Never Cache URL(s)":
+
+        ```
+        /wp-json/cocart/(.*)
+        ```
+        <Note>
+            WP Rocket automatically excludes WooCommerce cart/checkout pages by default, but you still need to exclude the REST API routes.
+        </Note>
+    </Accordion>
+
+    <Accordion title="W3 Total Cache">
+        **Version:** 2.0+
+
+        **Step 1: Page Cache Settings**
+
+        Go to **Performance → Page Cache → Advanced**
+
+        Add to "Never cache the following pages":
+        ```
+        wp-json/cocart/
+        ```
+
+        **Step 2: Object Cache Exclusions**
+
+        Go to **Performance → Object Cache → Advanced**
+
+        Add to "Never cache the following query strings":
+        ```
+        wc_session_id
+        cocart_session
+        ```
+
+        **Step 3: Disable for REST API**
+
+        In **Performance → General Settings**, ensure "Don't cache pages for logged in users" is checked.
+    </Accordion>
+
+    <Accordion title="WP Super Cache">
+        **Version:** 1.7+
+
+        **Exclude REST API Routes**
+
+        Go to **Settings → WP Super Cache → Advanced**
+
+        Add to "Rejected URIs":
+        ```
+        /wp-json/cocart/
+        ```
+
+        <Tip>
+            WP Super Cache works well with WooCommerce by default, but the REST API requires specific exclusions.
+        </Tip>
+    </Accordion>
+
+    <Accordion title="LiteSpeed Cache">
+        **Version:** 5.0+
+
+        **LiteSpeed automatically excludes CoCart routes** if you have WooCommerce installed. However, if you experience issues:
+
+        **Step 1: Check Exclusions**
+
+        Go to **LiteSpeed Cache → Cache → Excludes**
+
+        Verify these are listed:
+        ```
+        /wp-json/cocart/
+        ```
+
+        **Step 2: Object Cache**
+
+        Go to **LiteSpeed Cache → Object Cache**
+
+        Add to "Do Not Cache Objects":
+        ```
+        wc_session_id
+        cocart_session
+        ```
+
+        <Note>
+            LiteSpeed has excellent WooCommerce integration and should work with CoCart out of the box.
+        </Note>
+    </Accordion>
+
+    <Accordion title="Autoptimize">
+        **Version:** 3.0+
+
+        Autoptimize focuses on asset optimization, not page caching, so it generally doesn't conflict with CoCart. However:
+
+        **Ensure REST API is excluded from JS/CSS optimization:**
+
+        Go to **Settings → Autoptimize → JS, CSS & HTML**
+
+        Add to "Exclude scripts from Autoptimize":
+        ```
+        wp-json
+        ```
+
+        This prevents REST API responses from being modified.
+    </Accordion>
+
+    <Accordion title="SG Optimizer (SiteGround)">
+        **SiteGround Hosting Plugin**
+
+        **Step 1: Dynamic Cache Exclusions**
+
+        Go to **SG Optimizer → Caching → Dynamic Caching**
+
+        Add to "Exclude URLs":
+        ```
+        /wp-json/cocart/*
+        ```
+
+        **Step 2: Memcached Configuration**
+
+        If using Memcached, add to your `wp-config.php`:
+
+        ```php
+        <?php
+        // Exclude CoCart sessions from Memcached
+        if ( function_exists( 'wp_cache_add_non_persistent_groups' ) ) {
+            wp_cache_add_non_persistent_groups( array(
+                'wc_session_id',
+                'cocart_session',
+            ) );
+        }
+        ```
+    </Accordion>
+
+    <Accordion title="Breeze (Cloudways)">
+        **Cloudways Caching Plugin**
+
+        **Step 1: Exclude REST API**
+
+        Go to **Breeze → Advanced Options**
+
+        Add to "Never Cache these URLs":
+        ```
+        /wp-json/cocart/
+        ```
+
+        **Step 2: Exclude Query Strings**
+
+        Add to "Never Cache these Query Strings":
+        ```
+        cart_key
+        ```
+
+        **Step 3: Varnish Cache**
+
+        Cloudways uses Varnish. Purge Varnish cache after making changes:
+        - Go to your Cloudways panel
+        - Navigate to your application
+        - Click "Purge Varnish"
+    </Accordion>
+</AccordionGroup>
+
 ## Testing Your Configuration
 
-After implementing caching configuration, test thoroughly:
+<Info>
+After implementing caching configuration, run these tests to verify everything works correctly.
+</Info>
 
-### Test 1: Basic Cart Functionality
+<Steps>
+    <Step title="Test Basic Cart Functionality" icon="1">
+        Add an item and verify it appears immediately:
 
-```bash
-# Add an item to cart
-curl -X POST https://example.com/wp-json/cocart/v2/cart/add-item \
-  -H "Content-Type: application/json" \
-  -d '{"id":"123","quantity":"1"}'
+        <CodeGroup>
+        ```bash cURL
+        # Add an item to cart
+        curl -X POST https://example.com/wp-json/cocart/v2/cart/add-item \
+          -H "Content-Type: application/json" \
+          -d '{"id":"123","quantity":"1"}'
 
-# Immediately retrieve cart (should show new item)
-curl https://example.com/wp-json/cocart/v2/cart
-```
+        # Immediately retrieve cart (should show new item)
+        curl https://example.com/wp-json/cocart/v2/cart
+        ```
 
-### Test 2: Multiple Sessions
+        ```javascript JavaScript
+        // Add item to cart
+        await fetch('/wp-json/cocart/v2/cart/add-item', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: '123', quantity: '1' })
+        });
 
-Open two different browsers (or incognito windows) and verify:
-1. Each session maintains its own cart
-2. Changes in one session don't affect the other
-3. Cart keys are unique per session
+        // Verify cart updated
+        const cart = await fetch('/wp-json/cocart/v2/cart').then(r => r.json());
+        console.log('Cart items:', cart.items_count);
+        ```
+        </CodeGroup>
 
-### Test 3: Cart Modifications
+        <Check>Cart should show the newly added item immediately</Check>
+    </Step>
 
-```bash
-# Update item quantity
-curl -X POST https://example.com/wp-json/cocart/v2/cart/item/ITEM_KEY \
-  -H "Content-Type: application/json" \
-  -d '{"quantity":"5"}'
+    <Step title="Test Multiple Sessions" icon="2">
+        Verify session isolation between different users:
 
-# Verify update is reflected immediately
-curl https://example.com/wp-json/cocart/v2/cart
-```
+        1. Open **Chrome** in normal mode
+        2. Open **Chrome** in incognito mode
+        3. Add different items to each cart
+        4. Verify each session maintains its own cart
 
-### Test 4: Cache Headers
+        <Check>
+        - Each session has unique cart contents
+        - Changes in one session don't affect the other
+        - Cart keys are unique per session
+        </Check>
+    </Step>
 
-Check response headers:
+    <Step title="Test Cart Modifications" icon="3">
+        Verify updates are reflected immediately:
 
-```bash
-curl -I https://example.com/wp-json/cocart/v2/cart
-```
+        ```bash
+        # Update item quantity
+        curl -X POST https://example.com/wp-json/cocart/v2/cart/item/ITEM_KEY \
+          -H "Content-Type: application/json" \
+          -d '{"quantity":"5"}'
 
-Look for:
-- `Cache-Control: no-store, no-cache, must-revalidate, max-age=0`
-- `Pragma: no-cache`
-- Absence of caching headers like `Age` or `X-Cache: HIT`
+        # Verify update is reflected immediately
+        curl https://example.com/wp-json/cocart/v2/cart
+        ```
+
+        <Check>Quantity should update to 5 immediately</Check>
+    </Step>
+
+    <Step title="Verify Cache Headers" icon="4">
+        Check that proper headers are being sent:
+
+        ```bash
+        curl -I https://example.com/wp-json/cocart/v2/cart
+        ```
+
+        **Look for these headers:**
+
+        <Check>✅ `Cache-Control: no-store, no-cache, must-revalidate, max-age=0`</Check>
+        <Check>✅ `Pragma: no-cache`</Check>
+        <Check>❌ NO `Age` header (indicates cached response)</Check>
+        <Check>❌ NO `X-Cache: HIT` (indicates cached response)</Check>
+    </Step>
+</Steps>
+
+### Test 5: Using Browser Developer Tools
+
+The easiest way to check cache headers is using your browser's built-in developer tools.
+
+<Tabs>
+    <Tab title="Chrome / Edge">
+        **Step 1: Open DevTools**
+        - Press `F12` or right-click → "Inspect"
+        - Click the **Network** tab
+
+        **Step 2: Make API Request**
+        - Visit your site and add an item to cart
+        - In Network tab, filter by "Fetch/XHR"
+        - Find the CoCart API request (e.g., `/wp-json/cocart/v2/cart/add-item`)
+
+        **Step 3: Check Headers**
+        - Click on the request
+        - Click the **Headers** tab
+        - Scroll to **Response Headers**
+
+        **What to look for:**
+        - ✅ **Good:** `Cache-Control: no-cache, must-revalidate, max-age=0, no-store`
+        - ❌ **Bad:** `Cache-Control: public, max-age=3600` or missing header
+        - ❌ **Bad:** `X-Cache: HIT` (indicates response was cached)
+        - ❌ **Bad:** `Age: 123` (indicates cached response)
+    </Tab>
+
+    <Tab title="Firefox">
+        **Step 1: Open DevTools**
+        - Press `F12` or right-click → "Inspect"
+        - Click the **Network** tab
+
+        **Step 2: Make API Request**
+        - Visit your site and add an item to cart
+        - In Network tab, filter by "XHR"
+        - Find the CoCart API request
+
+        **Step 3: Check Headers**
+        - Click on the request
+        - Click the **Headers** panel
+        - Look at **Response Headers**
+
+        **What to look for:**
+        - ✅ `cache-control: no-cache, must-revalidate, max-age=0, no-store`
+        - ✅ `pragma: no-cache`
+        - ❌ Any caching indicators like `age`, `x-cache`
+    </Tab>
+
+    <Tab title="Safari">
+        **Step 1: Enable DevTools**
+        - Safari → Preferences → Advanced
+        - Check "Show Develop menu in menu bar"
+
+        **Step 2: Open Web Inspector**
+        - Press `Cmd + Option + I`
+        - Click the **Network** tab
+
+        **Step 3: Check Request**
+        - Perform a cart action
+        - Click on the CoCart request
+        - View **Headers** section
+
+        **Look for proper no-cache headers**
+    </Tab>
+</Tabs>
+
+<Tip>
+    **Pro Tip:** Use the "Disable cache" checkbox in DevTools (Network tab) to ensure you're seeing fresh responses during testing. Remember to test with it both enabled and disabled.
+</Tip>
 
 ## Debugging Caching Issues
 
@@ -390,22 +732,747 @@ Look for:
     </Accordion>
 </AccordionGroup>
 
+## Server Configuration (Advanced)
+
+For users with their own servers (VPS, dedicated), you can configure cache exclusions at the web server level:
+
+<AccordionGroup>
+    <Accordion title="Nginx Configuration">
+        Add this to your Nginx server block:
+
+        ```nginx
+        # Disable caching for CoCart REST API
+        location ~* ^/wp-json/cocart/ {
+            add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+            add_header Pragma "no-cache" always;
+            add_header Expires "0" always;
+
+            # Prevent upstream caching
+            proxy_no_cache 1;
+            proxy_cache_bypass 1;
+
+            # Pass to PHP-FPM
+            include fastcgi_params;
+            fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        }
+
+        # Allow caching for product endpoints
+        location ~* ^/wp-json/cocart/v[0-9]+/products {
+            add_header Cache-Control "public, max-age=3600" always;
+            add_header Last-Modified $date_gmt always;
+
+            include fastcgi_params;
+            fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        }
+        ```
+
+        After making changes:
+        ```bash
+        sudo nginx -t
+        sudo systemctl reload nginx
+        ```
+    </Accordion>
+
+    <Accordion title="Apache Configuration">
+        Add this to your `.htaccess` or Apache virtual host config:
+
+        ```apache
+        # Disable caching for CoCart REST API
+        <IfModule mod_rewrite.c>
+            RewriteEngine On
+
+            # Cart/Checkout endpoints - No caching
+            RewriteCond %{REQUEST_URI} ^/wp-json/cocart/v[0-9]+/(cart|checkout|session|login|logout)
+            RewriteRule .* - [E=NO_CACHE:1]
+
+            # Product endpoints - Allow caching
+            RewriteCond %{REQUEST_URI} ^/wp-json/cocart/v[0-9]+/products
+            RewriteRule .* - [E=CACHE_OK:1]
+        </IfModule>
+
+        # Set cache headers
+        <IfModule mod_headers.c>
+            # No cache for cart operations
+            Header always set Cache-Control "no-cache, no-store, must-revalidate" env=NO_CACHE
+            Header always set Pragma "no-cache" env=NO_CACHE
+            Header always set Expires "0" env=NO_CACHE
+
+            # Allow caching for products
+            Header always set Cache-Control "public, max-age=3600" env=CACHE_OK
+        </IfModule>
+        ```
+
+        After making changes:
+        ```bash
+        sudo apachectl configtest
+        sudo systemctl reload apache2
+        ```
+    </Accordion>
+
+    <Accordion title="Varnish Configuration">
+        Add to your Varnish VCL (`/etc/varnish/default.vcl`):
+
+        ```vcl
+        sub vcl_recv {
+            # Don't cache CoCart cart/checkout endpoints
+            if (req.url ~ "^/wp-json/cocart/v[0-9]+/(cart|checkout|session|login|logout)") {
+                return (pass);
+            }
+
+            # Allow caching for product endpoints
+            if (req.url ~ "^/wp-json/cocart/v[0-9]+/products") {
+                return (hash);
+            }
+        }
+
+        sub vcl_backend_response {
+            # Respect cache headers from CoCart
+            if (bereq.url ~ "^/wp-json/cocart/") {
+                if (beresp.http.Cache-Control ~ "no-cache|no-store") {
+                    set beresp.ttl = 0s;
+                    set beresp.uncacheable = true;
+                    return (deliver);
+                }
+            }
+        }
+        ```
+
+        Reload Varnish:
+        ```bash
+        sudo varnishadm "vcl.load reload01 /etc/varnish/default.vcl"
+        sudo varnishadm "vcl.use reload01"
+        ```
+    </Accordion>
+</AccordionGroup>
+
+## Performance Impact
+
+Understanding the performance trade-offs of caching configuration:
+
+### Why Cart Endpoints Can't Be Cached
+
+Cart data is **user-specific and constantly changing**:
+- Different users have different cart contents
+- Cart updates must be reflected immediately
+- Caching would serve stale data to users
+
+**Performance impact:** Minimal - Cart requests are infrequent compared to product browsing.
+
+### Why Product Endpoints Should Be Cached
+
+Product data is **shared across all users**:
+- Product information rarely changes
+- Same product data served to all users
+- Perfect candidate for caching
+
+**Performance gain:**
+- 90%+ reduction in database queries
+- Faster product listing pages
+- Better server resource utilization
+
+### Optimal Caching Strategy
+
+```php
+<?php
+/**
+ * Optimal caching strategy for CoCart
+ */
+
+// 1. Cache products for 1 hour
+add_filter( 'rest_post_dispatch', function( $response, $server, $request ) {
+    $route = $request->get_route();
+
+    // Product endpoints - Cache for 1 hour
+    if ( strpos( $route, '/cocart/' ) !== false && strpos( $route, '/products' ) !== false ) {
+        $response->header( 'Cache-Control', 'public, max-age=3600' );
+        return $response;
+    }
+
+    return $response;
+}, 10, 3 );
+
+// 2. Use object cache for better performance
+if ( ! wp_using_ext_object_cache() ) {
+    // Consider enabling Redis/Memcached for production
+}
+
+// 3. Exclude session data from persistent cache
+wp_cache_add_non_persistent_groups( array(
+    'wc_session_id',
+    'cocart_session',
+) );
+```
+
+### Monitoring Performance
+
+Track these metrics to ensure optimal performance:
+
+1. **Response Times:**
+   - Cart endpoints: < 200ms
+   - Product endpoints: < 100ms (when cached)
+
+2. **Cache Hit Ratio:**
+   - Products: Aim for 80%+ cache hit rate
+   - Cart: Should be 0% (never cached)
+
+3. **Database Queries:**
+   - Monitor slow query log
+   - Product queries should be minimal with caching
+
+<Tip>
+    Use a plugin like Query Monitor to track REST API performance and caching effectiveness during development.
+</Tip>
+
+## REST API Testing Tool
+
+Use this quick test to verify your cache configuration:
+
+<Tabs>
+    <Tab title="Browser Console">
+        Open your browser console and run:
+
+        ```javascript
+        // Test CoCart cache headers
+        fetch('/wp-json/cocart/v2/cart')
+            .then(response => {
+                console.log('Cache-Control:', response.headers.get('cache-control'));
+                console.log('Pragma:', response.headers.get('pragma'));
+                console.log('X-Cache:', response.headers.get('x-cache') || 'Not set');
+                console.log('Age:', response.headers.get('age') || 'Not set');
+
+                // Check if response is cached
+                const isCached = response.headers.get('x-cache')?.includes('HIT') ||
+                                response.headers.get('age') > 0;
+
+                console.log('\n🎯 Result:', isCached ? '❌ CACHED (Bad!)' : '✅ NOT CACHED (Good!)');
+            });
+        ```
+    </Tab>
+
+    <Tab title="WordPress Plugin">
+        Create a simple MU plugin to test cache configuration:
+
+        ```php
+        <?php
+        /**
+         * Plugin Name: CoCart Cache Tester
+         * Description: Test CoCart cache headers
+         */
+
+        add_action( 'admin_menu', function() {
+            add_submenu_page(
+                'woocommerce',
+                'CoCart Cache Test',
+                'Cache Test',
+                'manage_options',
+                'cocart-cache-test',
+                'cocart_cache_test_page'
+            );
+        });
+
+        function cocart_cache_test_page() {
+            $site_url = site_url();
+            $cart_url = $site_url . '/wp-json/cocart/v2/cart';
+
+            // Test cart endpoint
+            $response = wp_remote_get( $cart_url );
+            $headers = wp_remote_retrieve_headers( $response );
+
+            ?>
+            <div class="wrap">
+                <h1>CoCart Cache Test Results</h1>
+
+                <h2>Testing: <?php echo esc_url( $cart_url ); ?></h2>
+
+                <table class="widefat">
+                    <tr>
+                        <th>Header</th>
+                        <th>Value</th>
+                        <th>Status</th>
+                    </tr>
+                    <tr>
+                        <td>Cache-Control</td>
+                        <td><?php echo esc_html( $headers['cache-control'] ?? 'Not set' ); ?></td>
+                        <td>
+                            <?php
+                            $cc = $headers['cache-control'] ?? '';
+                            if ( strpos( $cc, 'no-cache' ) !== false ) {
+                                echo '✅ Good';
+                            } else {
+                                echo '❌ Bad - Should contain no-cache';
+                            }
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Pragma</td>
+                        <td><?php echo esc_html( $headers['pragma'] ?? 'Not set' ); ?></td>
+                        <td>
+                            <?php echo ( $headers['pragma'] ?? '' ) === 'no-cache' ? '✅ Good' : '⚠️ Should be no-cache'; ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>X-Cache</td>
+                        <td><?php echo esc_html( $headers['x-cache'] ?? 'Not set' ); ?></td>
+                        <td>
+                            <?php
+                            $xcache = strtolower( $headers['x-cache'] ?? '' );
+                            if ( empty( $xcache ) ) {
+                                echo '✅ Good (not cached)';
+                            } elseif ( strpos( $xcache, 'miss' ) !== false ) {
+                                echo '✅ Cache MISS (good)';
+                            } else {
+                                echo '❌ Cache HIT (bad!)';
+                            }
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Age</td>
+                        <td><?php echo esc_html( $headers['age'] ?? 'Not set' ); ?></td>
+                        <td>
+                            <?php
+                            if ( ! isset( $headers['age'] ) ) {
+                                echo '✅ Good (not cached)';
+                            } elseif ( $headers['age'] == 0 ) {
+                                echo '✅ Good (fresh)';
+                            } else {
+                                echo '❌ Bad - Response is cached';
+                            }
+                            ?>
+                        </td>
+                    </tr>
+                </table>
+
+                <h3>Object Cache Status</h3>
+                <p>
+                    <?php if ( wp_using_ext_object_cache() ): ?>
+                        ✅ External object cache is <strong>enabled</strong>
+                    <?php else: ?>
+                        ℹ️ External object cache is <strong>not enabled</strong>
+                    <?php endif; ?>
+                </p>
+            </div>
+            <?php
+        }
+        ```
+
+        Save to `wp-content/mu-plugins/cocart-cache-tester.php`
+    </Tab>
+
+    <Tab title="cURL Script">
+        Create a bash script to test cache headers:
+
+        ```bash
+        #!/bin/bash
+        # cocart-cache-test.sh
+
+        SITE_URL="https://example.com"
+
+        echo "🧪 Testing CoCart Cache Configuration..."
+        echo "=========================================="
+        echo ""
+
+        # Test cart endpoint
+        echo "📦 Testing Cart Endpoint:"
+        CART_HEADERS=$(curl -sI "$SITE_URL/wp-json/cocart/v2/cart")
+
+        echo "$CART_HEADERS" | grep -i "cache-control"
+        echo "$CART_HEADERS" | grep -i "pragma"
+        echo "$CART_HEADERS" | grep -i "x-cache"
+        echo "$CART_HEADERS" | grep -i "age"
+
+        echo ""
+        echo "📦 Testing Product Endpoint:"
+        PRODUCT_HEADERS=$(curl -sI "$SITE_URL/wp-json/cocart/v2/products")
+
+        echo "$PRODUCT_HEADERS" | grep -i "cache-control"
+        echo "$PRODUCT_HEADERS" | grep -i "last-modified"
+
+        echo ""
+        echo "✅ Test complete!"
+        ```
+
+        Run with: `bash cocart-cache-test.sh`
+    </Tab>
+</Tabs>
+
 ## Best Practices
 
-1. **Never cache cart/checkout endpoints**: These must always return dynamic, user-specific data
-2. **Do cache product data**: Products, categories, and attributes can be safely cached with appropriate TTL
-3. **Use unique session keys**: Ensure each guest user gets a unique cart key
-4. **Test in incognito mode**: Always test with multiple incognito sessions to verify isolation
-5. **Monitor cache headers**: Regularly check that proper headers are being sent
-6. **Document your configuration**: Keep notes on what caching rules you've implemented
+<CardGroup cols={2}>
+    <Card title="Never Cache Cart Routes" icon="ban" color="#dc2626">
+        Configure your host/CDN to **never cache**:
+        - `/wp-json/cocart/v1/cart*`
+        - `/wp-json/cocart/v2/cart*`
+        - All checkout and session endpoints
+
+        <Warning>Cart data is user-specific and must be dynamic</Warning>
+    </Card>
+
+    <Card title="Always Cache Products" icon="box" color="#16a34a">
+        Product endpoints **should be cached**:
+        - Use 1-24 hour TTL depending on update frequency
+        - Respect `Last-Modified` headers
+        - Purge on product updates
+
+        <Tip>Products are shared across users - caching saves database queries</Tip>
+    </Card>
+
+    <Card title="Configure Object Cache" icon="database" color="#0284c7">
+        Exclude session data from persistent cache:
+
+        ```php
+        wp_cache_add_non_persistent_groups([
+            'wc_session_id',
+            'cocart_session',
+        ]);
+        ```
+
+        <Tip>Prevents session data from being cached in Redis/Memcached</Tip>
+    </Card>
+
+    <Card title="Test Thoroughly" icon="vial" color="#9333ea">
+        Always verify with real-world testing:
+        - Use multiple incognito sessions
+        - Test different user scenarios
+        - Verify cache headers
+        - Monitor response times
+
+        <Tip>Testing prevents production issues</Tip>
+    </Card>
+
+    <Card title="Monitor Headers" icon="chart-line" color="#ca8a04">
+        Regularly check cache compliance:
+        - Set up automated header checks
+        - Log incorrect cache headers
+        - Alert on cache misconfigurations
+
+        <Tip>Proactive monitoring catches issues early</Tip>
+    </Card>
+
+    <Card title="Document Everything" icon="file-lines" color="#64748b">
+        Keep detailed records:
+        - Which caching plugins are active
+        - Cache exclusion rules configured
+        - Object cache settings
+        - CDN configurations
+
+        <Tip>Documentation saves time during troubleshooting</Tip>
+    </Card>
+</CardGroup>
+
+## WordPress Multisite Considerations
+
+Running CoCart on WordPress Multisite requires additional considerations:
+
+### Network-Wide Object Cache Configuration
+
+Configure object cache exclusions network-wide in your `wp-config.php`:
+
+```php
+<?php
+/**
+ * Network-wide object cache configuration for CoCart
+ * Add this to wp-config.php before ABSPATH
+ */
+if ( ! defined( 'WP_CACHE_KEY_SALT' ) ) {
+    // Use unique salt per site in multisite
+    define( 'WP_CACHE_KEY_SALT', $_SERVER['HTTP_HOST'] );
+}
+
+// Exclude session groups from persistent cache
+if ( function_exists( 'wp_cache_add_non_persistent_groups' ) ) {
+    wp_cache_add_non_persistent_groups( array(
+        'wc_session_id',
+        'cocart_session',
+    ) );
+}
+```
+
+### Per-Site Cache Exclusions
+
+If different sites need different cache configurations:
+
+```php
+<?php
+/**
+ * In a network-activated plugin or mu-plugin
+ */
+add_action( 'init', function() {
+    // Get current site
+    $site_id = get_current_blog_id();
+
+    // Configure cache exclusions per site
+    $cache_config = array(
+        1 => array( 'products' => true, 'cart' => false ),  // Main site
+        2 => array( 'products' => true, 'cart' => false ),  // Site 2
+        // Add more sites as needed
+    );
+
+    if ( isset( $cache_config[ $site_id ] ) ) {
+        // Apply site-specific configuration
+    }
+});
+```
+
+### CDN Configuration for Multisite
+
+Ensure your CDN cache keys include the site identifier:
+
+**Cloudflare:**
+- Use "Cache by Device Type" + "Custom Cache Key" including hostname
+
+**CloudFront:**
+- Forward `Host` header in cache behavior
+- Include hostname in cache key
+
+### Common Multisite Issues
+
+<AccordionGroup>
+    <Accordion title="Sessions mixing between subsites">
+        **Problem:** Cart sessions bleeding across subsites
+
+        **Solution:**
+        ```php
+        <?php
+        // Ensure unique cache keys per subsite
+        add_filter( 'cocart_generate_key', function( $key ) {
+            return get_current_blog_id() . '_' . $key;
+        });
+        ```
+    </Accordion>
+
+    <Accordion title="Object cache collisions">
+        **Problem:** Cache keys colliding between sites
+
+        **Solution:** Use `WP_CACHE_KEY_SALT` with hostname as shown above
+    </Accordion>
+</AccordionGroup>
+
+## Monitoring & Alerting
+
+Set up monitoring to catch caching issues before they affect users:
+
+### Key Metrics to Monitor
+
+1. **Cache Header Compliance**
+   ```php
+   <?php
+   /**
+    * Monitor cache headers and log warnings
+    */
+   add_filter( 'rest_post_dispatch', function( $response, $server, $request ) {
+       $route = $request->get_route();
+
+       if ( strpos( $route, '/cocart/' ) !== false && strpos( $route, '/cart' ) !== false ) {
+           $cache_control = $response->get_headers()['Cache-Control'] ?? '';
+
+           // Alert if cart endpoint has wrong cache headers
+           if ( strpos( $cache_control, 'no-cache' ) === false ) {
+               error_log( '[CoCart Cache Warning] Cart endpoint missing no-cache header: ' . $route );
+
+               // Send alert to monitoring service
+               // do_action( 'send_alert', 'cocart_cache_misconfigured', $route );
+           }
+       }
+
+       return $response;
+   }, 999, 3 ); // Late priority to check final headers
+   ```
+
+2. **Session Isolation Testing**
+   ```php
+   <?php
+   /**
+    * Periodically test session isolation
+    */
+   add_action( 'cocart_health_check', function() {
+       // Create two test sessions
+       $session1 = cocart_create_test_session();
+       $session2 = cocart_create_test_session();
+
+       // Verify they're unique
+       if ( $session1 === $session2 ) {
+           error_log( '[CoCart Alert] Session collision detected!' );
+           // Trigger alert
+       }
+   });
+   ```
+
+3. **Performance Monitoring**
+   ```php
+   <?php
+   /**
+    * Track REST API response times
+    */
+   add_filter( 'rest_post_dispatch', function( $response, $server, $request ) {
+       $route = $request->get_route();
+
+       if ( strpos( $route, '/cocart/' ) !== false ) {
+           // Add timing header
+           $start_time = $request->get_param( 'start_time' ) ?: microtime( true );
+           $duration = ( microtime( true ) - $start_time ) * 1000;
+
+           $response->header( 'X-Response-Time', round( $duration, 2 ) . 'ms' );
+
+           // Log slow requests
+           if ( $duration > 500 ) {
+               error_log( sprintf(
+                   '[CoCart Performance] Slow request: %s took %dms',
+                   $route,
+                   round( $duration )
+               ) );
+           }
+       }
+
+       return $response;
+   }, 999, 3 );
+   ```
+
+### Monitoring Tools
+
+<Tabs>
+    <Tab title="New Relic">
+        Monitor CoCart API performance:
+
+        1. Install New Relic APM
+        2. Create custom dashboard for:
+           - `/wp-json/cocart/*` response times
+           - Error rates
+           - Throughput
+
+        **Alert Conditions:**
+        - Response time > 500ms for 5 minutes
+        - Error rate > 5% for 1 minute
+    </Tab>
+
+    <Tab title="Datadog">
+        Track cache effectiveness:
+
+        ```php
+        <?php
+        // Send metrics to Datadog
+        add_filter( 'rest_post_dispatch', function( $response, $server, $request ) {
+            if ( strpos( $request->get_route(), '/cocart/' ) !== false ) {
+                // Log metric
+                datadogstatsd_gauge(
+                    'cocart.api.response_time',
+                    $duration,
+                    array( 'endpoint' => $request->get_route() )
+                );
+            }
+            return $response;
+        }, 999, 3 );
+        ```
+    </Tab>
+
+    <Tab title="WordPress Health Check">
+        Add CoCart cache check to WordPress Site Health:
+
+        ```php
+        <?php
+        add_filter( 'site_status_tests', function( $tests ) {
+            $tests['direct']['cocart_cache'] = array(
+                'label' => 'CoCart Cache Configuration',
+                'test'  => 'cocart_cache_health_test',
+            );
+            return $tests;
+        });
+
+        function cocart_cache_health_test() {
+            $result = array(
+                'label'       => 'CoCart cache headers are configured correctly',
+                'status'      => 'good',
+                'badge'       => array(
+                    'label' => 'Performance',
+                    'color' => 'blue',
+                ),
+                'description' => '<p>CoCart REST API cache headers are properly configured.</p>',
+                'actions'     => '',
+                'test'        => 'cocart_cache',
+            );
+
+            // Test cache headers
+            $response = wp_remote_get( site_url( '/wp-json/cocart/v2/cart' ) );
+            $headers = wp_remote_retrieve_headers( $response );
+
+            $cache_control = $headers['cache-control'] ?? '';
+
+            if ( strpos( $cache_control, 'no-cache' ) === false ) {
+                $result['status'] = 'critical';
+                $result['label'] = 'CoCart cache headers are misconfigured';
+                $result['description'] = '<p>Cart endpoints are being cached, which will cause stale data issues.</p>';
+                $result['actions'] = sprintf(
+                    '<p><a href="%s">View troubleshooting guide</a></p>',
+                    admin_url( 'admin.php?page=cocart-cache-guide' )
+                );
+            }
+
+            return $result;
+        }
+        ```
+    </Tab>
+</Tabs>
+
+### Setting Up Alerts
+
+**Email Alerts for Cache Issues:**
+```php
+<?php
+/**
+ * Email admin when cache misconfiguration detected
+ */
+add_action( 'cocart_cache_misconfigured', function( $details ) {
+    wp_mail(
+        get_option( 'admin_email' ),
+        '[Alert] CoCart Cache Misconfigured',
+        sprintf(
+            "Cache misconfiguration detected:\n\n%s\n\nPlease review cache settings immediately.",
+            print_r( $details, true )
+        )
+    );
+});
+```
+
+**Slack/Discord Webhooks:**
+```php
+<?php
+/**
+ * Send alerts to Slack
+ */
+add_action( 'cocart_cache_alert', function( $message ) {
+    $webhook_url = get_option( 'cocart_slack_webhook' );
+
+    if ( ! $webhook_url ) {
+        return;
+    }
+
+    wp_remote_post( $webhook_url, array(
+        'body' => json_encode( array(
+            'text' => '🚨 CoCart Alert: ' . $message,
+        ) ),
+        'headers' => array(
+            'Content-Type' => 'application/json',
+        ),
+    ) );
+});
+```
 
 ## Filter & Function References
 
-All code examples in this guide use documented WordPress core functions and filters:
+### CoCart Built-in Cache Handling
 
-### WordPress Core
+CoCart automatically sends proper cache headers for all cart/checkout endpoints:
 
-- **[`rest_post_dispatch`](https://developer.wordpress.org/reference/hooks/rest_post_dispatch/)** - Filter hook to modify REST API responses and headers
+- **[CoCart API Standards](/overview/standards#cache-control)** - Documentation on CoCart's automatic cache control headers
+- **Cache Headers Sent**: `Cache-Control: no-cache, must-revalidate, max-age=0, no-store`, `Pragma: no-cache`, `Expires: Thu, 01-Jan-70 00:00:01 GMT`
+
+### WordPress Core Functions
+
+Code examples in this guide use documented WordPress core functions:
+
 - **[`wp_cache_add_non_persistent_groups()`](https://developer.wordpress.org/reference/functions/wp_cache_add_non_persistent_groups/)** - Exclude cache groups from persistent object cache
 
 ### Hosting Provider Plugins
@@ -414,12 +1481,43 @@ All code examples in this guide use documented WordPress core functions and filt
 - **[Pantheon Advanced Page Cache](https://github.com/pantheon-systems/pantheon-advanced-page-cache)** - Plugin for Pantheon's Global CDN
 - **WP Engine** - Cache exclusions configured via User Portal (no public filter API)
 
+## Summary
+
+<Check>
+**Key Takeaways:**
+- CoCart automatically sends proper no-cache headers for cart/checkout endpoints
+- The problem occurs when hosting providers **ignore** these headers
+- Configure cache exclusions at your host/CDN level
+- Always exclude session data from persistent object cache
+- Product endpoints CAN and SHOULD be cached
+- Test thoroughly with multiple sessions
+- Monitor cache headers in production
+</Check>
+
 ## Additional Resources
 
-- [WooCommerce Caching Best Practices](https://developer.woocommerce.com/docs/best-practices/performance/configuring-caching-plugins/)
-- [CoCart Load Cart Documentation](/documentation/load-cart)
-- [CoCart Session Management](/api-reference/v2/sessions/get-sessions)
+<CardGroup cols={2}>
+    <Card title="CoCart Documentation" icon="book" href="/documentation/load-cart">
+        Learn about load cart functionality and session management
+    </Card>
+
+    <Card title="Session Management API" icon="key" href="/api-reference/v2/sessions/get-sessions">
+        Complete API reference for session management
+    </Card>
+
+    <Card title="WooCommerce Caching" icon="wordpress" href="https://developer.woocommerce.com/docs/best-practices/performance/configuring-caching-plugins/">
+        Official WooCommerce caching best practices
+    </Card>
+
+    <Card title="Get Support" icon="life-ring" href="/knowledge-base/contact-us">
+        Need help? Contact our support team
+    </Card>
+</CardGroup>
 
 <Note>
-    If you continue experiencing caching issues after implementing these configurations, [contact support](/knowledge-base/contact-us) with your host information and error logs.
+    **Still experiencing issues?** [Contact support](/knowledge-base/contact-us) with:
+    - Your hosting provider name
+    - Caching plugins installed
+    - Cache header test results
+    - Error logs (if any)
 </Note>

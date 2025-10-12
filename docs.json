@@ -432,7 +432,8 @@
                     "group": "Troubleshooting",
                     "pages": [
                       "knowledge-base/troubleshoot/authentication",
-                      "knowledge-base/troubleshoot/jwt-authentication"
+                      "knowledge-base/troubleshoot/jwt-authentication",
+                      "knowledge-base/troubleshoot/rest-api-caching"
                     ]
                   },
                   {
@@ -971,7 +972,8 @@
                     "group": "Troubleshooting",
                     "pages": [
                       "knowledge-base/troubleshoot/authentication",
-                      "knowledge-base/troubleshoot/jwt-authentication"
+                      "knowledge-base/troubleshoot/jwt-authentication",
+                      "knowledge-base/troubleshoot/rest-api-caching"
                     ]
                   },
                   {
