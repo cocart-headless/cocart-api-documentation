@@ -367,9 +367,27 @@
                         "pages": [
                           "tutorials/astro/setup",
                           "tutorials/astro/oxbowui-product-list"
-                        ]
+                        ],
+                        "tag": "FEEDBACK REQUIRED"
+                      },
+                      {
+                        "group": "Nuxt",
+                        "icon": "mountain",
+                        "pages": [
+                          "tutorials/nuxt/setup"
+                        ],
+                        "tag": "FEEDBACK REQUIRED"
+                      },
+                      {
+                        "group": "SvelteKit",
+                        "icon": "fire",
+                        "pages": [
+                          "tutorials/sveltekit/setup"
+                        ],
+                        "tag": "FEEDBACK REQUIRED"
                       }
-                    ]
+                    ],
+                    "tag": "WIP"
                   },
                   {
                     "group": "Tips and Tricks",
@@ -446,13 +464,13 @@
                       "updates/overview",
                       "updates/documentation",
                       "updates/core",
+                      "updates/plus",
                       "updates/jwt"
                     ]
                   },
                   {
                     "group": "Breaking Changes",
                     "pages": [
-                      "breaking-changes/core-v5",
                       "breaking-changes/core-v4"
                     ]
                   }
@@ -888,9 +906,27 @@
                         "pages": [
                           "tutorials/astro/setup",
                           "tutorials/astro/oxbowui-product-list"
-                        ]
+                        ],
+                        "tag": "FEEDBACK REQUIRED"
+                      },
+                      {
+                        "group": "Nuxt",
+                        "icon": "mountain",
+                        "pages": [
+                          "tutorials/nuxt/setup"
+                        ],
+                        "tag": "FEEDBACK REQUIRED"
+                      },
+                      {
+                        "group": "SvelteKit",
+                        "icon": "fire",
+                        "pages": [
+                          "tutorials/sveltekit/setup"
+                        ],
+                        "tag": "FEEDBACK REQUIRED"
                       }
-                    ]
+                    ],
+                    "tag": "WIP"
                   },
                   {
                     "group": "Tips and Tricks",
@@ -967,13 +1003,15 @@
                       "updates/overview",
                       "updates/documentation",
                       "updates/core",
+                      "updates/plus",
                       "updates/jwt"
                     ]
                   },
                   {
                     "group": "Breaking Changes",
                     "pages": [
-                      "breaking-changes/core-v5"
+                      "breaking-changes/core-v5",
+                      "breaking-changes/core-v4"
                     ]
                   }
                 ]

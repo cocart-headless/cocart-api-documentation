@@ -1,0 +1,425 @@
+---
+title: "REST API Caching"
+sidebarTitle: "REST API Caching"
+description: "Configure REST API caching on managed hosts like WP Engine and Pantheon"
+icon: "database"
+'og:title': "Configure REST API Caching for CoCart"
+---
+
+<Warning>
+    Improper caching configuration can cause CoCart to serve stale cart data, especially for unauthorized/guest requests. This guide helps you configure caching correctly.
+</Warning>
+
+## Why REST API Caching Matters
+
+CoCart relies on dynamic REST API responses to manage shopping carts in real-time. When hosting providers like WP Engine and Pantheon implement object caching or page caching, these systems can cache API responses, causing several issues:
+
+- Cart contents showing outdated items or quantities
+- Cached responses being served to different users
+- Cart modifications not reflecting immediately
+- Stale totals and pricing information
+
+## How CoCart Handles Caching
+
+CoCart implements several caching strategies internally:
+
+1. **Cart Cache Group**: Uses `COCART_CART_CACHE_GROUP` constant for WooCommerce cart caching
+2. **Session Management**: Cookie-less session handling that's concurrency-safe
+3. **Dynamic Responses**: All cart endpoints return dynamic data that should never be cached
+4. **No-Cache Headers**: CoCart sends appropriate cache control headers for REST API responses
+
+## Common Issues with Managed Hosts
+
+### Object Cache Problems
+
+**Issue**: Object caching systems (Redis, Memcached) on managed hosts can cache cart contents with improper cache keys, causing stale data to be served.
+
+**Affected Hosts**: WP Engine, Pantheon (with Object Cache Pro), Kinsta, Flywheel
+
+**Symptoms**:
+- Cart contents not updating after modifications
+- Cart changes not persisting
+- Stale cart data being served
+
+### REST API Response Caching
+
+**Issue**: Managed hosts often cache unauthenticated REST API responses by default, returning stale cart data.
+
+**Affected Hosts**: WP Engine, Pantheon (with Advanced Page Cache)
+
+**Symptoms**:
+- First API call works correctly, subsequent calls return cached data
+- Cart modifications appear to fail
+- Totals don't update after adding/removing items
+
+## Configuration by Host
+
+<AccordionGroup>
+    <Accordion title="WP Engine Configuration">
+        ### Exclude CoCart Routes from Cache
+
+        WP Engine caches REST API responses by default. You need to exclude CoCart routes from the cache.
+
+        **Via WP Engine User Portal** (Recommended):
+
+        1. Log into WP Engine User Portal
+        2. Navigate to your site
+        3. Go to "Web Rules" or contact WP Engine Support
+        4. Request cache exclusions for:
+           - `/wp-json/cocart/v1/`
+           - `/wp-json/cocart/v2/`
+
+        <Note>
+            WP Engine requires cache exclusions to be configured through their User Portal or by contacting support. Programmatic filter hooks for cache exclusions are not publicly documented.
+        </Note>
+
+        **Via REST API Headers**:
+
+        Use WordPress core filters to set proper cache headers:
+
+        ```php
+        <?php
+        /**
+         * Set no-cache headers for CoCart on WP Engine
+         *
+         * @see https://developer.wordpress.org/reference/hooks/rest_post_dispatch/
+         */
+        add_filter( 'rest_post_dispatch', function( $response, $server, $request ) {
+            $route = $request->get_route();
+
+            if ( strpos( $route, '/cocart/' ) !== false ) {
+                $response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
+                $response->header( 'Pragma', 'no-cache' );
+                $response->header( 'Expires', '0' );
+            }
+
+            return $response;
+        }, 10, 3 );
+        ```
+
+        ### Object Cache Configuration
+
+        Use WordPress core functions to exclude cache groups:
+
+        ```php
+        <?php
+        /**
+         * Exclude cart data from persistent object cache
+         */
+        wp_cache_add_non_persistent_groups( array(
+            'wc_session_id',
+            'cocart_session',
+        ) );
+        ```
+    </Accordion>
+
+    <Accordion title="Pantheon Configuration">
+        ### Advanced Page Cache Configuration
+
+        Pantheon uses the Pantheon Advanced Page Cache plugin. Configure it to exclude CoCart:
+
+        ```php
+        <?php
+        /**
+         * Exclude CoCart from Pantheon page cache
+         *
+         * @see https://github.com/pantheon-systems/pantheon-mu-plugin
+         */
+        add_filter( 'pantheon_cache_default_max_age', function( $max_age ) {
+            // Don't cache CoCart REST API requests
+            if ( strpos( $_SERVER['REQUEST_URI'], '/wp-json/cocart/' ) !== false ) {
+                return 0;
+            }
+
+            return $max_age;
+        });
+        ```
+
+        ### Object Cache Pro Configuration
+
+        If using Object Cache Pro on Pantheon:
+
+        ```php
+        <?php
+        /**
+         * Configure Object Cache Pro for CoCart
+         */
+        add_filter( 'objectcache_redis_key_prefix', function( $prefix ) {
+            // Use unique prefix per user session for cart data
+            if ( function_exists( 'cocart_get_cart_key' ) ) {
+                $cart_key = cocart_get_cart_key();
+                if ( $cart_key ) {
+                    return $prefix . $cart_key . '_';
+                }
+            }
+            return $prefix;
+        });
+
+        /**
+         * Exclude WooCommerce sessions from object cache
+         */
+        add_filter( 'oc_ignored_groups', function( $groups ) {
+            $groups[] = 'wc_session_id';
+            $groups[] = 'cocart_session';
+            return $groups;
+        });
+        ```
+
+        ### REST API Cache Headers
+
+        Ensure proper cache headers for REST API:
+
+        ```php
+        <?php
+        /**
+         * Set proper cache headers for CoCart REST API
+         *
+         * @see https://developer.wordpress.org/reference/hooks/rest_post_dispatch/
+         */
+        add_filter( 'rest_post_dispatch', function( $response, $server, $request ) {
+            $route = $request->get_route();
+
+            // Check if this is a CoCart route
+            if ( strpos( $route, '/cocart/' ) !== false ) {
+                $response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
+                $response->header( 'Pragma', 'no-cache' );
+                $response->header( 'Expires', '0' );
+            }
+
+            return $response;
+        }, 10, 3 );
+        ```
+    </Accordion>
+
+    <Accordion title="Other Managed Hosts (Kinsta, Flywheel, etc.)">
+        ### General Configuration
+
+        Most managed WordPress hosts have similar caching mechanisms. Use this general configuration:
+
+        ```php
+        <?php
+        /**
+         * Universal REST API cache exclusion for CoCart
+         *
+         * @see https://developer.wordpress.org/reference/hooks/rest_post_dispatch/
+         */
+        add_filter( 'rest_post_dispatch', function( $response, $server, $request ) {
+            $route = $request->get_route();
+
+            // Exclude CoCart routes from cache
+            if ( strpos( $route, '/cocart/' ) !== false ) {
+
+                // Set no-cache headers
+                $response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
+                $response->header( 'Pragma', 'no-cache' );
+                $response->header( 'Expires', '0' );
+
+                // Prevent proxy caching
+                $response->header( 'Surrogate-Control', 'no-store' );
+            }
+
+            return $response;
+        }, 10, 3 );
+        ```
+
+        ### Object Cache Exclusions
+
+        For Redis or Memcached-based object caching:
+
+        ```php
+        <?php
+        /**
+         * Exclude session data from persistent object cache
+         *
+         * @see https://developer.wordpress.org/reference/functions/wp_cache_add_non_persistent_groups/
+         */
+        wp_cache_add_non_persistent_groups( array(
+            'wc_session_id',
+            'cocart_session',
+        ) );
+        ```
+    </Accordion>
+
+    <Accordion title="Custom CDN Configuration">
+        If you use a CDN (Cloudflare, CloudFront, etc.), ensure CoCart routes are excluded:
+
+        ### Cloudflare Page Rules
+
+        Create page rules to bypass cache for:
+        - `*example.com/wp-json/cocart/*`
+
+        Settings for each rule:
+        - Cache Level: Bypass
+        - Disable Performance features
+
+        ### CloudFront Behavior Patterns
+
+        Create cache behaviors with:
+        - Path Pattern: `/wp-json/cocart/*`
+        - Cache Policy: Managed-CachingDisabled
+        - Origin Request Policy: AllViewer
+    </Accordion>
+</AccordionGroup>
+
+## Testing Your Configuration
+
+After implementing caching configuration, test thoroughly:
+
+### Test 1: Basic Cart Functionality
+
+```bash
+# Add an item to cart
+curl -X POST https://example.com/wp-json/cocart/v2/cart/add-item \
+  -H "Content-Type: application/json" \
+  -d '{"id":"123","quantity":"1"}'
+
+# Immediately retrieve cart (should show new item)
+curl https://example.com/wp-json/cocart/v2/cart
+```
+
+### Test 2: Multiple Sessions
+
+Open two different browsers (or incognito windows) and verify:
+1. Each session maintains its own cart
+2. Changes in one session don't affect the other
+3. Cart keys are unique per session
+
+### Test 3: Cart Modifications
+
+```bash
+# Update item quantity
+curl -X POST https://example.com/wp-json/cocart/v2/cart/item/ITEM_KEY \
+  -H "Content-Type: application/json" \
+  -d '{"quantity":"5"}'
+
+# Verify update is reflected immediately
+curl https://example.com/wp-json/cocart/v2/cart
+```
+
+### Test 4: Cache Headers
+
+Check response headers:
+
+```bash
+curl -I https://example.com/wp-json/cocart/v2/cart
+```
+
+Look for:
+- `Cache-Control: no-store, no-cache, must-revalidate, max-age=0`
+- `Pragma: no-cache`
+- Absence of caching headers like `Age` or `X-Cache: HIT`
+
+## Debugging Caching Issues
+
+<AccordionGroup>
+    <Accordion title="Cart data not updating after changes">
+        **Cause**: REST API responses are being cached
+
+        **Solution**:
+        1. Verify cache exclusion rules are active
+        2. Check response headers for caching indicators
+        3. Clear all caches (site cache, object cache, CDN cache)
+        4. Test with cache-busting query parameters temporarily
+
+        ```php
+        <?php
+        // Temporary debugging: Add timestamp to requests
+        add_filter( 'rest_pre_serve_request', function( $served, $result, $request ) {
+            error_log( 'CoCart Request: ' . $request->get_route() );
+            error_log( 'Cache-Control: ' . $result->get_headers()['Cache-Control'] ?? 'not set' );
+            return $served;
+        }, 10, 3 );
+        ```
+    </Accordion>
+
+    <Accordion title="Cached responses appearing for different users">
+        **Cause**: REST API responses are being cached at the page/response level without considering user sessions
+
+        **Solution**:
+        1. Verify cache exclusion rules for CoCart routes are active
+        2. Check that cache headers include `no-store` directive
+        3. Ensure CDN/proxy respects `Vary: Cookie` headers
+        4. Verify each user has a unique cart key
+
+        ```php
+        <?php
+        // Debug: Log cart keys and response headers
+        add_action( 'cocart_before_get_cart', function() {
+            $cart_key = cocart_get_cart_key();
+            error_log( 'Cart Key: ' . $cart_key );
+            error_log( 'Session ID: ' . WC()->session->get_customer_id() );
+        });
+
+        add_filter( 'rest_post_dispatch', function( $response, $server, $request ) {
+            if ( strpos( $request->get_route(), '/cocart/' ) !== false ) {
+                error_log( 'Cache Headers: ' . print_r( $response->get_headers(), true ) );
+            }
+            return $response;
+        }, 10, 3 );
+        ```
+    </Accordion>
+
+    <Accordion title="Performance issues after disabling cache">
+        **Cause**: Too much cache disabled, impacting performance
+
+        **Solution**: Use selective caching - only disable for CoCart routes
+
+        ```php
+        <?php
+        /**
+         * Selective caching: Cache products but not cart
+         */
+        add_filter( 'rest_post_dispatch', function( $response, $server, $request ) {
+            $route = $request->get_route();
+
+            // Don't cache cart/checkout/session routes
+            if ( strpos( $route, '/cocart/v' ) !== false
+                && ( strpos( $route, '/cart' ) !== false
+                    || strpos( $route, '/checkout' ) !== false
+                    || strpos( $route, '/session' ) !== false ) ) {
+                $response->header( 'Cache-Control', 'no-cache, must-revalidate' );
+            }
+            // Allow caching for product routes
+            elseif ( strpos( $route, '/products' ) !== false ) {
+                $response->header( 'Cache-Control', 'public, max-age=3600' );
+            }
+
+            return $response;
+        }, 10, 3 );
+        ```
+    </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+1. **Never cache cart/checkout endpoints**: These must always return dynamic, user-specific data
+2. **Do cache product data**: Products, categories, and attributes can be safely cached with appropriate TTL
+3. **Use unique session keys**: Ensure each guest user gets a unique cart key
+4. **Test in incognito mode**: Always test with multiple incognito sessions to verify isolation
+5. **Monitor cache headers**: Regularly check that proper headers are being sent
+6. **Document your configuration**: Keep notes on what caching rules you've implemented
+
+## Filter & Function References
+
+All code examples in this guide use documented WordPress core functions and filters:
+
+### WordPress Core
+
+- **[`rest_post_dispatch`](https://developer.wordpress.org/reference/hooks/rest_post_dispatch/)** - Filter hook to modify REST API responses and headers
+- **[`wp_cache_add_non_persistent_groups()`](https://developer.wordpress.org/reference/functions/wp_cache_add_non_persistent_groups/)** - Exclude cache groups from persistent object cache
+
+### Hosting Provider Plugins
+
+- **[Pantheon MU Plugin](https://github.com/pantheon-systems/pantheon-mu-plugin)** - `pantheon_cache_default_max_age` filter for cache control
+- **[Pantheon Advanced Page Cache](https://github.com/pantheon-systems/pantheon-advanced-page-cache)** - Plugin for Pantheon's Global CDN
+- **WP Engine** - Cache exclusions configured via User Portal (no public filter API)
+
+## Additional Resources
+
+- [WooCommerce Caching Best Practices](https://developer.woocommerce.com/docs/best-practices/performance/configuring-caching-plugins/)
+- [CoCart Load Cart Documentation](/documentation/load-cart)
+- [CoCart Session Management](/api-reference/v2/sessions/get-sessions)
+
+<Note>
+    If you continue experiencing caching issues after implementing these configurations, [contact support](/knowledge-base/contact-us) with your host information and error logs.
+</Note>

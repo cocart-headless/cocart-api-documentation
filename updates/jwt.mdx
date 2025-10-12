@@ -1,5 +1,238 @@
 ---
-title: "JWT Authentication"
-url: "https://github.com/cocart-headless/cocart-jwt-authentication/blob/master/CHANGELOG.md"
-robots: "noindex, follow"
+title: "CoCart JWT Authentication Updates"
+sidebarTitle: "JWT Auth Updates"
+description: "Keep up with all the latest improvements, features, and fixes in CoCart JWT Authentication."
+icon: "hashtag"
+rss: true
 ---
+
+Stay up to date with the latest releases and improvements to CoCart JWT Authentication. This plugin provides secure token-based authentication for your headless WooCommerce store.
+
+<Note>
+  CoCart JWT Authentication is a separate plugin that works specifically for CoCart to provide token-based authentication.
+</Note>
+
+---
+
+<Update label="September 20, 2025" description="v3.0.0">
+
+## Multi-Token Sessions & Enhanced Security
+
+This is a major security and functionality update that introduces multi-device token management and improved tracking.
+
+**🔴 Breaking Change:** Previous tokens will be invalidated and users will need to re-authenticate.
+
+**Multi-Token Support** - Users can now have multiple active token sessions, each tracked separately for different devices or browsers. This enables proper token lifecycle management across all user devices.
+
+**Personal Access Token (PAT) Integration** - Tokens are now dual-secured with PAT IDs, preventing token proliferation when users are already authenticated. The system returns existing tokens instead of creating new ones.
+
+**Enhanced WP-CLI** - The CLI now accepts user ID, email, or login when creating tokens, and includes a new `destroy` command to remove tokens for specific users with confirmation prompts.
+
+**Setup Guide** - Added a WordPress dashboard setup guide with a built-in secret key generator for easier configuration.
+
+Tokens now log the last login timestamp as part of the PAT, and authorization fails if users have no tokens in session or if tokens aren't found—improving security across the board.
+
+**For developers:** New filter `cocart_jwt_auth_max_user_tokens` to set maximum tokens per user, and new action hook `cocart_jwt_auth_authenticated` that fires on authentication.
+
+**Compatibility:** CoCart v4.8
+
+</Update>
+
+<Update label="September 16, 2025" description="v2.5.2">
+
+## PHP 7.4 Compatibility Fix
+
+Fixed token generation compatibility issue with PHP v7.4, ensuring the plugin works reliably across all supported PHP versions.
+
+**Compatibility:** CoCart v4.7, WooCommerce v10.1
+
+</Update>
+
+<Update label="June 20, 2025" description="v2.5.1">
+
+## 🔥 Hot Patch: Guest User Support
+
+Critical fix for guest user authentication that was broken in the previous release. The authentication header validation now properly handles empty values, failing safely instead of returning errors.
+
+Thanks to @marianobitelo for reporting this issue quickly.
+
+</Update>
+
+<Update label="June 19, 2025" description="v2.5.0">
+
+## Token Validation Improvements
+
+Enhanced token validation with improved pattern matching and more comprehensive debug logging to help troubleshoot authentication issues.
+
+We've corrected the plugin slug for the logger and improved how token values are checked against validation patterns.
+
+**For developers:** New filter `cocart_jwt_auth_token_prefix` lets you add a prefix to tokens to distinguish them from other authentication sources.
+
+**Compatibility:** CoCart v4.6, WooCommerce v9.9
+
+</Update>
+
+<Update label="May 9, 2025" description="v2.4.0">
+
+## Debug Logs & System Status
+
+Added comprehensive debug logging for authentication failures, making it much easier to identify where token validation is failing during development.
+
+The WooCommerce System Status page now includes JWT Authentication data, plus a handy button to manually clear expired tokens under Tools.
+
+</Update>
+
+<Update label="May 7, 2025" description="v2.3.1">
+
+## Quick Error Fix
+
+Fixed an uncaught error that could occur in certain authentication scenarios.
+
+</Update>
+
+<Update label="April 28, 2025" description="v2.3.0">
+
+## RSA-Based Configuration Support
+
+Added support for more advanced RSA-based token configuration, giving you greater control over token signing and validation.
+
+**New Developer Filters:**
+- `cocart_jwt_auth_token_before_sign` - Modify token data before signing
+- `cocart_jwt_auth_secret_private_key` - Set private key for token signing
+- `cocart_jwt_auth_secret_public_key` - Set public key for token validation
+- `cocart_jwt_auth_revoke_tokens_on_*` - Control token revocation on email changes, password changes, password resets, profile updates, user deletion, and logout
+
+**Filter Renamed:** `cocart_jwt_token_generated` → `cocart_jwt_auth_token_generated` for consistency (considered a typo correction)
+
+</Update>
+
+<Update label="March 17, 2025" description="v2.2.0">
+
+## Token Validation & WP-CLI Commands
+
+Introduced a new REST API endpoint `cocart/jwt/validate-token` to check token validity without making authenticated requests.
+
+**WP-CLI Commands** - Comprehensive CLI support for token management:
+- List all tokens for users
+- View individual token details
+- Validate tokens
+- Clear expired tokens (or force clear all)
+- Create new tokens
+
+We've also improved how tokens are created, how users are identified, and optimized the cleanup of expired tokens to work in batches of 100 for better performance.
+
+**For developers:** New filter `cocart_jwt_auth_token_user_data` allows adding custom user data to the token payload before generation.
+
+</Update>
+
+<Update label="March 3, 2025" description="v2.1.0">
+
+## Basic Auth & Action Hooks
+
+Added support for getting usernames during basic authentication via simple headers or URL parameters, making integration easier.
+
+Error responses now properly handle cases where a user account is deleted mid-request, preventing confusing error messages.
+
+**For developers:** Introduced a comprehensive set of action hooks that let you respond to various authentication events. Check the documentation for details on available hooks and usage examples.
+
+**Compatibility:** CoCart v4.3, WooCommerce v9.7
+
+</Update>
+
+<Update label="February 25, 2025" description="v2.0.0">
+
+## Token Refresh & Enhanced Security
+
+This major release introduces token refresh capabilities and significantly improved security features.
+
+**🔴 Breaking Change:** Previous tokens will be invalidated and users will need to re-authenticate.
+
+**Token Refresh Endpoint** - New `cocart/jwt/refresh-token` endpoint allows extending token lifetime without requiring re-authentication, improving user experience for long-lived sessions.
+
+**Device Binding** - Tokens are now bound to specific IP addresses or devices to mitigate token misuse and unauthorized access.
+
+**Flexible Algorithms** - You can now change the signing algorithm to any supported option per RFC 7518 specifications.
+
+**Longer Token Lifetime** - Tokens now expire after 10 days by default (previously 2 hours), reducing the need for frequent re-authentication.
+
+Authentication error messages have been simplified to make them harder to identify externally, improving security through obscurity.
+
+**For developers:** Six new filters for customizing token behavior:
+- `cocart_jwt_auth_issuer` - Change token issuer for multi-site setups
+- `cocart_jwt_auth_issued_at` - Adjust token timing
+- `cocart_jwt_auth_not_before` - Set earliest token usage time
+- `cocart_jwt_auth_algorithm` - Change signing algorithm
+- `cocart_jwt_auth_refresh_token_generation` - Customize refresh token creation
+- `cocart_jwt_refresh_token_expiration` - Control refresh token lifetime by role
+
+**Compatibility:** WordPress v6.7, WooCommerce v9.6
+
+**Requires:** CoCart v4.3 minimum
+
+</Update>
+
+<Update label="June 5, 2024" description="v1.0.3">
+
+## Enhanced Header Detection
+
+Authorization headers are now detectable using the `getallheaders()` function, improving compatibility with various server configurations.
+
+</Update>
+
+<Update label="May 10, 2024" description="v1.0.2">
+
+## Compatibility Update
+
+Updated compatibility testing with the latest WordPress and WooCommerce versions.
+
+**Compatibility:** WordPress v6.5, WooCommerce v8.8
+
+</Update>
+
+<Update label="August 3, 2023" description="v1.0.1">
+
+## WooCommerce HPOS Support
+
+Removed WooCommerce plugin headers to prevent incompatibility warnings when using the High-Performance Order Storage (HPOS) feature.
+
+</Update>
+
+<Update label="March 9, 2023" description="v1.0.0">
+
+## Initial Release
+
+The first public release of CoCart JWT Authentication, providing secure token-based authentication for headless WooCommerce stores.
+
+This plugin enables developers to authenticate API requests using JSON Web Tokens instead of traditional cookie-based authentication, perfect for modern JavaScript frameworks and mobile applications.
+
+</Update>
+
+---
+
+## Get JWT Authentication
+
+<Card title="Install JWT Authentication" icon="hashtag" href="https://github.com/cocart-headless/cocart-jwt-authentication">
+  Download from GitHub or install from the WordPress plugin directory
+</Card>
+
+---
+
+## Need Help?
+
+<CardGroup cols={2}>
+  <Card title="Report an Issue" icon="bug" href="https://github.com/cocart-headless/cocart-jwt-authentication/issues">
+    Found a bug? Report it on GitHub
+  </Card>
+
+  <Card title="Get Support" icon="life-ring" href="/resources/support-policy">
+    Need help? Check our support policy
+  </Card>
+
+  <Card title="Join Community" icon="users" href="/resources/community">
+    Connect with other CoCart developers
+  </Card>
+
+  <Card title="View Documentation" icon="book" href="/getting-started/jwt/setup">
+    Learn how to set up JWT Authentication
+  </Card>
+</CardGroup>

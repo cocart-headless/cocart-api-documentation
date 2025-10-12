@@ -1,0 +1,664 @@
+---
+title: "Setting Up SvelteKit"
+sidebarTitle: "SvelteKit Setup"
+description: "Learn how to set up a SvelteKit project for your headless WooCommerce store"
+robots: "noindex, follow"
+---
+
+<Warning>
+  This tutorial was written by Claude Code (an AI) and has not yet been reviewed. Follow along with caution. If the tutorial was helpful or a specific part was not clear/correct, please provide feedback at the bottom of the page. Thank you.
+</Warning>
+
+# Introduction
+
+[SvelteKit](https://kit.svelte.dev) is a modern web framework for building high-performance applications with Svelte. It's an excellent choice for headless storefronts with CoCart because of its speed, developer experience, and flexible rendering options.
+
+This guide will walk you through setting up a SvelteKit project configured to work with CoCart API.
+
+## Why SvelteKit for Headless Commerce?
+
+- **Fast and lightweight** - Minimal JavaScript bundle with reactive components
+- **Flexible rendering** - Choose between SSR, SSG, or CSR per route
+- **Built-in routing** - File-based routing with layouts and nested routes
+- **Server-side capabilities** - API routes and server-only code with `+server.ts` and `+page.server.ts`
+- **Great DX** - Hot module replacement, TypeScript support, and excellent tooling
+- **Progressive enhancement** - Works without JavaScript, enhanced when available
+
+## Prerequisites
+
+- Node.js 18 or higher
+- A WordPress site with WooCommerce installed
+- CoCart plugin installed and activated
+- Basic knowledge of JavaScript and command line
+
+## Creating a New SvelteKit Project
+
+Create a new SvelteKit project using the official CLI:
+
+```bash
+npm create svelte@latest my-headless-store
+```
+
+When prompted, choose the following options:
+
+- **Which Svelte app template?** → Skeleton project
+- **Add type checking with TypeScript?** → Yes, using TypeScript syntax (recommended)
+- **Select additional options** →
+  - Add ESLint for code linting (recommended)
+  - Add Prettier for code formatting (recommended)
+
+Navigate to your project:
+
+```bash
+cd my-headless-store
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+## Installing Tailwind CSS
+
+Install Tailwind CSS using the SvelteKit integration:
+
+```bash
+npx svelte-add@latest tailwindcss
+npm install
+```
+
+This will:
+- Install Tailwind CSS and its dependencies
+- Create `tailwind.config.js` and `postcss.config.js` files
+- Add necessary imports to your app
+
+## Project Structure
+
+Your SvelteKit project should have this structure:
+
+```
+my-headless-store/
+├── src/
+│   ├── lib/
+│   │   ├── server/         # Server-only code
+│   │   └── cocart.ts       # CoCart API client
+│   ├── routes/
+│   │   ├── +layout.svelte  # Root layout
+│   │   ├── +page.svelte    # Home page
+│   │   └── api/            # API routes
+│   └── app.html            # HTML template
+├── static/                 # Static assets
+├── svelte.config.js        # SvelteKit configuration
+├── tailwind.config.js      # Tailwind configuration
+└── package.json
+```
+
+<Tip>
+SvelteKit distinguishes between client and server code. Code in `src/lib/server` is only bundled for the server and never sent to the client.
+</Tip>
+
+## Environment Configuration
+
+Create a `.env` file in your project root:
+
+```bash
+PUBLIC_STORE_URL=https://yourstore.com
+```
+
+<Note>
+Variables prefixed with `PUBLIC_` are exposed to the client-side code. Keep sensitive data in server-only environment variables without the `PUBLIC_` prefix.
+</Note>
+
+Add `.env` to your `.gitignore`:
+
+```bash
+echo ".env" >> .gitignore
+```
+
+Create a `.env.example` for your team:
+
+```bash
+# .env.example
+PUBLIC_STORE_URL=https://yourstore.com
+```
+
+## Creating the CoCart API Client
+
+Create a centralized API client to interact with CoCart. Create `src/lib/cocart.ts`:
+
+<Accordion title="CoCart API Client Code">
+
+```typescript
+import { PUBLIC_STORE_URL } from '$env/static/public';
+
+const STORE_URL = PUBLIC_STORE_URL || 'https://yourstore.com';
+const API_BASE = `${STORE_URL}/wp-json/cocart/v2`;
+
+/**
+ * Fetch products from CoCart API
+ */
+export async function getProducts(params: {
+  per_page?: number;
+  page?: number;
+  [key: string]: any;
+} = {}) {
+  const queryParams = new URLSearchParams({
+    per_page: String(params.per_page || 12),
+    page: String(params.page || 1),
+    ...Object.fromEntries(
+      Object.entries(params).map(([k, v]) => [k, String(v)])
+    )
+  });
+
+  try {
+    const response = await fetch(`${API_BASE}/products?${queryParams}`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return [];
+  }
+}
+
+/**
+ * Get a single product by ID
+ */
+export async function getProduct(productId: string | number) {
+  try {
+    const response = await fetch(`${API_BASE}/products/${productId}`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    return null;
+  }
+}
+
+/**
+ * Add item to cart
+ */
+export async function addToCart(
+  productId: string | number,
+  quantity: number = 1,
+  options: Record<string, any> = {}
+) {
+  try {
+    const response = await fetch(`${API_BASE}/cart/add-item`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: productId,
+        quantity: quantity,
+        ...options
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error adding to cart:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get current cart
+ */
+export async function getCart(cartKey: string | null = null) {
+  const url = cartKey
+    ? `${API_BASE}/cart?cart_key=${cartKey}`
+    : `${API_BASE}/cart`;
+
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching cart:', error);
+    return null;
+  }
+}
+
+/**
+ * Update cart item quantity
+ */
+export async function updateCartItem(itemKey: string, quantity: number) {
+  try {
+    const response = await fetch(`${API_BASE}/cart/item/${itemKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ quantity })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating cart item:', error);
+    throw error;
+  }
+}
+
+/**
+ * Remove item from cart
+ */
+export async function removeCartItem(itemKey: string) {
+  try {
+    const response = await fetch(`${API_BASE}/cart/item/${itemKey}`, {
+      method: 'DELETE'
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error removing cart item:', error);
+    throw error;
+  }
+}
+```
+
+</Accordion>
+
+## Creating a Root Layout
+
+Create a root layout at `src/routes/+layout.svelte`:
+
+```svelte
+<script lang="ts">
+  import '../app.css';
+</script>
+
+<div class="min-h-screen bg-white dark:bg-zinc-900">
+  <slot />
+</div>
+```
+
+## Loading Data with Server-Side Rendering
+
+SvelteKit uses `+page.server.ts` files to load data on the server before rendering. Create `src/routes/+page.server.ts`:
+
+```typescript
+import { getProducts } from '$lib/cocart';
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async () => {
+  const products = await getProducts({ per_page: 12 });
+
+  return {
+    products
+  };
+};
+```
+
+Then create the page at `src/routes/+page.svelte`:
+
+```svelte
+<script lang="ts">
+  import type { PageData } from './$types';
+
+  export let data: PageData;
+</script>
+
+<main class="container mx-auto px-4 py-12">
+  <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-8">
+    Welcome to Your Headless Store
+  </h1>
+
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    {#each data.products as product}
+      <div class="border rounded-lg p-4">
+        <h2 class="font-semibold">{product.name}</h2>
+        <p class="text-zinc-600">
+          {product.prices.currency_symbol}{product.prices.price}
+        </p>
+      </div>
+    {/each}
+  </div>
+</main>
+```
+
+<Info>
+SvelteKit automatically generates TypeScript types for your route data. The `PageData` type is auto-generated based on your `load` function's return value.
+</Info>
+
+## Creating API Routes
+
+SvelteKit supports API routes using `+server.ts` files. Create `src/routes/api/cart/add/+server.ts`:
+
+<Accordion title="API Route Example">
+
+```typescript
+import { json } from '@sveltejs/kit';
+import { addToCart } from '$lib/cocart';
+import type { RequestHandler } from './$types';
+
+export const POST: RequestHandler = async ({ request }) => {
+  try {
+    const body = await request.json();
+    const { id, quantity = 1, ...options } = body;
+
+    const result = await addToCart(id, quantity, options);
+
+    return json(result);
+  } catch (error) {
+    return json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+};
+```
+
+</Accordion>
+
+## Managing Cart State with Stores
+
+SvelteKit works seamlessly with Svelte stores for client-side state management. Create `src/lib/stores/cart.ts`:
+
+<Accordion title="Cart Store Implementation">
+
+```typescript
+import { writable } from 'svelte/store';
+
+interface CartItem {
+  key: string;
+  id: number;
+  quantity: number;
+  name: string;
+  price: string;
+}
+
+interface Cart {
+  items: CartItem[];
+  itemCount: number;
+  total: string;
+}
+
+function createCartStore() {
+  const { subscribe, set, update } = writable<Cart>({
+    items: [],
+    itemCount: 0,
+    total: '0'
+  });
+
+  return {
+    subscribe,
+    set,
+    addItem: (item: CartItem) => update(cart => ({
+      ...cart,
+      items: [...cart.items, item],
+      itemCount: cart.itemCount + item.quantity
+    })),
+    removeItem: (itemKey: string) => update(cart => {
+      const newItems = cart.items.filter(item => item.key !== itemKey);
+      const newCount = newItems.reduce((sum, item) => sum + item.quantity, 0);
+      return {
+        ...cart,
+        items: newItems,
+        itemCount: newCount
+      };
+    }),
+    clear: () => set({
+      items: [],
+      itemCount: 0,
+      total: '0'
+    })
+  };
+}
+
+export const cart = createCartStore();
+```
+
+</Accordion>
+
+Use the store in your components:
+
+```svelte
+<script lang="ts">
+  import { cart } from '$lib/stores/cart';
+</script>
+
+<div>
+  <p>Cart items: {$cart.itemCount}</p>
+</div>
+```
+
+## Running Your Project
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Visit `http://localhost:5173` to see your store.
+
+<Tip>
+Use `npm run dev -- --open` to automatically open the browser.
+</Tip>
+
+## Building for Production
+
+Build your site for production:
+
+```bash
+npm run build
+```
+
+Preview the production build:
+
+```bash
+npm run preview
+```
+
+## Deployment Options
+
+SvelteKit supports multiple adapters for different deployment platforms:
+
+<AccordionGroup>
+
+<Accordion title="Vercel">
+
+Install the Vercel adapter:
+
+```bash
+npm i -D @sveltejs/adapter-vercel
+```
+
+Update `svelte.config.js`:
+
+```javascript
+import adapter from '@sveltejs/adapter-vercel';
+
+export default {
+  kit: {
+    adapter: adapter()
+  }
+};
+```
+
+</Accordion>
+
+<Accordion title="Netlify">
+
+Install the Netlify adapter:
+
+```bash
+npm i -D @sveltejs/adapter-netlify
+```
+
+Update `svelte.config.js`:
+
+```javascript
+import adapter from '@sveltejs/adapter-netlify';
+
+export default {
+  kit: {
+    adapter: adapter()
+  }
+};
+```
+
+</Accordion>
+
+<Accordion title="Cloudflare Pages">
+
+Install the Cloudflare adapter:
+
+```bash
+npm i -D @sveltejs/adapter-cloudflare
+```
+
+Update `svelte.config.js`:
+
+```javascript
+import adapter from '@sveltejs/adapter-cloudflare';
+
+export default {
+  kit: {
+    adapter: adapter()
+  }
+};
+```
+
+</Accordion>
+
+<Accordion title="Node.js Server">
+
+Install the Node adapter:
+
+```bash
+npm i -D @sveltejs/adapter-node
+```
+
+Update `svelte.config.js`:
+
+```javascript
+import adapter from '@sveltejs/adapter-node';
+
+export default {
+  kit: {
+    adapter: adapter()
+  }
+};
+```
+
+</Accordion>
+
+</AccordionGroup>
+
+## Advanced Configuration
+
+### Form Actions
+
+SvelteKit's form actions provide a way to handle form submissions with progressive enhancement:
+
+```typescript
+// src/routes/cart/+page.server.ts
+import type { Actions } from './$types';
+import { addToCart } from '$lib/cocart';
+
+export const actions = {
+  addToCart: async ({ request }) => {
+    const data = await request.formData();
+    const productId = data.get('productId');
+    const quantity = Number(data.get('quantity'));
+
+    try {
+      await addToCart(productId as string, quantity);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: 'Failed to add item' };
+    }
+  }
+} satisfies Actions;
+```
+
+### Hooks for Global Request Handling
+
+Use `src/hooks.server.ts` for global request handling like authentication:
+
+```typescript
+import type { Handle } from '@sveltejs/kit';
+
+export const handle: Handle = async ({ event, resolve }) => {
+  // Add custom headers, handle authentication, etc.
+  const response = await resolve(event);
+
+  return response;
+};
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+
+<Accordion title="CORS Errors">
+
+If you encounter CORS errors, you may need to configure WordPress to allow cross-origin requests. See the [CORS documentation](/documentation/cors).
+
+</Accordion>
+
+<Accordion title="API Connection Issues">
+
+1. Verify your `PUBLIC_STORE_URL` is correct in `.env`
+2. Ensure CoCart is installed and activated
+3. Check that WooCommerce is configured properly
+4. Test API endpoints directly in your browser or Postman
+
+</Accordion>
+
+<Accordion title="Build Errors">
+
+If you encounter build errors:
+
+1. Clear the `.svelte-kit` directory: `rm -rf .svelte-kit`
+2. Reinstall dependencies: `npm install`
+3. Try building again: `npm run build`
+
+</Accordion>
+
+</AccordionGroup>
+
+## Next Steps
+
+Now that your SvelteKit project is set up with CoCart:
+
+1. Build product listing pages with dynamic routes
+2. Create a shopping cart page with real-time updates
+3. Implement checkout functionality
+4. Add user authentication with JWT
+5. Optimize for performance with preloading and caching
+
+## Resources
+
+- [SvelteKit Documentation](https://kit.svelte.dev)
+- [CoCart API Reference](/api-reference/introduction)
+- [Tailwind CSS Documentation](https://tailwindcss.com)
+- [Svelte Tutorial](https://svelte.dev/tutorial)

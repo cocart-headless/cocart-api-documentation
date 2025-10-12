@@ -1,0 +1,936 @@
+---
+title: "Setting Up Nuxt"
+sidebarTitle: "Nuxt Setup"
+description: "Learn how to set up a Nuxt project for your headless WooCommerce store"
+robots: "noindex, follow"
+---
+
+<Warning>
+  This tutorial was written by Claude Code (an AI) and has not yet been reviewed. Follow along with caution. If the tutorial was helpful or a specific part was not clear/correct, please provide feedback at the bottom of the page. Thank you.
+</Warning>
+
+# Introduction
+
+[Nuxt](https://nuxt.com) is a powerful Vue framework that makes web development intuitive and performant. It's an excellent choice for building headless storefronts with CoCart because of its server-side rendering capabilities, excellent developer experience, and robust ecosystem.
+
+This guide will walk you through setting up a Nuxt project configured to work with CoCart API. Instructions are provided for both **Nuxt 3** (stable, widely supported) and **Nuxt 4** (latest release with new features).
+
+<Info>
+**Which version should you use?**
+- **Nuxt 3**: Recommended for production applications. Stable with extensive ecosystem support and long-term maintenance until January 2026.
+- **Nuxt 4**: Latest features and improvements. Good for new projects that want cutting-edge capabilities. Officially released in 2025.
+</Info>
+
+## Why Nuxt for Headless Commerce?
+
+- **Hybrid rendering** - Choose between SSR, SSG, or CSR per route
+- **Auto imports** - Components, composables, and utilities are automatically imported
+- **File-based routing** - Intuitive routing system with dynamic routes
+- **Server routes** - Built-in API routes with full-stack capabilities
+- **Vue ecosystem** - Access to the entire Vue.js ecosystem and components
+- **SEO friendly** - Built-in SEO features and meta tag management
+
+## Prerequisites
+
+<Tabs>
+  <Tab title="Nuxt 3">
+    - Node.js 16.10.0 or higher (18.0.0+ recommended)
+    - A WordPress site with WooCommerce installed
+    - CoCart plugin installed and activated
+    - Basic knowledge of JavaScript and command line
+  </Tab>
+  <Tab title="Nuxt 4">
+    - Node.js 18.0.0 or higher
+    - A WordPress site with WooCommerce installed
+    - CoCart plugin installed and activated
+    - Basic knowledge of JavaScript and command line
+  </Tab>
+</Tabs>
+
+## Creating a New Nuxt Project
+
+<Tabs>
+  <Tab title="Nuxt 3">
+    Create a new Nuxt 3 project using the official CLI:
+
+    ```bash
+    npx nuxi@latest init my-headless-store
+    ```
+
+    When prompted, choose your preferred package manager (npm, yarn, or pnpm).
+
+    Navigate to your project:
+
+    ```bash
+    cd my-headless-store
+    ```
+
+    Install dependencies:
+
+    ```bash
+    npm install
+    ```
+  </Tab>
+  <Tab title="Nuxt 4">
+    Create a new Nuxt 4 project using the official CLI:
+
+    ```bash
+    npx nuxi@latest init my-headless-store
+    ```
+
+    When prompted, choose your preferred package manager (npm, yarn, or pnpm).
+
+    Navigate to your project:
+
+    ```bash
+    cd my-headless-store
+    ```
+
+    Install dependencies:
+
+    ```bash
+    npm install
+    ```
+
+    <Note>
+    Nuxt 4 uses the same initialization command as Nuxt 3. The latest version will be installed automatically.
+    </Note>
+  </Tab>
+</Tabs>
+
+## Installing Tailwind CSS
+
+Install Tailwind CSS using the Nuxt module:
+
+```bash
+npm install -D @nuxtjs/tailwindcss
+```
+
+Add the module to your `nuxt.config.ts`:
+
+<Tabs>
+  <Tab title="Nuxt 3">
+    ```javascript
+    export default defineNuxtConfig({
+      modules: ['@nuxtjs/tailwindcss'],
+      devtools: { enabled: true }
+    })
+    ```
+  </Tab>
+  <Tab title="Nuxt 4">
+    ```javascript
+    export default defineNuxtConfig({
+      modules: ['@nuxtjs/tailwindcss'],
+      compatibilityDate: '2024-11-01',
+      devtools: { enabled: true }
+    })
+    ```
+
+    <Note>
+    Nuxt 4 introduces the `compatibilityDate` option for managing framework updates and breaking changes.
+    </Note>
+  </Tab>
+</Tabs>
+
+Create a `tailwind.config.js` file (optional, for customization):
+
+```javascript
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+```
+
+## Project Structure
+
+Your Nuxt project should have this structure:
+
+```
+my-headless-store/
+├── assets/             # Stylesheets, fonts, images
+├── components/         # Vue components (auto-imported)
+├── composables/        # Vue composables (auto-imported)
+├── layouts/            # Layout components
+├── pages/              # File-based routing
+├── public/             # Static files served at root
+├── server/
+│   ├── api/           # API routes
+│   └── utils/         # Server utilities
+├── utils/             # Auto-imported utilities
+├── app.vue            # Main app component
+├── nuxt.config.ts     # Nuxt configuration
+└── package.json
+```
+
+<Info>
+Nuxt automatically imports components from the `components/` directory and composables from the `composables/` directory. No need for manual imports!
+</Info>
+
+## Environment Configuration
+
+Create a `.env` file in your project root:
+
+```bash
+NUXT_PUBLIC_STORE_URL=https://yourstore.com
+```
+
+<Note>
+Variables prefixed with `NUXT_PUBLIC_` are exposed to the client-side code. Keep sensitive data in server-only environment variables without the `NUXT_PUBLIC_` prefix.
+</Note>
+
+Add `.env` to your `.gitignore`:
+
+```bash
+echo ".env" >> .gitignore
+```
+
+Create a `.env.example` for your team:
+
+```bash
+# .env.example
+NUXT_PUBLIC_STORE_URL=https://yourstore.com
+```
+
+## Creating the CoCart Composable
+
+Create a composable to interact with CoCart. Create `composables/useCoCart.js`:
+
+<Tabs>
+  <Tab title="Nuxt 3">
+    ```javascript
+    export const useCoCart = () => {
+      const config = useRuntimeConfig()
+      const STORE_URL = config.public.storeUrl
+      const API_BASE = `${STORE_URL}/wp-json/cocart/v2`
+
+      /**
+       * Fetch products from CoCart API
+       */
+      const getProducts = async (params = {}) => {
+        const queryParams = {
+          per_page: params.per_page || 12,
+          page: params.page || 1,
+          ...params
+        }
+
+        try {
+          const { data, error } = await useFetch(`${API_BASE}/products`, {
+            query: queryParams
+          })
+
+          if (error.value) {
+            console.error('Error fetching products:', error.value)
+            return []
+          }
+
+          return data.value || []
+        } catch (err) {
+          console.error('Error fetching products:', err)
+          return []
+        }
+      }
+
+      /**
+       * Get a single product by ID
+       */
+      const getProduct = async (productId) => {
+        try {
+          const { data, error } = await useFetch(`${API_BASE}/products/${productId}`)
+
+          if (error.value) {
+            console.error('Error fetching product:', error.value)
+            return null
+          }
+
+          return data.value
+        } catch (err) {
+          console.error('Error fetching product:', err)
+          return null
+        }
+      }
+
+      /**
+       * Add item to cart
+       */
+      const addToCart = async (productId, quantity = 1, options = {}) => {
+        try {
+          const { data, error } = await useFetch(`${API_BASE}/cart/add-item`, {
+            method: 'POST',
+            body: {
+              id: productId,
+              quantity: quantity,
+              ...options
+            }
+          })
+
+          if (error.value) {
+            throw new Error(error.value.message || 'Failed to add item to cart')
+          }
+
+          return data.value
+        } catch (err) {
+          console.error('Error adding to cart:', err)
+          throw err
+        }
+      }
+
+      /**
+       * Get current cart
+       */
+      const getCart = async (cartKey = null) => {
+        const url = cartKey
+          ? `${API_BASE}/cart?cart_key=${cartKey}`
+          : `${API_BASE}/cart`
+
+        try {
+          const { data, error } = await useFetch(url)
+
+          if (error.value) {
+            console.error('Error fetching cart:', error.value)
+            return null
+          }
+
+          return data.value
+        } catch (err) {
+          console.error('Error fetching cart:', err)
+          return null
+        }
+      }
+
+      /**
+       * Update cart item quantity
+       */
+      const updateCartItem = async (itemKey, quantity) => {
+        try {
+          const { data, error } = await useFetch(`${API_BASE}/cart/item/${itemKey}`, {
+            method: 'POST',
+            body: { quantity }
+          })
+
+          if (error.value) {
+            throw new Error(error.value.message || 'Failed to update cart item')
+          }
+
+          return data.value
+        } catch (err) {
+          console.error('Error updating cart item:', err)
+          throw err
+        }
+      }
+
+      /**
+       * Remove item from cart
+       */
+      const removeCartItem = async (itemKey) => {
+        try {
+          const { data, error } = await useFetch(`${API_BASE}/cart/item/${itemKey}`, {
+            method: 'DELETE'
+          })
+
+          if (error.value) {
+            throw new Error(error.value.message || 'Failed to remove cart item')
+          }
+
+          return data.value
+        } catch (err) {
+          console.error('Error removing cart item:', err)
+          throw err
+        }
+      }
+
+      return {
+        getProducts,
+        getProduct,
+        addToCart,
+        getCart,
+        updateCartItem,
+        removeCartItem
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Nuxt 4">
+    ```javascript
+    export const useCoCart = () => {
+      const config = useRuntimeConfig()
+      const STORE_URL = config.public.storeUrl
+      const API_BASE = `${STORE_URL}/wp-json/cocart/v2`
+
+      /**
+       * Fetch products from CoCart API
+       */
+      const getProducts = async (params = {}) => {
+        const queryParams = {
+          per_page: params.per_page || 12,
+          page: params.page || 1,
+          ...params
+        }
+
+        try {
+          const { data, error } = await useFetch(`${API_BASE}/products`, {
+            query: queryParams
+          })
+
+          if (error.value) {
+            console.error('Error fetching products:', error.value)
+            return []
+          }
+
+          return data.value || []
+        } catch (err) {
+          console.error('Error fetching products:', err)
+          return []
+        }
+      }
+
+      /**
+       * Get a single product by ID
+       */
+      const getProduct = async (productId) => {
+        try {
+          const { data, error } = await useFetch(`${API_BASE}/products/${productId}`)
+
+          if (error.value) {
+            console.error('Error fetching product:', error.value)
+            return null
+          }
+
+          return data.value
+        } catch (err) {
+          console.error('Error fetching product:', err)
+          return null
+        }
+      }
+
+      /**
+       * Add item to cart
+       */
+      const addToCart = async (productId, quantity = 1, options = {}) => {
+        try {
+          const { data, error } = await useFetch(`${API_BASE}/cart/add-item`, {
+            method: 'POST',
+            body: {
+              id: productId,
+              quantity: quantity,
+              ...options
+            }
+          })
+
+          if (error.value) {
+            throw new Error(error.value.message || 'Failed to add item to cart')
+          }
+
+          return data.value
+        } catch (err) {
+          console.error('Error adding to cart:', err)
+          throw err
+        }
+      }
+
+      /**
+       * Get current cart
+       */
+      const getCart = async (cartKey = null) => {
+        const url = cartKey
+          ? `${API_BASE}/cart?cart_key=${cartKey}`
+          : `${API_BASE}/cart`
+
+        try {
+          const { data, error } = await useFetch(url)
+
+          if (error.value) {
+            console.error('Error fetching cart:', error.value)
+            return null
+          }
+
+          return data.value
+        } catch (err) {
+          console.error('Error fetching cart:', err)
+          return null
+        }
+      }
+
+      /**
+       * Update cart item quantity
+       */
+      const updateCartItem = async (itemKey, quantity) => {
+        try {
+          const { data, error } = await useFetch(`${API_BASE}/cart/item/${itemKey}`, {
+            method: 'POST',
+            body: { quantity }
+          })
+
+          if (error.value) {
+            throw new Error(error.value.message || 'Failed to update cart item')
+          }
+
+          return data.value
+        } catch (err) {
+          console.error('Error updating cart item:', err)
+          throw err
+        }
+      }
+
+      /**
+       * Remove item from cart
+       */
+      const removeCartItem = async (itemKey) => {
+        try {
+          const { data, error } = await useFetch(`${API_BASE}/cart/item/${itemKey}`, {
+            method: 'DELETE'
+          })
+
+          if (error.value) {
+            throw new Error(error.value.message || 'Failed to remove cart item')
+          }
+
+          return data.value
+        } catch (err) {
+          console.error('Error removing cart item:', err)
+          throw err
+        }
+      }
+
+      return {
+        getProducts,
+        getProduct,
+        addToCart,
+        getCart,
+        updateCartItem,
+        removeCartItem
+      }
+    }
+    ```
+
+    <Info>
+    The composable code is identical for both Nuxt 3 and 4. Nuxt 4 maintains backward compatibility with Nuxt 3 APIs.
+    </Info>
+  </Tab>
+</Tabs>
+
+<Tip>
+This composable is automatically imported in all your components and pages. Just call `const { getProducts } = useCoCart()` to use it!
+</Tip>
+
+## Creating a Default Layout
+
+Create a default layout at `layouts/default.vue`:
+
+```vue
+<template>
+  <div class="min-h-screen bg-white dark:bg-zinc-900">
+    <slot />
+  </div>
+</template>
+```
+
+## Creating Your First Page
+
+Create a home page at `pages/index.vue`:
+
+```vue
+<script setup>
+const { getProducts } = useCoCart()
+
+// Fetch products on the server
+const { data: products } = await useAsyncData('products', () =>
+  getProducts({ per_page: 12 })
+)
+</script>
+
+<template>
+  <NuxtLayout>
+    <main class="container mx-auto px-4 py-12">
+      <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-8">
+        Welcome to Your Headless Store
+      </h1>
+
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div
+          v-for="product in products"
+          :key="product.id"
+          class="border rounded-lg p-4"
+        >
+          <h2 class="font-semibold">{{ product.name }}</h2>
+          <p class="text-zinc-600">
+            {{ product.prices.currency_symbol }}{{ product.prices.price }}
+          </p>
+        </div>
+      </div>
+    </main>
+  </NuxtLayout>
+</template>
+```
+
+<Info>
+The `useAsyncData` composable automatically handles server-side rendering and client-side hydration. Data fetched on the server is serialized and sent to the client.
+</Info>
+
+## Creating Server API Routes
+
+Nuxt supports server API routes for server-side operations. Create `server/api/cart/add.post.js`:
+
+```javascript
+export default defineEventHandler(async (event) => {
+  try {
+    const body = await readBody(event)
+    const { id, quantity = 1, ...options } = body
+
+    const config = useRuntimeConfig()
+    const STORE_URL = config.public.storeUrl
+    const API_BASE = `${STORE_URL}/wp-json/cocart/v2`
+
+    const response = await $fetch(`${API_BASE}/cart/add-item`, {
+      method: 'POST',
+      body: {
+        id,
+        quantity,
+        ...options
+      }
+    })
+
+    return response
+  } catch (error) {
+    throw createError({
+      statusCode: 500,
+      message: error.message || 'Failed to add item to cart'
+    })
+  }
+})
+```
+
+<Note>
+Server routes are automatically prefixed with `/api`. This route will be accessible at `/api/cart/add`.
+</Note>
+
+## Managing Cart State
+
+Create a cart composable for managing cart state at `composables/useCartState.js`:
+
+```javascript
+export const useCartState = () => {
+  const cart = useState('cart', () => ({
+    items: [],
+    itemCount: 0,
+    total: '0'
+  }))
+
+  const addItem = (item) => {
+    cart.value = {
+      ...cart.value,
+      items: [...cart.value.items, item],
+      itemCount: cart.value.itemCount + item.quantity
+    }
+  }
+
+  const removeItem = (itemKey) => {
+    const newItems = cart.value.items.filter(item => item.key !== itemKey)
+    const newCount = newItems.reduce((sum, item) => sum + item.quantity, 0)
+
+    cart.value = {
+      ...cart.value,
+      items: newItems,
+      itemCount: newCount
+    }
+  }
+
+  const updateQuantity = (itemKey, quantity) => {
+    const items = cart.value.items.map(item =>
+      item.key === itemKey ? { ...item, quantity } : item
+    )
+    const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
+
+    cart.value = {
+      ...cart.value,
+      items,
+      itemCount
+    }
+  }
+
+  const clearCart = () => {
+    cart.value = {
+      items: [],
+      itemCount: 0,
+      total: '0'
+    }
+  }
+
+  return {
+    cart,
+    addItem,
+    removeItem,
+    updateQuantity,
+    clearCart
+  }
+}
+```
+
+Use the cart state in your components:
+
+```vue
+<script setup>
+const { cart } = useCartState()
+</script>
+
+<template>
+  <div>
+    <p>Cart items: {{ cart.itemCount }}</p>
+  </div>
+</template>
+```
+
+## SEO and Meta Tags
+
+Nuxt makes it easy to manage SEO with the `useSeoMeta` composable:
+
+```vue
+<script setup>
+useSeoMeta({
+  title: 'My Headless Store',
+  description: 'Shop our amazing products powered by WooCommerce and CoCart',
+  ogTitle: 'My Headless Store',
+  ogDescription: 'Shop our amazing products powered by WooCommerce and CoCart',
+  ogImage: 'https://yourstore.com/og-image.jpg',
+  twitterCard: 'summary_large_image'
+})
+</script>
+```
+
+## Running Your Project
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Visit `http://localhost:3000` to see your store.
+
+## Building for Production
+
+Build your site for production:
+
+```bash
+npm run build
+```
+
+Preview the production build:
+
+```bash
+npm run preview
+```
+
+## Deployment Options
+
+Nuxt can be deployed to various platforms:
+
+<AccordionGroup>
+  <Accordion title="Vercel">
+    **Zero configuration deployment**
+
+    ```bash
+    # Install Vercel CLI
+    npm i -g vercel
+
+    # Deploy
+    vercel
+    ```
+
+    Nuxt automatically detects Vercel and configures itself appropriately.
+  </Accordion>
+
+  <Accordion title="Netlify">
+    **Easy deployment with built-in features**
+
+    Create a `netlify.toml` file:
+
+    ```toml
+    [build]
+      command = "npm run build"
+      publish = ".output/public"
+    ```
+
+    Connect your repository to Netlify and deploy.
+  </Accordion>
+
+  <Accordion title="Cloudflare Pages">
+    **Global edge network deployment**
+
+    1. Connect your Git repository to Cloudflare Pages
+    2. Set build command: `npm run build`
+    3. Set build output directory: `.output/public`
+    4. Deploy
+
+    Nuxt automatically detects Cloudflare Pages and configures itself.
+  </Accordion>
+
+  <Accordion title="Node.js Server">
+    **Deploy to any Node.js hosting**
+
+    After running `npm run build`, you can start the production server:
+
+    ```bash
+    node .output/server/index.mjs
+    ```
+
+    Or use PM2 for process management:
+
+    ```bash
+    pm2 start .output/server/index.mjs --name "my-headless-store"
+    ```
+  </Accordion>
+
+  <Accordion title="Static Hosting">
+    **Generate a static site**
+
+    For fully static sites, you can use:
+
+    ```bash
+    npm run generate
+    ```
+
+    This creates a `.output/public` directory that can be deployed to any static hosting service like GitHub Pages, AWS S3, or Nginx.
+  </Accordion>
+</AccordionGroup>
+
+## Version-Specific Features
+
+<Tabs>
+  <Tab title="Nuxt 3">
+    ### Nuxt 3 Specific Features
+
+    - **Stable ecosystem**: All major modules and libraries are fully compatible
+    - **Long-term support**: Maintenance until January 2026
+    - **Production-ready**: Battle-tested in thousands of applications
+    - **Extensive documentation**: Comprehensive guides and community resources
+
+    ### Recommended Modules for Nuxt 3
+
+    ```bash
+    # Image optimization
+    npm install -D @nuxt/image
+
+    # PWA support
+    npm install -D @vite-pwa/nuxt
+
+    # Icon support
+    npm install -D @nuxt/icon
+    ```
+  </Tab>
+  <Tab title="Nuxt 4">
+    ### Nuxt 4 Specific Features
+
+    - **Compatibility date**: Use `compatibilityDate` in config for controlled updates
+    - **Performance improvements**: Enhanced build times and smaller bundle sizes
+    - **New defaults**: Better defaults for modern web development
+    - **Future-ready**: Latest features and improvements from the Nuxt team
+
+    ### New in Nuxt 4
+
+    - **Shared `app/` directory**: New folder structure for better organization
+    - **Normalized `useFetch` and `$fetch` defaults**: More consistent API behavior
+    - **Future Nitro 3**: Upcoming server engine improvements
+
+    ### Migration from Nuxt 3 to Nuxt 4
+
+    If you want to upgrade an existing Nuxt 3 project to Nuxt 4:
+
+    ```bash
+    # Update package.json
+    npm install nuxt@latest
+
+    # Add compatibility date to nuxt.config.ts
+    # compatibilityDate: '2024-11-01'
+    ```
+
+    <Warning>
+    Review the [Nuxt 4 migration guide](https://nuxt.com/docs/getting-started/upgrade#nuxt-4) for breaking changes and necessary updates.
+    </Warning>
+  </Tab>
+</Tabs>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="CORS Errors">
+    If you encounter CORS errors, you may need to configure WordPress to allow cross-origin requests. See [CORS documentation](/documentation/cors).
+
+    You can also add CORS headers in your Nuxt config:
+
+    ```javascript
+    export default defineNuxtConfig({
+      routeRules: {
+        '/api/**': {
+          cors: true,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET,HEAD,PUT,PATCH,POST,DELETE',
+          }
+        }
+      }
+    })
+    ```
+  </Accordion>
+
+  <Accordion title="API Connection Issues">
+    1. Verify your `NUXT_PUBLIC_STORE_URL` is correct in `.env`
+    2. Ensure CoCart is installed and activated
+    3. Check that WooCommerce is configured properly
+    4. Test API endpoints directly in your browser or Postman
+
+    **Debug tip**: Add logging to your composable:
+
+    ```javascript
+    console.log('API_BASE:', API_BASE)
+    console.log('Response:', data.value)
+    ```
+  </Accordion>
+
+  <Accordion title="Hydration Mismatch Errors">
+    If you see hydration mismatch warnings:
+
+    1. Ensure data fetching is done with `useAsyncData` or `useFetch`
+    2. Check that your component structure matches between server and client
+    3. Avoid using browser-only APIs during SSR
+    4. Use `<ClientOnly>` for client-side only components:
+
+    ```vue
+    <ClientOnly>
+      <BrowserOnlyComponent />
+    </ClientOnly>
+    ```
+  </Accordion>
+
+  <Accordion title="Module Compatibility (Nuxt 4)">
+    Some Nuxt modules may not yet support Nuxt 4. Check the module's documentation for compatibility.
+
+    If a module isn't compatible yet:
+    - Check for updates or beta versions
+    - Look for alternative modules
+    - Consider staying on Nuxt 3 until the module is updated
+    - Report the issue to the module maintainer
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Now that your Nuxt project is set up with CoCart:
+
+1. Build product listing pages with dynamic routes
+2. Create a shopping cart component with real-time updates
+3. Implement checkout functionality
+4. Add user authentication with JWT
+5. Optimize images with Nuxt Image module
+6. Add PWA capabilities with `@vite-pwa/nuxt`
+
+## Resources
+
+- [Nuxt Documentation](https://nuxt.com)
+- [Nuxt 4 Announcement](https://nuxt.com/blog/v4)
+- [CoCart API Reference](/api-reference/introduction)
+- [Tailwind CSS Documentation](https://tailwindcss.com)
+- [Vue.js Documentation](https://vuejs.org)

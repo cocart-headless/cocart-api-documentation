@@ -1,6 +1,507 @@
 ---
-title: "Core"
-icon: "code"
-url: "https://github.com/co-cart/co-cart/blob/trunk/CHANGELOG.md"
-robots: "noindex, follow"
+title: "CoCart Core Updates"
+sidebarTitle: "Core Updates"
+description: "Keep up with all the latest improvements, features, and fixes in CoCart Core."
+icon: "cart-shopping"
+rss: true
 ---
+
+Stay up to date with the latest releases and improvements to CoCart Core. Each update brings new features, bug fixes, and performance enhancements to help you build better headless WooCommerce experiences.
+
+<Note>
+For complete technical details, visit the [full changelog on GitHub](https://github.com/co-cart/co-cart/blob/trunk/CHANGELOG.md).
+</Note>
+
+---
+
+<Update label="September 22, 2025" description="v4.8.0">
+
+## Enhanced Login Security & Proxy Support
+
+We've strengthened the authentication system with better security controls and improved proxy detection. This release introduces several new filter hooks that give you fine-grained control over the login endpoint's permission system.
+
+If you're running CoCart behind a proxy or load balancer, you'll appreciate the enhanced IP address detection that now supports trusted proxy configurations. We've also added helpful logging to make debugging authentication issues much easier.
+
+For developers, there are six new filters available to customize authentication behavior, including `cocart_login_permission_callback` for adding custom permission checks and `cocart_trusted_proxies` for configuring your proxy setup.
+
+**Compatibility:** WooCommerce v10.2
+
+</Update>
+
+<Update label="August 8, 2025" description="v4.7.0">
+
+## Plugin Renamed for WordPress Directory
+
+To comply with WordPress directory trademark guidelines, we've updated the plugin name from "Headless WooCommerce Made Easy with CoCart" to "Headless eCommerce API for Developers - CoCart". This is purely a branding change—everything else works exactly the same.
+
+We've also added support for authenticating via JSON request body on the API v2 login endpoint, making it easier to integrate with modern frontend frameworks that prefer JSON over form data.
+
+</Update>
+
+<Update label="August 6, 2025" description="v4.6.4">
+
+## Session Management Improvements
+
+Fixed a critical issue where the "Load Cart from Session" feature was inadvertently destroying sessions after loading them, which was caused by session improvements in WooCommerce v10. If you experienced carts not persisting correctly, this update resolves that.
+
+We've also optimized the session handler to reduce duplicate database calls and improved how session timestamps are updated. These changes should result in better performance, especially on high-traffic stores.
+
+**Deprecated:** The `cocart_load_cart_override` action hook is no longer used.
+
+</Update>
+
+<Update label="July 25, 2025" description="v4.6.2">
+
+## WooCommerce v10 Cart Persistence Fix
+
+This release fixes a frustrating bug where removing items from the cart wouldn't stick. WooCommerce v10 introduced changes to session data handling that created cache conflicts—we've resolved this with session handler optimizations.
+
+We've also added a 30-day maximum expiration limit for cart sessions to prevent your session table from growing too large and impacting performance. The cart cache now loads with WooCommerce instead of only during REST API requests, ensuring consistent pricing calculations whether you're using the API or WooCommerce's native cart.
+
+**Important:** WooCommerce v9 is now the minimum required version, though we recommend v10+ for best performance.
+
+**Compatibility:** WooCommerce v10.0.4
+
+</Update>
+
+<Update label="July 21, 2025" description="v4.6.1">
+
+## Empty Cart Error Fixes
+
+Quick fix for `undefined array key` errors that were appearing when the cart was empty. We've also resolved an issue where items couldn't be removed via the update endpoint due to quantity validation problems.
+
+**Compatibility:** WooCommerce v10.0.3
+
+</Update>
+
+<Update label="June 26, 2025" description="v4.6.0">
+
+## WooCommerce v10 Ready
+
+This release focuses on compatibility with WooCommerce v10. We've refreshed CoCart's branding and improved styling consistency across all admin pages to reduce conflicts with WordPress and WooCommerce.
+
+Authentication has been enhanced with better detection for basic auth and new debug logs to help troubleshoot authentication failures. We've also improved accessibility with a semantic markup overhaul for better screen reader support.
+
+WordPress.org users can now try CoCart instantly using the new Playground blueprint—perfect for testing before installing.
+
+**Compatibility:** WooCommerce v10.0
+
+</Update>
+
+<Update label="May 31, 2025" description="v4.5.0">
+
+## Product Filtering by Brand
+
+You can now filter products by brand names in the Products API. We've also added the missing option to order products randomly, which was requested by the community.
+
+This will likely be the last feature release on the WordPress plugin directory as we transition to a new distribution model. Future updates will focus on maintenance and compatibility.
+
+**Compatibility:** WooCommerce v9.9
+
+</Update>
+
+<Update label="May 16, 2025" description="v4.4.0">
+
+## Automatic Database Updates
+
+Database updates now run automatically when needed—no more manual intervention required. This is especially helpful if you're using site management tools like ManageWP, MainWP, or BlogVault.
+
+We've aligned cart session expirations with WooCommerce's defaults for better abandoned cart compatibility. Logged-in users now get persistent carts that renew daily and expire after a week, while guest carts follow WooCommerce's standard expiration.
+
+LiteSpeed Cache users will benefit from automatic exclusion of CoCart from caching, preventing stale cart data issues.
+
+**For developers:** The `cocart_cart_expiring` and `cocart_cart_expiration` filters now include the `is_user_logged_in()` parameter for better control.
+
+</Update>
+
+<Update label="April 27, 2025" description="v4.3.30">
+
+## Variation Attribute Sanitization
+
+Product variation attributes are now properly sanitized, with labels automatically converted to their internal names (for example, "Size" becomes "pa_size"). This ensures consistency across your API responses.
+
+**Compatibility:** WordPress v6.8
+
+</Update>
+
+<Update label="April 10, 2025" description="v4.3.29">
+
+## Shipping Settings Respect
+
+We've fixed an issue where package details weren't being returned properly and optimized cart fetching across all endpoints.
+
+Shipping methods now fully respect your WooCommerce shipping settings. If you've configured your store to require a shipping address before calculating shipping, the API will correctly return no methods until the customer provides their address.
+
+**Compatibility:** WooCommerce v9.8
+
+</Update>
+
+<Update label="April 1, 2025" description="v4.3.26">
+
+## Critical Error Fix & WordPress 6.3 Required
+
+Fixed a critical error that occurred when adding items to the cart while requesting item details to be returned. We've also corrected missing schema information for Cart API v1.
+
+**Important:** WordPress 6.3 is now the minimum required version.
+
+</Update>
+
+<Update label="March 3, 2025" description="v4.3.23">
+
+## Guest Session Identification
+
+Guest carts now include a `t_` prefix before the cart key, matching WooCommerce's session handler convention. This helps third-party plugins and hosting configurations identify guest sessions more reliably.
+
+We've also improved authentication error handling by making error access public, preventing other authentication plugins from failing unnecessarily.
+
+**Compatibility:** WooCommerce v9.7
+
+</Update>
+
+<Update label="February 26, 2025" description="v4.3.22">
+
+## New Customer Field Filters
+
+We've improved how customer fields are handled with two powerful new filters. The `cocart_get_customer_{field}` filter now runs after value retrieval, allowing you to transform customer data (like converting country codes to country names).
+
+There's also a new `cocart_get_after_customer_{field-type}_fields` filter for modifying all billing or shipping fields at once.
+
+The cart and items endpoint schemas have been corrected for better API documentation.
+
+</Update>
+
+<Update label="February 20, 2025" description="v4.3.21">
+
+## Cache Control for Guest Users
+
+Added `no-store` to the `Cache-Control` header for guest users, preventing browsers and proxies from caching sensitive cart data.
+
+</Update>
+
+<Update label="November 29, 2024" description="v4.3.15">
+
+## Persistent Cart Fix for Registered Users
+
+Fixed the root cause of persistent cart issues affecting registered customers. If you experienced carts not saving properly for logged-in users, this update resolves that completely.
+
+</Update>
+
+<Update label="November 21, 2024" description="v4.3.13">
+
+## Security Patch: Meta Data Exposure
+
+**Security Update:** We've patched an issue where hidden and private product meta data could be exposed through the API. CoCart now properly filters out any meta data that should remain private.
+
+As a bonus improvement, the `Last-Modified` header now returns the actual product modification date when a product ID is detected.
+
+</Update>
+
+<Update label="November 20, 2024" description="v4.3.11">
+
+## Cache Header Improvements
+
+Removed conflicting cache headers and improved cache handling across the board. Cache headers now respect authentication status and are set at a better priority to prevent conflicts with cache plugins and preflight requests.
+
+The `Last-Modified` header now properly respects your WordPress timezone settings instead of always using UTC.
+
+**Compatibility:** WordPress v6.7, WooCommerce v9.4
+
+</Update>
+
+<Update label="November 14, 2024" description="v4.3.9">
+
+## Security Patch: Third Party Plugins
+
+**Security Update:** While not directly a CoCart vulnerability, we've added proactive protection against public information leaks from other WooCommerce plugins. Since CoCart is a public API, we're releasing security patches quickly to protect your store without waiting for third-party fixes.
+
+If you notice any security concerns with CoCart or plugins that connect to it, please [report them responsibly](https://cocartapi.com/security-policy/#Reporting-Security-Vulnerabilities).
+
+</Update>
+
+<Update label="November 7, 2024" description="v4.3.8">
+
+## Cart Tax Display Fix
+
+Fixed a fatal error when adding items to the cart and corrected how cart item prices are displayed. Prices now properly reflect your cart's tax settings rather than your store's default settings.
+
+</Update>
+
+<Update label="November 5, 2024" description="v4.3.7">
+
+## Cart Validation Improvements
+
+We've made several improvements to cart validation and item handling. The cart now validates earlier in the request lifecycle, and item keys are properly reset when re-adding items to prevent manipulation.
+
+The upgrade notice timing has been adjusted to show after 6 weeks instead of 4, and we've removed unnecessary Gravatar API calls from the dashboard.
+
+Translation contributors should note that our translation URL has moved to [translate.cocartapi.com](https://translate.cocartapi.com).
+
+</Update>
+
+<Update label="August 2024" description="v4.3.4-4.3.6">
+
+## Session API & CORS Fixes
+
+We've resolved several CORS-related issues and fixed the Sessions API not properly accessing the session handler. The `access-control-allow-origin` header is now correctly returned, and header sending priority has been adjusted for better compatibility.
+
+Cart merging from guest to authenticated users now works reliably.
+
+</Update>
+
+<Update label="July 24, 2024" description="v4.3.3">
+
+## Price Consistency & Weight Format
+
+Product prices are now fully consistent in Cart API v2, even for stores configured without decimal places. We've also fixed how weight values are returned—they now come back as strings to preserve accuracy without rounding issues.
+
+Several autoload path issues have been corrected, improving overall plugin stability.
+
+</Update>
+
+<Update label="July 11, 2024" description="v4.2.0">
+
+## Major Session Handler Refresh
+
+We've completely refreshed our session handler to extend WooCommerce's native session handler instead of forking it. This makes CoCart significantly more compatible with third-party plugins and WooCommerce's new cart and checkout blocks.
+
+**Important changes:**
+- Cookies are no longer used for headless carts—use the cart key returned in headers or response
+- Better user switching support
+- Improved cart migration from guest to authenticated users
+- Can now request a specific cart via the `cocart-api-cart-key` header
+
+This is a significant architectural improvement that sets the foundation for better compatibility going forward. We recommend testing on staging first, as several experimental functions and filters have been deprecated.
+
+**Compatibility:** WordPress v6.6, WooCommerce v9.0
+
+</Update>
+
+<Update label="June 6, 2024" description="v4.1.0">
+
+## Customer Details & Phone Authentication
+
+You can now set customer billing details directly through the cart API with a new callback. Basic Authentication has been enhanced to accept a customer's billing phone number as their username—useful for phone-based authentication flows.
+
+Authentication is now more robust, detecting authorization headers through multiple methods including `HTTP_AUTHORIZATION`, `REDIRECT_HTTP_AUTHORIZATION`, and `getallheaders()`.
+
+Stock details now properly return for product variations in the Products API v2.
+
+**Deprecated:** The legacy API (CoCart's original version) has been removed. The minimum WooCommerce version is now 4.5.
+
+</Update>
+
+<Update label="May 13, 2024" description="v4.0.0">
+
+## Batch Support & Quantity Validation
+
+CoCart 4.0 introduces batch support for Cart API v2 endpoints, allowing you to perform multiple cart operations in a single request. You can now batch add items, clear cart, remove items, restore items, and update the cart—dramatically reducing API calls for complex cart operations.
+
+**Breaking change:** The quantity parameter must now be passed as a string (not integer) when adding or updating items. This ensures consistent data handling across all cart operations.
+
+We've fixed several important issues including CORS credentials being returned incorrectly and improved cart update resilience—updates now continue processing even if an item no longer exists.
+
+Product API schemas have been completed for v1 and corrected for v2, ensuring accurate API documentation.
+
+[Read the full release announcement](https://cocart.dev/cocart-4-0-released-now-with-cart-batch-support-and-more/)
+
+</Update>
+
+<Update label="March 2024" description="v3.11.x">
+
+## Products API Enhancements
+
+We've added powerful new capabilities to the Products API, including the ability to query product variations by attribute slugs and filter product meta data for better security.
+
+Product taxonomies are now fully accessible, and we've introduced filters to prevent sensitive meta data from being exposed through the API—important for protecting customer information that some plugins might inadvertently make public.
+
+Cart performance has been improved when returning items, and product queries now properly handle date ranges.
+
+**For developers:** New filters `cocart_products_ignore_private_meta_keys` and `cocart_products_get_safe_meta_data` give you control over what product meta is exposed.
+
+</Update>
+
+<Update label="February 2024" description="v3.10.x">
+
+## Performance & Compatibility
+
+This release focuses on performance improvements and better WordPress integration. CoCart now uses significantly less memory and sends headers more efficiently using WordPress's native `send_headers()` function.
+
+We've improved how plugin suggestions work in the WordPress dashboard and enhanced the Products API with support for excluding related products and better argument handling.
+
+**Compatibility:** PHP v8.3, WooCommerce v8.6
+
+</Update>
+
+<Update label="January 2024" description="v3.10.0">
+
+## Support Page & Security Improvements
+
+We've added a new support page in the WordPress dashboard and introduced helpful tabs on all CoCart admin pages to make getting help easier.
+
+For enhanced security, CoCart namespaces and routes are now hidden from the WordPress REST API index unless debug mode is enabled—this helps prevent external scanning of your store's API setup.
+
+Several PHP 8.1+ compatibility issues have been resolved, and the Setup Wizard no longer blocks access to the WordPress dashboard during installation.
+
+**Compatibility:** WordPress v6.4, WooCommerce v8.4
+
+**Requirements:** PHP 7.4 minimum (previously 7.0)
+
+</Update>
+
+<Update label="August 2023" description="v3.9.0">
+
+## WooCommerce HPOS Support
+
+Removed WooCommerce plugin headers to prevent incompatibility warnings when using the High-Performance Order Storage (HPOS) feature. This ensures smooth operation with WooCommerce's modern order management system.
+
+We've also fixed an issue where products without featured images couldn't determine the placeholder image.
+
+**Compatibility:** WooCommerce v7.9
+
+</Update>
+
+<Update label="March 2023" description="v3.8.x">
+
+## Developer Hooks & Cart Loading
+
+Introduced the `cocart_cart_loaded` hook, allowing developers to trigger webhooks when a cart is loaded from session—perfect for tracking and analytics integrations.
+
+Authentication has been enhanced with better PHP 8.1+ compatibility and new filters for extending the login response.
+
+**Compatibility:** WooCommerce v7.4
+
+</Update>
+
+<Update label="October-December 2022" description="v3.7.x">
+
+## Cart Cache & Item Validation
+
+Fixed critical issues with custom pricing not being applied when carts are loaded from session. The cart cache system now properly maintains custom prices across sessions.
+
+Item validation has been improved to catch issues earlier, preventing errors when products no longer exist. We've also resolved several edge cases with item quantity updates and removed item handling.
+
+**Compatibility:** WooCommerce v7.0
+
+</Update>
+
+<Update label="June-July 2022" description="v3.7.0-3.7.4">
+
+## WooCommerce Detection & Yoast SEO
+
+CoCart installation now requires WooCommerce to be active first, preventing activation errors on fresh WordPress installs. The plugin will deactivate automatically if WooCommerce is not detected.
+
+Product queries can now use both category/tag slugs and IDs for more flexible filtering.
+
+Yoast SEO support has been adjusted—the `yoast_head` field is now available by default for better SEO integration.
+
+**Compatibility:** WordPress v6.0, WooCommerce v6.6
+
+</Update>
+
+<Update label="April 2022" description="v3.5.0-3.6.0">
+
+## Cache Prevention & Plugin Suggestions
+
+Added support to prevent CoCart from being cached by WP Super Cache and specific web hosts like Pantheon. This ensures your cart API always returns fresh data.
+
+Plugin suggestions system has been completely rebuilt to fetch data from a cached JSON file, improving dashboard performance.
+
+Products API v2 now properly handles placeholder images when products don't have featured images.
+
+**For developers:** New filter `cocart_send_cache_control_patterns` lets you control which routes should not be cached.
+
+**Compatibility:** WooCommerce v6.4
+
+</Update>
+
+<Update label="March 2022" description="v3.2.0-3.4.0">
+
+## Products API Pagination
+
+Products API v2 now returns proper pagination information as a separate object, making it easier to navigate through product listings. Pagination links automatically include your query arguments for seamless navigation.
+
+We've improved performance by unregistering Yoast SEO's duplicate `yoast_head` field while keeping `yoast_head_json` for better JSON response validation.
+
+**Breaking change:** Products array is now nested under a `products` object instead of being returned directly. This only affects the get all products endpoint in API v2.
+
+</Update>
+
+<Update label="February 2022" description="v3.1.0">
+
+## Major Feature Release
+
+This is one of the biggest releases in CoCart's history, introducing groundbreaking features:
+
+**Setup Wizard** - Helps new stores prepare for headless commerce
+
+**Custom Cart Callbacks** - Build your own cart update endpoints for unlimited flexibility
+
+**Products API Merged** - The Products add-on is now part of CoCart core with API v2
+
+**Custom Pricing** - Set custom prices for items when adding to cart (simple products and variations)
+
+**Field Selection** - Request only the cart fields you need, like GraphQL, for incredible performance
+
+**Bulk Updates** - Update multiple item quantities at once
+
+**Email Capture** - Set billing email when adding items for abandoned cart tracking
+
+Cart responses are now faster with selective field loading, timestamp headers show request timing, and login responses include user avatars and email addresses.
+
+**Important:** If using CoCart Products add-on, update it before upgrading to prevent site crashes.
+
+**Requirements:** WordPress v5.6 minimum
+
+**Compatibility:** WordPress v5.9, WooCommerce v6.2
+
+</Update>
+
+<Update label="December 2021" description="v3.0.17">
+
+## Validation Fixes
+
+Fixed item removal validation issues for specific edge cases and resolved an undefined function error with `get_current_screen()`.
+
+</Update>
+
+<Update label="May 2021" description="v3.0.0">
+
+## API v2 Launch
+
+CoCart 3.0 marked a major milestone with the introduction of API v2—a complete redesign of the cart response with improved structure, better performance, and enhanced developer experience.
+
+This release brought significant improvements to how cart data is organized and returned, making it easier to build modern frontend applications. The enhanced cart response provides clearer structure for items, totals, shipping, and customer data.
+
+While API v1 remains available for backward compatibility, v2 set the foundation for all future CoCart development with a more logical, developer-friendly architecture.
+
+This was the beginning of CoCart's evolution into the powerful headless commerce solution it is today.
+
+</Update>
+
+---
+
+## Earlier Versions
+
+For changelog entries prior to v3.0.0, please refer to the [complete changelog on GitHub](https://github.com/co-cart/co-cart/blob/trunk/CHANGELOG.md).
+
+---
+
+## Need Help?
+
+<CardGroup cols={2}>
+  <Card title="Report an Issue" icon="bug" href="/resources/opening-issues">
+    Found a bug? Let us know on GitHub
+  </Card>
+
+  <Card title="Get Support" icon="life-ring" href="/resources/support-policy">
+    Need help? Check our support policy
+  </Card>
+
+  <Card title="Join Community" icon="users" href="/resources/community">
+    Connect with other CoCart developers
+  </Card>
+
+  <Card title="View Roadmap" icon="map" href="/overview/roadmap">
+    See what's coming next
+  </Card>
+</CardGroup>

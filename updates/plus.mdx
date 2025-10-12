@@ -1,0 +1,190 @@
+---
+title: "CoCart Plus Updates"
+sidebarTitle: "Plus Updates"
+description: "Keep up with all the latest improvements, features, and fixes in CoCart Plus."
+icon: "cart-plus"
+rss: true
+---
+
+Stay up to date with the latest releases and improvements to CoCart Plus. Each update brings new features, bug fixes, and performance enhancements to extend CoCart's capabilities.
+
+<Note>
+  CoCart Plus is a premium extension that adds advanced features like batch requests, rate limiting, and extended cart callbacks.
+</Note>
+
+---
+
+<Update label="August 15, 2024" description="v1.5.4">
+
+## Admin Notice & Totals Calculation Fix
+
+Fixed an issue with admin notice removal in the WordPress dashboard and ensured cart totals are properly calculated before handling any data operations.
+
+These fixes improve stability and prevent edge cases where cart data might be processed before totals are ready.
+
+</Update>
+
+<Update label="August 10, 2024" description="v1.5.3">
+
+## Coupon Removal Fix
+
+Fixed a bug where removing coupons from the cart would silently return true without actually removing the coupon. Coupon removal now works reliably and provides proper feedback.
+
+</Update>
+
+<Update label="August 6, 2024" description="v1.5.2">
+
+## Cloudflare Support & Staging Detection
+
+We've enhanced the rate limiter to properly detect Cloudflare's IP header, ensuring accurate rate limiting for sites behind Cloudflare's proxy.
+
+InstaWP domains are now automatically recognized as staging sites, making it easier to test CoCart Plus without license restrictions.
+
+Customer phone numbers and postcodes are now sanitized and formatted when validated, ensuring consistent data quality.
+
+**Important:** WooCommerce v7.0 is now the minimum required version, and CoCart v4.2+ will be required for future updates.
+
+**Compatibility:** WordPress v6.6
+
+</Update>
+
+<Update label="June 11, 2024" description="v1.5.1">
+
+## Quick Bug Fix
+
+Fixed an undefined index error for `ship_to_different_address` that could appear in certain checkout scenarios.
+
+</Update>
+
+<Update label="June 5, 2024" description="v1.5.0">
+
+## Batch Requests & Shipping Details
+
+This release introduces powerful new capabilities for handling multiple cart operations efficiently.
+
+**Batch Endpoint** - Send multiple cart requests in a single API call and receive a unified cart response. This dramatically reduces API calls and improves performance for complex cart operations. (API v2 only)
+
+**Shipping Details Callback** - The cart callback has been extended to allow setting customer shipping details, complementing the existing billing details functionality.
+
+We've also improved session initialization to fail gracefully when sessions aren't available, preventing errors in edge cases.
+
+**Requires:** CoCart v4.1
+
+</Update>
+
+<Update label="May 23, 2024" description="v1.4.0">
+
+## Rate Limiting Introduced
+
+CoCart Plus now includes a comprehensive rate limiting system to protect your API from abuse and ensure fair usage across all clients.
+
+The rate limiter is fully configurable and includes detailed documentation to help you set appropriate limits for your store's needs. Check out our [Rate Limiting Guide](https://cocart.dev/guide/rate-limiting-guide/) for implementation details and testing strategies.
+
+We've also fixed the coupon endpoint REST base to ensure compatibility with CoCart v4.0 and adjusted error status codes to better reflect response types.
+
+**Compatibility:** CoCart v4.0, WooCommerce v8.9
+
+</Update>
+
+<Update label="May 13, 2024" description="v1.3.1">
+
+## Stylesheet Loading Fix
+
+Quick fix for the CoCart Updates page stylesheet not loading correctly in the WordPress dashboard.
+
+</Update>
+
+<Update label="May 13, 2024" description="v1.3.0">
+
+## License Management & Subscription Support
+
+This release brings significant improvements to license management and adds WooCommerce Subscriptions support.
+
+**What's New:**
+- Subscription item details now included in Cart API v2
+- License activation notifications in WordPress dashboard
+- Direct links to manage licenses via customer portal
+- Purchase license links for unlicensed installations
+- Recent updates feed on the CoCart Updates page
+
+**Security Improvements:**
+- Properly escaped dashboard values to prevent XSS
+- Updated to latest WordPress Coding Standards
+
+License activation messages for local and staging sites are now much clearer, and the activation status properly returns for these environments.
+
+**Compatibility:** WordPress v6.5, WooCommerce v8.8, PHP 8.3
+
+</Update>
+
+<Update label="February 22, 2024" description="v1.2.1">
+
+## Plugin Action Links Fix
+
+Fixed plugin action links appearing incorrectly for all plugins when CoCart Plus needed an update.
+
+</Update>
+
+<Update label="February 9, 2024" description="v1.2.0">
+
+## Enhanced License Management
+
+We've significantly improved how CoCart Plus handles licenses and updates, making it easier to manage your license across different environments.
+
+**New Features:**
+- Force update check on WordPress updates page now clears cached plugin data
+- License expiration warnings on both Plugins and Updates pages
+- Site lock key to detect site migrations and prompt license reactivation
+- Better staging and local site detection during activation
+- License activation without domain protocol for seamless HTTP to HTTPS transitions
+
+We've also fixed a critical static method call error in the Totals Controller and resolved an issue where plugin information wouldn't return for existing licenses.
+
+</Update>
+
+<Update label="February 1, 2024" description="v1.1.0">
+
+## License Activation Page
+
+Introduced a dedicated Updates page where you can enter and manage your license key. Once activated, you'll see your full license details and unlock automatic updates.
+
+We've also corrected default values for cart fees and fixed PHP deprecation warnings for float-to-int conversions.
+
+**Requirements:**
+- WordPress v5.6 minimum
+- PHP 7.4 minimum
+- CoCart v3.10 minimum
+
+**Compatibility:** WordPress v6.4.3, WooCommerce v8.5.2, PHP 8.2.10
+
+</Update>
+
+---
+
+## Get CoCart Plus
+
+<Card title="Upgrade to CoCart Plus" icon="cart-plus" href="https://cocartapi.com/pricing/">
+  Unlock advanced features like batch requests, rate limiting, and priority support
+</Card>
+
+---
+
+## Need Help?
+
+<CardGroup cols={2}>
+  <Card title="Report an Issue" icon="bug" href="/resources/opening-issues">
+    Found a bug? Let us know on GitHub
+  </Card>
+
+  <Card title="Get Support" icon="life-ring" href="/resources/support-policy">
+    Need help? Check our support policy
+  </Card>
+
+  <Card title="Join Community" icon="users" href="/resources/community">
+    Connect with other CoCart developers
+  </Card>
+
+  <Card title="View Roadmap" icon="map" href="/overview/roadmap">
+    See what's coming next
+  </Card>
+</CardGroup>
