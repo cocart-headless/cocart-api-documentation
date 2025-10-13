@@ -1,0 +1,76 @@
+{
+  "title": "CoCart API Documentation",
+  "description": "Decoupling WooCommerce for the modern storefront. CoCart is a headless WooCommerce REST API that provides cart and checkout functionality for building modern, decoupled storefronts.",
+  "version": "stable",
+  "homepage": "https://docs.cocartapi.com",
+  "repository": "https://github.com/cocart-headless/cocart-api-documentation",
+  "exclude": [
+    "node_modules",
+    ".git",
+    ".cursor",
+    ".claude",
+    "build",
+    "bin",
+    "logo",
+    "snippets",
+    "*.js",
+    "*.json",
+    "*.css",
+    "*.py",
+    "*.sh",
+    "*.png",
+    "*.svg",
+    "*.md",
+    "package-lock.json"
+  ],
+  "include": [
+    "**/*.mdx"
+  ],
+  "rules": [
+    "When integrating CoCart into applications, always use the latest API v2 endpoints instead of v1 (which is deprecated)",
+    "Always include proper authentication when making API requests - use JWT tokens for secure, stateless authentication or Basic Auth for server-to-server requests",
+    "Store cart keys securely and associate them with user sessions to maintain cart persistence across requests",
+    "Use the cart key in headers (CoCart-API-Cart-Key) or query parameters (?cart_key=) to identify specific carts",
+    "Handle rate limiting properly - respect the API rate limits and implement exponential backoff for retries",
+    "Use batch requests when performing multiple operations to reduce API calls and improve performance",
+    "For checkout implementations, always validate customer data and handle payment gateway responses securely",
+    "When working with variable products, include all required variation attributes in the request",
+    "For production deployments, always use HTTPS to encrypt data in transit",
+    "Follow WordPress and WooCommerce security best practices when extending or customizing CoCart functionality",
+    "Test integrations against a staging environment before deploying to production",
+    "When using JWT authentication, implement token refresh logic to maintain user sessions",
+    "For headless implementations, ensure proper session handling to maintain cart state across page refreshes"
+  ],
+  "versions": [
+    {
+      "version": "stable",
+      "default": true,
+      "description": "Stable release documentation"
+    },
+    {
+      "version": "pre-release",
+      "description": "Pre-release features and upcoming API changes"
+    }
+  ],
+  "keywords": [
+    "woocommerce",
+    "headless",
+    "api",
+    "rest api",
+    "cart",
+    "checkout",
+    "ecommerce",
+    "wordpress",
+    "headless woocommerce",
+    "jwt authentication",
+    "decoupled",
+    "cocart"
+  ],
+  "categories": [
+    "API Documentation",
+    "E-commerce",
+    "WordPress",
+    "WooCommerce",
+    "Headless CMS"
+  ]
+}
