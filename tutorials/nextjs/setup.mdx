@@ -1,0 +1,487 @@
+---
+title: "Setting Up Next.js"
+sidebarTitle: "Next.js Setup"
+description: "Learn how to set up a Next.js project for your headless WooCommerce store"
+tag: "WIP"
+robots: "noindex, follow"
+---
+
+<Warning>
+    This tutorial was written by [Claude Code (an AI)](https://claude.com/product/claude-code) and has not yet been reviewed. Follow along with caution. If the tutorial was helpful or a specific part was not clear/correct, please provide feedback at the bottom of the page. Thank you.
+</Warning>
+
+# Introduction
+
+[Next.js](https://nextjs.org) is a powerful React framework that enables you to build fast, production-ready web applications. It's an excellent choice for headless storefronts with CoCart because of its server-side rendering, API routes, excellent performance, and built-in optimizations.
+
+This guide will walk you through setting up a Next.js project configured to work with CoCart API.
+
+## Why Next.js for Headless Commerce?
+
+- **Hybrid rendering** - Use SSR, SSG, or ISR based on your needs
+- **Built-in API routes** - Create backend endpoints without a separate server
+- **Optimized performance** - Automatic code splitting and image optimization
+- **SEO friendly** - Server-side rendering for better search engine visibility
+- **Great DX** - Fast refresh, TypeScript support, and comprehensive documentation
+- **Vercel deployment** - Zero-config deployment with built-in CI/CD
+
+## Prerequisites
+
+- Node.js 18.17 or higher
+- A WordPress site with WooCommerce installed
+- CoCart plugin installed and activated
+- Basic knowledge of React and JavaScript
+
+## Creating a New Next.js Project
+
+Create a new Next.js project using the official CLI:
+
+```bash
+npx create-next-app@latest my-headless-store
+```
+
+When prompted, choose the following options:
+
+- **Would you like to use TypeScript?** → Yes (recommended) or No
+- **Would you like to use ESLint?** → Yes (recommended)
+- **Would you like to use Tailwind CSS?** → Yes (recommended)
+- **Would you like your code inside a `src/` directory?** → Yes (recommended)
+- **Would you like to use App Router?** → Yes (recommended)
+- **Would you like to use Turbopack for `next dev`?** → Yes (optional, for faster dev)
+- **Would you like to customize the import alias?** → No (unless you have preference)
+
+Navigate to your project:
+
+```bash
+cd my-headless-store
+```
+
+## Project Structure
+
+Your Next.js project will have this structure:
+
+```
+my-headless-store/
+├── src/
+│   ├── app/              # App Router pages and layouts
+│   │   ├── layout.tsx    # Root layout
+│   │   ├── page.tsx      # Home page
+│   │   └── api/          # API routes
+│   ├── components/       # Reusable React components
+│   ├── lib/              # Utility functions and API clients
+│   └── styles/           # Global styles
+├── public/               # Static assets
+├── next.config.js        # Next.js configuration
+├── tailwind.config.ts    # Tailwind configuration
+├── package.json
+└── tsconfig.json         # TypeScript config (if using TS)
+```
+
+Create the necessary folders:
+
+```bash
+mkdir -p src/components src/lib
+```
+
+## Environment Configuration
+
+Create a `.env.local` file in your project root:
+
+```bash
+NEXT_PUBLIC_STORE_URL=https://yourstore.com
+```
+
+<Note>
+  Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser. Server-only variables should not have this prefix.
+</Note>
+
+Add `.env.local` to your `.gitignore` (it should already be there by default):
+
+```bash
+# .gitignore already includes
+.env*.local
+```
+
+Create a `.env.example` for your team:
+
+```bash
+# .env.example
+NEXT_PUBLIC_STORE_URL=https://yourstore.com
+```
+
+## Creating the CoCart API Client
+
+Create a centralized API client to interact with CoCart. Create `src/lib/cocart.ts` (or `.js` if not using TypeScript):
+
+<Info>
+  We are currently building out this client, so for now just make standard fetch requests to the CoCart API endpoints as needed.
+</Info>
+
+```typescript
+const STORE_URL = process.env.NEXT_PUBLIC_STORE_URL || 'https://yourstore.com';
+const API_BASE = `${STORE_URL}/wp-json/cocart/v2`;
+
+/**
+ * Fetch products from CoCart API
+ */
+export async function getProducts(params: {
+  per_page?: number;
+  page?: number;
+  [key: string]: any;
+} = {}) {
+  const queryParams = new URLSearchParams({
+    per_page: String(params.per_page || 12),
+    page: String(params.page || 1),
+    ...params
+  });
+
+  try {
+    const response = await fetch(`${API_BASE}/products?${queryParams}`, {
+      next: { revalidate: 3600 } // Cache for 1 hour
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return [];
+  }
+}
+
+/**
+ * Get a single product by ID
+ */
+export async function getProduct(productId: string | number) {
+  try {
+    const response = await fetch(`${API_BASE}/products/${productId}`, {
+      next: { revalidate: 3600 } // Cache for 1 hour
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    return null;
+  }
+}
+
+/**
+ * Add item to cart
+ */
+export async function addToCart(
+  productId: string,
+  quantity: number = 1,
+  options: Record<string, any> = {}
+) {
+  try {
+    const response = await fetch(`${API_BASE}/cart/add-item`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: productId,
+        quantity: quantity,
+        ...options
+      }),
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error adding to cart:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get current cart
+ */
+export async function getCart(cartKey: string | null = null) {
+  const url = cartKey
+    ? `${API_BASE}/cart?cart_key=${cartKey}`
+    : `${API_BASE}/cart`;
+
+  try {
+    const response = await fetch(url, {
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching cart:', error);
+    return null;
+  }
+}
+
+/**
+ * Update cart item quantity
+ */
+export async function updateCartItem(itemKey: string, quantity: number) {
+  try {
+    const response = await fetch(`${API_BASE}/cart/item/${itemKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ quantity }),
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating cart item:', error);
+    throw error;
+  }
+}
+
+/**
+ * Remove item from cart
+ */
+export async function removeCartItem(itemKey: string) {
+  try {
+    const response = await fetch(`${API_BASE}/cart/item/${itemKey}`, {
+      method: 'DELETE',
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error removing cart item:', error);
+    throw error;
+  }
+}
+```
+
+## Creating API Routes
+
+Next.js API routes allow you to create backend endpoints. Create an API route for cart operations.
+
+Create `src/app/api/cart/add/route.ts`:
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { addToCart } from '@/lib/cocart';
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { id, quantity = 1, ...options } = body;
+
+    const result = await addToCart(id, quantity, options);
+
+    return NextResponse.json(result, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
+  }
+}
+```
+
+## Updating the Root Layout
+
+Update your root layout at `src/app/layout.tsx`:
+
+```typescript
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "My Headless Store",
+  description: "Your headless WooCommerce store powered by CoCart",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <body className={inter.className}>
+        {children}
+      </body>
+    </html>
+  );
+}
+```
+
+## Testing Your Setup
+
+Update the homepage at `src/app/page.tsx`:
+
+```typescript
+import { getProducts } from '@/lib/cocart';
+
+export default async function Home() {
+  const products = await getProducts({ per_page: 3 });
+
+  return (
+    <main className="container mx-auto px-4 py-12">
+      <h1 className="text-3xl font-bold text-zinc-900 dark:text-white mb-8">
+        Welcome to Your Headless Store
+      </h1>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {products.map((product: any) => (
+          <div key={product.id} className="border rounded-lg p-4">
+            <h2 className="font-semibold">{product.name}</h2>
+            <p className="text-zinc-600">
+              {product.prices.currency_symbol}{product.prices.price}
+            </p>
+          </div>
+        ))}
+      </div>
+    </main>
+  );
+}
+```
+
+## Running Your Project
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Visit `http://localhost:3000` to see your store.
+
+## Building for Production
+
+Build your site for production:
+
+```bash
+npm run build
+```
+
+Start the production server locally:
+
+```bash
+npm run start
+```
+
+## Caching Strategies
+
+Next.js offers several caching strategies for optimal performance:
+
+### Static Generation (SSG)
+For pages that can be pre-rendered at build time:
+
+```typescript
+export const revalidate = 3600; // Revalidate every hour
+
+export default async function ProductsPage() {
+  const products = await getProducts();
+  // ...
+}
+```
+
+### Incremental Static Regeneration (ISR)
+For pages that need periodic updates:
+
+```typescript
+export async function generateStaticParams() {
+  const products = await getProducts({ per_page: 100 });
+  return products.map((product: any) => ({ id: String(product.id) }));
+}
+
+export default async function ProductPage({ params }: { params: { id: string } }) {
+  const product = await getProduct(params.id);
+  // ...
+}
+```
+
+### Server-Side Rendering (SSR)
+For dynamic pages that need fresh data:
+
+```typescript
+export const dynamic = 'force-dynamic';
+
+export default async function CartPage() {
+  const cart = await getCart();
+  // ...
+}
+```
+
+## Deployment Options
+
+Next.js sites can be deployed to various platforms:
+
+- **Vercel** - Zero configuration deployment (recommended)
+- **Netlify** - Easy deployment with built-in features
+- **AWS Amplify** - Full-stack deployment
+- **Docker** - Containerized deployment
+- **Your own server** - Node.js server required
+
+### Deploying to Vercel
+
+1. Push your code to GitHub, GitLab, or Bitbucket
+2. Import your project on [Vercel](https://vercel.com)
+3. Add your environment variables
+4. Deploy!
+
+## Next Steps
+
+Now that your Next.js project is set up with CoCart:
+
+1. Add shopping cart functionality with React Context or Zustand
+2. Implement checkout flow
+3. Add user authentication with JWT
+4. Optimize images with Next.js Image component
+5. Add loading states and error boundaries
+
+## Troubleshooting
+
+### CORS Errors
+
+If you encounter CORS errors, you may need to configure WordPress to allow cross-origin requests. See [CORS documentation](../../documentation/cors).
+
+### API Connection Issues
+
+1. Verify your `NEXT_PUBLIC_STORE_URL` is correct in `.env.local`
+2. Ensure CoCart is installed and activated
+3. Check that WooCommerce is configured properly
+4. Test API endpoints directly in your browser or Postman
+
+### Hydration Errors
+
+If you see hydration mismatches:
+- Ensure you're not using browser-only APIs during SSR
+- Use `'use client'` directive for client-only components
+- Check that your data is consistent between server and client renders
+
+## Resources
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [CoCart API Reference](../../api-reference/introduction)
+- [Next.js Deployment](https://nextjs.org/docs/deployment)
+- [React Documentation](https://react.dev)

@@ -115,7 +115,14 @@
                           "documentation/developers/functions"
                         ]
                       },
-                      "documentation/developers/contributing"
+                      {
+                        "group": "Contributing",
+                        "icon": "hand-holding-heart",
+                        "pages": [
+                          "documentation/developers/contributing",
+                          "documentation/contributing-to-docs"
+                        ]
+                      }
                     ]
                   },
                   {
@@ -350,6 +357,7 @@
                   {
                     "group": "Tutorials",
                     "pages": [
+                      "tutorials/introduction",
                       "tutorials/postman",
                       "tutorials/covert-cart-to-order",
                       "tutorials/jwt-token-checkup",
@@ -371,6 +379,14 @@
                         "tag": "FEEDBACK REQUIRED"
                       },
                       {
+                        "group": "Next.js",
+                        "icon": "react",
+                        "pages": [
+                          "tutorials/nextjs/setup"
+                        ],
+                        "tag": "FEEDBACK REQUIRED"
+                      },
+                      {
                         "group": "Nuxt",
                         "icon": "mountain",
                         "pages": [
@@ -385,6 +401,14 @@
                           "tutorials/sveltekit/setup"
                         ],
                         "tag": "FEEDBACK REQUIRED"
+                      },
+                      {
+                        "group": "React Native",
+                        "icon": "mobile",
+                        "pages": [
+                          "tutorials/react-native/setup"
+                        ],
+                        "tag": "FEEDBACK REQUIRED"
                       }
                     ],
                     "tag": "WIP"
@@ -392,8 +416,10 @@
                   {
                     "group": "Tips and Tricks",
                     "pages": [
+                      "tutorials/typescript-types-generation",
                       "tutorials/generate-image-dataurl"
-                    ]
+                    ],
+                    "tag": "WIP"
                   },
                   {
                     "group": "Resources",
@@ -595,7 +621,14 @@
                           "documentation/developers/pre-release/functions"
                         ]
                       },
-                      "documentation/developers/contributing"
+                      {
+                        "group": "Contributing",
+                        "icon": "hand-holding-heart",
+                        "pages": [
+                          "documentation/developers/contributing",
+                          "documentation/contributing-to-docs"
+                        ]
+                      }
                     ]
                   },
                   {
@@ -752,7 +785,8 @@
                           "api-reference/pre-release/checkout/post-payment-context",
                           "api-reference/pre-release/checkout/get-address-search",
                           "api-reference/pre-release/checkout/get-address-details"
-                        ]
+                        ],
+                        "tag": "WIP"
                       },
                       {
                         "group": "Products",
@@ -793,15 +827,15 @@
                           "api-reference/pre-release/my-account/post-subscription-resubscribe",
                           "api-reference/pre-release/my-account/post-subscription-cancel",
                           "api-reference/pre-release/my-account/post-subscription-payment-method"
-                        ]
+                        ],
+                        "tag": "WIP"
                       },
                       {
                         "group": "User Management",
                         "icon": "user",
                         "pages": [
                           "api-reference/v2/user/post-login",
-                          "api-reference/v2/user/post-logout",
-                          "api-reference/v2/user/post-register"
+                          "api-reference/v2/user/post-logout"
                         ]
                       },
                       {
@@ -876,6 +910,7 @@
                   {
                     "group": "Tutorials",
                     "pages": [
+                      "tutorials/introduction",
                       "tutorials/postman",
                       "tutorials/covert-cart-to-order",
                       "tutorials/jwt-token-checkup",
@@ -894,7 +929,8 @@
                       "tutorials/pre-release/checkout-stripe",
                       "tutorials/pre-release/checkout-paypal",
                       "tutorials/pre-release/checkout-authorize-net"
-                    ]
+                    ],
+                    "tag": "WIP"
                   },
                   {
                     "group": "Framework Integrations",
@@ -906,6 +942,14 @@
                         "pages": [
                           "tutorials/astro/setup",
                           "tutorials/astro/oxbowui-product-list"
+                        ],
+                        "tag": "FEEDBACK REQUIRED"
+                      },
+                      {
+                        "group": "Next.js",
+                        "icon": "react",
+                        "pages": [
+                          "tutorials/nextjs/setup"
                         ],
                         "tag": "FEEDBACK REQUIRED"
                       },
@@ -924,6 +968,14 @@
                           "tutorials/sveltekit/setup"
                         ],
                         "tag": "FEEDBACK REQUIRED"
+                      },
+                      {
+                        "group": "React Native",
+                        "icon": "mobile",
+                        "pages": [
+                          "tutorials/react-native/setup"
+                        ],
+                        "tag": "FEEDBACK REQUIRED"
                       }
                     ],
                     "tag": "WIP"
@@ -931,8 +983,10 @@
                   {
                     "group": "Tips and Tricks",
                     "pages": [
+                      "tutorials/typescript-types-generation",
                       "tutorials/generate-image-dataurl"
-                    ]
+                    ],
+                    "tag": "WIP"
                   },
                   {
                     "group": "Resources",

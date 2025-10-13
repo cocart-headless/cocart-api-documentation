@@ -1,0 +1,513 @@
+---
+title: "Contributing to Documentation"
+sidebarTitle: "Documentation"
+description: "Learn how to contribute to CoCart API documentation"
+icon: "book-sparkles"
+tag: "NEW"
+---
+
+Thank you for your interest in improving the CoCart API documentation! This guide will help you understand how to contribute effectively.
+
+## Overview
+
+The CoCart API documentation is built with [Mintlify](https://mintlify.com), a modern documentation platform that uses MDX (Markdown + JSX) files and is hosted publicly on GitHub at [cocart-headless/cocart-api-documentation](https://github.com/cocart-headless/cocart-api-documentation).
+
+## Ways to Contribute
+
+You can help improve the documentation in several ways:
+
+<CardGroup cols={2}>
+  <Card title="Fix Typos & Errors" icon="pencil">
+    Correct spelling mistakes, grammar issues, or technical inaccuracies
+  </Card>
+
+  <Card title="Improve Clarity" icon="lightbulb">
+    Rewrite confusing sections to make them easier to understand
+  </Card>
+
+  <Card title="Add Examples" icon="code">
+    Contribute code examples in different programming languages
+  </Card>
+
+  <Card title="Write Tutorials" icon="graduation-cap">
+    Create step-by-step guides for common use cases
+  </Card>
+</CardGroup>
+
+## Getting Started
+
+### Prerequisites
+
+Before you begin, make sure you have:
+
+- A [GitHub account](https://github.com/signup)
+- [Git](https://git-scm.com/downloads) installed on your computer
+- [Node.js](https://nodejs.org/) (v18 or higher) installed
+- Basic familiarity with Markdown and Git workflows
+
+### Setting Up Your Development Environment
+
+1. **Fork the repository**
+
+    Visit the [documentation repository](https://github.com/cocart-headless/cocart-api-documentation) and click the "Fork" button in the top-right corner.
+
+2. **Clone your fork**
+
+  ```bash
+  git clone https://github.com/YOUR-USERNAME/cocart-api-documentation.git
+  cd cocart-api-documentation
+  ```
+
+3. **Install Mintlify CLI**
+
+  ```bash
+  npm install -g mintlify
+  ```
+
+4. **Start the development server**
+
+  ```bash
+  mintlify dev
+  ```
+
+  The documentation will be available at `http://localhost:3000`.
+
+<Tip>
+If `mintlify dev` isn't working, try running `mintlify install` to reinstall dependencies.
+</Tip>
+
+## Documentation Structure
+
+Understanding the project structure will help you navigate and contribute effectively:
+
+```
+cocart-api-documentation/
+├── docs.json                      # Navigation and site configuration
+├── api-reference/                 # API endpoint documentation
+│   ├── v1/                       # API v1 endpoints
+│   ├── v2/                       # API v2 endpoints
+│   └── jwt/                      # JWT authentication endpoints
+├── documentation/                 # User guides and features
+│   ├── developers/               # Developer resources
+│   └── guides/                   # How-to guides
+├── tutorials/                     # Step-by-step tutorials
+├── getting-started/              # Setup and quick start guides
+├── cli-reference/                # CLI command documentation
+├── knowledge-base/               # FAQ and troubleshooting
+└── resources/                    # Community and support info
+```
+
+### Key Files
+
+- **[docs.json](https://mintlify.com/docs.json)** - Controls navigation, theme, and site settings
+- **MDX files** - Content pages using Markdown with React components
+- **CLAUDE.md** - Project-specific contribution guidelines
+
+## Writing Guidelines
+
+### Frontmatter Requirements
+
+Every MDX file must include frontmatter with at least these fields:
+
+```mdx
+---
+title: "Clear, Descriptive Page Title"
+description: "Concise summary for SEO and navigation (1-2 sentences)"
+---
+```
+
+Optional frontmatter fields:
+
+```mdx
+---
+title: "Page Title"
+sidebarTitle: "Shorter Sidebar Title"
+description: "Page description"
+icon: "icon-name"              # Font Awesome icon
+tag: "NEW"                     # Badge: NEW, WIP, BETA, etc.
+---
+```
+
+### Writing Style
+
+Follow these style guidelines for consistency:
+
+<AccordionGroup>
+  <Accordion title="Voice and Tone" icon="message">
+    - Use **second-person voice** ("you") when addressing the reader
+    - Keep tone professional but friendly
+    - Write in active voice
+    - Be concise and direct
+
+    **Good**: "You can authenticate using Basic Auth or JWT tokens."
+
+    **Bad**: "Users are able to utilize either Basic Auth or JWT tokens for authentication purposes."
+  </Accordion>
+
+  <Accordion title="Code Examples" icon="code">
+    - Include code examples for all procedural content
+    - Add language tags to all code blocks
+    - Test all code examples before submitting
+    - Include both basic and advanced use cases where appropriate
+    - Show examples in multiple languages when possible (JavaScript, PHP, cURL)
+
+    ```javascript
+    const response = await fetch('https://example.com/wp-json/cocart/v2/cart');
+    const cart = await response.json();
+    ```
+  </Accordion>
+
+  <Accordion title="Links and References" icon="link">
+    - Use **relative paths** for internal links: `[link text](/path/to/page)`
+    - Use descriptive link text (avoid "click here")
+    - Link to relevant sections for additional context
+
+    **Good**: `See [Authentication](/api-reference/authentication) for more details.`
+
+    **Bad**: `Click [here](https://docs.cocartapi.com/api-reference/authentication) for more information.`
+  </Accordion>
+
+  <Accordion title="Structure" icon="sitemap">
+    - Start procedural content with prerequisites
+    - Use clear headings to organize content
+    - Include "What You'll Learn" or "Overview" sections for tutorials
+    - Add "Next Steps" or "What's Next" sections where appropriate
+  </Accordion>
+</AccordionGroup>
+
+## Using Mintlify Components
+
+Mintlify provides special components to enhance your documentation:
+
+### Callouts
+
+Use callouts to highlight important information:
+
+```mdx
+<Info>
+  This is informational content that provides helpful context.
+</Info>
+
+<Warning>
+  This warns users about potential issues or important considerations.
+</Warning>
+
+<Tip>
+  This offers helpful tips or best practices.
+</Tip>
+
+<Note>
+  This provides additional notes or clarifications.
+</Note>
+```
+
+### Cards
+
+Create card layouts for organized content:
+
+```mdx
+<CardGroup cols={2}>
+  <Card title="Card Title" icon="icon-name" href="/link">
+    Card description
+  </Card>
+
+  <Card title="Another Card" icon="icon-name" href="/link">
+    Another description
+  </Card>
+</CardGroup>
+```
+
+### Accordions
+
+Use accordions for collapsible content:
+
+```mdx
+<AccordionGroup>
+  <Accordion title="Section Title">
+    Content that can be expanded/collapsed
+  </Accordion>
+
+  <Accordion title="Another Section">
+    More collapsible content
+  </Accordion>
+</AccordionGroup>
+```
+
+### Code Groups
+
+Show code in multiple languages using CodeGroup:
+
+<CodeGroup>
+```bash cURL
+curl -X GET https://example.com/wp-json/cocart/v2/cart
+```
+
+```javascript JavaScript
+const response = await fetch('https://example.com/wp-json/cocart/v2/cart');
+```
+
+```php PHP
+$response = wp_remote_get('https://example.com/wp-json/cocart/v2/cart');
+```
+</CodeGroup>
+
+<Note>
+For more components and options, see the [Mintlify Components Documentation](https://mintlify.com/docs/content/components/accordions).
+</Note>
+
+## Contribution Workflow
+
+### Making Changes
+
+1. **Create a new branch**
+
+    ```bash
+    git checkout -b fix/improve-authentication-docs
+    ```
+
+    Branch naming conventions:
+    - `fix/short-description` - Bug fixes or corrections
+    - `add/short-description` - New content
+    - `refactor/short-description` - Reorganizing content
+    - `update/short-description` - Updating existing content
+
+2. **Make your changes**
+
+    Edit MDX files in your preferred text editor. The local dev server will auto-reload as you make changes.
+
+3. **Preview your changes**
+
+    Check `http://localhost:3000` to see how your changes look before committing.
+
+4. **Update navigation** (if adding new pages)
+
+    Add your new page to [docs.json](docs.json) in the appropriate section:
+
+    ```json
+    {
+      "group": "Tutorials",
+      "pages": [
+        "tutorials/existing-page",
+        "tutorials/your-new-page"
+      ]
+    }
+    ```
+
+### Committing Changes
+
+Follow these commit guidelines:
+
+<Steps>
+  <Step title="Write clear commit messages">
+    - Subject line: 50 characters or less, imperative mood
+    - Body: Wrap at 72 characters, explain what and why
+    - No period at end of subject line
+
+    ```bash
+    git commit -m "Fix typo in authentication tutorial
+
+    Corrected the endpoint URL in the Basic Auth example.
+    The previous URL was missing the /wp-json prefix."
+    ```
+  </Step>
+
+  <Step title="Never skip pre-commit hooks">
+    The repository may have pre-commit hooks for validation. **Never** use `--no-verify` flag.
+  </Step>
+
+  <Step title="Commit frequently">
+    Make small, atomic commits that each address one specific change.
+  </Step>
+</Steps>
+
+### Submitting Your Contribution
+
+1. **Push your branch to GitHub**
+
+    ```bash
+    git push origin fix/improve-authentication-docs
+    ```
+
+2. **Create a Pull Request**
+
+    - Go to your fork on GitHub
+    - Click "Compare & pull request"
+    - Fill out the PR template with:
+      - Clear description of your changes
+      - Why the changes are needed
+      - Any related issues
+
+3. **Address review feedback**
+
+    Maintainers may request changes. Make updates to your branch and push again:
+
+    ```bash
+    git add .
+    git commit -m "Address review feedback"
+    git push origin fix/improve-authentication-docs
+    ```
+
+## Updating docs.json
+
+The [docs.json](docs.json) file controls navigation and site configuration. When updating it:
+
+### Navigation Structure
+
+The documentation has versioned navigation (stable and pre-release):
+
+```json
+{
+  "navigation": {
+    "versions": [
+      {
+        "version": "stable",
+        "default": true,
+        "anchors": [...]
+      },
+      {
+        "version": "pre-release",
+        "anchors": [...]
+      }
+    ]
+  }
+}
+```
+
+### Adding a New Page
+
+When you add a new page, include it in the appropriate tab and group:
+
+```json
+{
+  "tab": "Tutorials",
+  "groups": [
+    {
+      "group": "Tutorials",
+      "pages": [
+        "tutorials/existing-tutorial",
+        "tutorials/your-new-tutorial"
+      ]
+    }
+  ]
+}
+```
+
+<Warning>
+Always validate your JSON syntax. Invalid JSON will break the entire documentation site.
+</Warning>
+
+### docs.json Schema
+
+Refer to the [Mintlify docs.json schema](https://mintlify.com/docs.json) for complete configuration options.
+
+## Testing Your Changes
+
+Before submitting a pull request:
+
+<Checklist>
+  <ChecklistItem complete={false}>
+    All links work correctly and use relative paths
+  </ChecklistItem>
+  <ChecklistItem complete={false}>
+    Code examples have been tested and work as expected
+  </ChecklistItem>
+  <ChecklistItem complete={false}>
+    Frontmatter is present and correctly formatted
+  </ChecklistItem>
+  <ChecklistItem complete={false}>
+    No spelling or grammar errors
+  </ChecklistItem>
+  <ChecklistItem complete={false}>
+    Images have alt text
+  </ChecklistItem>
+  <ChecklistItem complete={false}>
+    Content follows the writing guidelines
+  </ChecklistItem>
+  <ChecklistItem complete={false}>
+    Navigation works correctly (if you modified docs.json)
+  </ChecklistItem>
+  <ChecklistItem complete={false}>
+    Local preview renders correctly
+  </ChecklistItem>
+</Checklist>
+
+## Content Strategy
+
+When contributing content, keep these principles in mind:
+
+<CardGroup cols={2}>
+  <Card title="Just Enough" icon="balance-scale">
+    Document enough for user success - not too much, not too little
+  </Card>
+
+  <Card title="Accuracy First" icon="bullseye">
+    Prioritize accuracy and usability over comprehensiveness
+  </Card>
+
+  <Card title="Evergreen Content" icon="leaf">
+    Write content that remains relevant over time when possible
+  </Card>
+
+  <Card title="Avoid Duplication" icon="copy">
+    Search for existing info before adding new content
+  </Card>
+</CardGroup>
+
+## Common Mistakes to Avoid
+
+<Warning>
+**Do NOT:**
+- Skip frontmatter on any MDX file
+- Use absolute URLs for internal links
+- Include untested code examples
+- Make assumptions - ask for clarification instead
+- Use `--no-verify` when committing
+- Modify changelog files directly (these are maintained by the CoCart team)
+</Warning>
+
+## Getting Help
+
+Need help with your contribution?
+
+- **Questions about content**: Ask in the [#documentation channel](https://cocartapi.com/community/?ref=mintlify) on Discord
+- **Technical issues with Mintlify**: Check the [Mintlify documentation](https://mintlify.com/docs/introduction)
+- **Report documentation issues**: Open an issue on [GitHub](https://github.com/cocart-headless/cocart-api-documentation/issues)
+
+## Recognition
+
+Contributors are valued members of the CoCart community! Significant contributions may be recognized:
+
+- Listed in documentation contributors
+- Mentioned in release notes
+- Invited to join the documentation team
+
+## Resources
+
+<CardGroup cols={2}>
+  <Card title="Mintlify Docs" icon="book" href="https://mintlify.com/docs">
+    Official Mintlify documentation
+  </Card>
+
+  <Card title="MDX Docs" icon="markdown" href="https://mdxjs.com/docs/">
+    Learn about MDX syntax
+  </Card>
+
+  <Card title="CoCart Community" icon="discord" href="https://cocartapi.com/community/?ref=mintlify">
+    Join our Discord community
+  </Card>
+
+  <Card title="GitHub Repo" icon="github" href="https://github.com/cocart-headless/cocart-api-documentation">
+    Documentation repository
+  </Card>
+</CardGroup>
+
+## What's Next?
+
+Ready to contribute? Here are some good starting points:
+
+1. Look for pages tagged with "WIP" (work in progress) that need completion or reviewing before finalization and tagging as "NEW"
+2. Check the [GitHub issues](https://github.com/cocart-headless/cocart-api-documentation/issues) for documentation tasks
+3. Review recent changes to understand current documentation priorities
+4. Start with small improvements like fixing typos before tackling larger contributions
+
+Thank you for helping make CoCart documentation better for everyone!

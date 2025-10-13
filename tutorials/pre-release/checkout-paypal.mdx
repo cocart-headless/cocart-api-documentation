@@ -7,6 +7,10 @@ tag: "WIP"
 robots: "noindex, follow"
 ---
 
+<Warning>
+    This tutorial was written by [Claude Code (an AI)](https://claude.com/product/claude-code) and has not yet been reviewed. Follow along with caution. If the tutorial was helpful or a specific part was not clear/correct, please provide feedback at the bottom of the page. Thank you.
+</Warning>
+
 <Note>
     This guide covers integrating PayPal with CoCart Preview API. Requires CoCart v4.6+ and a configured PayPal payment gateway.
 </Note>
@@ -27,18 +31,18 @@ Before implementing PayPal checkout, ensure you have:
 ## Integration Flow
 
 <Steps>
-  <Step title="Initialize PayPal Buttons">
-    Set up PayPal SDK with your store's client ID and cart information
-  </Step>
-  <Step title="Handle Payment Creation">
-    Create PayPal order when customer clicks Pay with PayPal
-  </Step>
-  <Step title="Handle Payment Approval">
-    Process the PayPal payment approval and capture transaction details
-  </Step>
-  <Step title="Complete Checkout">
-    Submit checkout with PayPal order ID to CoCart for order creation
-  </Step>
+    <Step title="Initialize PayPal Buttons">
+        Set up PayPal SDK with your store's client ID and cart information
+    </Step>
+    <Step title="Handle Payment Creation">
+        Create PayPal order when customer clicks Pay with PayPal
+    </Step>
+    <Step title="Handle Payment Approval">
+        Process the PayPal payment approval and capture transaction details
+    </Step>
+    <Step title="Complete Checkout">
+        Submit checkout with PayPal order ID to CoCart for order creation
+    </Step>
 </Steps>
 
 ## Step 1: Load PayPal SDK
@@ -56,7 +60,7 @@ Replace `YOUR_PAYPAL_CLIENT_ID` with your actual PayPal client ID from your WooC
 Get the cart total and currency for PayPal order creation:
 
 <Tabs>
-  <Tab title="JavaScript">
+    <Tab title="JavaScript">
     ```javascript
     async function getCartTotal() {
         const cartKey = localStorage.getItem('cart_key');
@@ -81,9 +85,9 @@ Get the cart total and currency for PayPal order creation:
         };
     }
     ```
-  </Tab>
+    </Tab>
 
-  <Tab title="PHP">
+    <Tab title="PHP">
     ```php
     function get_cart_total_for_paypal( $cart_key ) {
         $response = wp_remote_get( 'https://yoursite.com/wp-json/cocart/preview/checkout', array(
@@ -110,7 +114,7 @@ Get the cart total and currency for PayPal order creation:
         );
     }
     ```
-  </Tab>
+    </Tab>
 </Tabs>
 
 <Warning>
@@ -773,35 +777,35 @@ For development and testing:
 ## Best Practices
 
 <CardGroup cols={2}>
-  <Card title="User Experience" icon="user">
+    <Card title="User Experience" icon="user">
     - Validate forms before enabling PayPal buttons
     - Show clear loading states during processing
     - Handle payment cancellations gracefully
     - Provide clear error messages
-  </Card>
+    </Card>
 
-  <Card title="Security" icon="shield-check">
+    <Card title="Security" icon="shield-check">
     - Use HTTPS for all requests
     - Validate data server-side
     - Never expose sensitive keys client-side
     - Handle webhook validations properly
-  </Card>
+    </Card>
 
-  <Card title="Performance" icon="gauge-high">
+    <Card title="Performance" icon="gauge-high">
     - Load PayPal SDK asynchronously
     - Cache payment contexts when possible
     - Minimize API calls
     - Handle timeouts appropriately
-  </Card>
+    </Card>
 
-  <Card title="Accessibility" icon="universal-access">
+    <Card title="Accessibility" icon="universal-access">
     - Ensure buttons are keyboard accessible
     - Provide alternative payment methods
     - Use proper ARIA labels
     - Test with screen readers
-  </Card>
+    </Card>
 </CardGroup>
 
 <Note>
-Always test your PayPal integration thoroughly using PayPal's sandbox environment before going live. Configure webhook endpoints to handle payment notifications and updates.
+    Always test your PayPal integration thoroughly using PayPal's sandbox environment before going live. Configure webhook endpoints to handle payment notifications and updates.
 </Note>

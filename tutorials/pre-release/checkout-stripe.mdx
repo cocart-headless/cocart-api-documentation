@@ -7,6 +7,10 @@ tag: "WIP"
 robots: "noindex, follow"
 ---
 
+<Warning>
+    This tutorial was written by [Claude Code (an AI)](https://claude.com/product/claude-code) and has not yet been reviewed. Follow along with caution. If the tutorial was helpful or a specific part was not clear/correct, please provide feedback at the bottom of the page. Thank you.
+</Warning>
+
 <Note>
     This guide covers integrating Stripe with CoCart Preview API. Requires CoCart v4.6+ and a configured Stripe payment gateway.
 </Note>
@@ -36,18 +40,18 @@ Before implementing Stripe checkout, ensure you have:
 ## Integration Flow
 
 <Steps>
-  <Step title="Initialize Stripe Elements">
-    Set up Stripe SDK with your store's publishable key and create payment form
-  </Step>
-  <Step title="Collect Payment Details">
-    Let customers securely enter their payment information using Stripe Elements
-  </Step>
-  <Step title="Create Payment Method">
-    Generate a payment method using Stripe's client-side API
-  </Step>
-  <Step title="Complete Checkout">
-    Submit the checkout with payment method reference to CoCart
-  </Step>
+    <Step title="Initialize Stripe Elements">
+        Set up Stripe SDK with your store's publishable key and create payment form
+    </Step>
+    <Step title="Collect Payment Details">
+        Let customers securely enter their payment information using Stripe Elements
+    </Step>
+    <Step title="Create Payment Method">
+        Generate a payment method using Stripe's client-side API
+    </Step>
+    <Step title="Complete Checkout">
+        Submit the checkout with payment method reference to CoCart
+    </Step>
 </Steps>
 
 ## Step 1: Initialize Stripe Elements
@@ -55,7 +59,7 @@ Before implementing Stripe checkout, ensure you have:
 First, set up Stripe with your store's publishable key and create the payment form:
 
 <Tabs>
-  <Tab title="JavaScript">
+    <Tab title="JavaScript">
     ```javascript
     // Initialize Stripe with your store's publishable key
     const stripe = Stripe('pk_live_your_stripe_publishable_key'); // Must match WooCommerce settings
@@ -90,9 +94,9 @@ First, set up Stripe with your store's publishable key and create the payment fo
         }
     });
     ```
-  </Tab>
+    </Tab>
 
-  <Tab title="HTML">
+    <Tab title="HTML">
     ```html
     <!-- Load Stripe.js -->
     <script src="https://js.stripe.com/v3/"></script>
@@ -111,7 +115,7 @@ First, set up Stripe with your store's publishable key and create the payment fo
         </button>
     </form>
     ```
-  </Tab>
+    </Tab>
 </Tabs>
 
 <Warning>
@@ -658,35 +662,35 @@ Use Stripe's test card numbers for development:
 ## Best Practices
 
 <CardGroup cols={2}>
-  <Card title="Security" icon="shield-check">
+    <Card title="Security" icon="shield-check">
     - Never expose secret keys client-side
     - Use HTTPS for all requests
     - Validate data server-side
     - Handle PCI compliance properly
-  </Card>
+    </Card>
 
-  <Card title="User Experience" icon="user">
+    <Card title="User Experience" icon="user">
     - Show loading states during processing
     - Provide clear error messages
     - Enable real-time form validation
     - Support mobile-friendly interfaces
-  </Card>
+    </Card>
 
-  <Card title="Error Handling" icon="triangle-exclamation">
+    <Card title="Error Handling" icon="triangle-exclamation">
     - Handle network failures gracefully
     - Implement retry mechanisms
     - Log errors for debugging
     - Provide fallback options
-  </Card>
+    </Card>
 
-  <Card title="Performance" icon="gauge-high">
+    <Card title="Performance" icon="gauge-high">
     - Load Stripe.js asynchronously
     - Cache payment contexts when possible
     - Minimize API calls
     - Use request timeouts
-  </Card>
+    </Card>
 </CardGroup>
 
 <Note>
-Always test your Stripe integration thoroughly using Stripe's test mode before going live. Ensure your webhook endpoints are properly configured to handle payment updates.
+    Always test your Stripe integration thoroughly using Stripe's test mode before going live. Ensure your webhook endpoints are properly configured to handle payment updates.
 </Note>

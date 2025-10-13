@@ -1,0 +1,543 @@
+---
+title: "Generate TypeScript Types"
+sidebarTitle: "TypeScript Types"
+description: "Learn how to automatically generate TypeScript types from CoCart OpenAPI specifications for type-safe development"
+icon: "code"
+tag: "NEW"
+---
+
+<Warning>
+    This tutorial was written by [Claude Code (an AI)](https://claude.com/product/claude-code) and has not yet been reviewed. Follow along with caution. If the tutorial was helpful or a specific part was not clear/correct, please provide feedback at the bottom of the page. Thank you.
+</Warning>
+
+# Introduction
+
+TypeScript provides strong typing that helps catch errors at compile time and improves developer experience with better autocompletion. CoCart provides OpenAPI specification files that can be used to automatically generate TypeScript types for all API endpoints, request bodies, and response schemas.
+
+This tutorial will show you how to generate and use TypeScript types from the CoCart OpenAPI specifications in your TypeScript projects.
+
+## Why Use Generated Types?
+
+- **Type safety** - Catch errors at compile time instead of runtime
+- **Better IDE support** - Get accurate autocompletion and IntelliSense
+- **Automatic updates** - Regenerate types when the API changes
+- **Self-documenting** - Types serve as inline documentation
+- **Reduced errors** - Prevent typos and incorrect API usage
+
+## Prerequisites
+
+- Node.js 18 or higher
+- A TypeScript project (Next.js, React, Node.js, etc.)
+- Basic knowledge of TypeScript
+- CoCart API endpoint URL
+
+## Available OpenAPI Specifications
+
+CoCart provides several OpenAPI specification files depending on which API version you're using:
+
+| API Version | Specification File | Recommended For |
+|-------------|-------------------|-----------------|
+| **v2 Stable** | `openapi-v2-stable.yaml` | Production applications |
+| **v2 Pre-release** | `openapi-v2-pre-release.yaml` | Testing upcoming features |
+| **v1 Cart** | `openapi-cart-v1.yaml` | Legacy v1 cart endpoints |
+| **v1 Products** | `openapi-products-v1.yaml` | Legacy v1 product endpoints |
+
+<Note>
+  This tutorial focuses on the **v2 Stable API**, which is recommended for all new projects.
+</Note>
+
+## Installation
+
+Install the `openapi-typescript` package as a development dependency:
+
+```bash
+npm install -D openapi-typescript
+```
+
+Or if you prefer Yarn:
+
+```bash
+yarn add -D openapi-typescript
+```
+
+## Generating Types from Remote URL
+
+The easiest way to generate types is directly from the GitHub repository:
+
+```bash
+npx openapi-typescript https://raw.githubusercontent.com/cocart-headless/cocart-api-documentation/main/api-reference/v2/openapi-v2-stable.yaml -o src/types/cocart.ts
+```
+
+This command:
+- Fetches the OpenAPI spec from GitHub
+- Generates TypeScript types
+- Saves them to `src/types/cocart.ts`
+
+<Tip>
+Add this command to your `package.json` scripts for easy regeneration:
+
+```json
+{
+  "scripts": {
+    "generate-types": "openapi-typescript https://raw.githubusercontent.com/cocart-headless/cocart-api-documentation/main/api-reference/v2/openapi-v2-stable.yaml -o src/types/cocart.ts"
+  }
+}
+```
+
+Then run: `npm run generate-types`
+</Tip>
+
+## Generating Types from Local File
+
+If you have the OpenAPI specification file locally:
+
+1. **Download the specification file** to your project:
+
+```bash
+curl -o openapi-v2-stable.yaml https://raw.githubusercontent.com/cocart-headless/cocart-api-documentation/main/api-reference/v2/openapi-v2-stable.yaml
+```
+
+2. **Generate types from the local file**:
+
+```bash
+npx openapi-typescript ./openapi-v2-stable.yaml -o src/types/cocart.ts
+```
+
+## Using Generated Types
+
+Once you've generated the types, you can use them in your TypeScript code. The generated types follow this structure:
+
+```typescript
+import type { paths, components } from './types/cocart';
+
+// Extract types from paths
+type CartResponse = paths['/cart']['get']['responses']['200']['content']['application/json'];
+type AddItemRequest = paths['/cart/add-item']['post']['requestBody']['content']['application/json'];
+
+// Extract types from components/schemas
+type Product = components['schemas']['Product'];
+type Cart = components['schemas']['Cart'];
+```
+
+### Example: Creating a Type-Safe API Client
+
+Create a type-safe API client using the generated types:
+
+```typescript
+import type { paths, components } from './types/cocart';
+
+const API_BASE = 'https://yourstore.com/wp-json/cocart/v2';
+
+// Type-safe function to get cart
+export async function getCart(): Promise<components['schemas']['Cart']> {
+  const response = await fetch(`${API_BASE}/cart`);
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+// Type-safe function to add item to cart
+export async function addToCart(
+  data: paths['/cart/add-item']['post']['requestBody']['content']['application/json']
+): Promise<components['schemas']['Cart']> {
+  const response = await fetch(`${API_BASE}/cart/add-item`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+// Type-safe function to get products
+export async function getProducts(
+  params?: paths['/products']['get']['parameters']['query']
+): Promise<components['schemas']['Product'][]> {
+  const queryString = params ? new URLSearchParams(params as any).toString() : '';
+  const url = `${API_BASE}/products${queryString ? `?${queryString}` : ''}`;
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return response.json();
+}
+```
+
+### Example: Using Types in React Components
+
+Use the generated types in your React components:
+
+```typescript
+import React, { useEffect, useState } from 'react';
+import type { components } from './types/cocart';
+import { getCart, addToCart } from './api/cocart';
+
+type Cart = components['schemas']['Cart'];
+type Product = components['schemas']['Product'];
+
+export function ProductCard({ product }: { product: Product }) {
+  const [isAdding, setIsAdding] = useState(false);
+
+  const handleAddToCart = async () => {
+    setIsAdding(true);
+    try {
+      await addToCart({
+        id: product.id.toString(),
+        quantity: 1,
+      });
+      alert('Added to cart!');
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  return (
+    <div className="product-card">
+      <h3>{product.name}</h3>
+      <p>{product.prices.currency_symbol}{product.prices.price}</p>
+      <button onClick={handleAddToCart} disabled={isAdding}>
+        {isAdding ? 'Adding...' : 'Add to Cart'}
+      </button>
+    </div>
+  );
+}
+
+export function CartSummary() {
+  const [cart, setCart] = useState<Cart | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getCart()
+      .then(setCart)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div>Loading cart...</div>;
+  if (!cart) return <div>Failed to load cart</div>;
+
+  return (
+    <div className="cart-summary">
+      <h3>Cart ({cart.items_count} items)</h3>
+      <p>Total: {cart.totals.currency_symbol}{cart.totals.total}</p>
+    </div>
+  );
+}
+```
+
+### Example: Using with Axios
+
+Create a type-safe Axios client:
+
+```typescript
+import axios, { AxiosInstance } from 'axios';
+import type { paths, components } from './types/cocart';
+
+const api: AxiosInstance = axios.create({
+  baseURL: 'https://yourstore.com/wp-json/cocart/v2',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Type-safe cart operations
+export const cartApi = {
+  getCart: async (): Promise<components['schemas']['Cart']> => {
+    const response = await api.get('/cart');
+    return response.data;
+  },
+
+  addItem: async (
+    data: paths['/cart/add-item']['post']['requestBody']['content']['application/json']
+  ): Promise<components['schemas']['Cart']> => {
+    const response = await api.post('/cart/add-item', data);
+    return response.data;
+  },
+
+  updateItem: async (
+    itemKey: string,
+    data: paths['/cart/item/{item_key}']['post']['requestBody']['content']['application/json']
+  ): Promise<components['schemas']['Cart']> => {
+    const response = await api.post(`/cart/item/${itemKey}`, data);
+    return response.data;
+  },
+
+  removeItem: async (itemKey: string): Promise<components['schemas']['Cart']> => {
+    const response = await api.delete(`/cart/item/${itemKey}`);
+    return response.data;
+  },
+};
+
+// Type-safe product operations
+export const productApi = {
+  getProducts: async (
+    params?: paths['/products']['get']['parameters']['query']
+  ): Promise<components['schemas']['Product'][]> => {
+    const response = await api.get('/products', { params });
+    return response.data;
+  },
+
+  getProduct: async (id: string): Promise<components['schemas']['Product']> => {
+    const response = await api.get(`/products/${id}`);
+    return response.data;
+  },
+};
+```
+
+### Example: Using with React Query
+
+Combine generated types with React Query for powerful data fetching:
+
+```typescript
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { components } from './types/cocart';
+import { getCart, addToCart, getProducts } from './api/cocart';
+
+type Cart = components['schemas']['Cart'];
+type Product = components['schemas']['Product'];
+
+// Hook for fetching cart
+export function useCart() {
+  return useQuery<Cart>({
+    queryKey: ['cart'],
+    queryFn: getCart,
+  });
+}
+
+// Hook for adding to cart
+export function useAddToCart() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: addToCart,
+    onSuccess: () => {
+      // Invalidate cart query to refetch
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+    },
+  });
+}
+
+// Hook for fetching products
+export function useProducts(params?: { per_page?: number; page?: number }) {
+  return useQuery<Product[]>({
+    queryKey: ['products', params],
+    queryFn: () => getProducts(params),
+  });
+}
+```
+
+## Advanced Configuration
+
+### Custom Output Options
+
+The `openapi-typescript` CLI supports various options:
+
+```bash
+# Generate with additional options
+npx openapi-typescript https://raw.githubusercontent.com/cocart-headless/cocart-api-documentation/main/api-reference/v2/openapi-v2-stable.yaml \
+  -o src/types/cocart.ts \
+  --alphabetize \
+  --export-type
+```
+
+Available options:
+- `--alphabetize` - Sort types alphabetically
+- `--export-type` - Use `export type` instead of `export interface`
+- `--path-params-as-types` - Generate path parameters as types
+- `--additional-properties` - Allow additional properties in objects
+
+### Generating Multiple API Versions
+
+If you need types for multiple API versions:
+
+```json
+{
+  "scripts": {
+    "generate-types:v2": "openapi-typescript https://raw.githubusercontent.com/cocart-headless/cocart-api-documentation/main/api-reference/v2/openapi-v2-stable.yaml -o src/types/cocart-v2.ts",
+    "generate-types:v2-pre": "openapi-typescript https://raw.githubusercontent.com/cocart-headless/cocart-api-documentation/main/api-reference/v2/openapi-v2-pre-release.yaml -o src/types/cocart-v2-pre.ts",
+    "generate-types:all": "npm run generate-types:v2 && npm run generate-types:v2-pre"
+  }
+}
+```
+
+### Using with Your Own WordPress Instance
+
+If you're using a custom CoCart installation with extended endpoints, you can generate types from your own OpenAPI spec:
+
+```bash
+# If your WordPress site exposes the OpenAPI spec
+npx openapi-typescript https://yourstore.com/wp-json/cocart/v2/openapi.json -o src/types/cocart.ts
+```
+
+## Type Utilities
+
+Create utility types for common use cases:
+
+```typescript
+import type { paths, components } from './types/cocart';
+
+// Extract all cart-related types
+export type Cart = components['schemas']['Cart'];
+export type CartItem = components['schemas']['CartItem'];
+export type CartTotals = components['schemas']['CartTotals'];
+
+// Extract all product-related types
+export type Product = components['schemas']['Product'];
+export type ProductVariation = components['schemas']['ProductVariation'];
+export type ProductCategory = components['schemas']['ProductCategory'];
+
+// Extract request/response types
+export type AddItemRequest = paths['/cart/add-item']['post']['requestBody']['content']['application/json'];
+export type AddItemResponse = paths['/cart/add-item']['post']['responses']['200']['content']['application/json'];
+
+export type UpdateItemRequest = paths['/cart/item/{item_key}']['post']['requestBody']['content']['application/json'];
+export type UpdateItemResponse = paths['/cart/item/{item_key}']['post']['responses']['200']['content']['application/json'];
+
+// Extract query parameter types
+export type ProductsQuery = paths['/products']['get']['parameters']['query'];
+export type CartQuery = paths['/cart']['get']['parameters']['query'];
+
+// Helper type for API errors
+export type ApiError = {
+  code: string;
+  message: string;
+  data?: {
+    status: number;
+    [key: string]: any;
+  };
+};
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Keep Types Updated" icon="arrows-rotate">
+    Regenerate types regularly when:
+    - CoCart releases a new version
+    - You update your CoCart plugin
+    - API endpoints change
+
+    ```bash
+    npm run generate-types
+    ```
+  </Accordion>
+
+  <Accordion title="Version Control" icon="code-branch">
+    Commit generated types to version control so all team members have access:
+
+    ```bash
+    git add src/types/cocart.ts
+    git commit -m "chore: update CoCart types"
+    ```
+  </Accordion>
+
+  <Accordion title="Organize Types" icon="folder-tree">
+    Keep generated types separate from custom types:
+
+    ```
+    src/
+    ├── types/
+    │   ├── cocart.ts        # Generated types
+    │   ├── cocart-utils.ts  # Custom utility types
+    │   └── index.ts         # Type exports
+    ```
+  </Accordion>
+
+  <Accordion title="Type Guards" icon="shield-check">
+    Create type guards for runtime type checking:
+
+    ```typescript
+    import type { Cart } from './types/cocart';
+
+    export function isCart(data: unknown): data is Cart {
+      return (
+        typeof data === 'object' &&
+        data !== null &&
+        'items_count' in data &&
+        'totals' in data
+      );
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+### Types Not Generating
+
+If type generation fails:
+
+1. **Check your internet connection** (for remote URLs)
+2. **Verify the OpenAPI spec URL** is correct
+3. **Ensure openapi-typescript is installed**:
+    ```bash
+    npm install -D openapi-typescript
+    ```
+4. **Try with verbose output**:
+    ```bash
+    npx openapi-typescript [url] -o types.ts --verbose
+    ```
+
+### Type Errors in IDE
+
+If your IDE shows type errors:
+
+1. **Restart your TypeScript server** in VS Code: `Cmd/Ctrl + Shift + P` → "TypeScript: Restart TS Server"
+2. **Check tsconfig.json** includes the types directory:
+    ```json
+    {
+      "include": ["src/**/*"]
+    }
+    ```
+3. **Regenerate types** to ensure they're up-to-date
+
+### Missing Types
+
+If some types are missing:
+
+- The OpenAPI spec may not include all schemas
+- Check if the endpoint exists in the specification file
+- You may need to create custom types for extended functionality
+
+## Next Steps
+
+Now that you have TypeScript types set up:
+
+1. [Implement cart functionality](/tutorials/nextjs/setup) with type safety
+2. [Add user authentication](/api-reference/authentication) with typed requests
+3. [Build a checkout flow](/api-reference/v2/cart/post-add-item) with full type coverage
+4. [Explore the API Reference](/api-reference/introduction) to see all available endpoints
+
+## Resources
+
+<CardGroup cols={2}>
+  <Card title="openapi-typescript Docs" icon="book" href="https://openapi-ts.pages.dev/">
+    Official documentation for openapi-typescript
+  </Card>
+
+  <Card title="CoCart API Reference" icon="code" href="/api-reference/introduction">
+    Complete API documentation with all endpoints
+  </Card>
+
+  <Card title="TypeScript Handbook" icon="book-open" href="https://www.typescriptlang.org/docs/handbook/intro.html">
+    Learn more about TypeScript
+  </Card>
+
+  <Card title="OpenAPI Specification" icon="file-code" href="https://swagger.io/specification/">
+    OpenAPI specification documentation
+  </Card>
+</CardGroup>

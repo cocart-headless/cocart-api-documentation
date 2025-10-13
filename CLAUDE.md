@@ -26,6 +26,23 @@
 - title: Clear, descriptive page title
 - description: Concise summary for SEO/navigation
 
+## New page creation notice
+
+When creating a NEW page, add this notice immediately after the frontmatter (use current date). Identify the page type (guide, tutorial, feature, reference, etc.) and use it in the notice:
+
+```mdx
+<Info>
+  This {page type} was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: October 11th, 2025.
+</Info>
+```
+
+Examples:
+
+- "This guide was written by..."
+- "This tutorial was written by..."
+- "This feature documentation was written by..."
+- "This reference was written by..."
+
 ## Writing standards
 - Second-person voice ("you")
 - Prerequisites at start of procedural content

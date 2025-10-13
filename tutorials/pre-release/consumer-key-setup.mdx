@@ -7,6 +7,10 @@ tag: "WIP"
 robots: "noindex, follow"
 ---
 
+<Warning>
+    This tutorial was written by [Claude Code (an AI)](https://claude.com/product/claude-code) and has not yet been reviewed. Follow along with caution. If the tutorial was helpful or a specific part was not clear/correct, please provide feedback at the bottom of the page. Thank you.
+</Warning>
+
 <Note>
     Consumer keys provide secure, authenticated access to the CoCart API. This guide covers setup and best practices for API authentication.
 </Note>
@@ -18,21 +22,21 @@ CoCart uses WooCommerce's built-in consumer key/secret authentication system to 
 ## Why Consumer Keys?
 
 <CardGroup cols={2}>
-  <Card title="Security" icon="shield-check">
-    Prevents unauthorized access to your checkout API and customer data
-  </Card>
+    <Card title="Security" icon="shield-check">
+        Prevents unauthorized access to your checkout API and customer data
+    </Card>
 
-  <Card title="Rate Limiting" icon="gauge-high">
-    Built-in request throttling and abuse protection per application
-  </Card>
+    <Card title="Rate Limiting" icon="gauge-high">
+        Built-in request throttling and abuse protection per application
+    </Card>
 
-  <Card title="Audit Trail" icon="clipboard-list">
-    Track which applications are making requests and monitor usage
-  </Card>
+    <Card title="Audit Trail" icon="clipboard-list">
+        Track which applications are making requests and monitor usage
+    </Card>
 
-  <Card title="Granular Control" icon="sliders">
-    Different permission levels and access controls per application
-  </Card>
+    <Card title="Granular Control" icon="sliders">
+        Different permission levels and access controls per application
+    </Card>
 </CardGroup>
 
 ## Step 1: Generate Consumer Keys
@@ -40,9 +44,9 @@ CoCart uses WooCommerce's built-in consumer key/secret authentication system to 
 ### Via WordPress Admin
 
 1. **Navigate to WooCommerce Settings**
-   ```
-   WooCommerce → Settings → Advanced → REST API
-   ```
+    ```
+    WooCommerce → Settings → Advanced → REST API
+    ```
 
 2. **Click "Add Key"**
 
@@ -50,16 +54,16 @@ CoCart uses WooCommerce's built-in consumer key/secret authentication system to 
    - **Description**: Enter a meaningful name (e.g., "Mobile App - Production")
    - **User**: Select a user account (typically an admin)
    - **Permissions**: Choose appropriate level:
-     - `Read` - For read-only access (GET requests only)
-     - `Write` - For write access (POST, PUT, DELETE)
-     - `Read/Write` - Full access (recommended for checkout)
+    - `Read` - For read-only access (GET requests only)
+    - `Write` - For write access (POST, PUT, DELETE)
+    - `Read/Write` - Full access (recommended for checkout)
 
 4. **Generate and Save Keys**
    - **Consumer Key**: Starts with `ck_` (public identifier)
    - **Consumer Secret**: Starts with `cs_` (private secret)
 
 <Warning>
-Copy and securely store both keys immediately. The consumer secret cannot be retrieved again after this screen.
+    Copy and securely store both keys immediately. The consumer secret cannot be retrieved again after this screen.
 </Warning>
 
 ### Via WP-CLI
@@ -324,52 +328,52 @@ function createGuestCartSession() {
 ### Key Storage
 
 <AccordionGroup>
-  <Accordion title="Client-Side Applications">
-    **Never store consumer secrets in client-side code**
+    <Accordion title="Client-Side Applications">
+        **Never store consumer secrets in client-side code**
 
-    ```javascript
-    // ❌ DON'T DO THIS - Exposes secret to users
-    const config = {
-        consumer_key: 'ck_1234567890abcdef',
-        consumer_secret: 'cs_1234567890abcdef' // Visible in browser
-    };
+        ```javascript
+        // ❌ DON'T DO THIS - Exposes secret to users
+        const config = {
+            consumer_key: 'ck_1234567890abcdef',
+            consumer_secret: 'cs_1234567890abcdef' // Visible in browser
+        };
 
-    // ✅ DO THIS - Use a backend proxy
-    const config = {
-        consumer_key: 'ck_1234567890abcdef',
-        // Consumer secret handled by your backend
-    };
-    ```
-  </Accordion>
+        // ✅ DO THIS - Use a backend proxy
+        const config = {
+            consumer_key: 'ck_1234567890abcdef',
+            // Consumer secret handled by your backend
+        };
+        ```
+    </Accordion>
 
-  <Accordion title="Server-Side Applications">
-    **Use environment variables or secure configuration**
+    <Accordion title="Server-Side Applications">
+        **Use environment variables or secure configuration**
 
-    ```php
-    // ✅ Good - Environment variables
-    $consumer_key = $_ENV['COCART_CONSUMER_KEY'];
-    $consumer_secret = $_ENV['COCART_CONSUMER_SECRET'];
+        ```php
+        // ✅ Good - Environment variables
+        $consumer_key = $_ENV['COCART_CONSUMER_KEY'];
+        $consumer_secret = $_ENV['COCART_CONSUMER_SECRET'];
 
-    // ✅ Good - WordPress options (if properly secured)
-    $consumer_key = get_option('cocart_consumer_key');
-    $consumer_secret = get_option('cocart_consumer_secret');
-    ```
-  </Accordion>
+        // ✅ Good - WordPress options (if properly secured)
+        $consumer_key = get_option('cocart_consumer_key');
+        $consumer_secret = get_option('cocart_consumer_secret');
+        ```
+    </Accordion>
 
-  <Accordion title="Mobile Applications">
-    **Use secure storage mechanisms**
+    <Accordion title="Mobile Applications">
+        **Use secure storage mechanisms**
 
-    ```javascript
-    // React Native example with Keychain/Keystore
-    import { setInternetCredentials, getInternetCredentials } from 'react-native-keychain';
+        ```javascript
+        // React Native example with Keychain/Keystore
+        import { setInternetCredentials, getInternetCredentials } from 'react-native-keychain';
 
-    // Store securely
-    await setInternetCredentials('cocart-api', consumerKey, consumerSecret);
+        // Store securely
+        await setInternetCredentials('cocart-api', consumerKey, consumerSecret);
 
-    // Retrieve securely
-    const credentials = await getInternetCredentials('cocart-api');
-    ```
-  </Accordion>
+        // Retrieve securely
+        const credentials = await getInternetCredentials('cocart-api');
+        ```
+    </Accordion>
 </AccordionGroup>
 
 ### Key Rotation
@@ -472,64 +476,64 @@ function cleanup_unused_api_keys() {
 ### Common Issues
 
 <CardGroup cols={2}>
-  <Card title="401 Unauthorized" icon="lock">
-    **Causes:**
-    - Invalid consumer key/secret
-    - Key disabled or expired
-    - Incorrect permissions
+    <Card title="401 Unauthorized" icon="lock">
+        **Causes:**
+        - Invalid consumer key/secret
+        - Key disabled or expired
+        - Incorrect permissions
 
-    **Solutions:**
-    - Verify key exists in WooCommerce
-    - Check key permissions
-    - Regenerate if necessary
-  </Card>
+        **Solutions:**
+        - Verify key exists in WooCommerce
+        - Check key permissions
+        - Regenerate if necessary
+    </Card>
 
-  <Card title="403 Forbidden" icon="ban">
-    **Causes:**
-    - Read-only key used for write operations
-    - Cart session access violation
-    - Rate limiting triggered
+    <Card title="403 Forbidden" icon="ban">
+        **Causes:**
+        - Read-only key used for write operations
+        - Cart session access violation
+        - Rate limiting triggered
 
-    **Solutions:**
-    - Check key permissions
-    - Verify cart key ownership
-    - Implement rate limit handling
-  </Card>
+        **Solutions:**
+        - Check key permissions
+        - Verify cart key ownership
+        - Implement rate limit handling
+    </Card>
 
-  <Card title="Rate Limiting" icon="clock">
-    **Causes:**
-    - Too many requests per timeframe
-    - Shared keys across applications
+    <Card title="Rate Limiting" icon="clock">
+        **Causes:**
+        - Too many requests per timeframe
+        - Shared keys across applications
 
-    **Solutions:**
-    - Implement request queuing
-    - Use separate keys per app
-    - Add retry logic with backoff
-  </Card>
+        **Solutions:**
+        - Implement request queuing
+        - Use separate keys per app
+        - Add retry logic with backoff
+    </Card>
 
-  <Card title="Key Exposure" icon="eye">
-    **Causes:**
-    - Keys in client-side code
-    - Keys in version control
-    - Insecure transmission
+    <Card title="Key Exposure" icon="eye">
+        **Causes:**
+        - Keys in client-side code
+        - Keys in version control
+        - Insecure transmission
 
-    **Solutions:**
-    - Use backend proxy
-    - Environment variables
-    - HTTPS only
-  </Card>
+        **Solutions:**
+        - Use backend proxy
+        - Environment variables
+        - HTTPS only
+    </Card>
 
-  <Card title="Payment Gateway Issues" icon="credit-card">
-    **Causes:**
-    - Gateway configuration mismatch
-    - Missing credentials
-    - Environment misalignment
+    <Card title="Payment Gateway Issues" icon="credit-card">
+        **Causes:**
+        - Gateway configuration mismatch
+        - Missing credentials
+        - Environment misalignment
 
-    **Solutions:**
-    - Use payment methods debug endpoint
-    - Verify gateway credentials match
-    - Check test vs production settings
-  </Card>
+        **Solutions:**
+        - Use payment methods debug endpoint
+        - Verify gateway credentials match
+        - Check test vs production settings
+    </Card>
 </CardGroup>
 
 ### Debug Mode
@@ -646,32 +650,32 @@ await adminAPI.debugPaymentMethods();
 **Example Debug Response:**
 ```json
 {
-  "payment_methods": {
-    "stripe": {
-      "id": "stripe",
-      "title": "Credit Card",
-      "enabled": true
+    "payment_methods": {
+        "stripe": {
+            "id": "stripe",
+            "title": "Credit Card",
+            "enabled": true
+        },
+        "paypal": {
+            "id": "paypal",
+            "title": "PayPal",
+            "enabled": true
+        }
     },
-    "paypal": {
-      "id": "paypal",
-      "title": "PayPal",
-      "enabled": true
+    "debug_info": {
+        "payment_context": {
+        "stripe": {
+            "publishable_key": "pk_test_xxx",
+            "webhook_endpoint": "/wc-api/stripe",
+            "gateway_mode": "test"
+        },
+        "paypal": {
+            "client_id": "paypal_client_id_xxx",
+            "environment": "sandbox"
+        }
+        },
+        "note": "Debug information - DO NOT use in production"
     }
-  },
-  "debug_info": {
-    "payment_context": {
-      "stripe": {
-        "publishable_key": "pk_test_xxx",
-        "webhook_endpoint": "/wc-api/stripe",
-        "gateway_mode": "test"
-      },
-      "paypal": {
-        "client_id": "paypal_client_id_xxx",
-        "environment": "sandbox"
-      }
-    },
-    "note": "Debug information - DO NOT use in production"
-  }
 }
 ```
 
@@ -746,5 +750,5 @@ export const useCoCart = () => {
 ```
 
 <Note>
-Remember to never expose consumer secrets in client-side applications. Use backend proxies or server-side rendering to handle secret authentication securely.
+    Remember to never expose consumer secrets in client-side applications. Use backend proxies or server-side rendering to handle secret authentication securely.
 </Note>

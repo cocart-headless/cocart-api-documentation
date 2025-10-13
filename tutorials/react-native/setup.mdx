@@ -1,0 +1,908 @@
+---
+title: "Setting Up React Native"
+sidebarTitle: "React Native Setup"
+description: "Learn how to set up a React Native project for your headless WooCommerce mobile store"
+robots: "noindex, follow"
+---
+
+<Warning>
+  This tutorial was written by [Claude Code (an AI)](https://claude.com/product/claude-code) and has not yet been reviewed. Follow along with caution. If the tutorial was helpful or a specific part was not clear/correct, please provide feedback at the bottom of the page. Thank you.
+</Warning>
+
+# Introduction
+
+[React Native](https://reactnative.dev) is a popular framework for building native mobile applications using React. It's an excellent choice for creating mobile storefronts with CoCart because it allows you to build iOS and Android apps from a single codebase while maintaining native performance and user experience.
+
+This guide will walk you through setting up a React Native project configured to work with CoCart API.
+
+## Why React Native for Headless Commerce?
+
+- **Cross-platform** - Build for iOS and Android from one codebase
+- **Native performance** - Real native components, not webviews
+- **React ecosystem** - Use familiar React patterns and libraries
+- **Hot reloading** - Fast development with instant feedback
+- **Large community** - Extensive third-party packages and support
+- **Cost effective** - One team can build for multiple platforms
+
+## Prerequisites
+
+- Node.js 18 or higher
+- A WordPress site with WooCommerce installed
+- CoCart plugin installed and activated
+- Basic knowledge of React and JavaScript
+- For iOS development: macOS with Xcode installed
+- For Android development: Android Studio installed
+
+## Development Environment Setup
+
+Before creating your project, set up your development environment:
+
+<CodeGroup>
+
+```bash macOS
+# Install Homebrew (if not already installed)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install Node and Watchman
+brew install node
+brew install watchman
+
+# Install CocoaPods (for iOS dependencies)
+sudo gem install cocoapods
+```
+
+```bash Windows
+# Install Chocolatey (if not already installed)
+# Run PowerShell as Administrator, then:
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
+# Install Node
+choco install -y nodejs-lts
+
+# Install OpenJDK for Android development
+choco install -y microsoft-openjdk11
+```
+
+</CodeGroup>
+
+<Note>
+  For detailed environment setup, refer to [React Native Environment Setup](https://reactnative.dev/docs/environment-setup).
+</Note>
+
+## Creating a New React Native Project
+
+Create a new React Native project using the official CLI:
+
+```bash
+npx react-native@latest init MyHeadlessStore
+```
+
+Navigate to your project:
+
+```bash
+cd MyHeadlessStore
+```
+
+## Project Structure
+
+Your React Native project will have this structure:
+
+```
+MyHeadlessStore/
+├── android/           # Android native code
+├── ios/              # iOS native code
+├── src/              # Your app code (create this)
+│   ├── api/          # API client
+│   ├── components/   # Reusable components
+│   ├── screens/      # Screen components
+│   ├── navigation/   # Navigation setup
+│   ├── context/      # Context providers
+│   ├── hooks/        # Custom hooks
+│   └── types/        # TypeScript types
+├── App.tsx           # Root component
+├── package.json
+└── tsconfig.json
+```
+
+Create the source directory structure:
+
+```bash
+mkdir -p src/api src/components src/screens src/navigation src/context src/hooks src/types
+```
+
+## Installing Essential Dependencies
+
+Install the necessary packages for a complete e-commerce app:
+
+```bash
+# Navigation
+npm install @react-navigation/native @react-navigation/native-stack @react-navigation/bottom-tabs
+
+# Navigation dependencies
+npm install react-native-screens react-native-safe-area-context
+
+# State management and data fetching
+npm install @tanstack/react-query zustand
+
+# Async storage for cart persistence
+npm install @react-native-async-storage/async-storage
+
+# Image handling
+npm install react-native-fast-image
+
+# Additional utilities
+npm install axios
+```
+
+For iOS, install pods:
+
+```bash
+cd ios && pod install && cd ..
+```
+
+## Environment Configuration
+
+Install the config package:
+
+```bash
+npm install react-native-config
+```
+
+Create a `.env` file in your project root:
+
+```bash
+API_URL=https://yourstore.com/wp-json/cocart/v2
+STORE_URL=https://yourstore.com
+```
+
+Add `.env` to your `.gitignore`:
+
+```bash
+echo ".env" >> .gitignore
+```
+
+Create a `.env.example`:
+
+```bash
+# .env.example
+API_URL=https://yourstore.com/wp-json/cocart/v2
+STORE_URL=https://yourstore.com
+```
+
+## Creating the CoCart API Client
+
+Create a centralized API client at `src/api/cocart.ts`:
+
+<Info>
+  We are currently building out this client, so for now just make standard fetch/axios requests to the CoCart API endpoints as needed.
+</Info>
+
+```typescript
+import axios, { AxiosInstance } from 'axios';
+import Config from 'react-native-config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const API_BASE = Config.API_URL || 'https://yourstore.com/wp-json/cocart/v2';
+
+// Create axios instance
+const api: AxiosInstance = axios.create({
+  baseURL: API_BASE,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add cart key to requests
+api.interceptors.request.use(
+  async (config) => {
+    const cartKey = await AsyncStorage.getItem('cart_key');
+    if (cartKey && config.headers) {
+      config.headers['Cart-Key'] = cartKey;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Save cart key from responses
+api.interceptors.response.use(
+  async (response) => {
+    const cartKey = response.headers['cart-key'];
+    if (cartKey) {
+      await AsyncStorage.setItem('cart_key', cartKey);
+    }
+    return response;
+  },
+  (error) => Promise.reject(error)
+);
+
+/**
+ * Fetch products from CoCart API
+ */
+export async function getProducts(params: {
+  per_page?: number;
+  page?: number;
+  category?: string;
+  search?: string;
+  [key: string]: any;
+} = {}) {
+  try {
+    const response = await api.get('/products', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get a single product by ID
+ */
+export async function getProduct(productId: string | number) {
+  try {
+    const response = await api.get(`/products/${productId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get current cart
+ */
+export async function getCart() {
+  try {
+    const response = await api.get('/cart');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching cart:', error);
+    throw error;
+  }
+}
+
+/**
+ * Add item to cart
+ */
+export async function addToCart(
+  productId: string,
+  quantity: number = 1,
+  options: Record<string, any> = {}
+) {
+  try {
+    const response = await api.post('/cart/add-item', {
+      id: productId,
+      quantity,
+      ...options,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error adding to cart:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update cart item quantity
+ */
+export async function updateCartItem(itemKey: string, quantity: number) {
+  try {
+    const response = await api.post(`/cart/item/${itemKey}`, { quantity });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating cart item:', error);
+    throw error;
+  }
+}
+
+/**
+ * Remove item from cart
+ */
+export async function removeCartItem(itemKey: string) {
+  try {
+    const response = await api.delete(`/cart/item/${itemKey}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error removing cart item:', error);
+    throw error;
+  }
+}
+
+/**
+ * Clear cart
+ */
+export async function clearCart() {
+  try {
+    const response = await api.post('/cart/clear');
+    await AsyncStorage.removeItem('cart_key');
+    return response.data;
+  } catch (error) {
+    console.error('Error clearing cart:', error);
+    throw error;
+  }
+}
+
+export default api;
+```
+
+## Setting Up React Query
+
+Create a query client configuration at `src/api/queryClient.ts`:
+
+```typescript
+import { QueryClient } from '@tanstack/react-query';
+
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      cacheTime: 1000 * 60 * 10, // 10 minutes
+      retry: 2,
+    },
+  },
+});
+```
+
+## Creating Custom Hooks
+
+Create a cart hook at `src/hooks/useCart.ts`:
+
+```typescript
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getCart, addToCart, updateCartItem, removeCartItem, clearCart } from '../api/cocart';
+import { Alert } from 'react-native';
+
+export function useCart() {
+  const queryClient = useQueryClient();
+
+  // Get cart query
+  const { data: cart, isLoading, error } = useQuery({
+    queryKey: ['cart'],
+    queryFn: getCart,
+  });
+
+  // Add to cart mutation
+  const addToCartMutation = useMutation({
+    mutationFn: ({ productId, quantity, options }: any) =>
+      addToCart(productId, quantity, options),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      Alert.alert('Success', 'Item added to cart');
+    },
+    onError: (error: any) => {
+      Alert.alert('Error', error.message || 'Failed to add item to cart');
+    },
+  });
+
+  // Update cart item mutation
+  const updateCartMutation = useMutation({
+    mutationFn: ({ itemKey, quantity }: any) => updateCartItem(itemKey, quantity),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+    },
+    onError: (error: any) => {
+      Alert.alert('Error', error.message || 'Failed to update cart');
+    },
+  });
+
+  // Remove cart item mutation
+  const removeCartMutation = useMutation({
+    mutationFn: (itemKey: string) => removeCartItem(itemKey),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+    },
+    onError: (error: any) => {
+      Alert.alert('Error', error.message || 'Failed to remove item');
+    },
+  });
+
+  // Clear cart mutation
+  const clearCartMutation = useMutation({
+    mutationFn: clearCart,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+    },
+    onError: (error: any) => {
+      Alert.alert('Error', error.message || 'Failed to clear cart');
+    },
+  });
+
+  return {
+    cart,
+    isLoading,
+    error,
+    addToCart: addToCartMutation.mutate,
+    updateCartItem: updateCartMutation.mutate,
+    removeCartItem: removeCartMutation.mutate,
+    clearCart: clearCartMutation.mutate,
+    isAddingToCart: addToCartMutation.isPending,
+  };
+}
+```
+
+Create a products hook at `src/hooks/useProducts.ts`:
+
+```typescript
+import { useQuery } from '@tanstack/react-query';
+import { getProducts, getProduct } from '../api/cocart';
+
+export function useProducts(params?: any) {
+  return useQuery({
+    queryKey: ['products', params],
+    queryFn: () => getProducts(params),
+  });
+}
+
+export function useProduct(productId: string | number) {
+  return useQuery({
+    queryKey: ['product', productId],
+    queryFn: () => getProduct(productId),
+    enabled: !!productId,
+  });
+}
+```
+
+## Setting Up Navigation
+
+Create the navigation structure at `src/navigation/AppNavigator.tsx`:
+
+```typescript
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+
+// Import screens (we'll create these next)
+import HomeScreen from '../screens/HomeScreen';
+import ProductDetailScreen from '../screens/ProductDetailScreen';
+import CartScreen from '../screens/CartScreen';
+import ProfileScreen from '../screens/ProfileScreen';
+
+const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
+
+function HomeTabs() {
+  return (
+    <Tab.Navigator>
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Cart" component={CartScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+    </Tab.Navigator>
+  );
+}
+
+export default function AppNavigator() {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen
+          name="HomeTabs"
+          component={HomeTabs}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="ProductDetail"
+          component={ProductDetailScreen}
+          options={{ title: 'Product Details' }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+```
+
+## Creating Example Screens
+
+Create a basic home screen at `src/screens/HomeScreen.tsx`:
+
+```typescript
+import React from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Image,
+} from 'react-native';
+import { useProducts } from '../hooks/useProducts';
+import FastImage from 'react-native-fast-image';
+
+export default function HomeScreen({ navigation }: any) {
+  const { data: products, isLoading, error } = useProducts({ per_page: 20 });
+
+  if (isLoading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#6a42d7" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>Error loading products</Text>
+      </View>
+    );
+  }
+
+  const renderProduct = ({ item }: any) => (
+    <TouchableOpacity
+      style={styles.productCard}
+      onPress={() => navigation.navigate('ProductDetail', { productId: item.id })}
+    >
+      {item.images?.[0]?.src && (
+        <FastImage
+          source={{ uri: item.images[0].src }}
+          style={styles.productImage}
+          resizeMode={FastImage.resizeMode.cover}
+        />
+      )}
+      <View style={styles.productInfo}>
+        <Text style={styles.productName} numberOfLines={2}>
+          {item.name}
+        </Text>
+        <Text style={styles.productPrice}>
+          {item.prices.currency_symbol}{item.prices.price}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={styles.container}>
+      <FlatList
+        data={products}
+        renderItem={renderProduct}
+        keyExtractor={(item) => item.id.toString()}
+        numColumns={2}
+        contentContainerStyle={styles.list}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  list: {
+    padding: 8,
+  },
+  productCard: {
+    flex: 1,
+    margin: 8,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    overflow: 'hidden',
+  },
+  productImage: {
+    width: '100%',
+    height: 150,
+    backgroundColor: '#f5f5f5',
+  },
+  productInfo: {
+    padding: 12,
+  },
+  productName: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+    color: '#333',
+  },
+  productPrice: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#6a42d7',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#ff0000',
+  },
+});
+```
+
+Create a placeholder for the cart screen at `src/screens/CartScreen.tsx`:
+
+```typescript
+import React from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { useCart } from '../hooks/useCart';
+
+export default function CartScreen() {
+  const { cart, isLoading } = useCart();
+
+  if (isLoading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#6a42d7" />
+      </View>
+    );
+  }
+
+  if (!cart || cart.items_count === 0) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.emptyText}>Your cart is empty</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Cart ({cart.items_count} items)</Text>
+      <Text style={styles.total}>
+        Total: {cart.totals.currency_symbol}{cart.totals.total}
+      </Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#fff',
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  total: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#6a42d7',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#999',
+  },
+});
+```
+
+Create placeholder screens:
+
+```typescript
+// src/screens/ProductDetailScreen.tsx
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+
+export default function ProductDetailScreen() {
+  return (
+    <View style={styles.container}>
+      <Text>Product Detail Screen</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+});
+```
+
+```typescript
+// src/screens/ProfileScreen.tsx
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+
+export default function ProfileScreen() {
+  return (
+    <View style={styles.container}>
+      <Text>Profile Screen</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+});
+```
+
+## Updating App.tsx
+
+Update your root `App.tsx` file:
+
+```typescript
+import React from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './src/api/queryClient';
+import AppNavigator from './src/navigation/AppNavigator';
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppNavigator />
+    </QueryClientProvider>
+  );
+}
+```
+
+## Running Your App
+
+<CodeGroup>
+
+```bash iOS
+npm run ios
+
+# Or for a specific simulator
+npm run ios -- --simulator="iPhone 15"
+```
+
+```bash Android
+# Start Metro bundler (in one terminal)
+npm start
+
+# Run Android app (in another terminal)
+npm run android
+```
+
+</CodeGroup>
+
+## Testing on Physical Devices
+
+<CodeGroup>
+
+```text iOS
+1. Open ios/MyHeadlessStore.xcworkspace in Xcode
+2. Select your device from the device menu
+3. Click Run button
+```
+
+```text Android
+1. Enable Developer Mode on your Android device
+2. Enable USB Debugging in Developer Options
+3. Connect device via USB
+4. Run: npm run android
+```
+
+</CodeGroup>
+
+## Building for Production
+
+<CodeGroup>
+
+```bash iOS
+cd ios
+pod install
+cd ..
+
+# Build for release
+npx react-native run-ios --configuration Release
+```
+
+```bash Android
+# Generate release APK
+cd android
+./gradlew assembleRelease
+
+# Or generate AAB for Google Play Store
+./gradlew bundleRelease
+```
+
+</CodeGroup>
+
+### App Store Submission
+
+<CodeGroup>
+
+```text iOS
+1. Open ios/MyHeadlessStore.xcworkspace in Xcode
+2. Select "Any iOS Device" as target
+3. Product → Archive
+4. Upload to App Store Connect
+```
+
+```text Android
+APK location: android/app/build/outputs/apk/release/app-release.apk
+AAB location: android/app/build/outputs/bundle/release/app-release.aab
+
+Upload the AAB to Google Play Console
+```
+
+</CodeGroup>
+
+## Performance Optimization
+
+### Image Optimization
+- Use `react-native-fast-image` for better image performance
+- Cache images appropriately
+- Use appropriate image sizes
+
+### List Optimization
+- Use `FlatList` with proper `keyExtractor`
+- Implement `getItemLayout` for fixed-height items
+- Use `maxToRenderPerBatch` and `windowSize` props
+
+### Code Splitting
+```bash
+npm install @react-native-community/cli-plugin-metro
+```
+
+## Troubleshooting
+
+### Metro Bundler Issues
+
+```bash
+# Clear cache and restart
+npm start -- --reset-cache
+```
+
+<CodeGroup>
+
+```bash iOS Build Issues
+cd ios
+pod deintegrate
+pod install
+cd ..
+```
+
+```bash Android Build Issues
+cd android
+./gradlew clean
+cd ..
+```
+
+</CodeGroup>
+
+### CORS Errors
+
+If you encounter CORS errors, configure WordPress to allow cross-origin requests. See [CORS documentation](../../documentation/cors).
+
+### Network Issues
+
+<CodeGroup>
+
+```text iOS Simulator
+Use localhost or 127.0.0.1 in your API_URL:
+API_URL=http://localhost:8000/wp-json/cocart/v2
+```
+
+```text Android Emulator
+Use 10.0.2.2 instead of localhost:
+API_URL=http://10.0.2.2:8000/wp-json/cocart/v2
+
+Or use your computer's IP address:
+API_URL=http://192.168.1.100:8000/wp-json/cocart/v2
+```
+
+</CodeGroup>
+
+## Next Steps
+
+Now that your React Native app is set up with CoCart:
+
+1. Implement full product detail screens
+2. Complete cart functionality (update quantities, remove items)
+3. Add checkout flow
+4. Implement user authentication with JWT
+5. Add push notifications for order updates
+6. Implement offline support with AsyncStorage
+7. Add analytics and crash reporting
+
+## Resources
+
+- [React Native Documentation](https://reactnative.dev/docs/getting-started)
+- [CoCart API Reference](../../api-reference/introduction)
+- [React Navigation](https://reactnavigation.org/docs/getting-started)
+- [React Query](https://tanstack.com/query/latest/docs/react/overview)
+- [Expo Documentation](https://docs.expo.dev/) (if using Expo)
