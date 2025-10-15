@@ -30,6 +30,53 @@ Before implementing PayPal checkout, ensure you have:
 
 ## Integration Flow
 
+```mermaid
+sequenceDiagram
+    participant Customer
+    participant Frontend
+    participant PayPal SDK
+    participant CoCart API
+    participant WooCommerce
+    participant PayPal Server
+
+    Frontend->>CoCart API: POST /checkout/payment-context
+    Note over CoCart API: payment_method: 'paypal'
+    CoCart API-->>Frontend: {cart_total, currency, client_id}
+
+    Frontend->>PayPal SDK: Initialize Buttons
+    Note over PayPal SDK: Render with client_id
+    PayPal SDK-->>Frontend: Buttons rendered
+
+    Customer->>PayPal SDK: Click Pay with PayPal
+    PayPal SDK->>Frontend: createOrder() callback
+    Frontend->>PayPal SDK: Return order details
+    Note over Frontend: amount, shipping, payer info
+    PayPal SDK->>PayPal Server: Create order
+    PayPal Server-->>PayPal SDK: order_id
+
+    PayPal SDK->>Customer: Show PayPal modal
+    Customer->>PayPal Server: Authenticate & approve
+    PayPal Server->>PayPal SDK: Payment approved
+    PayPal SDK->>Frontend: onApprove() callback
+    Note over PayPal SDK: order data, payer_id
+
+    Frontend->>PayPal SDK: actions.order.capture()
+    PayPal SDK->>PayPal Server: Capture payment
+    PayPal Server-->>PayPal SDK: Capture complete
+    PayPal SDK-->>Frontend: {order, transaction_id}
+
+    Frontend->>CoCart API: PUT /checkout
+    Note over Frontend: paypal_order_id, billing_address
+    CoCart API->>WooCommerce: Create order
+    WooCommerce->>PayPal Server: Verify payment
+    PayPal Server-->>WooCommerce: Payment verified
+    WooCommerce-->>CoCart API: Order created
+    CoCart API-->>Frontend: {order_id, order_number}
+
+    Frontend->>Customer: Show success message
+    Frontend->>Customer: Redirect to thank you page
+```
+
 <Steps>
     <Step title="Initialize PayPal Buttons">
         Set up PayPal SDK with your store's client ID and cart information

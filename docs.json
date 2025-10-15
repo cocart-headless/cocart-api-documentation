@@ -928,7 +928,11 @@
                       "tutorials/pre-release/checkout-payment-processing",
                       "tutorials/pre-release/checkout-stripe",
                       "tutorials/pre-release/checkout-paypal",
-                      "tutorials/pre-release/checkout-authorize-net"
+                      "tutorials/pre-release/checkout-braintree",
+                      "tutorials/pre-release/checkout-authorize-net",
+                      "tutorials/pre-release/checkout-mollie",
+                      "tutorials/pre-release/checkout-razorpay",
+                      "tutorials/pre-release/checkout-mercadopago"
                     ],
                     "tag": "WIP"
                   },

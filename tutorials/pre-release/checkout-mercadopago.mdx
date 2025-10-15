@@ -1,0 +1,985 @@
+---
+title: "Checkout with Mercado Pago"
+sidebarTitle: "Mercado Pago"
+description: "Complete guide to integrating Mercado Pago Checkout Bricks with CoCart's Checkout API"
+icon: "credit-card"
+tag: "WIP"
+robots: "noindex, follow"
+---
+
+<Warning>
+    This tutorial was written by [Claude Code (an AI)](https://claude.com/product/claude-code) and has not yet been reviewed. Follow along with caution. If the tutorial was helpful or a specific part was not clear/correct, please provide feedback at the bottom of the page. Thank you.
+</Warning>
+
+<Note>
+    This guide covers integrating Mercado Pago with CoCart Preview API. Requires CoCart v4.6+ and a configured Mercado Pago payment gateway.
+</Note>
+
+## Overview
+
+Mercado Pago integration with CoCart uses Checkout Bricks for a modular, secure, and customizable payment solution. This provides PCI compliance while supporting 15+ payment methods popular in Latin America, including PIX (Brazil), cards, installments, and digital wallets.
+
+Mercado Pago is the leading payment platform in Latin America, operating in Argentina, Brazil, Chile, Colombia, Mexico, Peru, and Uruguay.
+
+## Prerequisites
+
+Before implementing Mercado Pago checkout, ensure you have:
+
+1. Mercado Pago payment gateway configured in WooCommerce
+2. Mercado Pago Public Key and Access Token
+3. A valid cart with items added
+4. Customer billing address information
+5. Mercado Pago account (sandbox mode available)
+
+## Integration Flow
+
+<Steps>
+  <Step title="Load SDK">
+    Initialize the Mercado Pago JavaScript SDK
+  </Step>
+  <Step title="Create Bricks Instance">
+    Set up the Bricks Builder with your public key
+  </Step>
+  <Step title="Mount Card Payment Brick">
+    Render the secure payment form
+  </Step>
+  <Step title="Collect Payment Data">
+    Customer enters payment information in the Brick
+  </Step>
+  <Step title="Generate Payment Token">
+    Submit Brick form to get payment token
+  </Step>
+  <Step title="Complete Checkout">
+    Submit payment token to CoCart for processing
+  </Step>
+</Steps>
+
+## Step 1: Load Mercado Pago SDK
+
+Include the SDK in your checkout page:
+
+```html
+<!-- Load Mercado Pago SDK v2 -->
+<script src="https://sdk.mercadopago.com/js/v2"></script>
+```
+
+<Note>
+The Mercado Pago SDK is always served over HTTPS and includes the latest security updates.
+</Note>
+
+## Step 2: HTML Structure
+
+Create containers for the payment Brick and form:
+
+```html
+<form id="checkout-form">
+    <!-- Customer Information -->
+    <div class="billing-section">
+        <h3>Información de Facturación</h3>
+        <input type="text" name="billing_first_name" placeholder="Nombre" required>
+        <input type="text" name="billing_last_name" placeholder="Apellido" required>
+        <input type="email" name="billing_email" placeholder="Email" required>
+        <input type="tel" name="billing_phone" placeholder="Teléfono" required>
+        <input type="text" name="billing_address_1" placeholder="Dirección" required>
+        <input type="text" name="billing_city" placeholder="Ciudad" required>
+        <input type="text" name="billing_state" placeholder="Estado/Provincia" required>
+        <input type="text" name="billing_postcode" placeholder="Código Postal" required>
+        <select name="billing_country" required>
+            <option value="BR">Brasil</option>
+            <option value="AR">Argentina</option>
+            <option value="MX">México</option>
+            <option value="CL">Chile</option>
+            <option value="CO">Colombia</option>
+            <option value="PE">Perú</option>
+            <option value="UY">Uruguay</option>
+        </select>
+    </div>
+
+    <!-- Payment Brick Container -->
+    <div id="cardPaymentBrick_container"></div>
+
+    <div id="mercadopago-error-message" class="error-message" style="display: none;"></div>
+</form>
+
+<!-- Status message container (shown after submission) -->
+<div id="statusScreenBrick_container" style="display: none;"></div>
+```
+
+## Step 3: Initialize Mercado Pago SDK
+
+Set up the SDK with your public key:
+
+```javascript
+async function setupMercadoPagoCheckout() {
+    try {
+        // Get payment context with public key
+        const context = await createMercadoPagoPaymentContext();
+
+        // Initialize Mercado Pago SDK
+        const mp = new MercadoPago(context.public_key, {
+            locale: context.locale || 'es-AR' // Language preference
+        });
+
+        // Create Bricks instance
+        const bricksBuilder = mp.bricks();
+
+        // Create and mount Card Payment Brick
+        await createCardPaymentBrick(bricksBuilder, context);
+
+        console.log('Mercado Pago checkout initialized successfully');
+
+    } catch (error) {
+        console.error('Mercado Pago setup error:', error);
+        showError('Error al configurar el pago. Por favor, actualiza la página.');
+    }
+}
+
+async function createMercadoPagoPaymentContext() {
+    const cartKey = localStorage.getItem('cart_key');
+
+    const response = await fetch('/wp-json/cocart/preview/checkout/payment-context', {
+        method: 'POST',
+        headers: {
+            'Cart-Key': cartKey,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            payment_method: 'mercadopago'
+        })
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create payment context');
+    }
+
+    const context = await response.json();
+
+    // Context contains:
+    // - public_key: Your Mercado Pago public key
+    // - amount: Order amount
+    // - locale: Preferred locale (es-AR, pt-BR, es-MX, etc.)
+    // - currency: Currency code (ARS, BRL, MXN, etc.)
+
+    return context;
+}
+```
+
+## Step 4: Create Card Payment Brick
+
+Mount the payment form:
+
+```javascript
+async function createCardPaymentBrick(bricksBuilder, context) {
+    const form = document.getElementById('checkout-form');
+    const formData = new FormData(form);
+    const billingAddress = getBillingAddressFromForm(formData);
+
+    const settings = {
+        initialization: {
+            amount: context.amount,
+            payer: {
+                email: billingAddress.email,
+                firstName: billingAddress.first_name,
+                lastName: billingAddress.last_name,
+                identification: {
+                    type: getIdentificationType(billingAddress.country),
+                    number: '' // Customer will enter this
+                }
+            }
+        },
+        customization: {
+            visual: {
+                style: {
+                    theme: 'default', // 'default', 'dark', 'bootstrap', 'flat'
+                    customVariables: {
+                        textPrimaryColor: '#000000',
+                        textSecondaryColor: '#666666',
+                        inputBackgroundColor: '#ffffff',
+                        formBackgroundColor: '#f7f7f7',
+                        baseColor: '#6a42d7',
+                        borderRadius: '4px',
+                        errorColor: '#e53e3e',
+                        successColor: '#38a169'
+                    }
+                },
+                hidePaymentButton: false,
+                hideFormTitle: false
+            },
+            paymentMethods: {
+                maxInstallments: context.max_installments || 12,
+                minInstallments: 1,
+                // Only allow credit cards (exclude debit if needed)
+                types: {
+                    excluded: [] // or ['debit_card'] to exclude debit
+                }
+            }
+        },
+        callbacks: {
+            onReady: () => {
+                console.log('Card Payment Brick ready');
+            },
+            onSubmit: async (formData) => {
+                return await handleBrickSubmit(formData, billingAddress);
+            },
+            onError: (error) => {
+                console.error('Brick error:', error);
+                showError('Error en el formulario de pago');
+            }
+        }
+    };
+
+    // Create and mount the brick
+    const cardPaymentBrickController = await bricksBuilder.create(
+        'cardPayment',
+        'cardPaymentBrick_container',
+        settings
+    );
+
+    return cardPaymentBrickController;
+}
+
+// Helper to get identification type by country
+function getIdentificationType(country) {
+    const types = {
+        'AR': 'DNI',
+        'BR': 'CPF',
+        'CL': 'RUT',
+        'CO': 'CC',
+        'MX': 'RFC',
+        'PE': 'DNI',
+        'UY': 'CI'
+    };
+    return types[country] || 'DNI';
+}
+```
+
+## Step 5: Handle Brick Submission
+
+Process the payment data when Brick form is submitted:
+
+```javascript
+async function handleBrickSubmit(brickFormData, billingAddress) {
+    try {
+        console.log('Brick submitted:', brickFormData);
+
+        // Brick returns:
+        // - token: Payment token
+        // - paymentMethodId: Payment method (visa, master, etc.)
+        // - issuerId: Card issuer ID
+        // - installments: Number of installments
+        // - identificationNumber: Customer ID number
+        // - identificationType: ID type (CPF, DNI, etc.)
+
+        // Prepare payment data for CoCart
+        const paymentData = {
+            token: brickFormData.token,
+            payment_method_id: brickFormData.paymentMethodId,
+            issuer_id: brickFormData.issuerId,
+            installments: brickFormData.installments || 1,
+            payer: {
+                email: billingAddress.email,
+                identification: {
+                    type: brickFormData.identificationType,
+                    number: brickFormData.identificationNumber
+                }
+            }
+        };
+
+        // Process checkout with CoCart
+        const result = await processMercadoPagoCheckout(billingAddress, paymentData);
+
+        // Show success status
+        showStatusBrick(result, 'success');
+
+        return result;
+
+    } catch (error) {
+        console.error('Payment processing error:', error);
+
+        // Show error to user
+        if (error instanceof MercadoPagoError) {
+            showError(error.getDisplayMessage());
+        } else {
+            showError(error.message || 'Error al procesar el pago');
+        }
+
+        // Return error to brick
+        throw error;
+    }
+}
+
+async function processMercadoPagoCheckout(billingAddress, paymentData) {
+    const cartKey = localStorage.getItem('cart_key');
+
+    const checkoutData = {
+        billing_address: billingAddress,
+        payment_method: 'mercadopago',
+        payment_data: paymentData
+    };
+
+    const response = await fetch('https://yoursite.com/wp-json/cocart/preview/checkout', {
+        method: 'PUT',
+        headers: {
+            'Cart-Key': cartKey,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(checkoutData)
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        // Handle specific Mercado Pago errors
+        if (result.data?.gateway_error) {
+            throw new MercadoPagoError(result.data.gateway_error);
+        }
+        throw new Error(result.message || `HTTP ${response.status}`);
+    }
+
+    return result;
+}
+
+// Custom error class
+class MercadoPagoError extends Error {
+    constructor(gatewayError) {
+        super(gatewayError.message || 'Payment processing failed');
+        this.code = gatewayError.code;
+        this.cause = gatewayError.cause;
+    }
+
+    getDisplayMessage() {
+        const errorMap = {
+            '205': 'Ingresa el número de tu tarjeta',
+            '208': 'Elige un mes',
+            '209': 'Elige un año',
+            '212': 'Ingresa tu documento',
+            '213': 'Ingresa tu documento',
+            '214': 'Ingresa tu documento',
+            '220': 'Ingresa tu banco emisor',
+            '221': 'Ingresa el nombre y apellido',
+            '224': 'Ingresa el código de seguridad',
+            'E301': 'Número de tarjeta inválido',
+            'E302': 'Código de seguridad inválido',
+            '316': 'Ingresa un nombre válido',
+            '322': 'Tipo de documento inválido',
+            '323': 'Verifica tu documento',
+            '324': 'Documento inválido',
+            '325': 'Mes inválido',
+            '326': 'Año inválido',
+            'cc_rejected_bad_filled_card_number': 'Revisa el número de tarjeta',
+            'cc_rejected_bad_filled_date': 'Revisa la fecha de vencimiento',
+            'cc_rejected_bad_filled_other': 'Revisa los datos',
+            'cc_rejected_bad_filled_security_code': 'Revisa el código de seguridad',
+            'cc_rejected_blacklist': 'No pudimos procesar tu pago',
+            'cc_rejected_call_for_authorize': 'Debes autorizar el pago ante tu banco',
+            'cc_rejected_card_disabled': 'Tarjeta inactiva',
+            'cc_rejected_card_error': 'No pudimos procesar tu pago',
+            'cc_rejected_duplicated_payment': 'Ya hiciste un pago por ese valor',
+            'cc_rejected_high_risk': 'Tu pago fue rechazado',
+            'cc_rejected_insufficient_amount': 'Saldo insuficiente',
+            'cc_rejected_invalid_installments': 'Cuotas no válidas',
+            'cc_rejected_max_attempts': 'Llegaste al límite de intentos permitidos',
+            'cc_rejected_other_reason': 'Pago rechazado'
+        };
+
+        return errorMap[this.code] || this.message || 'Error al procesar el pago';
+    }
+}
+```
+
+## Step 6: Show Status Brick
+
+Display payment result to customer:
+
+```javascript
+async function showStatusBrick(result, status) {
+    // Hide checkout form
+    document.getElementById('checkout-form').style.display = 'none';
+
+    // Show status container
+    const statusContainer = document.getElementById('statusScreenBrick_container');
+    statusContainer.style.display = 'block';
+
+    // Initialize SDK again for status brick
+    const context = await createMercadoPagoPaymentContext();
+    const mp = new MercadoPago(context.public_key);
+    const bricksBuilder = mp.bricks();
+
+    const settings = {
+        initialization: {
+            paymentId: result.payment_id || null,
+            additionalInfo: {
+                externalResourceUrl: result.payment_result?.redirect_url || null
+            }
+        },
+        customization: {
+            visual: {
+                hideStatusDetails: false,
+                hideTransactionDate: false,
+                style: {
+                    theme: 'default'
+                }
+            },
+            backUrls: {
+                error: window.location.href,
+                return: result.payment_result?.redirect_url || window.location.href
+            }
+        },
+        callbacks: {
+            onReady: () => {
+                console.log('Status Brick ready');
+            },
+            onError: (error) => {
+                console.error('Status Brick error:', error);
+            }
+        }
+    };
+
+    await bricksBuilder.create('statusScreen', 'statusScreenBrick_container', settings);
+
+    // Clear cart
+    localStorage.removeItem('cart_key');
+
+    // Auto-redirect after delay
+    if (result.payment_result?.redirect_url) {
+        setTimeout(() => {
+            window.location.href = result.payment_result.redirect_url;
+        }, 5000);
+    }
+}
+```
+
+## Complete Integration Example
+
+Here's a complete working implementation:
+
+```javascript
+class MercadoPagoCheckout {
+    constructor() {
+        this.mp = null;
+        this.bricksBuilder = null;
+        this.cardBrickController = null;
+        this.context = null;
+    }
+
+    async initialize() {
+        try {
+            // Create payment context
+            this.context = await this.createPaymentContext();
+
+            // Initialize SDK
+            this.mp = new MercadoPago(this.context.public_key, {
+                locale: this.context.locale || 'es-AR'
+            });
+
+            this.bricksBuilder = this.mp.bricks();
+
+            // Create Card Payment Brick
+            await this.createCardBrick();
+
+            console.log('Mercado Pago checkout initialized successfully');
+        } catch (error) {
+            console.error('Mercado Pago initialization error:', error);
+            this.showError('Error al inicializar el pago. Por favor, recarga la página.');
+        }
+    }
+
+    async createPaymentContext() {
+        const cartKey = localStorage.getItem('cart_key');
+
+        const response = await fetch('/wp-json/cocart/preview/checkout/payment-context', {
+            method: 'POST',
+            headers: {
+                'Cart-Key': cartKey,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ payment_method: 'mercadopago' })
+        });
+
+        const context = await response.json();
+
+        if (!response.ok) {
+            throw new Error(context.message || 'Failed to create payment context');
+        }
+
+        return context;
+    }
+
+    async createCardBrick() {
+        const form = document.getElementById('checkout-form');
+        const formData = new FormData(form);
+        const billingAddress = this.getBillingAddressFromForm(formData);
+
+        const settings = {
+            initialization: {
+                amount: this.context.amount,
+                payer: {
+                    email: billingAddress.email,
+                    firstName: billingAddress.first_name,
+                    lastName: billingAddress.last_name
+                }
+            },
+            customization: {
+                visual: {
+                    style: {
+                        theme: 'default',
+                        customVariables: {
+                            baseColor: '#6a42d7',
+                            borderRadius: '4px'
+                        }
+                    }
+                },
+                paymentMethods: {
+                    maxInstallments: this.context.max_installments || 12
+                }
+            },
+            callbacks: {
+                onReady: () => {
+                    console.log('Card Payment Brick ready');
+                },
+                onSubmit: async (formData) => {
+                    return await this.handleSubmit(formData, billingAddress);
+                },
+                onError: (error) => {
+                    console.error('Brick error:', error);
+                    this.showError('Error en el formulario de pago');
+                }
+            }
+        };
+
+        this.cardBrickController = await this.bricksBuilder.create(
+            'cardPayment',
+            'cardPaymentBrick_container',
+            settings
+        );
+    }
+
+    async handleSubmit(brickFormData, billingAddress) {
+        try {
+            const paymentData = {
+                token: brickFormData.token,
+                payment_method_id: brickFormData.paymentMethodId,
+                issuer_id: brickFormData.issuerId,
+                installments: brickFormData.installments || 1,
+                payer: {
+                    email: billingAddress.email,
+                    identification: {
+                        type: brickFormData.identificationType,
+                        number: brickFormData.identificationNumber
+                    }
+                }
+            };
+
+            const result = await this.processCheckout(billingAddress, paymentData);
+
+            await this.showStatus(result);
+
+            return result;
+
+        } catch (error) {
+            console.error('Payment processing error:', error);
+
+            if (error instanceof MercadoPagoError) {
+                this.showError(error.getDisplayMessage());
+            } else {
+                this.showError(error.message || 'Error al procesar el pago');
+            }
+
+            throw error;
+        }
+    }
+
+    async processCheckout(billingAddress, paymentData) {
+        const cartKey = localStorage.getItem('cart_key');
+
+        const response = await fetch('/wp-json/cocart/preview/checkout', {
+            method: 'PUT',
+            headers: {
+                'Cart-Key': cartKey,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                billing_address: billingAddress,
+                payment_method: 'mercadopago',
+                payment_data: paymentData
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            if (result.data?.gateway_error) {
+                throw new MercadoPagoError(result.data.gateway_error);
+            }
+            throw new Error(result.message || `HTTP ${response.status}`);
+        }
+
+        return result;
+    }
+
+    async showStatus(result) {
+        document.getElementById('checkout-form').style.display = 'none';
+
+        const statusContainer = document.getElementById('statusScreenBrick_container');
+        statusContainer.style.display = 'block';
+
+        const settings = {
+            initialization: {
+                paymentId: result.payment_id || null
+            },
+            callbacks: {
+                onReady: () => console.log('Status Brick ready'),
+                onError: (error) => console.error('Status Brick error:', error)
+            }
+        };
+
+        await this.bricksBuilder.create('statusScreen', 'statusScreenBrick_container', settings);
+
+        localStorage.removeItem('cart_key');
+
+        if (result.payment_result?.redirect_url) {
+            setTimeout(() => {
+                window.location.href = result.payment_result.redirect_url;
+            }, 5000);
+        }
+    }
+
+    getBillingAddressFromForm(formData) {
+        return {
+            first_name: formData.get('billing_first_name'),
+            last_name: formData.get('billing_last_name'),
+            email: formData.get('billing_email'),
+            phone: formData.get('billing_phone'),
+            address_1: formData.get('billing_address_1'),
+            city: formData.get('billing_city'),
+            state: formData.get('billing_state'),
+            postcode: formData.get('billing_postcode'),
+            country: formData.get('billing_country')
+        };
+    }
+
+    showError(message) {
+        const errorElement = document.getElementById('mercadopago-error-message');
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+        errorElement.className = 'error-message';
+    }
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', async () => {
+    const checkout = new MercadoPagoCheckout();
+    await checkout.initialize();
+});
+```
+
+## Styling
+
+Add CSS to style your checkout:
+
+```css
+/* Billing Section */
+.billing-section {
+    margin-bottom: 2rem;
+}
+
+.billing-section input,
+.billing-section select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 1rem;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.billing-section input:focus,
+.billing-section select:focus {
+    border-color: #6a42d7;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(106, 66, 215, 0.1);
+}
+
+/* Card Payment Brick Container */
+#cardPaymentBrick_container {
+    margin: 2rem 0;
+}
+
+/* Status Screen Brick Container */
+#statusScreenBrick_container {
+    margin: 2rem 0;
+}
+
+/* Error Messages */
+.error-message {
+    padding: 0.75rem;
+    background-color: #fed7d7;
+    border-left: 4px solid #e53e3e;
+    color: #742a2a;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+```
+
+## Testing
+
+For development and testing with Mercado Pago:
+
+### Test Mode
+
+Use test credentials from your Mercado Pago dashboard:
+- **Public Key**: Starts with `TEST-`
+- **Access Token**: Starts with `TEST-`
+
+### Test Cards by Country
+
+**Brazil (BRL):**
+- **Approved**: `5031 4332 1540 6351` (Mastercard)
+- **CVV**: `123`
+- **Expiry**: Any future date
+- **Cardholder**: `APRO`
+
+**Argentina (ARS):**
+- **Approved**: `5031 7557 3453 0604` (Mastercard)
+- **CVV**: `123`
+- **Expiry**: Any future date
+- **Cardholder**: `APRO`
+
+**Mexico (MXN):**
+- **Approved**: `5474 9254 3267 0366` (Mastercard)
+- **CVV**: `123`
+- **Expiry**: Any future date
+- **Cardholder**: `APRO`
+
+### Test Scenarios
+
+To test different responses, use these cardholder names:
+- **APRO**: Approved payment
+- **CONT**: Pending payment
+- **OTHE**: Rejected (other reason)
+- **CALL**: Rejected (call to authorize)
+- **FUND**: Rejected (insufficient funds)
+- **SECU**: Rejected (security code)
+- **EXPI**: Rejected (expiration date)
+- **FORM**: Rejected (form error)
+
+### Test CPF/CNPJ (Brazil)
+
+Use these test documents:
+- **CPF**: `12345678909`
+- **CNPJ**: `12345678000190`
+
+## Supported Payment Methods
+
+Mercado Pago supports various payment methods by country:
+
+### Brazil
+- **Credit/Debit Cards** (Visa, Mastercard, Amex, Elo, Hipercard)
+- **PIX** (Instant payment)
+- **Boleto Bancário**
+- **Mercado Pago Wallet**
+
+### Argentina
+- **Credit/Debit Cards** (Visa, Mastercard, Amex, Naranja, Cabal)
+- **Rapipago / Pago Fácil**
+- **Mercado Pago Wallet**
+
+### Mexico
+- **Credit/Debit Cards** (Visa, Mastercard, Amex)
+- **OXXO**
+- **SPEI**
+- **Mercado Pago Wallet**
+
+### Chile, Colombia, Peru, Uruguay
+- **Credit/Debit Cards**
+- **Cash payments** (varies by country)
+- **Mercado Pago Wallet**
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Security" icon="shield-check">
+    - Never expose Access Token on frontend
+    - Always verify payments on server
+    - Use HTTPS for all requests
+    - Implement webhook verification
+    - Handle payment IDP notifications
+    - Enable 3DS authentication
+  </Card>
+
+  <Card title="User Experience" icon="user">
+    - Pre-fill customer information
+    - Show installment options clearly
+    - Support local payment methods
+    - Provide clear error messages
+    - Display payment status
+    - Enable retry for failed payments
+  </Card>
+
+  <Card title="Compliance" icon="certificate">
+    - PCI DSS compliant via Bricks
+    - Follow local regulations
+    - Store customer data securely
+    - Implement proper refund flows
+    - Maintain transaction logs
+    - Respect data privacy laws
+  </Card>
+
+  <Card title="Performance" icon="gauge-high">
+    - Load SDK from official CDN
+    - Cache payment contexts
+    - Implement proper timeouts
+    - Handle network errors
+    - Monitor success rates
+    - Set up IPN webhooks
+  </Card>
+</CardGroup>
+
+## Advanced Features
+
+### PIX Payments (Brazil)
+
+For instant PIX payments:
+
+```javascript
+const pixBrickController = await bricksBuilder.create(
+    'payment',
+    'payment_container',
+    {
+        initialization: {
+            amount: context.amount,
+            preferenceId: '<PREFERENCE_ID>'
+        },
+        customization: {
+            paymentMethods: {
+                types: {
+                    included: ['bank_transfer'],
+                    excluded: ['credit_card', 'debit_card']
+                }
+            }
+        }
+    }
+);
+```
+
+### Installments
+
+Configure installment options:
+
+```javascript
+customization: {
+    paymentMethods: {
+        maxInstallments: 12,
+        minInstallments: 1,
+        creditCard: ['installments', 'credits'] // Payment types
+    }
+}
+```
+
+### Wallet Integration
+
+Enable Mercado Pago Wallet:
+
+```javascript
+const walletBrickController = await bricksBuilder.create(
+    'wallet',
+    'wallet_container',
+    {
+        initialization: {
+            preferenceId: '<PREFERENCE_ID>',
+            redirectMode: 'modal' // or 'self' for redirect
+        }
+    }
+);
+```
+
+## Webhook Handling (IPN)
+
+Mercado Pago sends notifications via IPN (Instant Payment Notification):
+
+```javascript
+// Server-side webhook handler
+app.post('/webhooks/mercadopago', async (req, res) => {
+    const { type, data } = req.body;
+
+    if (type === 'payment') {
+        const paymentId = data.id;
+
+        // Fetch payment details from Mercado Pago API
+        const payment = await mercadopago.payment.get(paymentId);
+
+        switch (payment.status) {
+            case 'approved':
+                await handlePaymentApproved(payment);
+                break;
+            case 'pending':
+                await handlePaymentPending(payment);
+                break;
+            case 'rejected':
+                await handlePaymentRejected(payment);
+                break;
+            case 'refunded':
+                await handlePaymentRefunded(payment);
+                break;
+        }
+    }
+
+    res.sendStatus(200);
+});
+```
+
+## Error Handling
+
+Handle common Mercado Pago errors:
+
+```javascript
+function handleMercadoPagoErrors(error) {
+    const errorMap = {
+        '205': 'Card number required',
+        '208': 'Invalid month',
+        '209': 'Invalid year',
+        '212': 'Document required',
+        '213': 'Document type required',
+        '214': 'Invalid document',
+        'cc_rejected_bad_filled_card_number': 'Check card number',
+        'cc_rejected_bad_filled_date': 'Check expiration date',
+        'cc_rejected_bad_filled_security_code': 'Check security code',
+        'cc_rejected_insufficient_amount': 'Insufficient funds',
+        'cc_rejected_call_for_authorize': 'Must authorize with bank',
+        'cc_rejected_card_disabled': 'Card inactive',
+        'cc_rejected_duplicated_payment': 'Duplicate payment',
+        'cc_rejected_high_risk': 'Payment rejected',
+        'cc_rejected_max_attempts': 'Max attempts reached'
+    };
+
+    return errorMap[error.code] || error.message || 'Payment failed';
+}
+```
+
+## Troubleshooting
+
+Common issues and solutions:
+
+**Brick not loading**: Verify SDK is loaded and public key is correct.
+
+**Payment rejected**: Check test card details match the scenario.
+
+**IPN not received**: Configure webhook URL in Mercado Pago dashboard.
+
+**Installments not showing**: Verify payment method supports installments.
+
+**Currency mismatch**: Ensure amount matches account currency.
+
+<Note>
+Always test your Mercado Pago integration thoroughly using test mode before going live. Configure IPN/webhooks to handle asynchronous payment updates. Monitor your Mercado Pago dashboard for chargebacks and disputes. Implement proper error logging for debugging payment issues.
+</Note>
+
+## Additional Resources
+
+- [Mercado Pago Documentation](https://www.mercadopago.com/developers/)
+- [Checkout Bricks Guide](https://www.mercadopago.com/developers/en/docs/checkout-bricks)
+- [API Reference](https://www.mercadopago.com/developers/en/reference)
+- [Test Cards](https://www.mercadopago.com/developers/en/docs/checkout-bricks/additional-content/test-cards)
+- [IPN Documentation](https://www.mercadopago.com/developers/en/docs/checkout-api/additional-content/your-integrations/notifications/ipn)
+- [SDK React](https://github.com/mercadopago/sdk-react)

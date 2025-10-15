@@ -39,6 +39,44 @@ Before implementing Stripe checkout, ensure you have:
 
 ## Integration Flow
 
+```mermaid
+sequenceDiagram
+    participant Customer
+    participant Frontend
+    participant Stripe SDK
+    participant CoCart API
+    participant WooCommerce
+    participant Stripe Server
+
+    Customer->>Frontend: Enter payment details
+    Frontend->>CoCart API: POST /checkout/payment-context
+    Note over CoCart API: payment_method: 'stripe'
+    CoCart API->>Stripe Server: Create Payment Intent
+    Stripe Server-->>CoCart API: client_secret
+    CoCart API-->>Frontend: {client_secret, public_key}
+
+    Frontend->>Stripe SDK: Initialize Elements
+    Note over Stripe SDK: Load with client_secret
+    Stripe SDK-->>Frontend: Payment Element rendered
+
+    Customer->>Stripe SDK: Submit payment form
+    Stripe SDK->>Stripe Server: Confirm Payment Intent
+    Note over Stripe Server: Tokenize & validate card
+    Stripe Server-->>Stripe SDK: Payment confirmed
+    Stripe SDK-->>Frontend: {paymentIntent, status}
+
+    Frontend->>CoCart API: PUT /checkout
+    Note over Frontend: payment_intent_id, billing_address
+    CoCart API->>WooCommerce: Process order
+    WooCommerce->>Stripe Server: Capture payment
+    Stripe Server-->>WooCommerce: Payment captured
+    WooCommerce-->>CoCart API: Order created
+    CoCart API-->>Frontend: {order_id, order_number}
+
+    Frontend->>Customer: Show success message
+    Frontend->>Customer: Redirect to thank you page
+```
+
 <Steps>
     <Step title="Initialize Stripe Elements">
         Set up Stripe SDK with your store's publishable key and create payment form

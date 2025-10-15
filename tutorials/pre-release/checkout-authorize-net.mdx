@@ -31,6 +31,44 @@ Before implementing Authorize.Net checkout, ensure you have:
 
 ## Integration Flow
 
+```mermaid
+sequenceDiagram
+    participant Customer
+    participant Frontend
+    participant Accept.js SDK
+    participant CoCart API
+    participant WooCommerce
+    participant Authorize.Net Server
+
+    Frontend->>CoCart API: POST /checkout/payment-context
+    Note over CoCart API: payment_method: 'authorizenet'
+    CoCart API-->>Frontend: {public_client_key, api_login_id}
+
+    Frontend->>Accept.js SDK: Initialize Accept.js
+    Note over Accept.js SDK: Load with public_client_key
+    Accept.js SDK-->>Frontend: Ready to accept payments
+
+    Customer->>Frontend: Enter card details
+    Customer->>Frontend: Submit form
+
+    Frontend->>Accept.js SDK: dispatchData()
+    Note over Accept.js SDK: Secure card data
+    Accept.js SDK->>Authorize.Net Server: Tokenize card data
+    Authorize.Net Server-->>Accept.js SDK: Opaque data (token)
+    Accept.js SDK-->>Frontend: {dataDescriptor, dataValue}
+
+    Frontend->>CoCart API: PUT /checkout
+    Note over Frontend: opaque_data, billing_address
+    CoCart API->>WooCommerce: Process order
+    WooCommerce->>Authorize.Net Server: Process payment with token
+    Authorize.Net Server-->>WooCommerce: Transaction approved
+    WooCommerce-->>CoCart API: Order created
+    CoCart API-->>Frontend: {order_id, order_number}
+
+    Frontend->>Customer: Show success message
+    Frontend->>Customer: Redirect to thank you page
+```
+
 <Steps>
   <Step title="Load Accept.js Library">
     Initialize Accept.js with your store's public client key
