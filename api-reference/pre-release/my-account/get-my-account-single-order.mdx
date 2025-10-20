@@ -11,5 +11,9 @@ robots: "noindex, follow"
 </Warning>
 
 <Tip>
-    This endpoint retrieves a single order. As WooCommerce sends customers an email of the order review, you could use this endpoint to allow customers to return and view their full order without authorization so long as the order ID and order billing email address match. This is useful for guest checkouts.
+    As WooCommerce sends customers an email of the order review, you could use this endpoint to allow customers to return and view their full order without authorization so long as the order ID and order billing email address match. This is useful for guest checkouts.
 </Tip>
+
+<Info>
+    If the endpoint is accessed with authentication, the order ID must belong to the authenticated user. The billing email address is not required in this case.
+</Info>

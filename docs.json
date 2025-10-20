@@ -784,7 +784,9 @@
                           "api-reference/pre-release/checkout/get-payment-methods",
                           "api-reference/pre-release/checkout/post-payment-context",
                           "api-reference/pre-release/checkout/get-address-search",
-                          "api-reference/pre-release/checkout/get-address-details"
+                          "api-reference/pre-release/checkout/get-address-details",
+                          "api-reference/pre-release/checkout/get-order-received",
+                          "api-reference/pre-release/checkout/post-order-received-pay"
                         ],
                         "tag": "WIP"
                       },
@@ -819,14 +821,14 @@
                           "api-reference/pre-release/my-account/get-my-account-single-order-downloads",
                           "api-reference/pre-release/my-account/get-my-account-downloads",
                           "api-reference/pre-release/my-account/get-my-account-reviews",
-                          "api-reference/pre-release/my-account/get-my-account-subscriptions",
-                          "api-reference/pre-release/my-account/get-my-account-single-subscription",
-                          "api-reference/pre-release/my-account/post-subscription-renew",
-                          "api-reference/pre-release/my-account/post-subscription-on-hold",
-                          "api-reference/pre-release/my-account/post-subscription-reactivate",
-                          "api-reference/pre-release/my-account/post-subscription-resubscribe",
-                          "api-reference/pre-release/my-account/post-subscription-cancel",
-                          "api-reference/pre-release/my-account/post-subscription-payment-method"
+                          "api-reference/pre-release/my-account/subscriptions/get-my-account-subscriptions",
+                          "api-reference/pre-release/my-account/subscriptions/get-my-account-single-subscription",
+                          "api-reference/pre-release/my-account/subscriptions/post-subscription-renew",
+                          "api-reference/pre-release/my-account/subscriptions/post-subscription-on-hold",
+                          "api-reference/pre-release/my-account/subscriptions/post-subscription-reactivate",
+                          "api-reference/pre-release/my-account/subscriptions/post-subscription-resubscribe",
+                          "api-reference/pre-release/my-account/subscriptions/post-subscription-cancel",
+                          "api-reference/pre-release/my-account/subscriptions/post-subscription-payment-method"
                         ],
                         "tag": "WIP"
                       },
