@@ -74,19 +74,19 @@
                   {
                     "group": "Features",
                     "pages": [
-                      "documentation/security",
-                      "documentation/batch-requests",
-                      "documentation/force-permissions",
-                      "documentation/rate-limiting",
-                      "documentation/cors",
-                      "documentation/load-cart"
+                      "security",
+                      "batch-requests",
+                      "force-permissions",
+                      "rate-limiting",
+                      "cors",
+                      "load-cart"
                     ]
                   },
                   {
                     "group": "Guides",
                     "pages": [
-                      "documentation/guides/guiding-principles",
-                      "documentation/guides/updating-cocart"
+                      "guides/guiding-principles",
+                      "guides/updating-cocart"
                     ]
                   },
                   {
@@ -96,31 +96,31 @@
                         "group": "Action hooks",
                         "icon": "tag",
                         "pages": [
-                          "documentation/developers/actions",
-                          "documentation/developers/jwt/actions"
+                          "developers/actions",
+                          "developers/jwt/actions"
                         ]
                       },
                       {
                         "group": "Filters",
                         "icon": "filter",
                         "pages": [
-                          "documentation/developers/filters",
-                          "documentation/developers/jwt/filters"
+                          "developers/filters",
+                          "developers/jwt/filters"
                         ]
                       },
                       {
                         "group": "Functions",
                         "icon": "robot",
                         "pages": [
-                          "documentation/developers/functions"
+                          "developers/functions"
                         ]
                       },
                       {
                         "group": "Contributing",
                         "icon": "hand-holding-heart",
                         "pages": [
-                          "documentation/developers/contributing",
-                          "documentation/contributing-to-docs"
+                          "developers/contributing",
+                          "contributing-to-docs"
                         ]
                       }
                     ]
@@ -128,9 +128,9 @@
                   {
                     "group": "Tools and Resources",
                     "pages": [
-                      "documentation/tools",
-                      "documentation/resources",
-                      "documentation/wp-cli"
+                      "developers/tools",
+                      "resources",
+                      "wp-cli"
                     ]
                   },
                   {
@@ -506,12 +506,12 @@
           },
           {
             "anchor": "Feature requests",
-            "href": "https://cocartapi.com/suggest-a-feature/?ref=mintlify",
+            "href": "https://cocartapi.com/suggest-a-feature/?ref=cocartdocs-nav",
             "icon": "bell-concierge"
           },
           {
             "anchor": "Wall of Love",
-            "href": "https://cocartapi.com/wall-of-love/?ref=mintlify",
+            "href": "https://cocartapi.com/wall-of-love/?ref=cocartdocs-nav",
             "icon": "heart"
           }
         ]
@@ -579,20 +579,20 @@
                   {
                     "group": "Features",
                     "pages": [
-                      "documentation/security",
-                      "documentation/pre-release/batch-requests",
-                      "documentation/force-permissions",
-                      "documentation/pre-release/auto-address",
-                      "documentation/pre-release/rate-limiting",
-                      "documentation/pre-release/cors",
-                      "documentation/pre-release/load-cart"
+                      "security",
+                      "pre-release/batch-requests",
+                      "force-permissions",
+                      "pre-release/auto-address",
+                      "pre-release/rate-limiting",
+                      "pre-release/cors",
+                      "pre-release/load-cart"
                     ]
                   },
                   {
                     "group": "Guides",
                     "pages": [
-                      "documentation/guides/guiding-principles",
-                      "documentation/guides/updating-cocart"
+                      "guides/guiding-principles",
+                      "guides/updating-cocart"
                     ]
                   },
                   {
@@ -602,31 +602,31 @@
                         "group": "Action hooks",
                         "icon": "tag",
                         "pages": [
-                          "documentation/developers/pre-release/actions",
-                          "documentation/developers/jwt/actions"
+                          "developers/pre-release/actions",
+                          "developers/jwt/actions"
                         ]
                       },
                       {
                         "group": "Filters",
                         "icon": "filter",
                         "pages": [
-                          "documentation/developers/pre-release/filters",
-                          "documentation/developers/jwt/filters"
+                          "developers/pre-release/filters",
+                          "developers/jwt/filters"
                         ]
                       },
                       {
                         "group": "Functions",
                         "icon": "robot",
                         "pages": [
-                          "documentation/developers/pre-release/functions"
+                          "developers/pre-release/functions"
                         ]
                       },
                       {
                         "group": "Contributing",
                         "icon": "hand-holding-heart",
                         "pages": [
-                          "documentation/developers/contributing",
-                          "documentation/contributing-to-docs"
+                          "developers/contributing",
+                          "contributing-to-docs"
                         ]
                       }
                     ]
@@ -634,9 +634,9 @@
                   {
                     "group": "Tools and Resources",
                     "pages": [
-                      "documentation/tools",
-                      "documentation/resources",
-                      "documentation/wp-cli"
+                      "tools",
+                      "resources",
+                      "wp-cli"
                     ]
                   },
                   {
@@ -1078,12 +1078,12 @@
           },
           {
             "anchor": "Feature requests",
-            "href": "https://cocartapi.com/suggest-a-feature/?ref=mintlify",
+            "href": "https://cocartapi.com/suggest-a-feature/?ref=cocartdocs-nav",
             "icon": "bell-concierge"
           },
           {
             "anchor": "Wall of Love",
-            "href": "https://cocartapi.com/wall-of-love/?ref=mintlify",
+            "href": "https://cocartapi.com/wall-of-love/?ref=cocartdocs-nav",
             "icon": "heart"
           }
         ]
@@ -1094,6 +1094,12 @@
     "eyebrows": "breadcrumbs",
     "codeblocks": "system"
   },
+  "redirects": [
+    {
+      "source": "/documentation/:slug*",
+      "destination": "/:slug*"
+    }
+  ],
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg",
@@ -1126,7 +1132,7 @@
       },
       {
         "label": "Discord",
-        "href": "https://cocartapi.com/community/?ref=mintlify"
+        "href": "https://cocartapi.com/community/?ref=cocartdocs-navbar"
       }
     ],
     "primary": {
@@ -1148,7 +1154,7 @@
       "facebook": "https://www.facebook.com/cocartapi/",
       "linkedin": "https://www.linkedin.com/company/cocart-headless/",
       "github": "https://github.com/cocart-headless",
-      "website": "https://cocartapi.com/?ref=mintlify"
+      "website": "https://cocartapi.com/?ref=cocartdocs-footer"
     },
     "links": [
       {
@@ -1156,19 +1162,19 @@
         "items": [
           {
             "label": "Pricing",
-            "href": "https://cocartapi.com/pricing/?ref=mintlify"
+            "href": "https://cocartapi.com/pricing/?ref=cocartdocs-footer"
           },
           {
             "label": "Blog",
-            "href": "https://cocart.dev/news/?ref=mintlify"
+            "href": "https://cocart.dev/news/?ref=cocartdocs-footer"
           },
           {
             "label": "Showcase",
-            "href": "https://cocartapi.com/showcase/?ref=mintlify"
+            "href": "https://cocartapi.com/showcase/?ref=cocartdocs-footer"
           },
           {
             "label": "Try the API",
-            "href": "https://cocartapi.com/try-free-demo/?ref=mintlify"
+            "href": "https://cocartapi.com/try-free-demo/?ref=cocartdocs-footer"
           }
         ]
       },
@@ -1177,15 +1183,15 @@
         "items": [
           {
             "label": "Suggest a Feature",
-            "href": "https://cocartapi.com/suggest-a-feature/?ref=mintlify"
+            "href": "https://cocartapi.com/suggest-a-feature/?ref=cocartdocs-footer"
           },
           {
             "label": "Roadmap",
-            "href": "https://cocartapi.com/roadmap/?ref=mintlify"
+            "href": "https://cocartapi.com/roadmap/?ref=cocartdocs-footer"
           },
           {
             "label": "Translate CoCart",
-            "href": "https://translate.cocartapi.com/?ref=mintlify"
+            "href": "https://translate.cocartapi.com/?ref=cocartdocs-footer"
           }
         ]
       },
@@ -1194,23 +1200,23 @@
         "items": [
           {
             "label": "Merch Store",
-            "href": "https://swag.cocartheadless.com/?ref=cocartapidotcom"
+            "href": "https://swag.cocartheadless.com/?ref=cocartdocs-footer"
           },
           {
             "label": "Terms & Conditions",
-            "href": "https://cocartapi.com/terms-and-conditions-polar/?ref=mintlify"
+            "href": "https://cocartapi.com/terms-and-conditions-polar/?ref=cocartdocs-footer"
           },
           {
             "label": "Refund Policy",
-            "href": "https://cocartapi.com/refund-policy/?ref=mintlify"
+            "href": "https://cocartapi.com/refund-policy/?ref=cocartdocs-footer"
           },
           {
             "label": "Support Policy",
-            "href": "https://cocartapi.com/support-policy/?ref=mintlify"
+            "href": "https://cocartapi.com/support-policy/?ref=cocartdocs-footer"
           },
           {
             "label": "Security Policy",
-            "href": "https://cocartapi.com/security-policy/?ref=mintlify"
+            "href": "https://cocartapi.com/security-policy/?ref=cocartdocs-footer"
           }
         ]
       }
