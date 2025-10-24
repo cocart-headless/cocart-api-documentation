@@ -71,8 +71,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/CheckoutData'
               examples:
-                checkoutData:
+                Default:
                   $ref: '#/components/examples/CheckoutDataExample'
+                Switched Currency:
+                  $ref: '#/components/examples/checkoutDataSwitchedCurrencyExample'
         '400':
           description: Bad request - cart key required or cart is empty
           content:
@@ -154,8 +156,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/CheckoutData'
               examples:
-                checkoutData:
+                Default:
                   $ref: '#/components/examples/CheckoutDataExample'
+                Switched Currency:
+                  $ref: '#/components/examples/checkoutDataSwitchedCurrencyExample'
         '400':
           description: Bad request - invalid data provided
           content:
@@ -195,8 +199,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/CheckoutData'
               examples:
-                checkoutData:
+                Default:
                   $ref: '#/components/examples/CheckoutDataExample'
+                Switched Currency:
+                  $ref: '#/components/examples/checkoutDataSwitchedCurrencyExample'
         '400':
           description: Bad request - invalid data provided
           content:
@@ -1371,6 +1377,28 @@ components:
         cart_hash:
           type: string
           description: MD5 hash of cart contents
+        currency:
+          type: object
+          description: Currency information including code, symbol, and exchange rate
+          properties:
+            code:
+              type: string
+              description: ISO 4217 currency code
+              example: EUR
+            symbol:
+              type: string
+              description: Currency symbol
+              example: €
+            base_currency:
+              type: string
+              description: Store's base currency code
+              example: USD
+            exchange_rate:
+              type: number
+              format: float
+              description: Exchange rate from base currency to selected currency (null if same or unavailable)
+              example: 0.85
+              nullable: true
         customer_id:
           type: integer
           description: Customer ID, if logged in
@@ -1413,6 +1441,11 @@ components:
         shipping_method:
           type: string
           description: Shipping method ID
+        currency:
+          type: string
+          description: Currency code for the order (e.g., USD, EUR, GBP). If not provided, store default will be used.
+          example: EUR
+          pattern: '^[A-Z]{3}$'
 
     CheckoutProcessRequest:
       type: object
@@ -1438,6 +1471,11 @@ components:
         shipping_method:
           type: string
           description: Shipping method ID
+        currency:
+          type: string
+          description: Currency code for the order (e.g., USD, EUR, GBP). Enables multi-currency support with compatible plugins. If not provided, store default will be used.
+          example: USD
+          pattern: '^[A-Z]{3}$'
         create_account:
           type: boolean
           description: Create customer account during checkout (for guest checkout)
@@ -2333,6 +2371,11 @@ components:
       value:
         cart_key: "abc123def456"
         cart_hash: "d41d8cd98f00b204e9800998ecf8427e"
+        currency:
+          code: "USD"
+          symbol: "$"
+          base_currency: "USD"
+          exchange_rate: 1.0
         customer_id: 123
         billing_address:
           first_name: "John"
@@ -2385,6 +2428,73 @@ components:
             id: "flat_rate:1"
             label: "Flat Rate"
             cost: "5.00"
+            method_id: "flat_rate"
+            instance_id: "1"
+        needs_payment: true
+        needs_shipping: true
+        payment_method: "stripe"
+
+    checkoutDataSwitchedCurrencyExample:
+      value:
+        cart_key: "abc123def456"
+        cart_hash: "d41d8cd98f00b204e9800998ecf8427e"
+        currency:
+          code: "EUR"
+          symbol: "€"
+          base_currency: "USD"
+          exchange_rate: 0.85
+        customer_id: 123
+        billing_address:
+          first_name: "John"
+          last_name: "Doe"
+          email: "john@example.com"
+          phone: "+1234567890"
+          address_1: "123 Main St"
+          address_2: "Apt 4B"
+          city: "Anytown"
+          state: "CA"
+          postcode: "12345"
+          country: "US"
+          company: ""
+        shipping_address:
+          first_name: "John"
+          last_name: "Doe"
+          address_1: "123 Main St"
+          address_2: "Apt 4B"
+          city: "Anytown"
+          state: "CA"
+          postcode: "12345"
+          country: "US"
+          company: ""
+        cart_contents:
+          "c4ca4238a0b923820dcc509a6f75849b":
+            key: "c4ca4238a0b923820dcc509a6f75849b"
+            product_id: 456
+            variation_id: 0
+            quantity: 2
+            product_name: "Premium T-Shirt"
+            product_title: "Premium T-Shirt"
+            product_price: "€16.99"
+            line_total: "33.98"
+            line_subtotal: "33.98"
+        cart_totals:
+          subtotal: "33.98"
+          subtotal_tax: "0.00"
+          shipping_total: "4.25"
+          shipping_tax: "0.00"
+          discount_total: "0.00"
+          discount_tax: "0.00"
+          cart_contents_total: "33.98"
+          cart_contents_tax: "0.00"
+          fee_total: "0.00"
+          fee_tax: "0.00"
+          total: "38.23"
+          total_tax: "0.00"
+        shipping_methods:
+          "flat_rate:1":
+            id: "flat_rate:1"
+            label: "Flat Rate"
+            cost: "4.25"
             method_id: "flat_rate"
             instance_id: "1"
         needs_payment: true

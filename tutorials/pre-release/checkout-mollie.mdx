@@ -1,7 +1,7 @@
 ---
 title: "Checkout with Mollie"
 sidebarTitle: "Mollie"
-description: "Complete guide to integrating Mollie Components with CoCart's Checkout API"
+description: "Complete guide to integrating Mollie Components with Checkout API"
 icon: "credit-card"
 tag: "WIP"
 robots: "noindex, follow"
@@ -822,6 +822,125 @@ function handleMollieErrors(error) {
     return errorMessages[error.code] || error.message || 'Payment processing failed';
 }
 ```
+
+## Troubleshooting
+
+### Common Issues
+
+<AccordionGroup>
+    <Accordion title="Mollie.js Not Loading">
+        **Problem**: Mollie object is undefined.
+
+        **Solution**:
+        ```javascript
+        // Verify Mollie is loaded
+        if (typeof Mollie === 'undefined') {
+            console.error('Mollie.js not loaded. Check script tag.');
+        }
+
+        // Correct script tag
+        <script src="https://js.mollie.com/v1/mollie.js"></script>
+        ```
+        - Check browser console for loading errors
+        - Verify no ad blockers are interfering
+        - Ensure HTTPS is enabled (required)
+    </Accordion>
+
+    <Accordion title="Components Not Mounting">
+        **Problem**: Card fields don't appear.
+
+        **Solution**:
+        ```javascript
+        // Check profile ID is valid
+        const mollie = Mollie(profileId, { testmode: true });
+
+        // Verify containers exist
+        if (!document.getElementById('card-number')) {
+            console.error('Container missing');
+        }
+
+        // Mount with error handling
+        cardNumber.mount('#card-number').catch(error => {
+            console.error('Mount error:', error);
+        });
+        ```
+    </Accordion>
+
+    <Accordion title="Token Creation Fails">
+        **Problem**: createToken() returns errors.
+
+        **Solution**:
+        ```javascript
+        mollie.createToken().then(result => {
+            if (result.error) {
+                console.error('Token error:', result.error);
+                // Common: invalid card, incomplete fields
+            } else {
+                console.log('Token:', result.token);
+            }
+        });
+        ```
+        - Ensure all card fields are filled
+        - Verify card number is valid
+        - Check expiration date is future
+    </Accordion>
+
+    <Accordion title="Payment Method Not Recognized">
+        **Problem**: Backend doesn't accept Mollie payment.
+
+        **Solution**:
+        ```javascript
+        const checkoutData = {
+            payment_method: 'mollie_wc_gateway_creditcard', // Correct ID
+            payment_data: {
+                token: result.token,
+                card_token: result.token
+            }
+        };
+        ```
+        - Verify Mollie gateway is enabled in WooCommerce
+        - Check payment method ID matches gateway
+        - Ensure Mollie API keys are configured
+    </Accordion>
+
+    <Accordion title="Test Mode vs Live Mode Issues">
+        **Problem**: Works in test but not live.
+
+        **Solution**:
+        ```javascript
+        // For test mode
+        const mollie = Mollie(profileId, { testmode: true });
+
+        // For live mode
+        const mollie = Mollie(profileId, { testmode: false });
+        ```
+        Checklist:
+        - Switch profile ID from test to live
+        - Update API keys in WooCommerce
+        - Disable test mode in Mollie initialization
+        - Verify account is activated for live payments
+    </Accordion>
+</AccordionGroup>
+
+### Debug Mode
+
+```javascript
+if (DEBUG) {
+    console.log('[Mollie] Profile ID:', profileId);
+    console.log('[Mollie] Test mode:', testmode);
+
+    cardNumber.addEventListener('change', (event) => {
+        console.log('[Mollie] Card valid:', event.valid);
+        console.log('[Mollie] Errors:', event.error);
+    });
+}
+```
+
+### Getting Help
+
+1. **Mollie Documentation**: [Mollie Components Guide](https://docs.mollie.com/components/overview)
+2. **Mollie Support**: Contact through dashboard
+3. **WooCommerce Logs**: Check WooCommerce → Status → Logs
 
 ## Best Practices
 

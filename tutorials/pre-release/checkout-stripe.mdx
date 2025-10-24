@@ -1,7 +1,7 @@
 ---
 title: "Checkout with Stripe"
 sidebarTitle: "Stripe"
-description: "Complete guide to integrating Stripe Elements with CoCart's Checkout API"
+description: "Complete guide to integrating Stripe Elements with Checkout API"
 icon: "stripe"
 tag: "WIP"
 robots: "noindex, follow"
@@ -15,26 +15,36 @@ robots: "noindex, follow"
     This guide covers integrating Stripe with CoCart Preview API. Requires CoCart v4.6+ and a configured Stripe payment gateway.
 </Note>
 
-<Warning>
-**Plugin Compatibility**: This tutorial covers the **WooCommerce Stripe Payment Gateway** plugin, not WooCommerce Payments (WCPay).
+<Info>
+    **Plugin Compatibility**: This tutorial covers the **WooCommerce Stripe Payment Gateway** plugin, not WooCommerce Payments (WCPay/WooPay).
 
-- **WooCommerce Stripe Gateway** (`payment_method: 'stripe'`) - Full API access, designed for headless checkout ✅
-- **WooCommerce Payments** (`payment_method: 'woocommerce_payments'`) - Managed solution for traditional WooCommerce checkout only ❌
+    - **WooCommerce Stripe Gateway** (`payment_method: 'stripe'`) - **Available in 45+ countries**, full API access, direct Stripe account ✅
+    - **WooCommerce Payments / WooPay** (`payment_method: 'woocommerce_payments'`) - **Available in 39 countries**, managed solution with WooPay features
 
-For headless/API-based checkout with CoCart, use the standard WooCommerce Stripe Gateway plugin.
-</Warning>
+    **Using WooCommerce Payments?** If you want to use WooCommerce Payments, see the [WooPay tutorial](/tutorials/pre-release/checkout-woopay) instead.
+
+    **Why use Stripe Gateway?**
+    - More countries supported (45+ vs 39)
+    - Full control over your Stripe account
+    - Direct access to Stripe dashboard and features
+    - Better for businesses needing advanced Stripe features
+    - Available in countries not supported by WooCommerce Payments (e.g., Brazil, India, Indonesia, Malaysia, Mexico, Thailand)
+</Info>
 
 ## Overview
 
 Stripe integration with CoCart follows a secure client-side payment flow using Stripe Elements and Payment Intents. This ensures sensitive payment data never touches your server while providing a seamless checkout experience.
 
+**Geographic Availability**: The WooCommerce Stripe Gateway plugin works in all countries where Stripe is available (45+ countries including U.S., Canada, UK, EU, Australia, Japan, Singapore, and many more). [View all supported countries](https://stripe.com/global).
+
 ## Prerequisites
 
 Before implementing Stripe checkout, ensure you have:
 
-1. Stripe payment gateway configured in WooCommerce
-2. Stripe JavaScript SDK loaded in your frontend
-3. A valid cart with items added
+1. **Stripe account** - Create a direct account at [stripe.com](https://stripe.com) (must be in a supported country)
+2. WooCommerce Stripe Gateway plugin installed and configured
+3. Stripe JavaScript SDK loaded in your frontend
+4. A valid cart with items added via CoCart API
 4. Customer billing address information
 
 ## Integration Flow
@@ -696,6 +706,262 @@ Use Stripe's test card numbers for development:
 - **Declined card**: `4000000000000002`
 - **Insufficient funds**: `4000000000009995`
 - **Expired card**: `4000000000000069`
+
+## Troubleshooting
+
+### Common Issues
+
+<AccordionGroup>
+    <Accordion title="'Stripe is not defined' Error">
+        **Problem**: Stripe.js hasn't loaded before your code executes.
+
+        **Solution**: Ensure Stripe.js loads before initialization:
+        ```javascript
+        function waitForStripe() {
+            return new Promise((resolve) => {
+                if (typeof Stripe !== 'undefined') {
+                    resolve(Stripe);
+                    return;
+                }
+
+                const script = document.createElement('script');
+                script.src = 'https://js.stripe.com/v3/';
+                script.onload = () => resolve(Stripe);
+                document.head.appendChild(script);
+            });
+        }
+
+        // Usage
+        const Stripe = await waitForStripe();
+        const stripe = Stripe('pk_test_xxx');
+        ```
+    </Accordion>
+
+    <Accordion title="Payment Method Not Accepted">
+        **Problem**: Backend doesn't recognize the payment method.
+
+        **Solution**: Verify your configuration:
+        - Use `'stripe'` as payment_method (not `'woocommerce_payments'`)
+        - Ensure WooCommerce Stripe Gateway plugin is active
+        - Check that Stripe is enabled in WooCommerce → Settings → Payments
+        - Verify your Stripe account supports your currency
+    </Accordion>
+
+    <Accordion title="Elements Not Displaying">
+        **Problem**: Stripe Elements don't appear on the page.
+
+        **Solution**: Check these common issues:
+        - Verify mount selector matches HTML: `cardElement.mount('#card-element')`
+        - Ensure the container exists in DOM before mounting
+        - Check browser console for JavaScript errors
+        - Verify no CSS is hiding the element (check `display`, `visibility`, `height`)
+        - Try mounting with explicit styling:
+        ```javascript
+        const style = {
+            base: {
+                fontSize: '16px',
+                color: '#32325d'
+            }
+        };
+        const cardElement = elements.create('card', {style});
+        cardElement.mount('#card-element');
+        ```
+    </Accordion>
+
+    <Accordion title="Publishable Key Mismatch">
+        **Problem**: "This API key cannot be used" or authentication errors.
+
+        **Solution**:
+        - Ensure frontend publishable key matches WooCommerce Stripe settings exactly
+        - Check if you're using test key (`pk_test_`) in test mode or live key (`pk_live_`) in live mode
+        - Verify the key belongs to the correct Stripe account
+        - Go to WooCommerce → Settings → Payments → Stripe to confirm your keys
+    </Accordion>
+
+    <Accordion title="Payment Intent Creation Fails">
+        **Problem**: Error when creating payment intent via CoCart.
+
+        **Solution**: Check your setup:
+        ```javascript
+        // Ensure you're calling the correct endpoint
+        const response = await fetch('/wp-json/cocart/preview/checkout/payment-context', {
+            method: 'POST',
+            headers: {
+                'Cart-Key': cartKey,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                payment_method: 'stripe'
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            console.error('Payment context error:', error);
+            // Check error.message for details
+        }
+        ```
+        - Verify your cart has items and a valid total
+        - Ensure Stripe secret key is configured correctly in WooCommerce
+        - Check PHP error logs for server-side issues
+    </Accordion>
+
+    <Accordion title="'Your card was declined' Errors">
+        **Problem**: Legitimate cards are being declined.
+
+        **Solution**: Check multiple factors:
+        - **Test Mode**: Use official Stripe test cards (not real cards)
+        - **Live Mode**: Common causes:
+          - Insufficient funds
+          - Card issuer blocking the transaction
+          - International cards blocked by Stripe Radar rules
+          - Incorrect CVV or expiration date
+          - Address verification (AVS) failure
+
+        Enable detailed decline codes in your error handling:
+        ```javascript
+        if (error.code === 'card_declined') {
+            console.log('Decline code:', error.decline_code);
+            // Show appropriate message based on decline_code
+        }
+        ```
+    </Accordion>
+
+    <Accordion title="3D Secure Authentication Not Working">
+        **Problem**: 3DS authentication modal doesn't appear or fails.
+
+        **Solution**: Ensure proper 3DS implementation:
+        ```javascript
+        const {error, paymentIntent} = await stripe.confirmCardPayment(
+            clientSecret,
+            {
+                payment_method: {
+                    card: cardElement,
+                    billing_details: {
+                        name: billingName,
+                        email: billingEmail,
+                        address: billingAddress
+                    }
+                }
+            }
+        );
+
+        if (error) {
+            // Handle 3DS authentication failure
+            if (error.type === 'card_error' && error.code === 'authentication_required') {
+                showError('Card authentication failed. Please try a different card.');
+            }
+        }
+        ```
+        - Ensure popups are not blocked by browser
+        - Test with 3DS test cards: `4000002500003155`
+        - Verify your return_url is configured correctly
+    </Accordion>
+
+    <Accordion title="Webhook Events Not Received">
+        **Problem**: Not receiving payment confirmation webhooks.
+
+        **Solution**: Configure webhooks properly:
+        1. Go to Stripe Dashboard → Developers → Webhooks
+        2. Add endpoint: `https://yoursite.com/wc-api/wc_stripe/`
+        3. Select events: `payment_intent.succeeded`, `payment_intent.payment_failed`
+        4. Test webhook delivery in Stripe Dashboard
+        5. Check webhook signing secret matches WooCommerce settings
+        6. Verify your server can receive HTTPS requests from Stripe IPs
+    </Accordion>
+
+    <Accordion title="Currency or Amount Errors">
+        **Problem**: "Invalid currency" or "Invalid amount" errors.
+
+        **Solution**: Check amount formatting:
+        ```javascript
+        // Stripe expects amounts in cents (smallest currency unit)
+        // $10.00 USD = 1000 cents
+        const amount = Math.round(cartTotal * 100);
+
+        // Zero-decimal currencies (JPY, KRW) don't need multiplication
+        const isZeroDecimal = ['jpy', 'krw'].includes(currency.toLowerCase());
+        const stripeAmount = isZeroDecimal ? Math.round(cartTotal) : Math.round(cartTotal * 100);
+        ```
+        - Verify your Stripe account supports the currency
+        - Check minimum amount requirements per currency
+        - Ensure no decimal values for zero-decimal currencies
+    </Accordion>
+
+    <Accordion title="Checkout Completes But Order Not Created">
+        **Problem**: Payment succeeds but WooCommerce order is not created.
+
+        **Solution**: Debug the checkout flow:
+        ```javascript
+        try {
+            const response = await fetch('/wp-json/cocart/preview/checkout', {
+                method: 'PUT',
+                headers: {
+                    'Cart-Key': cartKey,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(checkoutData)
+            });
+
+            const result = await response.json();
+            console.log('Checkout response:', result);
+
+            if (!response.ok) {
+                console.error('Checkout failed:', result);
+                throw new Error(result.message);
+            }
+
+            if (!result.order_id) {
+                console.error('No order ID in response:', result);
+                throw new Error('Order creation failed');
+            }
+        } catch (error) {
+            console.error('Checkout error:', error);
+        }
+        ```
+        - Check PHP error logs on server
+        - Verify WooCommerce stock levels
+        - Check for plugin conflicts
+        - Ensure customer data is valid
+    </Accordion>
+</AccordionGroup>
+
+### Debug Mode
+
+Enable Stripe debug logging for detailed troubleshooting:
+
+```javascript
+// Add to your initialization code
+if (process.env.NODE_ENV === 'development') {
+    // Enable detailed logging
+    console.log('[Stripe] Initializing with key:', publishableKey);
+
+    // Log all Stripe events
+    cardElement.on('change', (event) => {
+        console.log('[Stripe] Card element changed:', event);
+    });
+
+    // Log tokenization attempts
+    console.log('[Stripe] Creating payment method...');
+    const {paymentMethod, error} = await stripe.createPaymentMethod(...);
+    console.log('[Stripe] Payment method result:', {paymentMethod, error});
+}
+```
+
+In WooCommerce:
+1. Go to WooCommerce → Settings → Payments → Stripe
+2. Enable "Log debug messages"
+3. Check logs at WooCommerce → Status → Logs
+
+### Getting Help
+
+If issues persist:
+
+1. **Check Stripe Dashboard**: View recent payment attempts and error details
+2. **Review Logs**: Check both browser console and server logs
+3. **Test Mode**: Always test thoroughly in Stripe test mode first
+4. **Stripe Documentation**: Visit [Stripe's troubleshooting guide](https://stripe.com/docs/testing)
+5. **WooCommerce Support**: Check WooCommerce Stripe Gateway plugin documentation
 
 ## Best Practices
 

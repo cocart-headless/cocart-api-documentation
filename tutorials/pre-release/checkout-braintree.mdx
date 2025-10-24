@@ -1,7 +1,7 @@
 ---
 title: "Checkout with Braintree"
 sidebarTitle: "Braintree"
-description: "Complete guide to integrating Braintree Hosted Fields with CoCart's Checkout API"
+description: "Complete guide to integrating Braintree Hosted Fields with Checkout API"
 icon: "credit-card"
 tag: "WIP"
 robots: "noindex, follow"
@@ -1166,17 +1166,432 @@ const paymentData = {
 
 ## Troubleshooting
 
-Common issues and solutions:
+### Common Issues
 
-**Hosted Fields not loading**: Check that all required scripts are loaded and client token is valid.
+<AccordionGroup>
+    <Accordion title="Hosted Fields Not Loading">
+        **Problem**: Braintree Hosted Fields don't appear on the page.
 
-**Tokenization fails**: Verify all required fields are filled and valid. Check browser console for specific error codes.
+        **Solution**: Check these common issues:
+        ```javascript
+        // 1. Verify Braintree SDK is loaded
+        if (typeof braintree === 'undefined') {
+            console.error('Braintree SDK not loaded');
+        }
 
-**3D Secure not working**: Ensure amount and billing address are provided during tokenization.
+        // 2. Check client token is valid
+        console.log('Client token:', clientToken);
 
-**Styling not applied**: Check that styles object matches Braintree's expected format. Test in different browsers.
+        // 3. Verify container elements exist
+        const cardNumber = document.getElementById('card-number');
+        if (!cardNumber) {
+            console.error('Card number container not found');
+        }
 
-**Network errors**: Verify your Braintree credentials and check for CORS issues.
+        // 4. Check for initialization errors
+        braintree.client.create({
+            authorization: clientToken
+        }).then(clientInstance => {
+            console.log('Client created successfully');
+            return braintree.hostedFields.create({
+                client: clientInstance,
+                fields: {...}
+            });
+        }).catch(error => {
+            console.error('Initialization error:', error);
+        });
+        ```
+        Common causes:
+        - Braintree SDK script not loaded or failed to load
+        - Invalid or expired client token
+        - Container elements missing from DOM
+        - CORS issues (check browser console)
+        - JavaScript errors preventing initialization
+    </Accordion>
+
+    <Accordion title="Tokenization Fails">
+        **Problem**: Getting errors when trying to tokenize card data.
+
+        **Solution**: Debug the tokenization process:
+        ```javascript
+        hostedFieldsInstance.tokenize().then(payload => {
+            console.log('Tokenization successful:', payload.nonce);
+        }).catch(error => {
+            console.error('Tokenization error:', error);
+
+            // Check error code for specific issues
+            switch(error.code) {
+                case 'HOSTED_FIELDS_FIELDS_EMPTY':
+                    showError('Please fill in all card fields');
+                    break;
+                case 'HOSTED_FIELDS_FIELDS_INVALID':
+                    showError('Please check your card information');
+                    // error.details has field-specific errors
+                    console.log('Invalid fields:', error.details);
+                    break;
+                case 'HOSTED_FIELDS_TOKENIZATION_FAIL_ON_DUPLICATE':
+                    showError('This card was already tokenized');
+                    break;
+                case 'HOSTED_FIELDS_TOKENIZATION_CVV_VERIFICATION_FAILED':
+                    showError('CVV verification failed');
+                    break;
+                default:
+                    showError('Payment processing failed');
+            }
+        });
+        ```
+        Verification steps:
+        - Ensure all required fields are filled
+        - Validate card number, expiration, CVV are correct
+        - Check for duplicate tokenization attempts
+        - Verify no JavaScript errors in console
+    </Accordion>
+
+    <Accordion title="3D Secure Authentication Not Working">
+        **Problem**: 3D Secure modal doesn't appear or fails.
+
+        **Solution**: Ensure proper 3DS configuration:
+        ```javascript
+        // Must provide amount and billing address for 3DS
+        const threeDSecureParameters = {
+            amount: '10.00', // Required - must match order total
+            email: billingAddress.email,
+            billingAddress: {
+                givenName: billingAddress.first_name,
+                surname: billingAddress.last_name,
+                streetAddress: billingAddress.address_1,
+                locality: billingAddress.city,
+                region: billingAddress.state,
+                postalCode: billingAddress.postcode,
+                countryCodeAlpha2: billingAddress.country
+            }
+        };
+
+        threeDSecureInstance.verifyCard({
+            nonce: payload.nonce,
+            bin: payload.details.bin,
+            ...threeDSecureParameters,
+            onLookupComplete: function(data, next) {
+                console.log('3DS lookup complete:', data);
+                next();
+            }
+        }).then(response => {
+            console.log('3DS verification:', response);
+            if (response.liabilityShifted) {
+                // 3DS successful, proceed with checkout
+            }
+        }).catch(error => {
+            console.error('3DS error:', error);
+        });
+        ```
+        Common issues:
+        - Missing or invalid amount parameter
+        - Incomplete billing address
+        - Popup blockers preventing 3DS modal
+        - Test cards not triggering 3DS in sandbox
+        - Network timeout during verification
+    </Accordion>
+
+    <Accordion title="Styling Not Applied to Hosted Fields">
+        **Problem**: Custom styles not appearing on card fields.
+
+        **Solution**: Verify style configuration:
+        ```javascript
+        const styles = {
+            'input': {
+                'font-size': '16px',
+                'font-family': 'helvetica, arial, sans-serif',
+                'color': '#3A3A3A'
+            },
+            ':focus': {
+                'color': 'black'
+            },
+            '.valid': {
+                'color': 'green'
+            },
+            '.invalid': {
+                'color': 'red'
+            }
+        };
+
+        braintree.hostedFields.create({
+            client: clientInstance,
+            styles: styles, // Must be here, not in individual fields
+            fields: {
+                number: {
+                    selector: '#card-number',
+                    // Don't put styles here
+                },
+                // ...
+            }
+        });
+        ```
+        Important notes:
+        - Styles must be in the `styles` property at root level
+        - Use CSS property names in kebab-case (e.g., `'font-size'`)
+        - Cannot use external stylesheets (security restriction)
+        - Test in multiple browsers as rendering may differ
+        - Some CSS properties are restricted for security
+    </Accordion>
+
+    <Accordion title="Payment Method Not Accepted">
+        **Problem**: Backend doesn't recognize Braintree payment method.
+
+        **Solution**: Verify configuration:
+        ```javascript
+        // Ensure correct payment method ID
+        const checkoutData = {
+            billing_address: billingAddress,
+            payment_method: 'braintree_credit_card', // Must match WooCommerce setting
+            payment_data: {
+                nonce: payload.nonce,
+                device_data: deviceData // If fraud protection enabled
+            }
+        };
+        ```
+        Checklist:
+        - Use `'braintree_credit_card'` as payment_method
+        - Verify Braintree gateway is active in WooCommerce
+        - Check Braintree credentials in WooCommerce settings
+        - Ensure nonce is fresh (expires after ~3 minutes)
+        - Include device_data if Advanced Fraud Tools enabled
+    </Accordion>
+
+    <Accordion title="Client Token Expired or Invalid">
+        **Problem**: "Authorization is invalid" or token expired errors.
+
+        **Solution**: Generate fresh tokens:
+        ```javascript
+        // Client tokens expire - regenerate before each checkout
+        async function getClientToken() {
+            const response = await fetch('/wp-json/cocart/preview/checkout/payment-context', {
+                method: 'POST',
+                headers: {
+                    'Cart-Key': cartKey,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    payment_method: 'braintree_credit_card'
+                })
+            });
+
+            const data = await response.json();
+            return data.client_token;
+        }
+
+        // Reinitialize if token expired
+        async function reinitializeBraintree() {
+            const newToken = await getClientToken();
+
+            // Teardown old instance
+            if (hostedFieldsInstance) {
+                hostedFieldsInstance.teardown();
+            }
+
+            // Create new instance with fresh token
+            await initializeBraintree(newToken);
+        }
+        ```
+        Notes:
+        - Client tokens typically last 24 hours
+        - Payment nonces expire after ~3 minutes
+        - Regenerate token if page has been open for extended period
+        - Always use fresh token for new sessions
+    </Accordion>
+
+    <Accordion title="Checkout Completes But Order Not Created">
+        **Problem**: Braintree payment succeeds but WooCommerce order fails.
+
+        **Solution**: Debug checkout flow:
+        ```javascript
+        try {
+            // 1. Verify nonce is valid
+            console.log('Payment nonce:', payload.nonce);
+            console.log('Nonce details:', payload.details);
+
+            // 2. Check billing address is complete
+            console.log('Billing address:', billingAddress);
+            if (!billingAddress.email || !billingAddress.first_name) {
+                throw new Error('Incomplete billing information');
+            }
+
+            // 3. Submit to CoCart
+            const response = await fetch('/wp-json/cocart/preview/checkout', {
+                method: 'PUT',
+                headers: {
+                    'Cart-Key': cartKey,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(checkoutData)
+            });
+
+            const result = await response.json();
+            console.log('Checkout response:', result);
+
+            if (!response.ok) {
+                console.error('Checkout failed:', result);
+                throw new Error(result.message || 'Checkout failed');
+            }
+
+            if (!result.order_id) {
+                throw new Error('Order was not created');
+            }
+
+        } catch (error) {
+            console.error('Full error:', error);
+        }
+        ```
+        Check these:
+        - Browser console for errors
+        - PHP error logs on server
+        - WooCommerce Status → Logs
+        - Braintree dashboard for transaction status
+        - Cart hasn't been emptied prematurely
+    </Accordion>
+
+    <Accordion title="Network or CORS Errors">
+        **Problem**: CORS errors or network failures when loading Braintree.
+
+        **Solution**: Verify server configuration:
+        ```javascript
+        // Check if Braintree endpoints are accessible
+        fetch('https://api.braintreegateway.com/merchants/YOUR_MERCHANT_ID/client_api/v1/configuration')
+            .then(response => {
+                console.log('Braintree API accessible:', response.ok);
+            })
+            .catch(error => {
+                console.error('Braintree API error:', error);
+            });
+        ```
+        Common causes:
+        - Firewall blocking Braintree endpoints
+        - Content Security Policy (CSP) restrictions
+        - Ad blockers interfering with payment scripts
+        - Invalid merchant ID or credentials
+        - Network proxy or VPN interference
+
+        CSP Headers needed:
+        ```
+        script-src: https://js.braintreegateway.com
+        frame-src: https://assets.braintreegateway.com
+        connect-src: https://api.braintreegateway.com
+        ```
+    </Accordion>
+
+    <Accordion title="Sandbox vs Production Issues">
+        **Problem**: Works in sandbox but fails in production.
+
+        **Solution**: Verify production configuration:
+        ```javascript
+        // Check environment setting
+        console.log('Braintree environment:', braintreeConfig.environment);
+        // Should be 'sandbox' for testing, 'production' for live
+
+        // Ensure credentials match environment
+        // Sandbox credentials start with "sandbox_"
+        // Production credentials are different
+        ```
+        Pre-launch checklist:
+        - Switch to production credentials in WooCommerce
+        - Update Braintree merchant ID to production
+        - Enable production mode in Braintree settings
+        - Test with real card (small amount)
+        - Verify webhook URL is accessible from internet
+        - Enable production fraud protection
+        - Test 3D Secure with production cards
+        - Monitor first few transactions closely
+    </Accordion>
+
+    <Accordion title="Device Data Not Collecting">
+        **Problem**: Advanced Fraud Tools not working, device data missing.
+
+        **Solution**: Properly initialize data collector:
+        ```javascript
+        // Create data collector instance
+        braintree.dataCollector.create({
+            client: clientInstance,
+            kount: true // Enable Kount fraud protection
+        }).then(dataCollectorInstance => {
+            // Get device data
+            const deviceData = dataCollectorInstance.deviceData;
+            console.log('Device data:', deviceData);
+
+            // Include in payment submission
+            return {
+                nonce: payload.nonce,
+                device_data: deviceData
+            };
+        }).catch(error => {
+            console.error('Data collector error:', error);
+            // Proceed without device data if necessary
+        });
+        ```
+        Notes:
+        - Device data improves fraud detection
+        - May increase page load time slightly
+        - Optional but recommended for production
+        - Check Braintree dashboard to verify data is being received
+    </Accordion>
+</AccordionGroup>
+
+### Debug Mode
+
+Enable comprehensive logging for troubleshooting:
+
+```javascript
+// Add detailed Braintree logging
+const DEBUG = process.env.NODE_ENV === 'development';
+
+if (DEBUG) {
+    console.log('[Braintree] Creating client with token:', clientToken);
+
+    braintree.client.create({
+        authorization: clientToken
+    }).then(clientInstance => {
+        console.log('[Braintree] Client created successfully');
+        return braintree.hostedFields.create({
+            client: clientInstance,
+            fields: fields
+        });
+    }).then(hostedFieldsInstance => {
+        console.log('[Braintree] Hosted Fields created');
+
+        // Log field events
+        hostedFieldsInstance.on('validityChange', (event) => {
+            console.log('[Braintree] Validity changed:', event);
+        });
+
+        hostedFieldsInstance.on('cardTypeChange', (event) => {
+            console.log('[Braintree] Card type:', event.cards[0]?.type);
+        });
+
+        hostedFieldsInstance.on('empty', (event) => {
+            console.log('[Braintree] Field emptied:', event.emittedBy);
+        });
+
+        hostedFieldsInstance.on('focus', (event) => {
+            console.log('[Braintree] Field focused:', event.emittedBy);
+        });
+    }).catch(error => {
+        console.error('[Braintree] Error:', error);
+    });
+}
+```
+
+In WooCommerce:
+1. Go to WooCommerce → Settings → Payments → Braintree
+2. Enable "Debug mode" or "Logging"
+3. Check logs at WooCommerce → Status → Logs
+
+### Getting Help
+
+If issues persist:
+
+1. **Braintree Support Portal**: Visit [Braintree Developer Documentation](https://developer.paypal.com/braintree/docs)
+2. **Braintree Community**: Check [Braintree Community Forums](https://www.braintreepayments.com/community)
+3. **WooCommerce Logs**: Review logs at WooCommerce → Status → Logs
+4. **Braintree Dashboard**: Monitor transactions and error logs in your Braintree account
+5. **Browser Console**: Always check for JavaScript errors and network issues
 
 <Note>
 Always test your Braintree integration thoroughly using the sandbox environment before going live. Ensure your webhook endpoints are configured to handle transaction notifications and updates. Monitor your Braintree dashboard for declined transactions and implement appropriate retry logic.

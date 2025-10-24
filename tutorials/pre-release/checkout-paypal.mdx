@@ -1,7 +1,7 @@
 ---
 title: "Checkout with PayPal"
 sidebarTitle: "PayPal"
-description: "Complete guide to integrating PayPal Buttons with CoCart's Checkout API"
+description: "Complete guide to integrating PayPal Buttons with Checkout API"
 icon: "paypal"
 tag: "WIP"
 robots: "noindex, follow"
@@ -820,6 +820,319 @@ For development and testing:
 2. Test with different PayPal account types (personal, business)
 3. Test payment cancellations
 4. Test network failures during payment
+
+## Troubleshooting
+
+### Common Issues
+
+<AccordionGroup>
+    <Accordion title="PayPal Buttons Not Displaying">
+        **Problem**: PayPal buttons don't appear on the page.
+
+        **Solution**: Check these common issues:
+        ```javascript
+        // Verify PayPal SDK is loaded
+        if (typeof paypal === 'undefined') {
+            console.error('PayPal SDK not loaded');
+            // Check the script tag is present and loads successfully
+        }
+
+        // Ensure container exists before rendering
+        const container = document.getElementById('paypal-button-container');
+        if (!container) {
+            console.error('PayPal button container not found');
+        }
+
+        // Check for initialization errors
+        paypal.Buttons({
+            // ... your configuration
+        }).render('#paypal-button-container').catch(error => {
+            console.error('PayPal button render error:', error);
+        });
+        ```
+        - Verify the PayPal SDK script tag is present and loading
+        - Check client ID is correct and matches WooCommerce settings
+        - Ensure container element exists in DOM
+        - Look for JavaScript errors in browser console
+        - Verify no CSS is hiding the container
+    </Accordion>
+
+    <Accordion title="Wrong Client ID or Currency Error">
+        **Problem**: "Invalid client ID" or currency mismatch errors.
+
+        **Solution**: Ensure SDK configuration matches your store:
+        ```html
+        <!-- Client ID must match WooCommerce PayPal settings -->
+        <script src="https://www.paypal.com/sdk/js?client-id=YOUR_CLIENT_ID&currency=USD"></script>
+        ```
+        - Get client ID from WooCommerce → Settings → Payments → PayPal
+        - Verify currency matches your store's currency
+        - Use sandbox client ID for testing, live client ID for production
+        - Check that your PayPal account supports the currency
+    </Accordion>
+
+    <Accordion title="'createOrder' Function Errors">
+        **Problem**: Errors when creating PayPal order.
+
+        **Solution**: Verify order data structure:
+        ```javascript
+        createOrder: function(data, actions) {
+            // Validate cart total exists
+            if (!cartInfo.total || cartInfo.total <= 0) {
+                console.error('Invalid cart total:', cartInfo.total);
+                return Promise.reject(new Error('Invalid cart total'));
+            }
+
+            return actions.order.create({
+                purchase_units: [{
+                    amount: {
+                        value: cartInfo.total, // Must be string or number
+                        currency_code: cartInfo.currency // Must match SDK currency
+                    }
+                }]
+            });
+        }
+        ```
+        - Ensure amount.value is a valid number or string
+        - Verify currency_code matches SDK initialization
+        - Check that cart total is greater than zero
+        - Validate all required billing/shipping fields are provided
+    </Accordion>
+
+    <Accordion title="Payment Approved But Order Not Created">
+        **Problem**: PayPal payment succeeds but WooCommerce order fails to create.
+
+        **Solution**: Debug the onApprove callback:
+        ```javascript
+        onApprove: async function(data, actions) {
+            try {
+                console.log('PayPal approval data:', data);
+
+                const order = await actions.order.capture();
+                console.log('PayPal order captured:', order);
+
+                // Verify order structure
+                if (!order.purchase_units || !order.purchase_units[0].payments.captures[0]) {
+                    throw new Error('Invalid PayPal order structure');
+                }
+
+                // Submit to CoCart
+                const checkoutResponse = await processPayPalCheckout(
+                    billingAddress,
+                    shippingAddress,
+                    order,
+                    data
+                );
+
+                console.log('Checkout response:', checkoutResponse);
+
+            } catch (error) {
+                console.error('onApprove error:', error);
+                // Check if error is from PayPal capture or CoCart checkout
+            }
+        }
+        ```
+        - Check browser console for error details
+        - Verify billing address is complete and valid
+        - Check PHP error logs for server-side issues
+        - Ensure payment_method is set to 'paypal'
+        - Verify WooCommerce PayPal gateway is active
+    </Accordion>
+
+    <Accordion title="Buttons Disabled or Grayed Out">
+        **Problem**: PayPal buttons appear but are disabled.
+
+        **Solution**: Common causes:
+        ```javascript
+        // 1. Form validation preventing button enable
+        createOrder: function(data, actions) {
+            // Check if form is valid
+            if (!validateForm()) {
+                // Show error message to user
+                showError('Please fill in all required fields');
+                return Promise.reject(new Error('Form validation failed'));
+            }
+
+            return actions.order.create({...});
+        }
+
+        // 2. CSS preventing interaction
+        #paypal-button-container {
+            pointer-events: auto; /* Ensure not disabled */
+            opacity: 1;
+        }
+        ```
+        - Verify form validation isn't blocking buttons
+        - Check for `pointer-events: none` CSS
+        - Ensure buttons finished rendering completely
+        - Look for overlay elements covering buttons
+    </Accordion>
+
+    <Accordion title="'INSTRUMENT_DECLINED' Error">
+        **Problem**: Customer's payment method is declined by PayPal.
+
+        **Solution**: Handle gracefully:
+        ```javascript
+        onError: function(error) {
+            console.error('PayPal error:', error);
+
+            let message = 'Payment failed. Please try again.';
+
+            if (error.message && error.message.includes('INSTRUMENT_DECLINED')) {
+                message = 'Your payment method was declined. Please try a different payment method or contact PayPal support.';
+            }
+
+            showError(message);
+        }
+        ```
+        Common reasons:
+        - Insufficient funds in PayPal account
+        - Payment method (bank/card) linked to PayPal is invalid
+        - PayPal account restrictions or limitations
+        - International transaction not supported
+    </Accordion>
+
+    <Accordion title="Payment Cancellation Issues">
+        **Problem**: onCancel not triggered or not handled properly.
+
+        **Solution**: Implement comprehensive cancellation handling:
+        ```javascript
+        onCancel: function(data) {
+            console.log('PayPal payment cancelled:', data);
+
+            // Clear any loading states
+            hideLoading();
+
+            // Show user-friendly message
+            showMessage('Payment was cancelled. You can try again anytime.');
+
+            // Re-enable form or payment buttons
+            enablePaymentForm();
+
+            // Optional: Track cancellation for analytics
+            trackEvent('paypal_payment_cancelled', data);
+        }
+        ```
+        - Test cancellation flow thoroughly
+        - Ensure UI resets to allow retry
+        - Don't treat cancellation as an error
+        - Provide clear next steps for customer
+    </Accordion>
+
+    <Accordion title="Sandbox vs Production Mode Issues">
+        **Problem**: Works in sandbox but fails in production.
+
+        **Solution**: Verify production configuration:
+        ```javascript
+        // Ensure using correct credentials for environment
+        const clientId = isProduction
+            ? 'YOUR_LIVE_CLIENT_ID'   // Live from PayPal dashboard
+            : 'YOUR_SANDBOX_CLIENT_ID'; // Sandbox from developer dashboard
+
+        // SDK URL for production (no -sandbox)
+        const sdkUrl = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=USD`;
+        ```
+        Checklist for going live:
+        - Switch to live client ID in WooCommerce settings
+        - Update SDK script to use live client ID
+        - Verify PayPal account is verified and approved for production
+        - Test with real PayPal account (small amount)
+        - Configure production webhooks
+        - Enable live payment processing in WooCommerce
+    </Accordion>
+
+    <Accordion title="Webhook Events Not Received">
+        **Problem**: Not receiving PayPal webhook notifications.
+
+        **Solution**: Configure webhooks properly:
+        1. Go to PayPal Developer Dashboard → My Apps & Credentials
+        2. Select your app
+        3. Scroll to Webhooks section
+        4. Add webhook URL: `https://yoursite.com/wc-api/wc_gateway_paypal_express_helper/`
+        5. Subscribe to events:
+           - Payment sale completed
+           - Payment sale refunded
+           - Payment capture completed
+        6. Test webhook delivery
+        7. Check webhook signature verification in WooCommerce logs
+    </Accordion>
+
+    <Accordion title="Amount Mismatch Errors">
+        **Problem**: "Amount mismatch" errors during checkout.
+
+        **Solution**: Ensure consistency:
+        ```javascript
+        // PayPal amount format
+        const paypalAmount = parseFloat(cartTotal).toFixed(2); // "10.00"
+
+        // In createOrder
+        amount: {
+            value: paypalAmount, // String with 2 decimals
+            currency_code: 'USD'
+        }
+
+        // In CoCart checkout
+        payment_data: {
+            gross_amount: paypalAmount, // Must match PayPal order
+            currency: 'USD'
+        }
+        ```
+        - Use consistent decimal formatting (2 decimal places)
+        - Match currency codes everywhere
+        - Don't modify cart during PayPal flow
+        - Verify cart hasn't changed between order creation and checkout
+    </Accordion>
+</AccordionGroup>
+
+### Debug Mode
+
+Enable detailed logging for troubleshooting:
+
+```javascript
+// Add detailed PayPal logging
+const DEBUG = true; // Set to false in production
+
+if (DEBUG) {
+    paypal.Buttons({
+        onInit: function(data, actions) {
+            console.log('[PayPal] Buttons initialized', data);
+        },
+        onClick: function(data, actions) {
+            console.log('[PayPal] Button clicked', data);
+        },
+        createOrder: function(data, actions) {
+            console.log('[PayPal] Creating order');
+            return actions.order.create({...}).then(orderId => {
+                console.log('[PayPal] Order created:', orderId);
+                return orderId;
+            });
+        },
+        onApprove: function(data, actions) {
+            console.log('[PayPal] Payment approved:', data);
+            return actions.order.capture().then(details => {
+                console.log('[PayPal] Payment captured:', details);
+                return details;
+            });
+        },
+        onCancel: function(data) {
+            console.log('[PayPal] Payment cancelled:', data);
+        },
+        onError: function(error) {
+            console.error('[PayPal] Error:', error);
+        }
+    }).render('#paypal-button-container');
+}
+```
+
+### Getting Help
+
+If issues persist:
+
+1. **PayPal Developer Forums**: Visit [PayPal Developer Community](https://www.paypal-community.com/t5/Merchant-Services-Development/ct-p/devtools)
+2. **PayPal Documentation**: Check [PayPal JavaScript SDK documentation](https://developer.paypal.com/sdk/js/)
+3. **WooCommerce Logs**: Review logs at WooCommerce → Status → Logs
+4. **Browser Console**: Always check for JavaScript errors
+5. **Network Tab**: Monitor API calls in browser DevTools
 
 ## Best Practices
 

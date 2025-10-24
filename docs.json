@@ -26,7 +26,7 @@
                 ]
               },
               {
-                "tab": "User-Guides",
+                "tab": "User Guides",
                 "icon": "book",
                 "groups": [
                   {
@@ -531,7 +531,7 @@
                 ]
               },
               {
-                "tab": "User-Guides",
+                "tab": "User Guides",
                 "icon": "book",
                 "groups": [
                   {
@@ -917,6 +917,7 @@
                       "tutorials/covert-cart-to-order",
                       "tutorials/jwt-token-checkup",
                       "tutorials/authentication-injection",
+                      "tutorials/pre-release/consumer-key-setup",
                       "tutorials/pre-release/extending-cart-creating-callbacks",
                       "tutorials/pre-release/address-provider"
                     ]
@@ -926,9 +927,9 @@
                     "icon": "cash-register",
                     "pages": [
                       "tutorials/pre-release/checkout-api",
-                      "tutorials/pre-release/consumer-key-setup",
                       "tutorials/pre-release/checkout-payment-processing",
                       "tutorials/pre-release/checkout-stripe",
+                      "tutorials/pre-release/checkout-woopay",
                       "tutorials/pre-release/checkout-paypal",
                       "tutorials/pre-release/checkout-braintree",
                       "tutorials/pre-release/checkout-authorize-net",

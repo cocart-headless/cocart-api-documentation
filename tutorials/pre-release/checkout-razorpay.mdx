@@ -1,7 +1,7 @@
 ---
 title: "Checkout with Razorpay"
 sidebarTitle: "Razorpay"
-description: "Complete guide to integrating Razorpay Standard Checkout with CoCart's Checkout API"
+description: "Complete guide to integrating Razorpay Standard Checkout with Checkout API"
 icon: "credit-card"
 tag: "WIP"
 robots: "noindex, follow"
@@ -834,6 +834,155 @@ Razorpay supports 100+ payment methods:
 - PayLater (LazyPay, Simpl, etc.)
 - NACH/eNACH
 - Bank Transfer (NEFT/RTGS)
+
+## Troubleshooting
+
+### Common Issues
+
+<AccordionGroup>
+    <Accordion title="Razorpay Checkout Script Not Loading">
+        **Problem**: Razorpay object is undefined.
+
+        **Solution**:
+        ```javascript
+        // Verify Razorpay is loaded
+        if (typeof Razorpay === 'undefined') {
+            console.error('Razorpay not loaded');
+        }
+
+        // Correct script
+        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+        ```
+        - Check browser console for errors
+        - Verify no ad blockers blocking script
+        - Ensure internet connectivity
+    </Accordion>
+
+    <Accordion title="Checkout Modal Not Opening">
+        **Problem**: rzp.open() doesn't show modal.
+
+        **Solution**:
+        ```javascript
+        const rzp = new Razorpay(options);
+
+        // Check for popup blockers
+        try {
+            rzp.open();
+        } catch (error) {
+            console.error('Modal error:', error);
+            alert('Please disable popup blocker');
+        }
+
+        // Listen for errors
+        rzp.on('payment.failed', function(response) {
+            console.error('Payment failed:', response.error);
+        });
+        ```
+        - Disable browser popup blockers
+        - Ensure HTTPS is enabled
+        - Verify all required options are provided
+    </Accordion>
+
+    <Accordion title="Payment Fails with Error Codes">
+        **Problem**: Getting Razorpay error codes.
+
+        **Solution**:
+        ```javascript
+        handler: function(response) {
+            console.log('Payment ID:', response.razorpay_payment_id);
+            console.log('Order ID:', response.razorpay_order_id);
+            console.log('Signature:', response.razorpay_signature);
+        },
+        modal: {
+            ondismiss: function() {
+                console.log('Modal dismissed by user');
+            }
+        }
+        ```
+        Common errors:
+        - `BAD_REQUEST_ERROR`: Invalid parameters
+        - `GATEWAY_ERROR`: Payment gateway issue
+        - `SERVER_ERROR`: Razorpay server issue
+        - `PAYMENT_DECLINED`: Card/bank declined
+    </Accordion>
+
+    <Accordion title="Payment Method Not Recognized">
+        **Problem**: Backend doesn't accept Razorpay.
+
+        **Solution**:
+        ```javascript
+        const checkoutData = {
+            payment_method: 'razorpay', // Correct ID
+            payment_data: {
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature
+            }
+        };
+        ```
+        - Verify Razorpay gateway enabled in WooCommerce
+        - Check API keys are configured
+        - Ensure payment method ID is correct
+    </Accordion>
+
+    <Accordion title="Test Mode vs Live Mode">
+        **Problem**: Works in test but not live.
+
+        **Solution**:
+        ```javascript
+        // Test mode: use test API key (starts with rzp_test_)
+        // Live mode: use live API key (starts with rzp_live_)
+
+        const options = {
+            key: isTestMode ? 'rzp_test_xxx' : 'rzp_live_xxx',
+            // ...
+        };
+        ```
+        Checklist:
+        - Switch to live API keys in WooCommerce
+        - Verify account is activated
+        - Complete KYC if required
+        - Test with real card (small amount)
+    </Accordion>
+
+    <Accordion title="UPI Payment Issues">
+        **Problem**: UPI payments failing.
+
+        **Solution**:
+        - Ensure customer has valid UPI ID
+        - Verify UPI is enabled in Razorpay dashboard
+        - Check UPI app is installed on device
+        - Test with different UPI apps (GPay, PhonePe, Paytm)
+        - Verify amount is within UPI limits
+    </Accordion>
+</AccordionGroup>
+
+### Debug Mode
+
+```javascript
+if (DEBUG) {
+    console.log('[Razorpay] Key:', options.key);
+    console.log('[Razorpay] Amount:', options.amount);
+    console.log('[Razorpay] Currency:', options.currency);
+
+    // Log all callbacks
+    options.handler = function(response) {
+        console.log('[Razorpay] Success:', response);
+    };
+
+    options.modal = {
+        ondismiss: function() {
+            console.log('[Razorpay] Modal dismissed');
+        }
+    };
+}
+```
+
+### Getting Help
+
+1. **Razorpay Documentation**: [Razorpay Checkout Docs](https://razorpay.com/docs/payments/payment-gateway/web-integration/)
+2. **Razorpay Support**: Contact through dashboard
+3. **WooCommerce Logs**: Check WooCommerce → Status → Logs
 
 ## Best Practices
 

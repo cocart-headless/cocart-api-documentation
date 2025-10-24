@@ -1,7 +1,7 @@
 ---
 title: "Checkout with Authorize.Net"
 sidebarTitle: "Authorize.Net"
-description: "Complete guide to integrating Authorize.Net Accept.js with CoCart's Checkout API"
+description: "Complete guide to integrating Authorize.Net Accept.js with Checkout API"
 icon: "credit-card"
 tag: "WIP"
 robots: "noindex, follow"
@@ -854,6 +854,426 @@ For development and testing with Authorize.Net:
 - **Declined transaction**: Use amount `$0.01`
 - **Error transaction**: Use amount `$0.02`
 - **Held transaction**: Use amount `$0.03`
+
+## Troubleshooting
+
+### Common Issues
+
+<AccordionGroup>
+    <Accordion title="Accept.js Library Not Loading">
+        **Problem**: Accept.js is undefined or not loading.
+
+        **Solution**: Verify script is loaded correctly:
+        ```javascript
+        // Check if Accept.js is available
+        if (typeof Accept === 'undefined') {
+            console.error('Accept.js not loaded');
+            console.error('Check script tag is present and correct');
+        }
+
+        // Correct script tag for production
+        <script type="text/javascript"
+                src="https://js.authorize.net/v1/Accept.js"
+                charset="utf-8">
+        </script>
+
+        // For sandbox testing
+        <script type="text/javascript"
+                src="https://jstest.authorize.net/v1/Accept.js"
+                charset="utf-8">
+        </script>
+        ```
+        Common causes:
+        - Wrong URL (production vs sandbox)
+        - Script blocked by ad blocker or firewall
+        - CORS or Content Security Policy issues
+        - Network timeout loading external script
+    </Accordion>
+
+    <Accordion title="Tokenization Fails with Error Messages">
+        **Problem**: Getting errors when calling Accept.dispatchData().
+
+        **Solution**: Handle Accept.js error responses:
+        ```javascript
+        Accept.dispatchData(secureData, function(response) {
+            if (response.messages.resultCode === 'Error') {
+                // Log all error messages
+                response.messages.message.forEach(function(msg) {
+                    console.error('Error:', msg.code, msg.text);
+
+                    // Common error codes
+                    switch(msg.code) {
+                        case 'E_WC_05':
+                            showError('Invalid card number');
+                            break;
+                        case 'E_WC_06':
+                            showError('Invalid expiration date');
+                            break;
+                        case 'E_WC_07':
+                            showError('Card has expired');
+                            break;
+                        case 'E_WC_08':
+                            showError('Invalid CVV');
+                            break;
+                        case 'E_WC_15':
+                            showError('Invalid client key or API login ID');
+                            break;
+                        default:
+                            showError(msg.text);
+                    }
+                });
+            } else {
+                // Success - use response.opaqueData
+                console.log('Token:', response.opaqueData.dataValue);
+            }
+        });
+        ```
+        Verification checklist:
+        - Card number is valid (use Luhn algorithm)
+        - Expiration date is in future (MM/YYYY format)
+        - CVV is 3-4 digits
+        - Client key and API login ID are correct
+        - All required fields are provided
+    </Accordion>
+
+    <Accordion title="Invalid Client Key or API Login ID">
+        **Problem**: Authentication errors when tokenizing.
+
+        **Solution**: Verify credentials match your environment:
+        ```javascript
+        // Credentials MUST match WooCommerce settings exactly
+        const authData = {
+            clientKey: 'YOUR_PUBLIC_CLIENT_KEY',  // From Authorize.Net account
+            apiLoginID: 'YOUR_API_LOGIN_ID'        // From Authorize.Net account
+        };
+
+        // Check which environment you're using
+        console.log('Using sandbox URL?',
+            document.querySelector('script[src*="jstest.authorize.net"]') !== null
+        );
+        ```
+        Steps to verify:
+        1. Log into Authorize.Net Merchant Interface
+        2. Go to Account → Settings → API Credentials & Keys
+        3. For sandbox: use test API credentials
+        4. For production: use live API credentials
+        5. Ensure WooCommerce Authorize.Net settings match
+        6. Client key format: starts with numbers and letters
+        7. API Login ID: alphanumeric string
+    </Accordion>
+
+    <Accordion title="Opaque Data Not Being Accepted">
+        **Problem**: Backend rejects the opaque data token.
+
+        **Solution**: Ensure proper data format:
+        ```javascript
+        // Accept.js returns opaqueData
+        const opaqueData = response.opaqueData;
+
+        // Must send BOTH dataDescriptor and dataValue
+        const paymentData = {
+            data_descriptor: opaqueData.dataDescriptor,  // e.g., "COMMON.ACCEPT.INAPP.PAYMENT"
+            data_value: opaqueData.dataValue,             // The actual token
+            // Optional but recommended
+            card_last_four: cardNumber.slice(-4),
+            card_type: getCardType(cardNumber),
+            expiry_month: expMonth,
+            expiry_year: expYear
+        };
+
+        // Submit to CoCart
+        const checkoutData = {
+            billing_address: billingAddress,
+            payment_method: 'authorizenet',
+            payment_data: paymentData
+        };
+        ```
+        Common mistakes:
+        - Only sending dataValue without dataDescriptor
+        - Trying to reuse an expired token (tokens expire quickly)
+        - Sending raw card data instead of opaque data
+        - Wrong payment_method ID (must be 'authorizenet')
+    </Accordion>
+
+    <Accordion title="Transaction Declined with Reason Codes">
+        **Problem**: Transactions are being declined.
+
+        **Solution**: Handle specific decline codes:
+        ```javascript
+        // Authorize.Net returns reason codes for declines
+        function handleAuthorizeNetError(error) {
+            const reasonCode = error.reason_code || error.code;
+
+            const errorMessages = {
+                '2': 'Transaction declined',
+                '3': 'Error processing transaction',
+                '4': 'Transaction held for review',
+                '6': 'Invalid credit card number',
+                '7': 'Invalid expiration date',
+                '8': 'Card has expired',
+                '11': 'Duplicate transaction',
+                '13': 'Merchant does not accept this card type',
+                '27': 'Address verification (AVS) failed',
+                '28': 'Card type not accepted',
+                '44': 'Card code (CVV) does not match',
+                '45': 'CVV and AVS both failed',
+                '127': 'Transaction did not meet AVS requirements',
+                '193': 'Country not supported'
+            };
+
+            return errorMessages[reasonCode] || 'Transaction failed';
+        }
+        ```
+        Testing declines:
+        - Use test amounts ($0.01, $0.02, $0.03) in sandbox
+        - Check AVS settings in Authorize.Net dashboard
+        - Verify CVV verification is properly configured
+        - Review fraud detection rules
+    </Accordion>
+
+    <Accordion title="Sandbox vs Production Configuration">
+        **Problem**: Works in sandbox but fails in production.
+
+        **Solution**: Verify environment configuration:
+        ```javascript
+        // Sandbox configuration
+        const sandboxConfig = {
+            scriptUrl: 'https://jstest.authorize.net/v1/Accept.js',
+            apiLoginID: 'sandbox_api_login',
+            clientKey: 'sandbox_public_key',
+            endpoint: 'apitest.authorize.net'
+        };
+
+        // Production configuration
+        const productionConfig = {
+            scriptUrl: 'https://js.authorize.net/v1/Accept.js',
+            apiLoginID: 'production_api_login',
+            clientKey: 'production_public_key',
+            endpoint: 'api.authorize.net'
+        };
+        ```
+        Pre-launch checklist:
+        - [ ] Switch Accept.js URL from jstest to js
+        - [ ] Update API Login ID to production credentials
+        - [ ] Update Public Client Key to production key
+        - [ ] Update WooCommerce settings to production mode
+        - [ ] Test with real card (small amount)
+        - [ ] Verify SSL certificate is valid
+        - [ ] Enable production transaction mode
+        - [ ] Configure webhooks for production
+        - [ ] Set up email notifications
+    </Accordion>
+
+    <Accordion title="Payment Method Not Recognized">
+        **Problem**: Backend returns "payment method not available" error.
+
+        **Solution**: Verify payment method configuration:
+        ```javascript
+        // Correct payment method ID for Authorize.Net
+        const checkoutData = {
+            billing_address: billingAddress,
+            payment_method: 'authorizenet', // Must match WooCommerce gateway ID
+            payment_data: {
+                data_descriptor: opaqueData.dataDescriptor,
+                data_value: opaqueData.dataValue
+            }
+        };
+        ```
+        Checklist:
+        - Payment method ID is 'authorizenet' (check WooCommerce gateway settings)
+        - Authorize.Net gateway is enabled in WooCommerce → Settings → Payments
+        - Gateway is properly configured with valid credentials
+        - Currency is supported by Authorize.Net
+        - Account is active and in good standing
+    </Accordion>
+
+    <Accordion title="Form Validation Not Working">
+        **Problem**: Unable to validate card input before tokenization.
+
+        **Solution**: Implement client-side validation:
+        ```javascript
+        // Validate card number (Luhn algorithm)
+        function isValidCardNumber(cardNumber) {
+            const digits = cardNumber.replace(/\D/g, '');
+            if (digits.length < 13 || digits.length > 19) return false;
+
+            let sum = 0;
+            let isEven = false;
+
+            for (let i = digits.length - 1; i >= 0; i--) {
+                let digit = parseInt(digits[i]);
+
+                if (isEven) {
+                    digit *= 2;
+                    if (digit > 9) digit -= 9;
+                }
+
+                sum += digit;
+                isEven = !isEven;
+            }
+
+            return sum % 10 === 0;
+        }
+
+        // Validate expiration date
+        function isValidExpiry(month, year) {
+            const expiry = new Date(parseInt(year), parseInt(month) - 1);
+            const now = new Date();
+            now.setDate(1); // Set to first of month for comparison
+
+            return expiry >= now;
+        }
+
+        // Validate CVV
+        function isValidCVV(cvv, cardType) {
+            const cvvLength = cvv.replace(/\D/g, '').length;
+            return cardType === 'amex' ? cvvLength === 4 : cvvLength === 3;
+        }
+
+        // Use before calling Accept.dispatchData
+        if (!isValidCardNumber(cardNumber)) {
+            showError('Invalid card number');
+            return;
+        }
+        ```
+    </Accordion>
+
+    <Accordion title="Checkout Completes But Order Not Created">
+        **Problem**: Payment authorized but WooCommerce order fails.
+
+        **Solution**: Debug the checkout submission:
+        ```javascript
+        async function processCheckout(billingAddress, paymentData) {
+            try {
+                console.log('Submitting checkout...');
+                console.log('Billing:', billingAddress);
+                console.log('Payment data:', paymentData);
+
+                const response = await fetch('/wp-json/cocart/preview/checkout', {
+                    method: 'PUT',
+                    headers: {
+                        'Cart-Key': cartKey,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        billing_address: billingAddress,
+                        payment_method: 'authorizenet',
+                        payment_data: paymentData
+                    })
+                });
+
+                const result = await response.json();
+                console.log('Checkout response:', result);
+
+                if (!response.ok) {
+                    console.error('HTTP Error:', response.status);
+                    throw new Error(result.message || 'Checkout failed');
+                }
+
+                if (!result.order_id) {
+                    console.error('No order ID returned');
+                    throw new Error('Order creation failed');
+                }
+
+                return result;
+
+            } catch (error) {
+                console.error('Checkout error:', error);
+                throw error;
+            }
+        }
+        ```
+        Debug checklist:
+        - Check browser console for errors
+        - Review server PHP error logs
+        - Check WooCommerce → Status → Logs
+        - Verify Authorize.Net transaction in merchant interface
+        - Ensure cart is not empty
+        - Validate all required billing fields are provided
+    </Accordion>
+
+    <Accordion title="CORS or Content Security Policy Errors">
+        **Problem**: Browser blocks Accept.js or API calls.
+
+        **Solution**: Configure CSP headers properly:
+        ```html
+        <!-- Required Content Security Policy directives -->
+        <meta http-equiv="Content-Security-Policy"
+              content="
+                script-src 'self' https://js.authorize.net https://jstest.authorize.net;
+                frame-src 'self' https://authorize.net https://test.authorize.net;
+                connect-src 'self' https://api.authorize.net https://apitest.authorize.net;
+              ">
+        ```
+        Or in server configuration:
+        ```
+        Content-Security-Policy:
+          script-src 'self' https://js.authorize.net https://jstest.authorize.net;
+          frame-src 'self' https://authorize.net https://test.authorize.net;
+          connect-src 'self' https://api.authorize.net https://apitest.authorize.net;
+        ```
+        Also check:
+        - Firewall not blocking authorize.net domains
+        - No ad blockers interfering with payment scripts
+        - HTTPS is properly configured (Accept.js requires HTTPS)
+    </Accordion>
+</AccordionGroup>
+
+### Debug Mode
+
+Enable detailed logging for troubleshooting:
+
+```javascript
+const DEBUG = true; // Set to false in production
+
+if (DEBUG) {
+    console.log('[Authorize.Net] Configuration:', {
+        clientKey: authData.clientKey,
+        apiLoginID: authData.apiLoginID,
+        environment: window.location.hostname.includes('test') ? 'sandbox' : 'production'
+    });
+
+    // Log card data being sent (DO NOT log full card number in production)
+    console.log('[Authorize.Net] Preparing to tokenize:', {
+        cardNumberLength: cardData.cardNumber.length,
+        lastFour: cardData.cardNumber.slice(-4),
+        month: cardData.month,
+        year: cardData.year,
+        cvvLength: cardData.cardCode.length
+    });
+
+    // Wrap Accept.dispatchData with logging
+    const originalDispatchData = Accept.dispatchData;
+    Accept.dispatchData = function(secureData, callback) {
+        console.log('[Authorize.Net] Calling Accept.dispatchData');
+
+        originalDispatchData(secureData, function(response) {
+            console.log('[Authorize.Net] Response received:', {
+                resultCode: response.messages.resultCode,
+                messageCount: response.messages.message.length
+            });
+
+            if (response.messages.resultCode === 'Ok') {
+                console.log('[Authorize.Net] Token created successfully');
+            } else {
+                console.error('[Authorize.Net] Errors:', response.messages.message);
+            }
+
+            callback(response);
+        });
+    };
+}
+```
+
+### Getting Help
+
+If issues persist:
+
+1. **Authorize.Net Documentation**: [Accept.js Integration Guide](https://developer.authorize.net/api/reference/features/acceptjs.html)
+2. **Authorize.Net Support**: Contact through merchant interface
+3. **Developer Forums**: [Authorize.Net Community](https://community.developer.authorize.net/)
+4. **WooCommerce Logs**: Check WooCommerce → Status → Logs
+5. **Transaction Details**: Review in Authorize.Net Merchant Interface
 
 ## Best Practices
 

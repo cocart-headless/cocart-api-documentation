@@ -1,7 +1,7 @@
 ---
-title: "Setting Up Consumer Keys"
-sidebarTitle: "Consumer Key Setup"
-description: "Complete guide to generating and configuring WooCommerce consumer keys for secure CoCart API access"
+title: "Setting Up Consumer Keys for Sessions API"
+sidebarTitle: "Consumer Keys (Sessions API)"
+description: "Complete guide to generating and configuring WooCommerce consumer keys for secure CoCart Sessions API access"
 icon: "key"
 tag: "WIP"
 robots: "noindex, follow"
@@ -12,30 +12,56 @@ robots: "noindex, follow"
 </Warning>
 
 <Note>
-    Consumer keys provide secure, authenticated access to the CoCart API. This guide covers setup and best practices for API authentication.
+    Consumer keys are required for administrative operations using the CoCart Sessions API. This guide covers setup and best practices for server-side authentication.
 </Note>
 
 ## Overview
 
-CoCart uses WooCommerce's built-in consumer key/secret authentication system to provide secure API access. This OAuth 1.0a implementation ensures that only authorized applications can access your checkout API.
+The CoCart **Sessions API** requires WooCommerce REST API authentication using consumer keys. This API is designed for **administrative and server-side operations** such as viewing all cart sessions, managing customer carts, and debugging session data.
 
-## Why Consumer Keys?
+<Warning>
+**Important**: Consumer keys are NOT needed for the Checkout API. Guest users and customers interact with the Checkout API using cart keys (session-based authentication). Only use consumer keys for Sessions API operations.
+</Warning>
+
+## What is the Sessions API?
+
+The Sessions API allows you to:
 
 <CardGroup cols={2}>
-    <Card title="Security" icon="shield-check">
-        Prevents unauthorized access to your checkout API and customer data
+    <Card title="View All Cart Sessions" icon="database">
+        Retrieve a paginated list of all active cart sessions in your store
     </Card>
 
-    <Card title="Rate Limiting" icon="gauge-high">
-        Built-in request throttling and abuse protection per application
+    <Card title="Get Session Details" icon="magnifying-glass">
+        View specific cart session data including items, customer info, and totals
+    </Card>
+
+    <Card title="Delete Sessions" icon="trash">
+        Remove abandoned or invalid cart sessions programmatically
+    </Card>
+
+    <Card title="Debug Customer Issues" icon="bug">
+        Troubleshoot cart problems by inspecting session data and expiration
+    </Card>
+</CardGroup>
+
+## Why Consumer Keys for Sessions API?
+
+<CardGroup cols={2}>
+    <Card title="Administrative Access" icon="shield-check">
+        Prevents unauthorized access to sensitive cart session data across all users
+    </Card>
+
+    <Card title="Server-to-Server Auth" icon="server">
+        Secure authentication for backend systems and integrations
     </Card>
 
     <Card title="Audit Trail" icon="clipboard-list">
-        Track which applications are making requests and monitor usage
+        Track which applications are accessing session management endpoints
     </Card>
 
-    <Card title="Granular Control" icon="sliders">
-        Different permission levels and access controls per application
+    <Card title="Permission Control" icon="sliders">
+        Read or Read/Write permissions for different operational needs
     </Card>
 </CardGroup>
 
@@ -51,12 +77,12 @@ CoCart uses WooCommerce's built-in consumer key/secret authentication system to 
 2. **Click "Add Key"**
 
 3. **Configure Key Settings**
-   - **Description**: Enter a meaningful name (e.g., "Mobile App - Production")
+   - **Description**: Enter a meaningful name (e.g., "Sessions API - Admin Dashboard")
    - **User**: Select a user account (typically an admin)
    - **Permissions**: Choose appropriate level:
-    - `Read` - For read-only access (GET requests only)
-    - `Write` - For write access (POST, PUT, DELETE)
-    - `Read/Write` - Full access (recommended for checkout)
+    - `Read` - For viewing sessions only (GET requests)
+    - `Write` - For deleting sessions (DELETE requests)
+    - `Read/Write` - Full access (recommended for session management)
 
 4. **Generate and Save Keys**
    - **Consumer Key**: Starts with `ck_` (public identifier)
@@ -69,11 +95,11 @@ CoCart uses WooCommerce's built-in consumer key/secret authentication system to 
 ### Via WP-CLI
 
 ```bash
-# Generate read/write API key
-wp wc api create --user=1 --description="CoCart Mobile App" --permissions=read_write
+# Generate read/write API key for Sessions API
+wp wc api create --user=1 --description="CoCart Sessions API - Admin" --permissions=read_write
 
-# Generate read-only API key
-wp wc api create --user=1 --description="CoCart Analytics" --permissions=read
+# Generate read-only API key for session monitoring
+wp wc api create --user=1 --description="CoCart Sessions API - Read Only" --permissions=read
 ```
 
 ### Programmatically (PHP)
@@ -149,12 +175,12 @@ COCART_DEV_API_URL=https://dev.yourstore.com/wp-json/cocart/preview
 COCART_PROD_API_URL=https://yourstore.com/wp-json/cocart/preview
 ```
 
-## Step 3: Implement Authentication in Your Application
+## Step 3: Implement Sessions API Authentication
 
-### Basic Implementation
+### Basic Implementation (JavaScript/Node.js)
 
 ```javascript
-class CoCartAPI {
+class CoCartSessionsAPI {
     constructor(config) {
         this.consumerKey = config.consumer_key;
         this.consumerSecret = config.consumer_secret;
@@ -162,15 +188,15 @@ class CoCartAPI {
     }
 
     async makeRequest(endpoint, options = {}) {
-        const url = new URL(`${this.baseURL}${endpoint}`);
+        // Create Basic Auth header
+        const credentials = Buffer.from(
+            `${this.consumerKey}:${this.consumerSecret}`
+        ).toString('base64');
 
-        // Add authentication parameters
-        url.searchParams.append('consumer_key', this.consumerKey);
-        url.searchParams.append('consumer_secret', this.consumerSecret);
-
-        const response = await fetch(url.toString(), {
+        const response = await fetch(`${this.baseURL}${endpoint}`, {
             ...options,
             headers: {
+                'Authorization': `Basic ${credentials}`,
                 'Content-Type': 'application/json',
                 ...options.headers
             }
@@ -183,195 +209,341 @@ class CoCartAPI {
 
         return response.json();
     }
+
+    // Get all cart sessions with pagination
+    async getAllSessions(page = 1, perPage = 10) {
+        return this.makeRequest(`/v2/sessions?page=${page}&per_page=${perPage}`);
+    }
+
+    // Get a specific session by cart key
+    async getSession(cartKey) {
+        return this.makeRequest(`/v2/sessions/${cartKey}`);
+    }
+
+    // Delete a specific session
+    async deleteSession(cartKey) {
+        return this.makeRequest(`/v2/sessions/${cartKey}`, {
+            method: 'DELETE'
+        });
+    }
 }
 
 // Usage
-const api = new CoCartAPI({
+const sessionsAPI = new CoCartSessionsAPI({
     consumer_key: 'ck_1234567890abcdef',
     consumer_secret: 'cs_1234567890abcdef',
-    api_url: '/wp-json/cocart/preview'
+    api_url: 'https://yourstore.com/wp-json/cocart'
 });
+
+// Example: Get all sessions
+const sessions = await sessionsAPI.getAllSessions(1, 20);
+console.log(`Found ${sessions.length} active cart sessions`);
 ```
 
-### Advanced Implementation with OAuth Signature
+### PHP Implementation
 
-```javascript
-// Using oauth-1.0a library for proper OAuth implementation
-import OAuth from 'oauth-1.0a';
-import crypto from 'crypto';
+```php
+<?php
+/**
+ * CoCart Sessions API Client
+ */
+class CoCart_Sessions_API {
+    private $consumer_key;
+    private $consumer_secret;
+    private $base_url;
 
-class SecureCoCartAPI {
-    constructor(config) {
-        this.oauth = OAuth({
-            consumer: {
-                key: config.consumer_key,
-                secret: config.consumer_secret
-            },
-            signature_method: 'HMAC-SHA1',
-            hash_function: (baseString, key) => {
-                return crypto.createHmac('sha1', key)
-                    .update(baseString)
-                    .digest('base64');
-            }
-        });
-
-        this.baseURL = config.api_url;
+    public function __construct($consumer_key, $consumer_secret, $base_url) {
+        $this->consumer_key = $consumer_key;
+        $this->consumer_secret = $consumer_secret;
+        $this->base_url = rtrim($base_url, '/');
     }
 
-    async makeRequest(endpoint, options = {}) {
-        const url = `${this.baseURL}${endpoint}`;
-        const method = options.method || 'GET';
+    /**
+     * Make authenticated request to Sessions API
+     */
+    private function make_request($endpoint, $method = 'GET', $body = null) {
+        $url = $this->base_url . $endpoint;
 
-        // Generate OAuth authorization data
-        const requestData = {
-            url: url,
-            method: method
-        };
+        // Create Basic Auth header
+        $credentials = base64_encode($this->consumer_key . ':' . $this->consumer_secret);
 
-        const authHeader = this.oauth.toHeader(this.oauth.authorize(requestData));
+        $args = array(
+            'method'  => $method,
+            'headers' => array(
+                'Authorization' => 'Basic ' . $credentials,
+                'Content-Type'  => 'application/json',
+            ),
+        );
 
-        const response = await fetch(url, {
-            ...options,
-            method,
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': authHeader.Authorization,
-                ...options.headers
-            }
-        });
-
-        return this.handleResponse(response);
-    }
-}
-```
-
-## Step 4: Handle Customer Authentication
-
-### For Registered Customers
-
-```javascript
-class CustomerCoCartAPI extends CoCartAPI {
-    constructor(config) {
-        super(config);
-        this.cartKey = config.cart_key;
-    }
-
-    async makeRequest(endpoint, options = {}) {
-        const url = new URL(`${this.baseURL}${endpoint}`);
-
-        // Add authentication
-        url.searchParams.append('consumer_key', this.consumerKey);
-        url.searchParams.append('consumer_secret', this.consumerSecret);
-
-        // Cart key contains customer context automatically
-        const headers = {
-            'Content-Type': 'application/json',
-            ...options.headers
-        };
-
-        if (this.cartKey) {
-            headers['Cart-Key'] = this.cartKey;
+        if ($body) {
+            $args['body'] = json_encode($body);
         }
 
-        return super.makeRequest(endpoint, {
-            ...options,
-            url: url.toString(),
-            headers
-        });
+        $response = wp_remote_request($url, $args);
+
+        if (is_wp_error($response)) {
+            throw new Exception($response->get_error_message());
+        }
+
+        return json_decode(wp_remote_retrieve_body($response), true);
     }
 
-    // Update cart key when cart changes
-    updateCartKey(cartKey) {
-        this.cartKey = cartKey;
+    /**
+     * Get all cart sessions
+     */
+    public function get_all_sessions($page = 1, $per_page = 10) {
+        return $this->make_request("/v2/sessions?page={$page}&per_page={$per_page}");
+    }
+
+    /**
+     * Get specific session by cart key
+     */
+    public function get_session($cart_key) {
+        return $this->make_request("/v2/sessions/{$cart_key}");
+    }
+
+    /**
+     * Delete specific session
+     */
+    public function delete_session($cart_key) {
+        return $this->make_request("/v2/sessions/{$cart_key}", 'DELETE');
     }
 }
 
-// Usage with cart context (automatically includes customer info)
-const customerAPI = new CustomerCoCartAPI({
-    consumer_key: 'ck_1234567890abcdef',
-    consumer_secret: 'cs_1234567890abcdef',
-    cart_key: 'user-cart-key-here', // Cart key includes customer context
-    api_url: '/wp-json/cocart/preview'
-});
+// Usage
+$sessions_api = new CoCart_Sessions_API(
+    'ck_1234567890abcdef',
+    'cs_1234567890abcdef',
+    'https://yourstore.com/wp-json/cocart'
+);
+
+// Get all sessions
+$sessions = $sessions_api->get_all_sessions(1, 20);
+error_log('Found ' . count($sessions) . ' active sessions');
 ```
 
-### Dynamic Customer Handling
+## Step 4: Common Sessions API Use Cases
+
+### Monitor Active Carts
 
 ```javascript
-// Handle login/logout events
-function handleUserLogin(newCartKey) {
-    // Update API instance with new cart key (contains customer context)
-    coCartAPI.updateCartKey(newCartKey);
+// Get all active sessions and analyze cart data
+async function monitorActiveCarts() {
+    const sessions = await sessionsAPI.getAllSessions(1, 100);
 
-    // Refresh any cached data
-    refreshCheckoutData();
+    const stats = {
+        total: sessions.length,
+        withItems: 0,
+        abandoned: 0,
+        totalValue: 0
+    };
+
+    sessions.forEach(session => {
+        if (session.cart_items && session.cart_items.length > 0) {
+            stats.withItems++;
+            stats.totalValue += parseFloat(session.cart_totals?.total || 0);
+        }
+
+        // Check if cart hasn't been updated in 24 hours
+        const lastUpdate = new Date(session.cart_expiry * 1000);
+        const hoursSinceUpdate = (Date.now() - lastUpdate) / (1000 * 60 * 60);
+
+        if (hoursSinceUpdate > 24) {
+            stats.abandoned++;
+        }
+    });
+
+    console.log('Cart Statistics:', stats);
+    return stats;
 }
+```
 
-function handleUserLogout() {
-    // Switch to guest cart key or create new session
-    const guestCartKey = createGuestCartSession();
-    coCartAPI.updateCartKey(guestCartKey);
+### Debug Customer Cart Issues
 
-    // Clear sensitive cached data
-    clearCustomerData();
+```javascript
+// Retrieve and inspect a specific customer's cart session
+async function debugCustomerCart(cartKey) {
+    try {
+        const session = await sessionsAPI.getSession(cartKey);
+
+        console.log('Session Details:', {
+            cartKey: cartKey,
+            items: session.cart_items,
+            customer: session.customer,
+            totals: session.cart_totals,
+            expires: new Date(session.cart_expiry * 1000)
+        });
+
+        // Check for common issues
+        if (!session.cart_items || session.cart_items.length === 0) {
+            console.warn('Cart is empty');
+        }
+
+        if (session.cart_expiry < Date.now() / 1000) {
+            console.warn('Cart has expired');
+        }
+
+        return session;
+    } catch (error) {
+        console.error('Failed to retrieve cart session:', error.message);
+        throw error;
+    }
 }
+```
 
-// Helper function to create guest cart session
-function createGuestCartSession() {
-    // This would typically make a request to create a new cart
-    return 'guest-cart-key-' + generateUniqueId();
+### Clean Up Abandoned Carts
+
+```javascript
+// Delete cart sessions that haven't been active for 30+ days
+async function cleanupAbandonedCarts() {
+    const allSessions = await sessionsAPI.getAllSessions(1, 1000);
+    const thirtyDaysAgo = Date.now() / 1000 - (30 * 24 * 60 * 60);
+
+    const deletedSessions = [];
+
+    for (const session of allSessions) {
+        if (session.cart_expiry < thirtyDaysAgo) {
+            try {
+                await sessionsAPI.deleteSession(session.cart_key);
+                deletedSessions.push(session.cart_key);
+                console.log(`Deleted abandoned cart: ${session.cart_key}`);
+            } catch (error) {
+                console.error(`Failed to delete ${session.cart_key}:`, error.message);
+            }
+        }
+    }
+
+    console.log(`Cleaned up ${deletedSessions.length} abandoned carts`);
+    return deletedSessions;
+}
+```
+
+### Build Admin Dashboard
+
+```php
+<?php
+/**
+ * Admin dashboard for monitoring cart sessions
+ */
+function display_cart_sessions_dashboard() {
+    $sessions_api = new CoCart_Sessions_API(
+        get_option('cocart_consumer_key'),
+        get_option('cocart_consumer_secret'),
+        home_url('/wp-json/cocart')
+    );
+
+    try {
+        $sessions = $sessions_api->get_all_sessions(1, 50);
+
+        echo '<div class="wrap">';
+        echo '<h1>Active Cart Sessions</h1>';
+        echo '<table class="wp-list-table widefat fixed striped">';
+        echo '<thead><tr>';
+        echo '<th>Cart Key</th>';
+        echo '<th>Customer</th>';
+        echo '<th>Items</th>';
+        echo '<th>Total</th>';
+        echo '<th>Expires</th>';
+        echo '<th>Actions</th>';
+        echo '</tr></thead><tbody>';
+
+        foreach ($sessions as $session) {
+            $customer_email = $session['customer']['billing_email'] ?? 'Guest';
+            $item_count = count($session['cart_items'] ?? []);
+            $total = $session['cart_totals']['total'] ?? '0.00';
+            $expiry = date('Y-m-d H:i', $session['cart_expiry']);
+
+            echo '<tr>';
+            echo '<td>' . esc_html($session['cart_key']) . '</td>';
+            echo '<td>' . esc_html($customer_email) . '</td>';
+            echo '<td>' . esc_html($item_count) . '</td>';
+            echo '<td>$' . esc_html($total) . '</td>';
+            echo '<td>' . esc_html($expiry) . '</td>';
+            echo '<td><a href="#" class="view-session" data-key="' . esc_attr($session['cart_key']) . '">View</a></td>';
+            echo '</tr>';
+        }
+
+        echo '</tbody></table>';
+        echo '</div>';
+    } catch (Exception $e) {
+        echo '<div class="error"><p>Error loading sessions: ' . esc_html($e->getMessage()) . '</p></div>';
+    }
 }
 ```
 
 ## Step 5: Security Best Practices
 
-### Key Storage
+### Key Storage for Server-Side Applications
+
+<Warning>
+**Critical**: Consumer keys for Sessions API should ONLY be used in server-side applications. Never expose these keys to client-side code or browsers.
+</Warning>
 
 <AccordionGroup>
-    <Accordion title="Client-Side Applications">
-        **Never store consumer secrets in client-side code**
+    <Accordion title="Environment Variables (Recommended)">
+        **Store keys in environment variables, never in code**
+
+        ```bash
+        # .env file
+        COCART_CONSUMER_KEY=ck_1234567890abcdef
+        COCART_CONSUMER_SECRET=cs_1234567890abcdef
+        COCART_API_URL=https://yourstore.com/wp-json/cocart
+        ```
 
         ```javascript
-        // ❌ DON'T DO THIS - Exposes secret to users
-        const config = {
-            consumer_key: 'ck_1234567890abcdef',
-            consumer_secret: 'cs_1234567890abcdef' // Visible in browser
-        };
-
-        // ✅ DO THIS - Use a backend proxy
-        const config = {
-            consumer_key: 'ck_1234567890abcdef',
-            // Consumer secret handled by your backend
-        };
+        // Node.js - Load from environment
+        const sessionsAPI = new CoCartSessionsAPI({
+            consumer_key: process.env.COCART_CONSUMER_KEY,
+            consumer_secret: process.env.COCART_CONSUMER_SECRET,
+            api_url: process.env.COCART_API_URL
+        });
         ```
-    </Accordion>
-
-    <Accordion title="Server-Side Applications">
-        **Use environment variables or secure configuration**
 
         ```php
-        // ✅ Good - Environment variables
-        $consumer_key = $_ENV['COCART_CONSUMER_KEY'];
-        $consumer_secret = $_ENV['COCART_CONSUMER_SECRET'];
-
-        // ✅ Good - WordPress options (if properly secured)
-        $consumer_key = get_option('cocart_consumer_key');
-        $consumer_secret = get_option('cocart_consumer_secret');
+        // PHP - Load from environment
+        $sessions_api = new CoCart_Sessions_API(
+            $_ENV['COCART_CONSUMER_KEY'],
+            $_ENV['COCART_CONSUMER_SECRET'],
+            $_ENV['COCART_API_URL']
+        );
         ```
     </Accordion>
 
-    <Accordion title="Mobile Applications">
-        **Use secure storage mechanisms**
+    <Accordion title="WordPress Options (Secured)">
+        **Store in WordPress options with proper access controls**
+
+        ```php
+        // Store keys securely (admin only)
+        if (current_user_can('manage_options')) {
+            update_option('cocart_sessions_consumer_key', $consumer_key);
+            update_option('cocart_sessions_consumer_secret', $consumer_secret);
+        }
+
+        // Retrieve keys for Sessions API
+        $consumer_key = get_option('cocart_sessions_consumer_key');
+        $consumer_secret = get_option('cocart_sessions_consumer_secret');
+        ```
+    </Accordion>
+
+    <Accordion title="Secrets Management Services">
+        **Use cloud secrets managers for production**
 
         ```javascript
-        // React Native example with Keychain/Keystore
-        import { setInternetCredentials, getInternetCredentials } from 'react-native-keychain';
+        // AWS Secrets Manager example
+        const AWS = require('aws-sdk');
+        const secretsManager = new AWS.SecretsManager();
 
-        // Store securely
-        await setInternetCredentials('cocart-api', consumerKey, consumerSecret);
+        async function getCoCartCredentials() {
+            const secret = await secretsManager.getSecretValue({
+                SecretId: 'cocart/sessions-api'
+            }).promise();
 
-        // Retrieve securely
-        const credentials = await getInternetCredentials('cocart-api');
+            const credentials = JSON.parse(secret.SecretString);
+            return {
+                consumer_key: credentials.consumer_key,
+                consumer_secret: credentials.consumer_secret
+            };
+        }
         ```
     </Accordion>
 </AccordionGroup>
@@ -479,67 +651,80 @@ function cleanup_unused_api_keys() {
     <Card title="401 Unauthorized" icon="lock">
         **Causes:**
         - Invalid consumer key/secret
-        - Key disabled or expired
-        - Incorrect permissions
+        - Incorrect Basic Auth header format
+        - Key disabled or revoked
 
         **Solutions:**
-        - Verify key exists in WooCommerce
-        - Check key permissions
-        - Regenerate if necessary
+        - Verify Base64 encoding: `base64(key:secret)`
+        - Check key exists in WooCommerce → Settings → Advanced → REST API
+        - Ensure key has not been deleted
     </Card>
 
     <Card title="403 Forbidden" icon="ban">
         **Causes:**
-        - Read-only key used for write operations
-        - Cart session access violation
-        - Rate limiting triggered
+        - Read-only key used for DELETE operations
+        - User associated with key lacks permissions
+        - IP restrictions or firewall rules
 
         **Solutions:**
-        - Check key permissions
-        - Verify cart key ownership
-        - Implement rate limit handling
+        - Use Read/Write key for delete operations
+        - Ensure key user has `manage_woocommerce` capability
+        - Check server firewall settings
+    </Card>
+
+    <Card title="404 Not Found" icon="circle-question">
+        **Causes:**
+        - Incorrect API endpoint URL
+        - Session key doesn't exist
+        - Pretty permalinks not enabled
+
+        **Solutions:**
+        - Verify endpoint: `/wp-json/cocart/v2/sessions`
+        - Check cart key is valid and exists
+        - Enable permalinks in WordPress Settings
+    </Card>
+
+    <Card title="Empty Response" icon="database">
+        **Causes:**
+        - No active cart sessions
+        - Pagination exceeds available data
+        - Sessions expired and cleaned up
+
+        **Solutions:**
+        - Check if any carts exist in store
+        - Reduce `per_page` or `page` parameter
+        - Verify session expiration settings
+    </Card>
+
+    <Card title="Key Exposure Risk" icon="eye">
+        **Causes:**
+        - Keys in version control (.git)
+        - Keys in client-side code
+        - Keys in logs or error messages
+
+        **Solutions:**
+        - Add `.env` to `.gitignore`
+        - Only use keys server-side
+        - Sanitize logs before debugging
+        - Rotate keys immediately if exposed
     </Card>
 
     <Card title="Rate Limiting" icon="clock">
         **Causes:**
-        - Too many requests per timeframe
-        - Shared keys across applications
+        - Too many requests in short timeframe
+        - Shared keys across multiple systems
 
         **Solutions:**
-        - Implement request queuing
-        - Use separate keys per app
-        - Add retry logic with backoff
-    </Card>
-
-    <Card title="Key Exposure" icon="eye">
-        **Causes:**
-        - Keys in client-side code
-        - Keys in version control
-        - Insecure transmission
-
-        **Solutions:**
-        - Use backend proxy
-        - Environment variables
-        - HTTPS only
-    </Card>
-
-    <Card title="Payment Gateway Issues" icon="credit-card">
-        **Causes:**
-        - Gateway configuration mismatch
-        - Missing credentials
-        - Environment misalignment
-
-        **Solutions:**
-        - Use payment methods debug endpoint
-        - Verify gateway credentials match
-        - Check test vs production settings
+        - Implement exponential backoff
+        - Use separate keys per application
+        - Cache session data when possible
     </Card>
 </CardGroup>
 
 ### Debug Mode
 
 ```javascript
-class DebugCoCartAPI extends CoCartAPI {
+class DebugCoCartSessionsAPI extends CoCartSessionsAPI {
     constructor(config) {
         super(config);
         this.debug = config.debug || false;
@@ -547,11 +732,11 @@ class DebugCoCartAPI extends CoCartAPI {
 
     async makeRequest(endpoint, options = {}) {
         if (this.debug) {
-            console.group('CoCart API Request');
+            console.group('CoCart Sessions API Request');
             console.log('Endpoint:', endpoint);
             console.log('Method:', options.method || 'GET');
             console.log('Consumer Key:', this.consumerKey);
-            console.log('Options:', options);
+            console.log('Timestamp:', new Date().toISOString());
         }
 
         try {
@@ -559,196 +744,289 @@ class DebugCoCartAPI extends CoCartAPI {
 
             if (this.debug) {
                 console.log('Response:', result);
+                console.log('Success: true');
                 console.groupEnd();
             }
 
             return result;
         } catch (error) {
             if (this.debug) {
-                console.error('Error:', error);
+                console.error('Error:', error.message);
+                console.error('Success: false');
                 console.groupEnd();
             }
             throw error;
         }
     }
 }
-```
 
-### Payment Gateway Debugging
-
-For admin users, the payment methods endpoint provides debug information to help understand gateway configurations:
-
-```javascript
-class AdminCoCartAPI extends CoCartAPI {
-    constructor(config) {
-        super(config);
-        this.isAdmin = config.is_admin || false;
-    }
-
-    /**
-     * Get payment methods with debug info (admin only)
-     */
-    async getPaymentMethodsWithDebug() {
-        if (!this.isAdmin) {
-            throw new Error('Debug information requires admin privileges');
-        }
-
-        const response = await this.makeRequest('/checkout/payment-methods', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${this.adminJwtToken}` // Admin JWT required
-            }
-        });
-
-        return response;
-    }
-
-    /**
-     * Log debug information for payment methods
-     */
-    async debugPaymentMethods() {
-        try {
-            const methods = await this.getPaymentMethodsWithDebug();
-
-            console.group('Payment Methods Debug');
-            console.log('Available Methods:', methods.payment_methods);
-
-            if (methods.debug_info) {
-                console.group('Gateway Debug Information');
-                console.warn('🚨 Debug info - DO NOT use in production');
-
-                Object.entries(methods.debug_info.payment_context).forEach(([gateway, config]) => {
-                    console.group(`${gateway.toUpperCase()} Configuration`);
-                    console.log('Gateway Config:', config);
-                    console.groupEnd();
-                });
-
-                console.groupEnd();
-            }
-
-            console.groupEnd();
-        } catch (error) {
-            console.error('Payment methods debug failed:', error);
-        }
-    }
-}
-
-// Usage for admin debugging
-const adminAPI = new AdminCoCartAPI({
-    consumer_key: 'ck_admin_key',
-    consumer_secret: 'cs_admin_secret',
-    cart_key: 'admin-cart-key',
-    is_admin: true,
-    admin_jwt_token: 'admin_jwt_token_here',
-    api_url: '/wp-json/cocart/preview'
+// Usage with debug logging
+const debugAPI = new DebugCoCartSessionsAPI({
+    consumer_key: process.env.COCART_CONSUMER_KEY,
+    consumer_secret: process.env.COCART_CONSUMER_SECRET,
+    api_url: 'https://yourstore.com/wp-json/cocart',
+    debug: true
 });
 
-// Debug payment gateway configurations
-await adminAPI.debugPaymentMethods();
+// All requests will now log detailed information
+await debugAPI.getAllSessions(1, 10);
 ```
 
-**Example Debug Response:**
+### Testing Authentication
+
+```bash
+# Test authentication with cURL
+curl -X GET 'https://yourstore.com/wp-json/cocart/v2/sessions?page=1&per_page=5' \
+  -H 'Authorization: Basic base64_encoded_key_secret' \
+  -H 'Content-Type: application/json'
+
+# Example with actual credentials (encode ck_abc:cs_xyz)
+# Base64 encode: echo -n "ck_abc:cs_xyz" | base64
+curl -X GET 'https://yourstore.com/wp-json/cocart/v2/sessions?page=1&per_page=5' \
+  -H 'Authorization: Basic Y2tfYWJjOmNzX3h5eg==' \
+  -H 'Content-Type: application/json'
+```
+
+**Example Success Response:**
+```json
+[
+    {
+        "cart_key": "abc123def456",
+        "customer": {
+            "billing_email": "customer@example.com",
+            "billing_first_name": "John",
+            "billing_last_name": "Doe"
+        },
+        "cart_items": [
+            {
+                "item_key": "item_123",
+                "product_id": 42,
+                "quantity": 2
+            }
+        ],
+        "cart_totals": {
+            "total": "49.99"
+        },
+        "cart_expiry": 1735689600
+    }
+]
+```
+
+**Example Error Response:**
 ```json
 {
-    "payment_methods": {
-        "stripe": {
-            "id": "stripe",
-            "title": "Credit Card",
-            "enabled": true
-        },
-        "paypal": {
-            "id": "paypal",
-            "title": "PayPal",
-            "enabled": true
-        }
-    },
-    "debug_info": {
-        "payment_context": {
-        "stripe": {
-            "publishable_key": "pk_test_xxx",
-            "webhook_endpoint": "/wc-api/stripe",
-            "gateway_mode": "test"
-        },
-        "paypal": {
-            "client_id": "paypal_client_id_xxx",
-            "environment": "sandbox"
-        }
-        },
-        "note": "Debug information - DO NOT use in production"
+    "code": "woocommerce_rest_cannot_view",
+    "message": "Sorry, you cannot list resources.",
+    "data": {
+        "status": 401
     }
 }
 ```
-
-<Warning>
-**Important Security Notes:**
-- Debug information is only available to users with `manage_options` capability
-- Debug info should never be used in production applications
-- Use this only for development, testing, and troubleshooting gateway configurations
-- Ensure your admin JWT tokens are properly secured
-</Warning>
 
 ## Integration Examples
 
-### WordPress Plugin
+### WordPress Admin Dashboard Plugin
 
 ```php
-// Add consumer key settings to admin
-class CoCart_Admin_Settings {
-    public function add_settings_fields() {
-        add_settings_field(
-            'cocart_consumer_key',
-            __('Consumer Key', 'cocart'),
-            array($this, 'consumer_key_field'),
-            'cocart-settings'
+<?php
+/**
+ * CoCart Sessions Admin Dashboard
+ */
+class CoCart_Sessions_Dashboard {
+    private $sessions_api;
+
+    public function __construct() {
+        // Initialize Sessions API with stored credentials
+        $this->sessions_api = new CoCart_Sessions_API(
+            get_option('cocart_sessions_consumer_key'),
+            get_option('cocart_sessions_consumer_secret'),
+            home_url('/wp-json/cocart')
         );
 
-        add_settings_field(
-            'cocart_consumer_secret',
-            __('Consumer Secret', 'cocart'),
-            array($this, 'consumer_secret_field'),
-            'cocart-settings'
+        // Add admin menu
+        add_action('admin_menu', array($this, 'add_admin_menu'));
+
+        // Add AJAX handlers
+        add_action('wp_ajax_cocart_get_sessions', array($this, 'ajax_get_sessions'));
+        add_action('wp_ajax_cocart_delete_session', array($this, 'ajax_delete_session'));
+    }
+
+    public function add_admin_menu() {
+        add_menu_page(
+            'Cart Sessions',
+            'Cart Sessions',
+            'manage_options',
+            'cocart-sessions',
+            array($this, 'render_dashboard'),
+            'dashicons-cart',
+            56
         );
     }
 
-    public function consumer_key_field() {
-        $value = get_option('cocart_consumer_key');
-        echo '<input type="text" name="cocart_consumer_key" value="' . esc_attr($value) . '" class="regular-text" />';
-        echo '<p class="description">' . __('WooCommerce API consumer key for CoCart authentication.', 'cocart') . '</p>';
+    public function ajax_get_sessions() {
+        check_ajax_referer('cocart_sessions_nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+
+        try {
+            $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+            $sessions = $this->sessions_api->get_all_sessions($page, 20);
+            wp_send_json_success($sessions);
+        } catch (Exception $e) {
+            wp_send_json_error($e->getMessage());
+        }
+    }
+
+    public function ajax_delete_session() {
+        check_ajax_referer('cocart_sessions_nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+
+        try {
+            $cart_key = sanitize_text_field($_POST['cart_key']);
+            $this->sessions_api->delete_session($cart_key);
+            wp_send_json_success('Session deleted');
+        } catch (Exception $e) {
+            wp_send_json_error($e->getMessage());
+        }
     }
 }
+
+new CoCart_Sessions_Dashboard();
 ```
 
-### React/Next.js Integration
+### Node.js Backend Service
 
 ```javascript
-// components/CoCartProvider.js
-import { createContext, useContext, useState } from 'react';
+// server.js - Express.js backend for session management
+const express = require('express');
+const CoCartSessionsAPI = require('./lib/cocart-sessions-api');
 
-const CoCartContext = createContext();
+const app = express();
 
-export function CoCartProvider({ children }) {
-    const [api] = useState(() => new CoCartAPI({
-        consumer_key: process.env.NEXT_PUBLIC_COCART_CONSUMER_KEY,
-        consumer_secret: process.env.COCART_CONSUMER_SECRET, // Server-side only
-        api_url: process.env.NEXT_PUBLIC_COCART_API_URL
-    }));
+// Initialize Sessions API
+const sessionsAPI = new CoCartSessionsAPI({
+    consumer_key: process.env.COCART_CONSUMER_KEY,
+    consumer_secret: process.env.COCART_CONSUMER_SECRET,
+    api_url: process.env.COCART_API_URL
+});
 
-    return (
-        <CoCartContext.Provider value={api}>
-            {children}
-        </CoCartContext.Provider>
-    );
-}
-
-export const useCoCart = () => {
-    const context = useContext(CoCartContext);
-    if (!context) {
-        throw new Error('useCoCart must be used within CoCartProvider');
+// Protected admin endpoint - get all sessions
+app.get('/api/admin/sessions', async (req, res) => {
+    // Verify admin authentication here
+    if (!req.user || !req.user.isAdmin) {
+        return res.status(403).json({ error: 'Forbidden' });
     }
-    return context;
-};
+
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const perPage = parseInt(req.query.per_page) || 20;
+
+        const sessions = await sessionsAPI.getAllSessions(page, perPage);
+        res.json({ success: true, data: sessions });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Protected admin endpoint - debug specific session
+app.get('/api/admin/sessions/:cartKey', async (req, res) => {
+    if (!req.user || !req.user.isAdmin) {
+        return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    try {
+        const session = await sessionsAPI.getSession(req.params.cartKey);
+        res.json({ success: true, data: session });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Scheduled cleanup job
+const cron = require('node-cron');
+
+// Run every day at 3 AM
+cron.schedule('0 3 * * *', async () => {
+    console.log('Running abandoned cart cleanup...');
+
+    try {
+        const sessions = await sessionsAPI.getAllSessions(1, 1000);
+        const thirtyDaysAgo = Date.now() / 1000 - (30 * 24 * 60 * 60);
+        let deletedCount = 0;
+
+        for (const session of sessions) {
+            if (session.cart_expiry < thirtyDaysAgo) {
+                await sessionsAPI.deleteSession(session.cart_key);
+                deletedCount++;
+            }
+        }
+
+        console.log(`Cleanup complete: ${deletedCount} sessions deleted`);
+    } catch (error) {
+        console.error('Cleanup failed:', error);
+    }
+});
+
+app.listen(3000, () => {
+    console.log('Sessions API backend running on port 3000');
+});
+```
+
+### Python Analytics Script
+
+```python
+import requests
+import base64
+import os
+from datetime import datetime
+
+class CoCartSessionsAPI:
+    def __init__(self, consumer_key, consumer_secret, api_url):
+        self.consumer_key = consumer_key
+        self.consumer_secret = consumer_secret
+        self.api_url = api_url.rstrip('/')
+
+        # Create Basic Auth header
+        credentials = f"{consumer_key}:{consumer_secret}"
+        encoded = base64.b64encode(credentials.encode()).decode()
+        self.headers = {
+            'Authorization': f'Basic {encoded}',
+            'Content-Type': 'application/json'
+        }
+
+    def get_all_sessions(self, page=1, per_page=100):
+        endpoint = f'{self.api_url}/v2/sessions'
+        params = {'page': page, 'per_page': per_page}
+
+        response = requests.get(endpoint, headers=self.headers, params=params)
+        response.raise_for_status()
+        return response.json()
+
+# Usage: Generate cart analytics report
+api = CoCartSessionsAPI(
+    os.getenv('COCART_CONSUMER_KEY'),
+    os.getenv('COCART_CONSUMER_SECRET'),
+    os.getenv('COCART_API_URL')
+)
+
+sessions = api.get_all_sessions()
+
+# Analyze cart data
+total_carts = len(sessions)
+total_value = sum(float(s.get('cart_totals', {}).get('total', 0)) for s in sessions)
+avg_items = sum(len(s.get('cart_items', [])) for s in sessions) / total_carts if total_carts > 0 else 0
+
+print(f"Cart Analytics Report - {datetime.now()}")
+print(f"Total Active Carts: {total_carts}")
+print(f"Total Cart Value: ${total_value:.2f}")
+print(f"Average Items per Cart: {avg_items:.2f}")
 ```
 
 <Note>
-    Remember to never expose consumer secrets in client-side applications. Use backend proxies or server-side rendering to handle secret authentication securely.
+**Security Reminder**: All these examples are server-side only. Never expose consumer keys in client-side code, frontend applications, or public repositories.
 </Note>

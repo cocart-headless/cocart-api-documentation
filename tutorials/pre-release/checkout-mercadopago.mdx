@@ -1,7 +1,7 @@
 ---
 title: "Checkout with Mercado Pago"
 sidebarTitle: "Mercado Pago"
-description: "Complete guide to integrating Mercado Pago Checkout Bricks with CoCart's Checkout API"
+description: "Complete guide to integrating Mercado Pago Checkout Bricks with Checkout API"
 icon: "credit-card"
 tag: "WIP"
 robots: "noindex, follow"
@@ -795,6 +795,187 @@ Mercado Pago supports various payment methods by country:
 - **Credit/Debit Cards**
 - **Cash payments** (varies by country)
 - **Mercado Pago Wallet**
+
+## Troubleshooting
+
+### Common Issues
+
+<AccordionGroup>
+    <Accordion title="Mercado Pago SDK Not Loading">
+        **Problem**: MercadoPago object is undefined.
+
+        **Solution**:
+        ```javascript
+        // Verify SDK is loaded
+        if (typeof MercadoPago === 'undefined') {
+            console.error('Mercado Pago SDK not loaded');
+        }
+
+        // Correct script
+        <script src="https://sdk.mercadopago.com/js/v2"></script>
+        ```
+        - Check browser console for errors
+        - Verify correct SDK URL (v2)
+        - Ensure HTTPS is enabled
+    </Accordion>
+
+    <Accordion title="Bricks Not Rendering">
+        **Problem**: Card Payment Brick doesn't appear.
+
+        **Solution**:
+        ```javascript
+        // Initialize MP with public key
+        const mp = new MercadoPago('YOUR_PUBLIC_KEY', {
+            locale: 'es-AR' // Match your country
+        });
+
+        // Create Bricks instance
+        const bricksBuilder = mp.bricks();
+
+        // Check container exists
+        if (!document.getElementById('cardPaymentBrick_container')) {
+            console.error('Container missing');
+        }
+
+        // Create brick with error handling
+        bricksBuilder.create('cardPayment', 'cardPaymentBrick_container', {
+            initialization: {
+                amount: parseFloat(cartTotal)
+            },
+            callbacks: {
+                onReady: () => console.log('Brick ready'),
+                onError: (error) => console.error('Brick error:', error)
+            }
+        });
+        ```
+    </Accordion>
+
+    <Accordion title="Token Generation Fails">
+        **Problem**: Can't get payment token from Brick.
+
+        **Solution**:
+        ```javascript
+        // Get form data from Brick
+        const formData = await bricksBuilder.getFormData();
+
+        if (formData.error) {
+            console.error('Form errors:', formData.error);
+            // Show validation errors to user
+        } else {
+            console.log('Token:', formData.token);
+            console.log('Payment method:', formData.paymentMethodId);
+        }
+        ```
+        - Ensure all required fields are filled
+        - Verify card number is valid
+        - Check expiration date is future
+        - Validate CVV is correct length
+    </Accordion>
+
+    <Accordion title="Payment Method Not Recognized">
+        **Problem**: Backend doesn't accept Mercado Pago.
+
+        **Solution**:
+        ```javascript
+        const checkoutData = {
+            payment_method: 'woo-mercado-pago-basic', // Correct ID
+            payment_data: {
+                token: formData.token,
+                payment_method_id: formData.paymentMethodId,
+                issuer_id: formData.issuerId,
+                installments: formData.installments
+            }
+        };
+        ```
+        - Verify Mercado Pago gateway enabled
+        - Check payment method ID matches WooCommerce
+        - Ensure public key is configured
+    </Accordion>
+
+    <Accordion title="Wrong Country or Currency">
+        **Problem**: Payment fails due to country mismatch.
+
+        **Solution**:
+        ```javascript
+        // Initialize with correct locale
+        const locales = {
+            'AR': 'es-AR', // Argentina
+            'BR': 'pt-BR', // Brazil
+            'MX': 'es-MX', // Mexico
+            'CL': 'es-CL', // Chile
+            'CO': 'es-CO', // Colombia
+            'PE': 'es-PE', // Peru
+            'UY': 'es-UY'  // Uruguay
+        };
+
+        const mp = new MercadoPago(publicKey, {
+            locale: locales[country]
+        });
+        ```
+        - Use correct public key for country
+        - Match locale to customer's country
+        - Verify currency is supported
+    </Accordion>
+
+    <Accordion title="Test Mode vs Production">
+        **Problem**: Works in test but not production.
+
+        **Solution**:
+        ```javascript
+        // Test keys start with TEST-
+        // Production keys start with APP-
+
+        const publicKey = isTestMode
+            ? 'TEST-xxx-xxx'
+            : 'APP-xxx-xxx';
+        ```
+        Checklist:
+        - Switch to production public key
+        - Update credentials in WooCommerce
+        - Verify account is activated
+        - Test with real card (small amount)
+    </Accordion>
+
+    <Accordion title="PIX Payment Issues (Brazil)">
+        **Problem**: PIX payments not working.
+
+        **Solution**:
+        - Ensure PIX is enabled in Mercado Pago account
+        - Verify customer is in Brazil
+        - Check amount is within PIX limits
+        - Ensure QR code is displaying correctly
+        - Verify PIX key is configured in account
+    </Accordion>
+</AccordionGroup>
+
+### Debug Mode
+
+```javascript
+if (DEBUG) {
+    console.log('[Mercado Pago] Public key:', publicKey);
+    console.log('[Mercado Pago] Locale:', locale);
+    console.log('[Mercado Pago] Amount:', amount);
+
+    // Log Brick callbacks
+    const callbacks = {
+        onReady: () => {
+            console.log('[Mercado Pago] Brick ready');
+        },
+        onSubmit: (formData) => {
+            console.log('[Mercado Pago] Form submitted:', formData);
+        },
+        onError: (error) => {
+            console.error('[Mercado Pago] Error:', error);
+        }
+    };
+}
+```
+
+### Getting Help
+
+1. **Mercado Pago Documentation**: [Checkout Bricks Guide](https://www.mercadopago.com/developers/en/docs/checkout-bricks/landing)
+2. **Mercado Pago Support**: Contact through dashboard
+3. **WooCommerce Logs**: Check WooCommerce → Status → Logs
 
 ## Best Practices
 
