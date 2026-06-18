@@ -1,0 +1,147 @@
+---
+title: "All Products for WooCommerce Subscriptions"
+sidebarTitle: "All Products for Subscriptions"
+description: "Let customers choose a subscription scheme when adding any product to the cart in a headless CoCart storefront."
+tag: "In Testing"
+robots: "noindex, follow"
+---
+
+<Info>
+  This feature documentation was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 28th, 2026.
+</Info>
+
+[All Products for WooCommerce Subscriptions (WCS&T)](https://woocommerce.com/products/all-products-for-woocommerce-subscriptions/) lets store owners attach subscription schemes to any product type, not just native subscription products. Customers can then choose to purchase once or on a recurring basis.
+
+The CoCart Plus integration exposes subscription scheme options on product and cart item responses, lets customers pick a scheme at add-to-cart time, supports switching schemes on existing cart items, and returns recurring totals on the cart.
+
+<Info>
+  This integration is available in CoCart Plus since <Tooltip tip="This is the version of CoCart Plus">v2.0.0</Tooltip> and requires [All Products for WooCommerce Subscriptions](https://woocommerce.com/products/all-products-for-woocommerce-subscriptions/) to be installed and active.
+</Info>
+
+## Product response
+
+Products that support subscription schemes receive a `subscription_schemes` array in their `extensions` key. Each entry represents one purchase option.
+
+```json Example (product extensions excerpt)
+{
+  "extensions": {
+    "subscription_schemes": [
+      {
+        "price": "1000",
+        "period": "one-time",
+        "value": "0",
+        "selected": true,
+        "rest_url": "https://your-store.com/wp-json/cocart/v2/cart/add-item?id=42&convert_to_sub=0"
+      },
+      {
+        "price": "900",
+        "period": "every month",
+        "value": "1_month_0_1",
+        "selected": false,
+        "rest_url": "https://your-store.com/wp-json/cocart/v2/cart/add-item?id=42&convert_to_sub=1_month_0_1"
+      }
+    ]
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `price` | `string` | Formatted price for this scheme. |
+| `period` | `string` | Human-readable billing period label (e.g. `every month`, `one-time`). |
+| `value` | `string` | Scheme key to pass as `convert_to_sub` when adding to cart. |
+| `selected` | `boolean` | Whether this scheme is currently the default selection. |
+| `rest_url` | `string` | Pre-built URL to add the product with this scheme applied. |
+
+When only a single option is available (forced subscription, no one-time option), `subscription_schemes` is omitted.
+
+## Adding to cart with a scheme
+
+Pass `convert_to_sub` as a query parameter or body field when calling the add-item endpoint.
+
+<CodeGroup>
+  ```bash cURL
+  curl -X POST "https://your-store.com/wp-json/cocart/v2/cart/add-item" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "id": 42,
+      "quantity": 1,
+      "convert_to_sub": "1_month_0_1"
+    }'
+  ```
+
+  ```javascript JavaScript
+  await fetch('https://your-store.com/wp-json/cocart/v2/cart/add-item', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: 42,
+      quantity: 1,
+      convert_to_sub: '1_month_0_1'
+    })
+  });
+  ```
+</CodeGroup>
+
+Pass `"0"` as `convert_to_sub` to add as a one-time purchase when the product supports both options.
+
+## Cart item response
+
+Cart items for products with subscription schemes show the same `subscription_schemes` array on their `extensions` key, allowing customers to switch their selected scheme.
+
+Each option includes a `rest_url` pointing to the update endpoint with the correct `convert_to_sub` value pre-filled.
+
+## Switching a scheme on an existing cart item
+
+Use the `rest_url` from any scheme option in the cart item response to update it:
+
+```bash cURL
+curl -X POST "https://your-store.com/wp-json/cocart/v2/cart/update?namespace=update-item-schema&item_key=abc123&convert_to_sub=0"
+```
+
+## Cart-level recurring totals
+
+When the cart contains a subscription item, the cart `extensions` key includes a `recurring_totals` object keyed by cart item key. Each entry contains the recurring coupons, shipping, fees, taxes, and totals including the first renewal date.
+
+```json Example (cart extensions excerpt)
+{
+  "extensions": {
+    "recurring_totals": {
+      "abc123": {
+        "totals": {
+          "period": "every month",
+          "subtotal": "900",
+          "total": "900",
+          "label": "$9.00 / month",
+          "first_renewal": {
+            "date": "2026-06-28 12:00:00",
+            "formatted_date": "June 28, 2026",
+            "labelled": "First renewal: June 28, 2026"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## Order response
+
+After checkout, the order response includes a `wcsatt_schemes` array listing the active subscription scheme applied to each line item at purchase time.
+
+```json Example
+{
+  "wcsatt_schemes": [
+    {
+      "item_id": 1,
+      "product_id": 42,
+      "scheme_key": "1_month_0_1"
+    }
+  ]
+}
+```
+
+## Known limitations
+
+- Price overrides via CoCart's `price` parameter are blocked for items with active subscription schemes to prevent inconsistencies.
+- Mix and Match product container items have their subscription scheme prices recalculated to include child item costs.

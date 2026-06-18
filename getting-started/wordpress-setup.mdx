@@ -1,102 +1,107 @@
 ---
 title: "WordPress Setup"
-description: "The best way to host your WordPress site for headless store."
+description: "Configure your WordPress installation for a headless WooCommerce storefront"
 icon: "wordpress"
-tag: "WIP"
+'og:title': "WordPress Setup for Headless WooCommerce"
+'og:description': "Learn how to set up WordPress for a headless WooCommerce storefront, including wp-config, hosting considerations and frontend access control."
 ---
 
-Deciding on the best way to host and configure your WordPress site for headless store can be a daunting task. There are many options available, and it can be difficult to know which one is right for you.
+This guide covers how to configure WordPress as an API-only backend for your headless storefront. A headless setup has different requirements than a traditional WordPress site — the frontend is served by a separate application, so WordPress only needs to handle REST API requests and admin access.
 
-This guide will help you understand the different options available and specify the best ones for your needs.
+## Hosting considerations
 
-## The different types of hosting available
+In a headless setup, WordPress is an API server. The factors that matter are different from traditional WordPress hosting.
 
-There are many different types of hosting available, but the most common ones are:
-- Shared hosting
-- VPS hosting
-- Dedicated hosting
-- Managed WordPress hosting
+**What matters:**
+- **PHP workers** — each API request uses a PHP worker. Concurrent shoppers need concurrent workers. Look for hosting that offers 4+ PHP workers minimum.
+- **Object caching** — Redis or Memcached drastically reduces database queries for cart sessions and product data.
+- **Low latency** — host your WordPress backend in the same region as your frontend deployment.
+- **PHP 8.2+** — required by CoCart, and newer PHP versions are measurably faster.
 
-Each type of hosting has its own pros and cons, and the best one for you will depend on your needs.
+**What matters less:**
+- Page caching plugins (Varnish, WP Super Cache) — your frontend doesn't serve WordPress pages.
+- CDN for HTML — your frontend app handles its own CDN. You still want a CDN for WordPress media uploads.
+- Theme performance — there's no theme rendering API responses.
 
-## The pros and cons of each type of hosting
+### Recommended hosting types
 
-### Shared hosting
+**Managed WordPress hosting** is the easiest option. Providers like Cloudways, SpinupWP, GridPane, or RunCloud handle server configuration, updates, and security. Most include Redis object caching out of the box.
 
-Shared hosting is the most common type of hosting. It is also the cheapest option, making it a good choice for small businesses and personal websites.
-However, shared hosting has some drawbacks. Because you are sharing a server with other websites, your website may be slower and less reliable than if you were on a dedicated server. Additionally, you may have limited control over your server environment, which can make it difficult to customize your website.
+**VPS hosting** (DigitalOcean, Linode, Vultr) gives you full control but requires server management knowledge. A good option if you need custom PHP-FPM tuning or non-standard configurations.
 
-### VPS hosting
+**Shared hosting** works for development and low-traffic stores but will struggle under concurrent API requests due to limited PHP workers and no object caching. Providers like Bluehost, SiteGround, and HostGator offer shared hosting plans.
 
-VPS (Virtual Private Server) hosting is a step up from shared hosting. With VPS hosting, you have your own virtual server that is isolated from other websites. This means that your website will be faster and more reliable than with shared hosting.
+## wp-config.php configuration
 
-However, VPS hosting is more expensive than shared hosting, and it requires more technical knowledge to set up and manage. If you are not comfortable managing your own server, VPS hosting may not be the best option for you.
+The WordPress configuration file is located at the root of your WordPress installation. These constants optimize WordPress for headless use.
 
-### Dedicated hosting
+### Site URLs
 
-Dedicated hosting is the most expensive option, but it also offers the most control and flexibility. With dedicated hosting, you have your own physical server that is not shared with any other websites. This means that you can customize your server environment to meet your specific needs.
-
-However, dedicated hosting is also the most complex option, and it requires a lot of technical knowledge to set up and manage. If you are not comfortable managing your own server, dedicated hosting may not be the best option for you.
-
-### Managed WordPress hosting
-
-Managed WordPress hosting is a specialized type of hosting that is designed specifically for WordPress websites. With managed WordPress hosting, your website is hosted on a server that is optimized for WordPress, and you have access to a team of experts who can help you with any issues you may have.
-
-This type of hosting is more expensive than shared hosting, but it can save you time and hassle in the long run. If you are not comfortable managing your own server, managed WordPress hosting may be the best option for you.
-
-## Taking advantage of the WordPress Configuration File
-
-The WordPress configuration file **wp-config.php** is located at the root of WordPress and allows you to customize your WordPress installation.
-
-By taking advantage of the WordPress configuration file, you can improve the performance and reliability of your website, and make it easier to manage.
-
-For running a headless WordPress setup, we will be looking at a few options that will help improve the performance of your WordPress site and reduce the number of database calls when accessing the REST API.
-
-### WP_SITEURL
-
-**Site URL** is the address where your WordPress site is installed. It should include the **https://** part and should not have a slash **/** at the end.
-
-**Recommend**: If you are using a subdirectory for your WordPress installation, you should set the site URL to the root of your site. This will allow you to access your site from the root URL without having to include the subdirectory in the URL.
+Define your site URLs as constants to avoid a database query on every request:
 
 ```php
-define( 'WP_HOME', 'https://example.com/wordpress' );
+define( 'WP_SITEURL', 'https://api.yourstore.com' );
+define( 'WP_HOME', 'https://api.yourstore.com' );
+```
+
+If WordPress is installed in a subdirectory:
+
+```php
+define( 'WP_SITEURL', 'https://yourstore.com/wordpress' );
+define( 'WP_HOME', 'https://yourstore.com/wordpress' );
 ```
 
 [More information](https://developer.wordpress.org/advanced-administration/wordpress/wp-config/#wp-siteurl)
 
-### WP_HOME
+### Memory limit
 
-**Home** is the address where you want your visitors to access your site. It should include the **https://** part and should not have a slash **/** at the end.
-
-**Recommend**: If you are using a subdirectory for your WordPress installation, you should set the home URL to the root of your site. This will allow you to access your site from the root URL without having to include the subdirectory in the URL.
+WooCommerce recommends at least **256M**. For stores with large catalogs or concurrent API traffic, consider 512M:
 
 ```php
-define( 'WP_HOME', 'https://example.com/wordpress' );
-```
-
-[More information](https://developer.wordpress.org/advanced-administration/wordpress/wp-config/#blog-address-url)
-
-### Memory Limit
-
-Having enough memory for WooCommerce is a must, even for smaller stores. We recommend setting the memory limit to at least **128M**.
-
-```php
-define( 'WP_MAX_MEMORY_LIMIT', '128M' );
+define( 'WP_MAX_MEMORY_LIMIT', '256M' );
 ```
 
 [More information](https://developer.wordpress.org/advanced-administration/wordpress/wp-config/#increasing-memory-allocated-to-php)
 
-### Disable File Edits
+### Disable WP-Cron
 
-Once your site is live, you should disable the ability to edit files from the WordPress admin. This will prevent any unauthorized changes to your site.
+This is one of the most impactful changes for a headless setup. By default, WordPress checks for scheduled tasks on every HTTP request, adding latency to every API call. Disable it and use a system cron instead:
+
+```php
+define( 'DISABLE_WP_CRON', true );
+```
+
+Then set up a system cron job to run WP-Cron every minute:
+
+```bash
+cd /path/to/wordpress && php wp-cron.php > /dev/null 2>&1
+```
+
+Or use WP-CLI:
+
+```bash
+cd /path/to/wordpress && wp cron event run --due-now > /dev/null 2>&1
+```
+
+### Post revisions
+
+Limit post revisions to reduce database bloat. This is less critical for headless but still good practice:
+
+```php
+define( 'WP_POST_REVISIONS', 5 );
+```
+
+### Disable file edits
+
+Prevent file editing from the WordPress admin. This is a security best practice for any production site:
 
 ```php
 define( 'DISALLOW_FILE_EDIT', true );
 ```
 
-### Disable Updates
+### Disable automatic updates
 
-Having updates running in the background can cause issues with your site on production. For piece of mind, we recommend you disable updates.
+Automatic updates running in the background can cause unexpected downtime. Manage updates manually or through your deployment process:
 
 ```php
 define( 'AUTOMATIC_UPDATER_DISABLED', true );
@@ -104,66 +109,164 @@ define( 'AUTOMATIC_UPDATER_DISABLED', true );
 
 [More information](https://developer.wordpress.org/advanced-administration/wordpress/wp-config/#disable-plugin-and-theme-update-and-installation)
 
-### Debugging WordPress
+### Debugging
 
-Debugging WordPress is essential for identifying and resolving issues. However, it is important to disable debugging on production sites to prevent exposing sensitive information.
-
-While working on your headless site, we recommend this simple configuration to enable debugging. It will log errors to a file instead of displaying them on the screen.
-
-This is especially useful where you may not have direct access to the server logs.
+Enable debug logging during development. Log errors to a file instead of displaying them, since REST API responses should not contain PHP notices:
 
 ```php
 define( 'WP_DEBUG', true );
 
 if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-	// Enable Debug logging to the /wp-content/debug.log file
-	define( 'WP_DEBUG_LOG', true );
-
-	// Disable display of errors and warnings
-	define( 'WP_DEBUG_DISPLAY', false );
-	@ini_set( 'display_errors', 0 );
+    define( 'WP_DEBUG_LOG', true );
+    define( 'WP_DEBUG_DISPLAY', false );
+    @ini_set( 'display_errors', 0 );
 }
 ```
 
+<Warning>
+    Disable `WP_DEBUG` on production. Debug output can expose sensitive information in API responses and log files.
+</Warning>
+
 [More information](https://developer.wordpress.org/advanced-administration/wordpress/wp-config/#wp-debug)
 
+## Object caching
 
-## Setting up CORS to allow the frontend to access the REST API
+Object caching stores database query results in memory (Redis or Memcached), so repeated requests don't hit the database. This is critical for headless because:
 
-When using CoCart with a decoupled frontend, you will encounter CORS (Cross-Origin Resource Sharing) issues. CORS is a security feature implemented by web browsers to prevent malicious websites from making requests to other domains.
+- Every cart API call reads session data from the database
+- Product queries are repeated across requests
+- WooCommerce transients are used extensively
 
-To resolve CORS issues, you need to configure your server to allow requests from your frontend domain. This is done by setting the **Access-Control-Allow-Origin** header in your server's response.
+Most managed WordPress hosts include Redis. For VPS hosting, install Redis and a WordPress object cache plugin like [Redis Object Cache](https://wordpress.org/plugins/redis-cache/) or use the drop-in provided by your hosting panel.
 
-Simply set this filter `cocart_disable_all_cors` to `false` to enable CORS.
+---
+
+## Disabling WordPress frontend access
+
+<Info>
+    This section is optional but recommended for a true headless experience. It prevents visitors from accessing the WordPress frontend and ensures they interact with your headless storefront instead. Requires **CoCart Starter**.
+</Info>
+
+In a headless setup, visitors should be directed to your frontend application, not the WordPress site.
+
+### Using CoCart settings
+
+CoCart's settings allow you to disable WordPress frontend access and redirect visitors to your headless frontend. When enabled:
+
+- Non-admin visitors are redirected to your frontend URL with a **302** redirect
+- **Administrators** always retain full access to WordPress
+- Cart and checkout pages are pre-populated in the **Accessible Pages** setting — you can add or remove pages from **CoCart → Settings**
+- **HEAD requests** pass through so your headless frontend can detect redirects
+
+### Using filters
+
+For more control, use CoCart's filters in a custom plugin or your theme's `functions.php`.
+
+<Note>
+  Filters take precedence over whatever is configured in **CoCart → Settings**.
+</Note>
+
+**Disable WordPress access:**
 
 ```php
 <?php
-add_filter( 'cocart_disable_all_cors', function() { return false; });
-```
-
-To fine tune so only specify single domain is allowed, use the filter `cocart_allow_origin`.
-
-```php
-<?php
-add_filter( 'cocart_allow_origin', function() { return 'https://example-store.com'; });
-```
-
-If you are also accessing other REST API's from your WordPress site then you will also need to setup CORS in general too.
-
-```php
-<?php
-add_action( 'rest_api_init', function() {
-    header("Access-Control-Allow-Origin: *");
-    header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-    header("Access-Control-Allow-Headers: Content-Type");
+// Disable WordPress frontend for non-admins
+add_filter( 'cocart_wp_disable_access', function() {
+    return 'yes';
 });
 ```
 
-For **Access-Control-Allow-Origin** header, specify the single domain instead of a wildcard `*`.
+**Set the frontend redirect URL:**
 
-## Additional Resources
+```php
+<?php
+// Redirect visitors to the headless frontend
+add_filter( 'cocart_wp_frontend_url', function() {
+    return 'https://store.yourfrontend.com';
+});
+```
+
+**Control which pages remain accessible:**
+
+By default, the WooCommerce cart and checkout pages are still accessible even when WordPress is disabled. You can customize this:
+
+```php Only allow the checkout page
+<?php
+add_filter( 'cocart_wp_accessible_page_ids', function( $page_ids ) {
+    $checkout_id = get_option( 'woocommerce_checkout_page_id' );
+
+    return array( $checkout_id );
+});
+```
+
+```php Block all WordPress pages (admin-only access)
+<?php
+add_filter( 'cocart_wp_accessible_page_ids', function() {
+    return array();
+});
+```
+
+## Setting up CORS
+
+When your frontend application is on a different domain than WordPress, browsers block cross-origin API requests by default. CoCart includes built-in CORS handling.
+
+Enable CoCart's CORS support:
+
+```php
+<?php
+add_filter( 'cocart_disable_all_cors', function() {
+    return false;
+});
+```
+
+Restrict to your frontend domain:
+
+```php
+<?php
+add_filter( 'cocart_allow_origin', function() {
+    return 'https://store.yourfrontend.com';
+});
+```
+
+<Warning>
+    Never use a wildcard (`*`) for `Access-Control-Allow-Origin` in production. Always specify your frontend domain.
+</Warning>
+
+For full CORS configuration details, see the [CORS documentation](/cors).
+
+## Reducing unnecessary load
+
+A headless WordPress site doesn't need everything a traditional site loads. Consider:
+
+- **Deactivate frontend-only plugins** — SEO plugins, page builders, form plugins, and caching plugins that only affect HTML output.
+- **Use a minimal theme** — activate a lightweight theme (or a blank theme) since it's never rendered for visitors.
+- **Disable embeds and emoji scripts** — WordPress loads these on every page by default, including REST API requests in some configurations.
+
+## Summary
+
+A minimal headless `wp-config.php` setup:
+
+```php
+// Site URLs (avoids DB query per request)
+define( 'WP_SITEURL', 'https://api.yourstore.com' );
+define( 'WP_HOME', 'https://api.yourstore.com' );
+
+// Performance
+define( 'WP_MAX_MEMORY_LIMIT', '256M' );
+define( 'DISABLE_WP_CRON', true );
+define( 'WP_POST_REVISIONS', 5 );
+
+// Security
+define( 'DISALLOW_FILE_EDIT', true );
+define( 'AUTOMATIC_UPDATER_DISABLED', true );
+
+// Debugging (disable on production)
+define( 'WP_DEBUG', false );
+```
+
+## Additional resources
+
 - [WordPress Configuration File](https://developer.wordpress.org/advanced-administration/wordpress/wp-config/)
-- [WordPress Security Guide](https://developer.wordpress.org/advanced-administration/security/hardening/)
-- [WordPress Performance Guide](https://developer.wordpress.org/advanced-administration/performance/optimization/)
-- [WordPress Debugging Guide](https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/)
-- [Common WordPress Errors](https://developer.wordpress.org/advanced-administration/wordpress/common-errors/)
+- [WordPress Security Hardening](https://developer.wordpress.org/advanced-administration/security/hardening/)
+- [CORS Documentation](/cors)
+- [CoCart Security Practices](/knowledge-base/security-practices)

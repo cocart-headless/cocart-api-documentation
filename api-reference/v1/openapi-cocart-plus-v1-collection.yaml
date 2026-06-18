@@ -1,0 +1,1279 @@
+openapi: 3.0.3
+
+info:
+  title: CoCart Plus - API v1
+  version: 1.6.0
+  description: |
+    CoCart Plus extends the CoCart REST API v1 with support for coupons, fees, shipping methods, payment methods, cart totals breakdowns, and more.
+  termsOfService: https://cocartapi.com/terms-of-conditions-polar/
+  contact:
+    email: support@cocartapi.com
+  license:
+    name: GNU General Public License v3.0
+    url: http://www.gnu.org/licenses/gpl-3.0.html
+
+externalDocs:
+  description: Find out more about CoCart API
+  url: https://docs.cocartapi.com
+
+servers:
+  - url: "{protocol}://{host}/wp-json/cocart/v1"
+    description: API v1
+    variables:
+      protocol:
+        enum: [http, https]
+        default: https
+      host:
+        default: example-store.com
+        description: Your store domain
+
+tags:
+  - name: coupons
+    description: Operations for managing cart coupons
+  - name: fees
+    description: Operations for managing cart fees
+  - name: shipping
+    description: Operations for managing shipping methods and rates
+  - name: payment
+    description: Operations for managing payment methods
+  - name: totals
+    description: Operations for retrieving cart total breakdowns
+  - name: calculate
+    description: Operations for calculating cart totals, fees, and shipping
+  - name: cart-data
+    description: Operations for retrieving cart metadata (weight, quantities, removed items, cross-sells)
+
+paths:
+  /coupon:
+    get:
+      tags:
+        - coupons
+      operationId: getAppliedCoupons
+      summary: Get applied coupons
+      description: |
+        Gets the coupons currently applied to the cart.
+      responses:
+        "200":
+          description: List of applied coupon codes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+              example:
+                - "save10"
+                - "freeship"
+        "404":
+          description: Coupons are not enabled for this store.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_coupons_not_enabled"
+                message: "Coupons are not enabled for this store!"
+                data:
+                  status: 404
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+    post:
+      tags:
+        - coupons
+      operationId: applyCoupon
+      summary: Apply coupon to cart
+      description: |
+        Applies a coupon code to the cart.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                coupon:
+                  type: string
+                  description: Coupon code to apply.
+              required:
+                - coupon
+            example:
+              coupon: "save10"
+      responses:
+        "200":
+          description: Coupon applied successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CouponResponse"
+              example:
+                message: "Coupon was successfully added."
+                coupon: "save10"
+                response: true
+        "400":
+          description: Coupon failed to apply.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_coupon_failed_to_apply"
+                message: "Coupon \"invalid\" does not exist!"
+                data:
+                  status: 400
+        "404":
+          description: No coupon code provided.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_coupon_required"
+                message: "Coupon is required!"
+                data:
+                  status: 404
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+    delete:
+      tags:
+        - coupons
+      operationId: removeCoupon
+      summary: Remove coupon from cart
+      description: |
+        Removes a coupon from the cart.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                coupon:
+                  type: string
+                  description: Coupon code to remove.
+              required:
+                - coupon
+            example:
+              coupon: "save10"
+      responses:
+        "200":
+          description: Coupon removed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CouponResponse"
+              example:
+                message: "Coupon has been removed from the cart."
+                coupon: "save10"
+                response: true
+        "404":
+          description: Coupon does not exist in the cart.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_coupon_not_in_cart"
+                message: "Coupon \"save10\" is not applied to the cart!"
+                data:
+                  status: 404
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /check-coupons:
+    get:
+      tags:
+        - coupons
+      operationId: checkCoupons
+      summary: Check all applied coupons
+      description: |
+        Checks all applied coupons to see if they are still valid.
+      responses:
+        "200":
+          description: All coupons are valid.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Validation result message.
+                  response:
+                    type: boolean
+                    description: Whether all coupons are valid.
+              example:
+                message: "Coupons applied are still valid!"
+                response: true
+        "400":
+          description: Some coupons are invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: No coupons have been applied.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_no_coupons_applied"
+                message: "No coupons are applied to the cart."
+                data:
+                  status: 404
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /fees:
+    get:
+      tags:
+        - fees
+      operationId: getFees
+      summary: Get all cart fees
+      description: |
+        Gets all fees applied to the cart.
+      responses:
+        "200":
+          description: List of cart fees.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CartFee"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+    post:
+      tags:
+        - fees
+      operationId: addFee
+      summary: Add fee to cart
+      description: |
+        Adds a custom fee to the cart.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the fee.
+                amount:
+                  type: string
+                  description: Amount for the fee.
+                taxable:
+                  type: boolean
+                  description: Whether the fee is taxable.
+                  default: false
+                tax_class:
+                  type: string
+                  description: The tax class the fee applies to.
+              required:
+                - name
+                - amount
+            example:
+              name: "Gift Wrapping"
+              amount: "5.00"
+              taxable: true
+      responses:
+        "200":
+          description: Fee added successfully.
+          content:
+            application/json:
+              schema:
+                type: string
+              example: "\"Gift Wrapping\" has been added as a fee."
+        "403":
+          description: Fee already exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_fee_already_exists"
+                message: "Fee has already been added!"
+                data:
+                  status: 403
+        "404":
+          description: The name or amount of the fee is missing, or cart is empty.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_fee_required"
+                message: "The name and amount of the fee is required!"
+                data:
+                  status: 404
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+    delete:
+      tags:
+        - fees
+      operationId: removeFees
+      summary: Remove all cart fees
+      description: |
+        Removes all fees from the cart.
+      responses:
+        "200":
+          description: All cart fees have been removed.
+          content:
+            application/json:
+              schema:
+                type: string
+              example: "All fees have been removed from the cart."
+        "400":
+          description: Cart fees failed to remove.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /shipping-methods:
+    get:
+      tags:
+        - shipping
+      operationId: getShippingMethods
+      summary: Get available shipping methods
+      description: |
+        Gets available shipping methods for the cart.
+      parameters:
+        - name: recurring_cart_key
+          in: query
+          description: Recurring cart key for subscription shipping methods.
+          schema:
+            type: string
+          required: false
+      responses:
+        "200":
+          description: List of available shipping methods.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ShippingMethod"
+        "404":
+          description: No shipping methods available or not needed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_no_shipping_methods"
+                message: "No shipping methods are available."
+                data:
+                  status: 404
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+    post:
+      tags:
+        - shipping
+      operationId: setShippingMethod
+      summary: Set shipping method
+      description: |
+        Sets a shipping method for the cart.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                key:
+                  type: string
+                  description: Shipping method key.
+              required:
+                - key
+            example:
+              key: "flat_rate:1"
+      responses:
+        "200":
+          description: Shipping method set successfully.
+          content:
+            application/json:
+              schema:
+                type: boolean
+              example: true
+        "404":
+          description: Shipping method is incorrect or does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_shipping_method_incorrect"
+                message: "The shipping method is incorrect or does not exist!"
+                data:
+                  status: 404
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /payment-methods:
+    get:
+      tags:
+        - payment
+      operationId: getPaymentMethods
+      summary: Get available payment methods
+      description: |
+        Gets available payment methods for the cart.
+      responses:
+        "200":
+          description: List of available payment methods.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: A map of gateway IDs to payment method objects.
+                additionalProperties:
+                  $ref: "#/components/schemas/PaymentMethod"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+    post:
+      tags:
+        - payment
+      operationId: setPaymentMethod
+      summary: Set payment method
+      description: |
+        Sets a payment method for the cart.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gateway_id:
+                  type: string
+                  description: Payment gateway ID.
+              required:
+                - gateway_id
+            example:
+              gateway_id: "stripe"
+      responses:
+        "200":
+          description: Payment method set successfully.
+          content:
+            application/json:
+              schema:
+                type: boolean
+              example: true
+        "404":
+          description: Payment method is incorrect or does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_payment_method_incorrect"
+                message: "The payment method is incorrect or does not exist!"
+                data:
+                  status: 404
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /weight:
+    get:
+      tags:
+        - cart-data
+      operationId: getCartWeight
+      summary: Get cart weight
+      description: |
+        Gets the total weight of all items in the cart.
+      responses:
+        "200":
+          description: Cart weight retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: string
+                description: Total cart weight as a formatted string.
+              example: "3.5"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /removed-items:
+    get:
+      tags:
+        - cart-data
+      operationId: getRemovedItems
+      summary: Get removed cart items
+      description: |
+        Gets the items that have been removed from the cart and can be restored.
+      responses:
+        "200":
+          description: List of removed cart items.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: A map of cart item keys to removed item objects.
+                additionalProperties:
+                  $ref: "#/components/schemas/RemovedItem"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /quantities:
+    get:
+      tags:
+        - cart-data
+      operationId: getQuantities
+      summary: Get cart item quantities
+      description: |
+        Gets the quantities of all items in the cart, indexed by cart item key.
+      responses:
+        "200":
+          description: Cart item quantities retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: A map of cart item keys to their quantities.
+                additionalProperties:
+                  type: integer
+              example:
+                "1c383cd30b7c298ab50293adfecb7b18": 6
+                "70efdf2ec9b086079795c442636b55fb": 5
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /cross-sells:
+    get:
+      tags:
+        - cart-data
+      operationId: getCrossSells
+      summary: Get cross-sell products
+      description: |
+        Gets cross-sell products for items currently in the cart.
+      parameters:
+        - name: thumb
+          in: query
+          description: Returns the URL of the product image thumbnail.
+          schema:
+            type: boolean
+            default: false
+          required: false
+      responses:
+        "200":
+          description: List of cross-sell products.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: A map of product IDs to cross-sell product objects.
+                additionalProperties:
+                  $ref: "#/components/schemas/CrossSellItem"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /calculate/fees:
+    post:
+      tags:
+        - calculate
+      operationId: calculateFees
+      summary: Calculate cart fees
+      description: |
+        Calculates the cart fees.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                set_session:
+                  type: boolean
+                  description: Sets the cart fees in session once calculated.
+                  default: false
+                return:
+                  type: boolean
+                  description: Returns the cart fees once calculated.
+                  default: false
+      responses:
+        "200":
+          description: Cart fees calculated successfully.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: string
+                    description: Success message when return parameter is false.
+                    example: "Cart fees have been calculated."
+                  - type: array
+                    description: Array of cart fees when return parameter is true.
+                    items:
+                      $ref: "#/components/schemas/CartFee"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /calculate/shipping:
+    post:
+      tags:
+        - calculate
+      operationId: calculateShipping
+      summary: Calculate shipping
+      description: |
+        Calculates shipping for the cart based on the provided address.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                country:
+                  type: string
+                  description: Country code (required to calculate shipping).
+                state:
+                  type: string
+                  description: State or province code.
+                city:
+                  type: string
+                  description: City name.
+                postcode:
+                  type: string
+                  description: Postcode or ZIP code.
+                return_methods:
+                  type: boolean
+                  description: Return available shipping methods after calculation.
+                  default: false
+              required:
+                - country
+            example:
+              country: "US"
+              state: "NY"
+              postcode: "10001"
+              return_methods: true
+      responses:
+        "200":
+          description: Shipping calculated successfully.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: string
+                    description: Success message when return_methods is false.
+                    example: "Shipping has been calculated."
+                  - type: array
+                    description: Array of shipping methods when return_methods is true.
+                    items:
+                      $ref: "#/components/schemas/ShippingMethod"
+        "404":
+          description: Invalid postcode or missing country.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_shipping_country_required"
+                message: "Country is required to calculate shipping!"
+                data:
+                  status: 404
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /totals/discount:
+    get:
+      tags:
+        - totals
+      operationId: getDiscountTotal
+      summary: Get discount total
+      description: |
+        Gets the total discount applied to the cart.
+      responses:
+        "200":
+          description: Discount total retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: string
+              example: "10.00"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /totals/discount/coupon-totals:
+    get:
+      tags:
+        - totals
+      operationId: getCouponDiscountTotals
+      summary: Get coupon discount totals
+      description: |
+        Gets the discount totals per coupon.
+      responses:
+        "200":
+          description: Coupon discount totals retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: A map of coupon codes to their discount amounts.
+                additionalProperties:
+                  type: string
+              example:
+                save10: "10.00"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /totals/discount/coupon-tax:
+    get:
+      tags:
+        - totals
+      operationId: getCouponDiscountTax
+      summary: Get coupon discount tax totals
+      description: |
+        Gets the discount tax totals per coupon.
+      responses:
+        "200":
+          description: Coupon discount tax totals retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: string
+              example: "0"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /totals/fee:
+    get:
+      tags:
+        - totals
+      operationId: getFeeTotal
+      summary: Get fee total
+      description: |
+        Gets the total fees applied to the cart.
+      responses:
+        "200":
+          description: Fee total retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: string
+              example: "5.00"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /totals/fee/tax:
+    get:
+      tags:
+        - totals
+      operationId: getFeeTax
+      summary: Get fee tax
+      description: |
+        Gets the total fee tax applied to the cart.
+      responses:
+        "200":
+          description: Fee tax retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: string
+              example: "0"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /totals/shipping:
+    get:
+      tags:
+        - totals
+      operationId: getShippingTotal
+      summary: Get shipping total
+      description: |
+        Gets the total shipping cost for the cart.
+      parameters:
+        - name: calculate
+          in: query
+          description: Calculate shipping before returning total.
+          schema:
+            type: boolean
+            default: false
+          required: false
+      responses:
+        "200":
+          description: Shipping total retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: string
+              example: "10.00"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /totals/shipping/tax:
+    get:
+      tags:
+        - totals
+      operationId: getShippingTax
+      summary: Get shipping tax
+      description: |
+        Gets the total shipping tax for the cart.
+      parameters:
+        - name: calculate
+          in: query
+          description: Calculate shipping before returning tax.
+          schema:
+            type: boolean
+            default: false
+          required: false
+      responses:
+        "200":
+          description: Shipping tax retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: string
+              example: "0"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /totals/subtotal:
+    get:
+      tags:
+        - totals
+      operationId: getSubtotal
+      summary: Get subtotal
+      description: |
+        Gets the subtotal of the cart.
+      responses:
+        "200":
+          description: Subtotal retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: string
+              example: "108.00"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /totals/subtotal/tax:
+    get:
+      tags:
+        - totals
+      operationId: getSubtotalTax
+      summary: Get subtotal tax
+      description: |
+        Gets the subtotal tax of the cart.
+      responses:
+        "200":
+          description: Subtotal tax retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: string
+              example: "0"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /totals/tax:
+    get:
+      tags:
+        - totals
+      operationId: getTotalTax
+      summary: Get total tax
+      description: |
+        Gets the total tax for the cart.
+      responses:
+        "200":
+          description: Total tax retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: string
+              example: "0"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /totals/total:
+    get:
+      tags:
+        - totals
+      operationId: getCartTotal
+      summary: Get cart total
+      description: |
+        Gets the total amount for the cart.
+      responses:
+        "200":
+          description: Cart total retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: string
+              example: "103.00"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: |
+        Basic authentication with username and password.
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Bearer token authentication (JWT).
+
+  schemas:
+    CartFee:
+      type: object
+      description: A fee applied to the cart.
+      properties:
+        name:
+          type: string
+          description: Fee name.
+        amount:
+          type: number
+          description: Fee amount.
+        taxable:
+          type: boolean
+          description: Whether the fee is taxable.
+        tax_class:
+          type: string
+          description: Tax class applied to the fee.
+        total:
+          type: number
+          description: Fee total after tax.
+        tax:
+          type: number
+          description: Fee tax amount.
+
+    ShippingMethod:
+      type: object
+      description: Available shipping method.
+      properties:
+        key:
+          type: string
+          description: Shipping method key.
+        method_id:
+          type: string
+          description: Shipping method ID.
+        instance_id:
+          type: integer
+          description: Shipping method instance ID.
+        label:
+          type: string
+          description: Shipping method label.
+        cost:
+          type: number
+          description: Shipping cost.
+        html:
+          type: string
+          description: Formatted shipping cost as HTML.
+        taxes:
+          type: object
+          description: Shipping taxes.
+          additionalProperties: true
+        chosen_method:
+          type: boolean
+          description: Whether this is the chosen shipping method.
+
+    PaymentMethod:
+      type: object
+      description: Available payment method.
+      properties:
+        id:
+          type: string
+          description: Payment gateway ID.
+        method_title:
+          type: string
+          description: Payment method title (admin).
+        title:
+          type: string
+          description: Payment method title (customer-facing).
+        description:
+          type: string
+          description: Payment method description.
+        icon:
+          type: string
+          description: Payment method icon URL.
+        icon_urls:
+          type: array
+          description: Array of payment method icon URLs.
+          items:
+            type: string
+        has_fields:
+          type: boolean
+          description: Whether the payment method has additional fields.
+        countries:
+          type: array
+          description: Countries this payment method is available in.
+          items:
+            type: string
+        availability:
+          type: string
+          description: Availability type.
+        supports:
+          type: array
+          description: Features this payment method supports.
+          items:
+            type: string
+        order_button_text:
+          type: string
+          description: Custom order button text.
+        chosen_gateway:
+          type: boolean
+          description: Whether this is the chosen payment gateway.
+
+    RemovedItem:
+      type: object
+      description: An item that was removed from the cart and can be restored.
+      properties:
+        key:
+          type: string
+          description: Cart item key.
+        product_id:
+          type: integer
+          description: Product ID.
+        quantity:
+          type: integer
+          description: Quantity when removed.
+        name:
+          type: string
+          description: Product name.
+
+    CrossSellItem:
+      type: object
+      description: A cross-sell product recommendation.
+      properties:
+        id:
+          type: integer
+          description: Product ID.
+        product_name:
+          type: string
+          description: Product name.
+        product_title:
+          type: string
+          description: Product title.
+        price:
+          type: string
+          description: Current price.
+        regular_price:
+          type: string
+          description: Regular price.
+        sale_price:
+          type: string
+          description: Sale price (empty string if not on sale).
+        product_image:
+          type: string
+          description: Product image URL.
+
+    CouponResponse:
+      type: object
+      description: Response after applying or removing a coupon.
+      properties:
+        message:
+          type: string
+          description: Result message.
+        coupon:
+          type: string
+          description: The coupon code.
+        response:
+          type: boolean
+          description: Whether the operation was successful.
+
+    ErrorResponse:
+      type: object
+      description: Standard error response structure.
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code.
+          example: "cocart_rest_invalid_param"
+        message:
+          type: string
+          description: Human-readable error message.
+          example: "Invalid parameter."
+        data:
+          type: object
+          description: Additional error data.
+          properties:
+            status:
+              type: integer
+              description: HTTP status code.
+              example: 400
+            params:
+              type: object
+              description: Parameter-specific error details.
+              additionalProperties:
+                type: string
+          additionalProperties: true

@@ -1,0 +1,269 @@
+---
+title: "Extending the Settings Page"
+sidebarTitle: "Settings Page"
+description: "Add sections and fields to the CoCart admin settings page using the schema-driven API."
+icon: "sliders"
+---
+
+<Info>
+  This guide was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 16th, 2026.
+</Info>
+
+CoCart Starter adds a settings page under **CoCart → Settings** in wp-admin. This guide covers how to extend it as an add-on developer: registering sections and fields, the full field schema reference, and JavaScript integration.
+
+## Add-on registration: sections and fields
+
+Add-ons register settings using two filters — no changes to core files are required.
+
+### Registering a section (tab)
+
+```php
+add_filter( 'cocart_settings_sections', function( $sections ) {
+    $sections['my_addon'] = array(
+        'label'    => __( 'My Add-on', 'my-cocart-addon' ),
+        'priority' => 55, // Controls tab order; built-in tabs use 10–60.
+    );
+
+    return $sections;
+} );
+```
+
+Tabs are sorted by `priority` after the filter runs. Built-in priorities:
+
+| Section | Priority |
+|---|---|
+| `general` | 10 |
+| `cors` | 20 |
+| `auth` | 30 |
+| `session` | 40 |
+| `features` | 50 |
+| `misc` | 60 |
+
+### Registering fields
+
+```php
+add_filter( 'cocart_settings_fields', function( $fields ) {
+    $fields['my_addon']['my_toggle'] = array(
+        'label'       => __( 'Enable Feature', 'my-cocart-addon' ),
+        'type'        => 'checkbox',
+        'default'     => 'no',
+        'description' => __( 'Enables the feature.', 'my-cocart-addon' ),
+        'docs_url'    => 'https://docs.example.com/feature',
+    );
+
+    return $fields;
+} );
+```
+
+Fields are nested under their section key — `$fields['my_addon']['my_toggle']`. The field ID is the inner array key; no `id` or `section` key is needed inside the field definition. The `docs_url` key automatically renders a "Docs" badge link below the field description.
+
+The POST key used when saving is `{section}_{field_id}` — e.g. `my_addon_my_toggle`. Custom `save_cb` implementations should read `$_POST['my_addon_my_field']` using this convention.
+
+### Reading saved values
+
+All settings are stored in a single WordPress option (`cocart_settings`), nested by section key. Add-on sections sit alongside built-in ones:
+
+```php
+array(
+    'general'  => array( 'frontend_url' => '', ... ),
+    'my_addon' => array( 'my_setting' => 'yes' ),
+)
+```
+
+Read your values with:
+
+```php
+$settings   = get_option( 'cocart_settings', array() );
+$my_toggle  = isset( $settings['my_addon']['my_toggle'] ) ? $settings['my_addon']['my_toggle'] : 'no';
+$is_enabled = 'yes' === $my_toggle;
+```
+
+Always pass the saved value as the default into `apply_filters()` — this keeps the filter detection system accurate:
+
+```php
+if ( apply_filters( 'cocart_disable_my_feature', ! $is_enabled ) ) {
+    return;
+}
+```
+
+---
+
+## Field schema reference
+
+Each field array must include `label` and `type`. All other keys are optional. The section and field ID are determined by the parent array keys — neither `section` nor `id` is needed inside the field definition.
+
+### Common keys
+
+| Key | Type | Description |
+|---|---|---|
+| `label` | `string` | Label shown in the `<th>` |
+| `type` | `string` | Input type — see types below |
+| `default` | `mixed` | Default value when not yet saved |
+| `description` | `string` | Help text below the input |
+| `docs_url` | `string` | URL for the "Docs" badge link |
+| `docs_label` | `string` | Override the "Docs" badge text |
+| `placeholder` | `string` | Input placeholder |
+| `options` | `array` | Required for `select` type — `array( value => label )` |
+| `filter` | `array` | Filter detection metadata — see [Filter metadata](#filter-metadata) |
+
+### Field types
+
+| Type | Description |
+|---|---|
+| `text` | Single-line text input |
+| `url` | URL input — sanitized with `esc_url_raw()` |
+| `password` | Password input — empty submission preserves the existing value |
+| `textarea` | Multi-line textarea |
+| `number` | Number input — supports `min`, `max`, `step` |
+| `checkbox` | Toggle switch — saves `'yes'` or `'no'` |
+| `select` | Select dropdown — requires `options` key |
+| `readonly` | Read-only text input — never saved |
+| `custom` | Custom render/save — requires `render_cb` and optionally `save_cb` |
+
+### `number` extra keys
+
+| Key | Type | Description |
+|---|---|---|
+| `min` | `int` | Minimum value |
+| `max` | `int` | Maximum value |
+| `step` | `int` | Step increment |
+
+### `password` save behavior
+
+An empty password submission is silently ignored — the previously saved value is preserved. This prevents accidental erasure of secrets. Only a non-empty submission updates the stored value.
+
+### `custom` extra keys
+
+| Key | Type | Description |
+|---|---|---|
+| `render_cb` | `callable` | Called with `( $field, $value )` to output the field HTML — must render description and docs link itself |
+| `save_cb` | `callable\|null` | Called with `( $field, &$settings )` to save; `null` skips saving |
+
+### Filter metadata
+
+Declare a filter hook that may override this field's value at runtime. The renderer detects external callbacks and displays a locked notice automatically — no additional code required.
+
+```php
+'filter' => array(
+    'hook'   => 'cocart_disable_my_feature', // Hook name to inspect.
+    'invert' => true,                         // true if the hook is a "disable_*" flag (inverted logic).
+    'locked' => true,                         // true locks the UI input when filtered.
+),
+```
+
+| Key | Type | Description |
+|---|---|---|
+| `hook` | `string` | WordPress filter hook to monitor |
+| `invert` | `bool` | `true` when filter returns `true` to *disable* the feature (e.g. `cocart_disable_*`) |
+| `locked` | `bool` | `true` renders the field as read-only when the filter is active |
+
+---
+
+## Full add-on example
+
+```php
+// Register the section.
+add_filter( 'cocart_settings_sections', function( $sections ) {
+    $sections['social_login'] = array(
+        'label'    => __( 'Social Login', 'cocart-social-login' ),
+        'priority' => 55,
+    );
+    return $sections;
+} );
+
+// Register fields.
+add_filter( 'cocart_settings_fields', function( $fields ) {
+    $fields['social_login']['google_enabled'] = array(
+        'label'       => __( 'Google Login', 'cocart-social-login' ),
+        'type'        => 'checkbox',
+        'default'     => 'no',
+        'description' => __( 'Allow customers to sign in with Google.', 'cocart-social-login' ),
+    );
+
+    $fields['social_login']['google_client_id'] = array(
+        'label'       => __( 'Google Client ID', 'cocart-social-login' ),
+        'type'        => 'text',
+        'default'     => '',
+        'description' => __( 'OAuth client ID from Google Cloud Console.', 'cocart-social-login' ),
+        'docs_url'    => 'https://docs.example.com/google-oauth',
+    );
+
+    $fields['social_login']['google_client_secret'] = array(
+        'label'       => __( 'Google Client Secret', 'cocart-social-login' ),
+        'type'        => 'password',
+        'default'     => '',
+        'description' => __( 'OAuth client secret. Leave blank to keep the existing value.', 'cocart-social-login' ),
+    );
+
+    return $fields;
+} );
+
+// Read saved values at runtime.
+$settings = get_option( 'cocart_settings', array() );
+$enabled  = isset( $settings['social_login']['google_enabled'] ) && 'yes' === $settings['social_login']['google_enabled'];
+```
+
+---
+
+## JavaScript integration
+
+### `cocartSettingsConfig` global
+
+CoCart Starter outputs a `cocartSettingsConfig` variable before its settings script loads. Add-on scripts that depend on `cocart-admin-settings` can read it directly:
+
+```js
+var config = cocartSettingsConfig;
+// config.ajaxUrl      — admin-ajax.php URL
+// config.nonce        — cocart_settings_nonce value
+// config.defaults     — default values, keyed by section then field
+// config.sections     — array of registered section IDs
+// config.filterInfo   — filter attribution data for the "More info" modal
+// config.i18n         — localised strings used by the core script
+```
+
+### Settings page events
+
+The core script fires DOM events that add-ons can listen to without modifying core files.
+
+| Event | Fired on | When |
+|---|---|---|
+| `cocart:saved` | `#cocart-save-settings` | After a successful AJAX save |
+| `cocart:reset` | `document` | After the user confirms a settings reset |
+
+**Reacting to save:**
+
+```js
+$( '#cocart-save-settings' ).on( 'cocart:saved', function() {
+    // Settings have been persisted — update any UI that reflects saved state.
+} );
+```
+
+**Reacting to reset:**
+
+```js
+$( document ).on( 'cocart:reset', function() {
+    var defaults   = cocartSettingsConfig.defaults || {};
+    var myDefaults = defaults.my_addon || {};
+    // Restore your UI to default values.
+} );
+```
+
+### Enqueueing add-on settings scripts
+
+Enqueue your script with `cocart-admin-settings` as a dependency so it loads after the core script and `cocartSettingsConfig` is guaranteed to be defined:
+
+```php
+add_action( 'admin_enqueue_scripts', function( $hook ) {
+    if ( false === strpos( $hook, 'cocart-settings' ) ) {
+        return;
+    }
+
+    wp_enqueue_script(
+        'my-addon-settings',
+        plugin_dir_url( __FILE__ ) . 'assets/js/my-addon-settings.js',
+        array( 'cocart-admin-settings' ),
+        MY_ADDON_VERSION,
+        true
+    );
+} );
+```

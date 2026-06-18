@@ -1,0 +1,63 @@
+---
+title: "WooCommerce Shipment Tracking"
+sidebarTitle: "Shipment Tracking"
+description: "Expose shipment tracking entries on order responses so customers can track their parcels from a headless storefront."
+tag: "In Testing"
+robots: "noindex, follow"
+---
+
+<Info>
+  This feature documentation was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 28th, 2026.
+</Info>
+
+[WooCommerce Shipment Tracking](https://woocommerce.com/products/shipment-tracking/) lets store owners add carrier tracking information to orders. The CoCart Plus integration appends that tracking data to the single-order response so customers can track their shipments directly from a headless storefront without visiting the WooCommerce My Account page.
+
+<Info>
+  This integration is available in CoCart Plus since <Tooltip tip="This is the version of CoCart Plus">v2.0.0</Tooltip> and requires WooCommerce Shipment Tracking to be installed and active.
+</Info>
+
+## Order response
+
+Each order response from the CoCart My Account orders endpoint includes a `shipment_tracking` array.
+
+```json Example (order response excerpt)
+{
+  "order_id": 101,
+  "shipment_tracking": [
+    {
+      "tracking_id": "abc123",
+      "tracking_provider": "USPS",
+      "tracking_number": "9400111899223397619600",
+      "tracking_link": "https://tools.usps.com/go/TrackConfirmAction?tLabels=9400111899223397619600",
+      "date_shipped": "May 28, 2026, 9:00 am"
+    }
+  ]
+}
+```
+
+An empty array is returned for orders with no tracking entries.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `tracking_id` | `string` | Unique tracking entry identifier. |
+| `tracking_provider` | `string` | Shipping provider display name (e.g. `USPS`, `FedEx`). |
+| `tracking_number` | `string` | The shipment tracking number. |
+| `tracking_link` | `string` | URL to track the shipment on the carrier's website. |
+| `date_shipped` | `string` | Formatted date and time the order was shipped. Empty string if not set. |
+
+## Usage
+
+Fetch an order from the My Account endpoint and read `shipment_tracking`:
+
+```javascript JavaScript
+const response = await fetch(
+  'https://your-store.com/wp-json/cocart/v2/account/orders/101',
+  { headers: { 'Authorization': 'Basic ...' } }
+);
+const order = await response.json();
+
+for (const tracking of order.shipment_tracking) {
+  console.log(`${tracking.tracking_provider}: ${tracking.tracking_number}`);
+  console.log(`Track at: ${tracking.tracking_link}`);
+}
+```

@@ -1,0 +1,36 @@
+---
+title: "Extensions Hooks"
+sidebarTitle: "Extensions"
+description: "Action hooks for registering CoCart extensions and callbacks via the CoCart_Cart_Extension API."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Action Hooks overview](/developers/actions) for all hook categories and the [Developer Reference](/developers) for the plugin key index.
+</Tip>
+
+### `cocart_register_extension_callback`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Fires when an extension callback is registered.
+
+<Note>Made available since v3.1.0</Note>
+
+**Parameters**
+
+<ParamField path="cart_extension" type="CoCart_Cart_Extension">
+  Instance of the CoCart_Cart_Extension class which exposes the CoCart_Cart_Extension::register() method.
+</ParamField>
+
+**Usage**
+```php
+add_action( 'cocart_register_extension_callback', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_register_extension_callback` in repository](https://github.com/co-cart/co-cart/search?q=cocart_register_extension_callback&type=code)

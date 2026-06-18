@@ -1,10 +1,10 @@
 ---
 title: 'Get Cart Totals'
 sidebarTitle: "Cart totals"
-description: "Get the carts totals."
-openapi: "../openapi-v2-stable.yaml GET /cart/totals"
+description: "Retrieve the cart totals including subtotal, tax, shipping, and total. Will be deprecated in favor of the main cart endpoint."
+openapi: "../openapi-cocart-v2-collection.yaml GET /cart/totals"
 ---
 
 <Warning>
-    This endpoint will be deprecated in the future. Recommend getting the totals from the main **cart** endpoint.
+    This endpoint will be deprecated in the future. Recommend getting the totals from the main **[cart](/api-reference/v2/cart/get-cart)** endpoint.
 </Warning>

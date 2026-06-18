@@ -1,0 +1,188 @@
+---
+title: "TypeScript SDK: Sessions API"
+sidebarTitle: "Sessions API"
+description: "Manage cart sessions with the CoCart TypeScript SDK — admin sessions endpoint, SessionManager, and cart transfer on login."
+'og:title': "Cart Session Management — CoCart TypeScript SDK"
+'og:description': "Manage WooCommerce cart sessions from TypeScript. Admin sessions endpoint, SessionManager for guest-to-customer cart transfer on login, and pluggable storage adapters."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+</Info>
+
+This page covers two things:
+
+1. **Admin Sessions Endpoint** — For store administrators to view and manage all active cart sessions.
+2. **SessionManager** — A helper class for your frontend to handle the guest-to-customer login flow.
+
+## Admin Sessions Endpoint
+
+The Sessions endpoint requires WooCommerce REST API credentials (see [Consumer Keys](/sdk/typescript/authentication#consumer-keys-admin)).
+
+```ts
+import { CoCart } from '@cocartheadless/sdk';
+
+const client = new CoCart('https://your-store.com', {
+  consumerKey: 'ck_xxxxx',
+  consumerSecret: 'cs_xxxxx',
+});
+```
+
+### List All Sessions
+
+```ts
+const response = await client.sessions().all();
+
+// With parameters
+const response = await client.sessions().all({ per_page: '50' });
+```
+
+### Find a Session
+
+```ts
+// By cart key
+const response = await client.sessions().find('guest_abc123');
+
+// By customer ID
+const response = await client.sessions().bySession(123);
+```
+
+### Get Session Items
+
+```ts
+const response = await client.sessions().getItems('guest_abc123');
+```
+
+### Delete a Session
+
+```ts
+// By cart key
+const response = await client.sessions().destroy('guest_abc123');
+
+// By customer ID
+const response = await client.sessions().destroySession(123);
+```
+
+---
+
+## SessionManager
+
+The `SessionManager` handles a common e-commerce flow: a visitor browses as a guest, adds items, then logs in — and their guest cart transfers to their customer account.
+
+### Basic Setup
+
+```ts
+import { CoCart, SessionManager, EncryptedStorage } from '@cocartheadless/sdk';
+
+const storage = new EncryptedStorage('my-secret-key');
+const client = new CoCart('https://your-store.com', { storage });
+const session = new SessionManager(client, storage);
+```
+
+### Initialize a Cart
+
+Creates a guest cart and persists the cart key:
+
+```ts
+const cartKey = await session.initializeCart();
+console.log(cartKey); // 'guest_abc123...'
+
+// The cart key is stored in encrypted localStorage
+// On the next page load, restoreSession() restores it automatically
+```
+
+### Login with Basic Auth
+
+```ts
+// Guest adds items first
+await client.cart().addItem(123, 2);
+
+// Login and merge guest cart into customer cart
+const response = await session.login('customer@email.com', 'password', true);
+
+// Or login without merging (starts fresh customer cart)
+const response = await session.login('customer@email.com', 'password', false);
+```
+
+### Login with JWT
+
+```ts
+// Guest adds items
+await client.cart().addItem(123, 2);
+
+// Login via JWT and merge cart
+const response = await session.loginWithJwt('customer@email.com', 'password', true);
+
+// Access JWT manager for token operations
+await session.jwt().validate();
+await session.jwt().refresh();
+```
+
+### Login with Existing JWT Token
+
+```ts
+const response = await session.loginWithToken('eyJ...');
+```
+
+### Logout
+
+```ts
+await session.logout();
+
+// Start a new guest session
+await session.initializeCart();
+```
+
+### Session Status
+
+```ts
+session.isAuthenticated(); // true if Basic Auth or JWT is set
+session.isGuest();         // true if no auth credentials
+session.getCartKey();      // current cart key or null
+```
+
+### Custom Storage Key
+
+```ts
+session.setStorageKey('my_app_cart_key');
+```
+
+---
+
+## Storage Adapters
+
+See [Storage Adapters](/sdk/typescript#storage-adapters) in the TypeScript SDK overview for available adapters (`MemoryStorage`, `LocalStorage`, `EncryptedStorage`) and how to implement a custom one.
+
+---
+
+## Cart Transfer on Login
+
+A complete guest-to-customer cart transfer flow:
+
+```ts
+import { CoCart, SessionManager, EncryptedStorage } from '@cocartheadless/sdk';
+
+const storage = new EncryptedStorage('my-secret-key');
+const client = new CoCart('https://your-store.com', { storage });
+const session = new SessionManager(client, storage);
+
+// 1. Initialize guest session
+await session.initializeCart();
+
+// 2. Guest browses and adds items
+await client.cart().addItem(123, 2);
+await client.cart().addItem(456, 1);
+
+// 3. Guest decides to log in
+await session.loginWithJwt('customer@email.com', 'password', true);
+
+// 4. Guest cart items are now in the customer's cart
+const cart = await client.cart().get();
+const items = cart.getItems(); // Contains items 123 and 456
+
+// 5. Later, customer logs out
+await session.logout();
+await session.initializeCart(); // Fresh guest session
+```
+
+See [Authentication](/sdk/typescript/authentication) for more on JWT and Basic Auth setup.

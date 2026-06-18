@@ -1,0 +1,327 @@
+---
+title: "Go SDK"
+sidebarTitle: "Overview"
+description: "Official Go SDK for the CoCart REST API. Zero external dependencies, functional options pattern, context.Context support, generics, and range-over-func pagination."
+'og:title': "CoCart Go SDK — Install, Configure & Connect to WooCommerce"
+'og:description': "Install and configure the CoCart Go SDK. go get, all functional options, fluent setters, custom http.Client, lifecycle event hooks, debug mode, and legacy plugin support."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+</Info>
+
+The official Go SDK for the CoCart REST API. Requires Go 1.23+.
+
+## Requirements
+
+- Go 1.23 or higher
+- CoCart plugin installed on your WooCommerce store
+- [CoCart JWT Authentication](https://wordpress.org/plugins/cocart-jwt-authentication/) plugin _(optional, for JWT features)_
+
+## Installation
+
+```bash
+go get github.com/cocart-headless/cocart-sdk-go
+```
+
+## Configuration Options
+
+The `NewClient` function accepts functional options as variadic arguments. Only include the ones relevant to your setup — everything has sensible defaults.
+
+```go
+import (
+	"time"
+	cocart "github.com/cocart-headless/cocart-sdk-go"
+)
+
+client := cocart.NewClient("https://your-store.com",
+	// Guest session
+	cocart.WithCartKey("existing_cart_key"),
+
+	// Basic Auth
+	cocart.WithBasicAuth("customer@email.com", "password"),
+
+	// JWT Auth
+	cocart.WithJWTToken("your-jwt-token"),
+	cocart.WithJWTRefreshToken("your-refresh-token"),
+
+	// Admin (Sessions API)
+	cocart.WithWooCommerceKeys("ck_xxxxx", "cs_xxxxx"),
+
+	// HTTP settings
+	cocart.WithTimeout(30 * time.Second),
+
+	// REST API prefix (default: "wp-json")
+	cocart.WithRESTPrefix("wp-json"),
+
+	// API namespace (default: "cocart")
+	cocart.WithNamespace("cocart"),
+
+	// CoCart main plugin: MainPluginBasic (default) or MainPluginLegacy
+	cocart.WithMainPlugin(cocart.MainPluginBasic),
+
+	// Retry transient failures (429, 503, timeouts)
+	cocart.WithMaxRetries(2),
+
+	// Storage adapter (default: MemoryStorage)
+	cocart.WithStorage(cocart.NewMemoryStorage()),
+	cocart.WithStorageKey("cocart_cart_key"),
+
+	// Custom auth header name (default: "Authorization")
+	cocart.WithAuthHeaderName("X-Auth-Token"),
+
+	// Transform every API response before returning
+	cocart.WithResponseTransformer(func(r *cocart.Response) *cocart.Response {
+		return r
+	}),
+
+	// Enable ETag conditional requests (default: true)
+	cocart.WithETag(true),
+
+	// Enable debug logging (default: false)
+	cocart.WithDebug(true),
+
+	// Custom HTTP client
+	cocart.WithHTTPClient(&http.Client{Timeout: 60 * time.Second}),
+)
+```
+
+### Fluent Configuration
+
+Setters return `*Client` for optional chaining:
+
+```go
+client := cocart.NewClient("https://your-store.com").
+	SetTimeout(60 * time.Second).
+	SetMaxRetries(2).
+	SetRESTPrefix("api").
+	SetNamespace("mystore").
+	AddHeader("X-Custom-Header", "value").
+	SetAuthHeaderName("X-Auth-Token").
+	SetETag(true).
+	SetMainPlugin(cocart.MainPluginBasic).
+	SetDebug(true)
+```
+
+## White-Labelling / Custom REST Prefix
+
+WordPress exposes its REST API at `/wp-json/` by default. If your site or hosting changes this prefix, or if the CoCart plugin has been renamed (white-labelled), you can configure the SDK to match:
+
+```go
+// Custom REST prefix (site uses /api/ instead of /wp-json/)
+client := cocart.NewClient("https://your-store.com",
+	cocart.WithRESTPrefix("api"),
+)
+// Requests go to: https://your-store.com/api/cocart/v2/cart
+
+// White-labelled namespace
+client2 := cocart.NewClient("https://your-store.com",
+	cocart.WithNamespace("mystore"),
+)
+// Requests go to: https://your-store.com/wp-json/mystore/v2/cart
+
+// Both together
+client3 := cocart.NewClient("https://your-store.com",
+	cocart.WithRESTPrefix("api"),
+	cocart.WithNamespace("mystore"),
+)
+// Requests go to: https://your-store.com/api/mystore/v2/cart
+```
+
+## Storage Adapters
+
+A storage adapter knows how to save and retrieve data. The SDK needs storage to persist cart keys and JWT tokens.
+
+All storage adapters implement the `Storage` interface:
+
+```go
+type Storage interface {
+	Get(key string) (string, error)
+	Set(key string, value string) error
+	Delete(key string) error
+}
+```
+
+### MemoryStorage
+
+Stores data in memory using a Go `map` protected by `sync.RWMutex`. This is the default. Data is lost when the process restarts.
+
+```go
+storage := cocart.NewMemoryStorage()
+```
+
+### Custom Storage
+
+Implement the `Storage` interface for any backend. For example, Redis:
+
+```go
+type RedisStorage struct {
+	client *redis.Client
+}
+
+func (s *RedisStorage) Get(key string) (string, error) {
+	val, err := s.client.Get(ctx, key).Result()
+	if err == redis.Nil {
+		return "", cocart.ErrKeyNotFound
+	}
+	return val, err
+}
+
+func (s *RedisStorage) Set(key string, value string) error {
+	return s.client.Set(ctx, key, value, 0).Err()
+}
+
+func (s *RedisStorage) Delete(key string) error {
+	return s.client.Del(ctx, key).Err()
+}
+```
+
+Pass your custom storage via `WithStorage`:
+
+```go
+client := cocart.NewClient("https://your-store.com",
+	cocart.WithStorage(&RedisStorage{client: redisClient}),
+)
+```
+
+<Note>When implementing custom storage, return `cocart.ErrKeyNotFound` from `Get()` when a key doesn't exist. This allows the SDK to distinguish between "key not found" and other errors.</Note>
+
+## Legacy Plugin Support
+
+The SDK supports both **CoCart Starter** and **CoCart Community** plugin (`cart-rest-api-for-woocommerce` v4.x). By default, the SDK targets CoCart Starter.
+
+To use the SDK with the community plugin, set `mainPlugin` to `MainPluginLegacy`:
+
+```go
+client := cocart.NewClient("https://your-store.com",
+	cocart.WithMainPlugin(cocart.MainPluginLegacy),
+)
+
+// Or use the fluent setter
+client.SetMainPlugin(cocart.MainPluginLegacy)
+```
+
+### What changes in legacy mode
+
+**Basic-only methods return an error immediately.** Methods that require CoCart Starter return a `*VersionError` before making any HTTP request:
+
+```go
+client := cocart.NewClient("https://your-store.com",
+	cocart.WithMainPlugin(cocart.MainPluginLegacy),
+)
+
+_, err := client.Products().FindBySlug(ctx, "blue-hoodie")
+
+var vErr *cocart.VersionError
+if errors.As(err, &vErr) {
+	// "FindBySlug() requires CoCart Starter. Please upgrade..."
+	fmt.Println(vErr.Message)
+}
+```
+
+Basic-only methods include:
+
+- `Cart().Create()`
+- `Products().FindBySlug()`, `Variation()`, `Category()`, `Tag()`
+- `Products().AttributeBySlug()`, `AttributeTermsBySlug()`, `AttributeTermBySlug()`
+- `Products().Brands()`, `Brand()`, `ByBrand()`
+- `Products().MyReviews()`
+
+## Custom HTTP Client
+
+For advanced use cases like custom TLS configuration, proxy settings, or transport middleware, pass your own `*http.Client`:
+
+```go
+transport := &http.Transport{
+	MaxIdleConns:    10,
+	IdleConnTimeout: 30 * time.Second,
+}
+
+client := cocart.NewClient("https://your-store.com",
+	cocart.WithHTTPClient(&http.Client{
+		Transport: transport,
+	}),
+)
+```
+
+## Event System
+
+Register callbacks for request/response lifecycle events. These are useful for logging, metrics, or debugging:
+
+```go
+client.OnRequest(func(e cocart.RequestEvent) {
+	fmt.Printf("%s %s\n", e.Method, e.URL)
+})
+client.OnResponse(func(e cocart.ResponseEvent) {
+	fmt.Printf("%d in %dms\n", e.Status, e.Duration.Milliseconds())
+})
+client.OnError(func(e cocart.ErrorEvent) {
+	fmt.Println("Error:", e.Err)
+})
+```
+
+## Debug Mode
+
+Enable debug mode to log request/response details to stderr:
+
+```go
+client := cocart.NewClient("https://your-store.com",
+	cocart.WithDebug(true),
+)
+```
+
+## Quick Start
+
+```go
+import cocart "github.com/cocart-headless/cocart-sdk-go"
+
+client := cocart.NewClient("https://your-store.com")
+
+// Add an item to the cart
+response, err := client.Cart().AddItem(ctx, 123, cocart.AddItemParams{Quantity: 2})
+
+// Get the cart
+cart, err := client.Cart().Get(ctx, nil)
+fmt.Println(cart.GetItemCount())
+```
+
+## Key Features
+
+- **Zero external dependencies** — Go stdlib only
+- **Functional options pattern** — clean, extensible configuration
+- **`context.Context` on all IO methods** — full cancellation and deadline support
+- **Generics** — `Unmarshal[T]()` for typed response deserialization
+- **Range-over-func pagination** — Go 1.23 iterator support
+- **JWT authentication** with auto-refresh
+- **Event system** for request/response lifecycle hooks
+- **Retry with exponential backoff**
+- **ETag conditional requests** for reduced bandwidth
+- **Response transformer** for custom processing
+- **Legacy plugin support** for older CoCart versions
+
+## Documentation
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="lock" href="/sdk/go/authentication">
+    Guest sessions, Basic Auth, JWT, consumer keys, and custom auth headers
+  </Card>
+  <Card title="Cart API" icon="cart-shopping" href="/sdk/go/cart">
+    Add, update, remove items, coupons, shipping, fees, and ETag caching
+  </Card>
+  <Card title="Products API" icon="shirt" href="/sdk/go/products">
+    Browse, filter, paginate products, variations, categories, and reviews
+  </Card>
+  <Card title="Sessions API" icon="database" href="/sdk/go/sessions">
+    Admin sessions endpoint, SessionManager, and cart transfer on login
+  </Card>
+  <Card title="Error Handling" icon="circle-exclamation" href="/sdk/go/error-handling">
+    Error types, sentinel errors, and HTTP status code mapping
+  </Card>
+  <Card title="Utilities" icon="wrench" href="/sdk/go/utilities">
+    Currency formatting, timezone helpers, and response transformers
+  </Card>
+</CardGroup>
+
+## Source
+
+The SDK is open source. View the source and report issues on [GitHub](https://github.com/cocart-headless/cocart-go).

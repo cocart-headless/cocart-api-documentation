@@ -1,0 +1,121 @@
+---
+title: "Security"
+description: "Security is the most important part of creating a headless store."
+icon: "shield"
+---
+
+CoCart is built with security in mind. This page covers the security features built into the API and how to configure them for your store.
+
+## API Discovery Protection
+
+<Note>
+    By default, CoCart cannot be found in the WordPress REST API index under namespaces or routes.
+</Note>
+
+CoCart hides itself from the REST API discovery endpoint (`/wp-json/`). This prevents outsiders from detecting whether your store is running CoCart by inspecting the API index. The API itself functions normally — only the namespace listing is hidden.
+
+## HTTPS
+
+All authenticated API requests must use HTTPS. Basic Auth sends credentials on every request, and JWT tokens are bearer credentials — anyone who intercepts either can impersonate the user.
+
+<Warning>
+    Never use HTTP for authenticated requests in production. Even for guest cart operations, HTTPS protects customer data in transit.
+</Warning>
+
+See [Security Practices](/knowledge-base/security-practices#always-use-https) for SSL verification configuration in the SDKs.
+
+## Authentication
+
+CoCart supports multiple authentication methods, each suited to different use cases:
+
+| Method | Best for | Credentials sent |
+|---|---|---|
+| [Basic Auth](/authentication) | Server-to-server, development | Every request |
+| [JWT](/authentication/jwt) | Customer-facing apps, SPAs | Once at login, then tokens |
+
+<Tip>
+    For customer-facing applications, use [JWT authentication](/authentication/jwt). It avoids sending credentials on every request and provides automatic token refresh, revocation on password change, and short-lived access tokens.
+</Tip>
+
+### Custom Authentication Header
+
+If your infrastructure requires a non-standard authorization header (for example, when a proxy or CDN strips the default `Authorization` header), use the `cocart_auth_header` filter:
+
+```php
+add_filter( 'cocart_auth_header', function( $auth_header ) {
+    $custom_header = isset( $_SERVER['HTTP_X_MY_CUSTOM_AUTH'] )
+        ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_MY_CUSTOM_AUTH'] ) )
+        : '';
+
+    return ! empty( $custom_header ) ? $custom_header : $auth_header;
+}, 10, 1 );
+```
+
+## Restricting API Access
+
+By default, cart and product endpoints are publicly accessible for guest customers. If your store requires authentication for all API access (for example, a members-only store), you can [restrict access](/force-permissions) to specific routes using permission filters:
+
+```php
+add_filter( 'cocart_api_permission_check_get', function() {
+    return array(
+        'v2/cart',
+        'v2/cart/items',
+        'v2/cart/totals',
+        'v2/products',
+    );
+} );
+```
+
+This forces authentication on the listed routes without affecting other endpoints. See [API Permissions](/force-permissions) for the full guide.
+
+## Cross-Origin Requests (CORS)
+
+Browsers block cross-origin API requests by default. If your frontend is on a different domain than your WordPress backend (which is typical for headless stores), you need to enable [CORS](/cors).
+
+For production, always restrict allowed origins to your specific domain:
+
+```php
+add_filter( 'cocart_allow_origin', function() {
+    return 'https://your-storefront.com';
+} );
+```
+
+See the [CORS guide](/cors) for setup options including the [CoCart CORS Support](https://wordpress.org/plugins/cocart-cors/) plugin.
+
+## Rate Limiting
+
+<Note>
+    [Rate limiting](/rate-limiting) is available with CoCart Plus.
+</Note>
+
+Rate limiting protects your store from excessive API calls and abuse. When enabled, it limits requests per user (by user ID for authenticated users, IP address for guests) within a configurable time window.
+
+## Credential & Token Storage
+
+How you store credentials and tokens determines your application's security posture:
+
+- **Never hardcode** credentials or secret keys in source code — use environment variables
+- **Never store JWT tokens** in plain `localStorage` — use HttpOnly cookies or the SDK's `EncryptedStorage`
+- **Never expose** consumer keys or admin credentials in client-side code
+
+See [Security Practices](/knowledge-base/security-practices) for detailed guidance on credential management, token storage options, and common mistakes to avoid.
+
+## Related
+
+<CardGroup cols={2}>
+    <Card title="Security Practices" icon="lock" href="/knowledge-base/security-practices">
+        Detailed guidance on HTTPS, credentials, token storage, and common mistakes.
+    </Card>
+    <Card title="HTTP Security Headers" icon="shield-halved" href="/knowledge-base/http-security-headers">
+        Recommended headers for your storefront and hosting environment.
+    </Card>
+    <Card title="Authentication" icon="key" href="/authentication">
+        Set up Basic Auth or JWT for your store.
+    </Card>
+    <Card title="CORS" icon="door-open" href="/cors">
+        Enable cross-origin requests for your frontend.
+    </Card>
+    <Card title="Security Policy" icon="vault" href="/security-policy">
+        Supported versions and how to report vulnerabilities.
+    </Card>
+</CardGroup>

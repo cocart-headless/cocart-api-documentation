@@ -1,14 +1,51 @@
 ---
-title: "WordPress Configuration"
-description: "Also known as the wp-config.php file."
+title: "CoCart Configuration Constants"
+sidebarTitle: "Configuration Constants"
+description: "These constants must be defined in wp-config.php file."
 icon: "gears"
+tag: "Updated"
 ---
 
-For more handling over CoCart for your store or a client, you will find that using the `wp-config.php` file is the best place to setup certain conditions.
+You can define in your `wp-config.php` file to control plugin behavior. These are CoCart-specific — for general WordPress configuration (memory limits, cron, debugging), see the [WordPress setup guide](/getting-started/wordpress-setup#wp-configphp-configuration).
+
+<Note>
+    All constants must be defined in `wp-config.php` **before** the `/* That's all, stop editing! */` line.
+</Note>
+
+## Quick Reference
+
+| Constant | Default | Description |
+|---|---|---|
+| `COCART_WHITE_LABEL` | `false` | Hides CoCart from the WordPress dashboard |
+| `COCART_REMOVE_ALL_DATA` | `false` | Enables full data removal on uninstall |
+| `COCART_JWT_AUTH_SECRET_KEY` | — | Secret key for JWT token signing |
+| `COCART_JWT_AUTH_PRIVATE_KEY_PATH` | — | Path to RSA private key for JWT |
+| `COCART_JWT_AUTH_PUBLIC_KEY_PATH` | — | Path to RSA public key for JWT |
+
+## White Labelling
+
+If you are building a headless store for a client and need to hide CoCart from the WordPress dashboard, enable white label mode.
+
+This hides CoCart completely from the backend including the admin menu, plugin row links, plugin notices, WooCommerce inbox notices, and WooCommerce System Status information.
+
+```php
+/**
+ * Hides CoCart from the WordPress dashboard.
+ */
+define( 'COCART_WHITE_LABEL', true );
+```
+
+<Tip>
+    This is useful for agencies and freelancers who want a clean client-facing dashboard. The REST API continues to function normally — only the admin UI is hidden.
+</Tip>
+
+<Info>
+    An advanced White Label mode will be available soon for more control such as branding support. Requires CoCart Starter or higher so stay tuned!
+</Info>
 
 ## Uninstall
 
-To prevent any data loss when uninstalling CoCart from the backend and to ensure only the site owner can perform this action. You need to enable the ability to remove it.
+By default, deactivating and deleting CoCart does not remove its data (session table, settings). To enable full data removal on uninstall, define this constant before uninstalling:
 
 ```php
 /**
@@ -17,15 +54,48 @@ To prevent any data loss when uninstalling CoCart from the backend and to ensure
 define( 'COCART_REMOVE_ALL_DATA', true );
 ```
 
-## White Labelling
+<Warning>
+    This permanently deletes all CoCart session data and settings when the plugin is deleted. Only enable this when you are certain you no longer need the data.
+</Warning>
 
-If you are developing a headless store for a client and need to hide CoCart. Enabling white label mode comes in handy if that is something you would want.
+## JWT Authentication
 
-Enabling this hides CoCart completely from the backend including the admin menu, plugin row links, plugin notices, WooCommerce inbox notices and WooCommerce System Status information.
+These constants configure the [JWT Authentication](/authentication/jwt) plugin. They are only needed if you use JWT for token-based authentication.
+
+### Secret Key (HMAC)
+
+Required for the default HMAC signing algorithm. Generate a unique, random string — do not reuse your WordPress salts:
 
 ```php
-/**
- * Hides CoCart from the WordPress dashboard.
- */
-define( 'COCART_WHITE_LABEL', true );
+define( 'COCART_JWT_AUTH_SECRET_KEY', 'your-unique-secret-key-here' );
 ```
+
+<Warning>
+    Changing this key after tokens have been issued will invalidate all existing tokens. Users will need to re-authenticate.
+</Warning>
+
+See the [JWT setup guide](/authentication/jwt) for full installation steps.
+
+### RSA Key Paths (Advanced)
+
+For RSA-based signing instead of HMAC, define the paths to your private and public key files:
+
+```php
+define( 'COCART_JWT_AUTH_PRIVATE_KEY_PATH', '/secure/path/private.key' );
+define( 'COCART_JWT_AUTH_PUBLIC_KEY_PATH', '/secure/path/public.key' );
+```
+
+<Tip>
+    Store key files outside your web root so they are not publicly accessible. See [JWT advanced configuration](/authentication/jwt/advanced-configuration) for RSA setup details.
+</Tip>
+
+## Related
+
+<CardGroup cols={2}>
+    <Card title="WordPress Setup" icon="wordpress" href="/getting-started/wordpress-setup">
+        General wp-config.php settings for headless WordPress — memory, cron, debugging, object caching.
+    </Card>
+    <Card title="Security Practices" icon="shield" href="/knowledge-base/security-practices">
+        Best practices for securing your CoCart API, including credential storage and HTTPS.
+    </Card>
+</CardGroup>

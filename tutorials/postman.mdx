@@ -1,76 +1,121 @@
 ---
 title: "Getting Started with Postman"
-description: "Learn how to use Postman to interact with CoCart API"
+description: "Import the official CoCart OpenAPI specs into Postman to explore, test, and debug the CoCart REST API with a full pre-built collection."
 icon: "user-astronaut"
-tag: "NEW"
 ---
 
-# Introduction
+<Info>
+  This tutorial was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 27th, 2026.
+</Info>
 
-[Postman](https://www.postman.com/) is a popular API development tool that makes it easy to build, test, and modify API requests from a user-friendly graphical interface for sending HTTP requests and viewing responses, making it perfect for testing and exploring the CoCart API. We recommend using Postman with the CoCart API when you are troubleshooting issues with your application.
+[Postman](https://www.postman.com/) is a popular API client with a graphical interface for building, testing, and debugging HTTP requests. Importing the official CoCart OpenAPI specs gives you a ready-made collection of every endpoint, complete with request bodies, parameters, and example responses.
 
-## Why Use Postman?
+## Prerequisites
 
-- Easy-to-use graphical interface for making API requests
-- Save and organize your API requests for future use
-- Test different parameters and authentication methods quickly
-- View detailed response data in a structured format
-- Share API collections with your team
+- [Postman](https://www.postman.com/downloads/) installed (desktop app recommended)
+- A WordPress site with CoCart installed
+- Your site URL (e.g. `https://yourstore.com`)
 
-## Setting Up Postman
+## Import the OpenAPI spec
 
-1. Download and install Postman from the [official website](https://www.postman.com/downloads/)
-2. Create a free Postman account (optional but recommended)
-3. Launch Postman on your computer
+CoCart publishes official OpenAPI 3.0.3 specs in the [`cocart-headless/cocart-openapi`](https://github.com/cocart-headless/cocart-openapi) repository. You can import directly from a URL — no download required.
 
-## Importing CoCart API Collection
+### Option A: Import from URL
 
-CoCart provides an OpenAPI document that follows the [OpenAPI Specification](https://swagger.io/specification/) that you can import to get started quickly:
+1. Open Postman and click **Import** in the top left
+2. Select the **Link** tab
+3. Paste the URL for the spec you need:
 
-1. Download the CoCart OpenAPI document: [CoCart OpenAPI Document](#)
-2. In Postman, click the "Import" button in the top left
-3. Drag and drop the downloaded the OpenAPI file or browse to select it
-4. Click "Import" to add the collection to your workspace
+| Edition | URL |
+|---------|-----|
+| **CoCart Starter v2** (recommended) | `https://raw.githubusercontent.com/cocart-headless/cocart-openapi/main/basic/v2/openapi-cocart-v2-collection.yaml` |
+| **Community v2** | `https://raw.githubusercontent.com/cocart-headless/cocart-openapi/main/community/v2/openapi-cocart-v2-stable.yaml` |
+| **JWT Authentication** | `https://raw.githubusercontent.com/cocart-headless/cocart-openapi/main/jwt-authentication/openapi-cocart-jwt-auth.yaml` |
+| **CoCart Plus v1** | `https://raw.githubusercontent.com/cocart-headless/cocart-openapi/main/plus/v1/openapi-cocart-plus-v1-collection.yaml` |
 
-## Configuring Environment Variables
+4. Click **Import**
 
-To use the CoCart API effectively with Postman, set up your environment variables:
+Postman will create a collection with all endpoints organized by tag.
 
-1. Click the "Environments" tab in Postman
-2. Create a new environment (e.g., "CoCart Local")
-3. Add the following variables:
-   - `url`: Your WordPress site URL (e.g., `http://localhost/wordpress`)
-   - `consumer_key`: Your WooCommerce consumer key - for Session API ONLY
-   - `consumer_secret`: Your WooCommerce consumer secret - for Session API ONLY
+### Option B: Import from file
 
-## Making Your First Request
+1. Download the spec file from the [cocart-openapi repository](https://github.com/cocart-headless/cocart-openapi)
+2. In Postman, click **Import** → **Files** → select the downloaded YAML file
+3. Click **Import**
 
-1. Select the imported CoCart collection
-2. Choose the environment you created
-3. Open the "Products" request
-4. Click "Send" to make your first API request
+<Tip>
+  Import multiple specs to get separate collections for the core API, JWT authentication, and Plus add-on endpoints.
+</Tip>
 
-The response will show your stores product data in JSON format.
+## Set up your environment
+
+Create an environment so you can switch between local, staging, and production stores without editing each request.
+
+1. Click **Environments** in the sidebar
+2. Click **+** to create a new environment (e.g. "CoCart Local")
+3. Add these variables:
+
+| Variable | Type | Example Value |
+|----------|------|---------------|
+| `protocol` | Default | `https` |
+| `host` | Default | `yourstore.com` |
+| `consumer_key` | Secret | `ck_xxxx` (for Sessions API only) |
+| `consumer_secret` | Secret | `cs_xxxx` (for Sessions API only) |
+
+4. Click **Save** and select the environment from the dropdown in the top right
+
+The imported collection already uses `{{protocol}}` and `{{host}}` variables from the OpenAPI server definition, so requests will automatically target your configured store.
+
+## Make your first request
+
+1. Expand the imported **CoCart - API v2** collection in the sidebar
+2. Select **Get Products** under the products group
+3. Make sure your environment is selected
+4. Click **Send**
+
+You should see a JSON response with your store's products.
 
 ## Authentication
 
-If you need customer authentication:
+Most cart endpoints work without authentication (guest carts). For customer-specific carts or protected endpoints, you have two options:
 
-1. In the request's "Auth" tab, select "Basic Auth"
-2. Enter your the customers username/email/phone number
-3. Enter your the customers password
+### Basic Authentication
 
-[See Authentication](../api-reference/authentication) for more information.
+1. Select the request's **Authorization** tab
+2. Choose **Basic Auth**
+3. Enter the customer's username or email and password
 
-## Next Steps
+### JWT Authentication
 
-- Explore the various endpoints in the CoCart collection
-- Try modifying request parameters to see different responses
-- Use the "Tests" tab to write test scripts for your requests
-- Save your frequently used requests for quick access
+If you imported the JWT spec, you can authenticate with tokens:
 
-For more information about using Postman, visit the [Postman Learning Center](https://learning.postman.com/).
+1. First, log in through the **Login User** endpoint to get a JWT token
+2. Copy the `jwt_token` from the response
+3. On subsequent requests, go to the **Authorization** tab
+4. Choose **Bearer Token** and paste the token
 
-## What’s next
+See [Authentication](/authentication/index) for more details.
 
-If you click on the right side in Postman that says “Code”, you can turn the request we just created into the language of your choosing such as PHP, Javascript, Python, Node or Ruby to help you get started. Postman has great documentation that might be helpful and an AI assistant.
+## Generate code snippets
+
+Postman can convert any request into code for your application:
+
+1. Open a request and click **Send** to verify it works
+2. Click the **Code snippet** icon on the right sidebar
+3. Choose your language — PHP, JavaScript, Python, cURL, and more
+4. Copy the generated code into your project
+
+This is a quick way to bootstrap API calls in your application.
+
+## Tips
+
+- **Use the Console** (`Ctrl/Cmd + Alt + C`) to inspect raw HTTP traffic when debugging
+- **Save examples** — after a successful response, click **Save as Example** to document expected responses
+- **Use Collection Runner** to execute multiple requests in sequence, such as creating a cart, adding items, and checking out
+- **Set up Pre-request Scripts** to automatically refresh JWT tokens before each request
+
+## Next steps
+
+- [Explore the API Reference](/api-reference/introduction) for full endpoint documentation
+- [Set up JWT Authentication](/authentication/jwt/quick-start) for token-based auth
+- Try [Yaak](/tutorials/yaak) as a lightweight alternative to Postman

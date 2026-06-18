@@ -1,0 +1,276 @@
+---
+title: "Guest to Customer Cart"
+description: "Understand how CoCart transfers a guest's cart when they log in, and how to handle cart continuity in your headless store."
+icon: "right-to-bracket"
+tag: "NEW"
+'og:title': "Guest to Customer Cart Transfer in CoCart"
+---
+
+<Info>
+  This guide was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+One of the most common flows in any online store is: a guest browses products, adds items to their cart, and then logs in to complete their purchase. In a traditional WooCommerce store, this "just works" because sessions are managed by cookies. In a headless setup, you need to understand how to pass the guest cart to the authenticated customer.
+
+This guide explains exactly what happens during that transition and how to implement it in your frontend.
+
+## How It Works
+
+CoCart identifies carts using a **cart key**:
+
+- **Guest carts** get a randomly generated key (prefixed with `t_`), returned to your frontend via the `Cart-Key` response header.
+- **Authenticated carts** use the customer's WordPress user ID as the cart key.
+
+When a guest logs in, CoCart **merges** their guest cart into their customer account on the next `GET` request that includes the guest cart key. If the customer has no existing cart, the guest cart is adopted as-is. If both carts have items, they are merged: guest items not already in the customer's cart are added, and where the same item exists in both, the higher quantity is kept. The customer's existing items are always preserved. The guest session is then deleted and the cart is stored under the customer's user ID — meaning they can log out, come back later, and their cart is still there.
+
+<Note>
+  Merge only triggers on `GET` requests. If you pass a guest cart key on a `POST`, `PUT`, or `DELETE` request, CoCart ignores it and uses the authenticated customer's own cart instead.
+</Note>
+
+## Step-by-Step Flow
+
+Here's what happens in a typical guest-to-customer flow:
+
+<Steps>
+  <Step title="Guest starts shopping">
+    Your frontend makes an unauthenticated request (e.g., adding an item to the cart). CoCart creates a new session and returns the cart key in the response header.
+
+    ```bash
+    curl -X POST https://example.com/wp-json/cocart/v2/cart/add-item \
+      -H "Content-Type: application/json" \
+      -d '{"id":"42","quantity":"1"}'
+    ```
+
+    Response headers include:
+
+    ```http
+    Cart-Key: t_a1b2c3d4e5f6...
+    ```
+
+    <Note>
+      `Cart-Expiring` and `Cart-Expiration` headers only appear when `WP_DEBUG` is enabled as of CoCart Starter v5.0.0.
+    </Note>
+
+    **Store this cart key.** You'll need it in step 3.
+  </Step>
+  <Step title="Guest logs in">
+    Your frontend authenticates the customer — either via the CoCart login endpoint or your own authentication method (JWT, Basic Auth, etc.).
+
+    ```bash
+    curl -X POST https://example.com/wp-json/cocart/v2/login \
+      -H "Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ="
+    ```
+
+    At this point, the customer is authenticated but their cart is still stored under the guest cart key.
+  </Step>
+  <Step title="Request the cart with the guest cart key">
+    On the **next authenticated request**, pass the guest cart key so CoCart knows which guest cart to transfer. You can do this via a header or query parameter:
+
+    **Via header:**
+
+    ```bash
+    curl https://example.com/wp-json/cocart/v2/cart \
+      -H "Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=" \
+      -H "Cart-Key: t_a1b2c3d4e5f6..."
+    ```
+
+    <Note>
+      The legacy `CoCart-API-Cart-Key` header is still accepted for backwards compatibility, but `Cart-Key` is preferred.
+    </Note>
+
+    **Via query parameter:**
+
+    ```bash
+    curl "https://example.com/wp-json/cocart/v2/cart?cart_key=t_a1b2c3d4e5f6..." \
+      -H "Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ="
+    ```
+
+    CoCart detects that an authenticated customer is requesting a guest cart and handles the merge:
+    1. If the customer has no existing cart, the guest cart is adopted wholesale
+    2. Otherwise, guest items not already in the customer's cart are added
+    3. Where the same item exists in both, the higher quantity is kept
+    4. The customer's existing items are always preserved
+    5. The old guest session (`t_a1b2c3d4e5f6...`) is deleted
+    6. The response returns the cart with the customer's user ID as the new cart key
+  </Step>
+  <Step title="Continue as an authenticated customer">
+    From this point on, all authenticated requests automatically use the customer's cart — no `cart_key` parameter needed.
+
+    ```bash
+    curl https://example.com/wp-json/cocart/v2/cart \
+      -H "Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ="
+    ```
+
+    The cart is now a **persistent cart** — it survives logout and is available whenever the customer logs back in.
+  </Step>
+</Steps>
+
+## Implementation examples
+
+The key detail in all examples: the `Cart-Key` header is sent **with** the first authenticated request. CoCart sees "authenticated user #123 is requesting guest cart `t_a1b2c3...`" and merges it into their account.
+
+<CodeGroup dropdown>
+
+```typescript TypeScript SDK
+import { createClient } from '@cocart/sdk';
+
+const client = createClient({ baseUrl: 'https://example.com' });
+
+// 1. Guest adds items — SDK stores the cart key automatically.
+await client.cart.addItem({ id: '42', quantity: '1' });
+await client.cart.addItem({ id: '99', quantity: '2' });
+
+// 2. Authenticate — passing the stored cart key triggers the merge.
+await client.auth.login({ username: 'jane', password: 's3cureP@ss' });
+
+// 3. Cart is now merged under the customer's account.
+const cart = await client.cart.get();
+console.log('Items preserved:', Object.keys(cart.items).length);
+```
+
+```php PHP SDK
+<?php
+use CoCart\Client;
+
+$client = new Client(['base_url' => 'https://example.com']);
+
+// 1. Guest adds items — SDK stores the cart key automatically.
+$client->cart->addItem(['id' => '42', 'quantity' => '1']);
+$client->cart->addItem(['id' => '99', 'quantity' => '2']);
+
+// 2. Authenticate — passing the stored cart key triggers the merge.
+$client->auth->login(['username' => 'jane', 'password' => 's3cureP@ss']);
+
+// 3. Cart is now merged under the customer's account.
+$cart = $client->cart->get();
+echo 'Items preserved: ' . count($cart['items']);
+```
+
+```javascript Vanilla JS
+let cartKey = null;
+let authHeader = null;
+const BASE = 'https://example.com/wp-json/cocart/v2';
+
+function headers() {
+  const h = { 'Content-Type': 'application/json' };
+  if (authHeader) h['Authorization'] = authHeader;
+  if (cartKey) h['Cart-Key'] = cartKey;
+  return h;
+}
+
+async function request(method, path, body) {
+  const res = await fetch(`${BASE}${path}`, {
+    method,
+    headers: headers(),
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const key = res.headers.get('Cart-Key');
+  if (key) cartKey = key;
+  return res.json();
+}
+
+// 1. Guest adds items.
+await request('POST', '/cart/add-item', { id: '42', quantity: '1' });
+await request('POST', '/cart/add-item', { id: '99', quantity: '2' });
+console.log('Guest cart key:', cartKey); // "t_a1b2c3..."
+
+// 2. Authenticate — next request with Cart-Key header triggers the merge.
+authHeader = 'Basic ' + btoa('jane:s3cureP@ss');
+const cart = await request('GET', '/cart');
+console.log('Customer cart key:', cartKey); // "123" (user ID)
+console.log('Items preserved:', Object.keys(cart.items).length);
+```
+
+</CodeGroup>
+
+## What Happens to Existing Customer Carts?
+
+As of CoCart Starter v5.0.0, CoCart **merges** the guest cart into the customer's existing cart. If the customer has no cart yet, the guest cart is adopted as-is. Otherwise, guest items not already present are added; where the same item exists in both sessions, the higher quantity is kept. The customer's existing items are never removed.
+
+<Note>
+  Administrators and shop managers are excluded from cart merging by design. Their sessions are never auto-merged.
+</Note>
+
+## Transferring a Cart to the Web
+
+If you need to hand off the cart to WooCommerce's native web checkout, CoCart's **Load Cart** feature supports both guest and registered customers via a URL redirect — no login required on the native site.
+
+[Learn more about Load Cart →](/load-cart)
+
+## Cart Expiration Differences
+
+Guest and customer carts have different lifetimes:
+
+| Cart type | Expires after | Renews? |
+|-----------|--------------|---------|
+| Guest | 48 hours | No |
+| Customer (logged in) | 7 days | Yes — renews daily on activity |
+
+When a guest cart is transferred to a customer, it inherits the longer customer expiration. This means a guest who was about to lose their cart (approaching the 48-hour limit) gets a fresh 7-day window after logging in.
+
+You can customize these durations from **CoCart → Settings → Session** in wp-admin, or via filters:
+
+```php
+// Extend guest cart expiration to 7 days.
+add_filter( 'cocart_cart_expiration', function( $expiration, $is_logged_in ) {
+    if ( ! $is_logged_in ) {
+        return 7 * DAY_IN_SECONDS;
+    }
+
+    return $expiration;
+}, 10, 2 );
+```
+
+The maximum allowed expiration is 30 days. Exceeding it logs a performance warning and has no effect.
+
+## Security Notes
+
+- **Admins and shop managers are excluded from cart merging.** CoCart checks the user's role before triggering a merge. Only users with customer-type roles (by default: `customer` and `subscriber`) are eligible. Users with the `administrator` or `shop_manager` role always load their own session untouched, regardless of any guest cart key passed.
+- **A guest can only access their own cart.** Without the correct cart key, there is no way to read or modify another guest's cart.
+- **Requesting a registered user's ID as a cart key requires authentication.** If you pass a user ID as the `cart_key`, CoCart requires you to be authenticated as that user.
+
+You can customize which roles are considered "customer" roles:
+
+```php
+add_filter( 'cocart_user_customer_roles', function( $roles ) {
+    $roles[] = 'wholesale_customer';
+    return $roles;
+});
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Guest cart items disappear after login">
+    Make sure you are passing the guest cart key on the first authenticated request. Without it, CoCart creates a fresh cart for the customer instead of transferring the guest one.
+
+    Check that:
+    1. You stored the `Cart-Key` response header from the guest session
+    2. You are sending it as a `Cart-Key` header or `cart_key` query parameter on the first authenticated request
+  </Accordion>
+
+  <Accordion title="An item from my customer's existing cart is missing after login">
+    Check the quantities. When the same item exists in both the guest and customer cart, CoCart keeps the higher quantity. If the guest cart had a lower quantity for that item, the customer's quantity is preserved unchanged — nothing should be lost.
+
+    If items are genuinely missing, ensure you are on CoCart Starter v5.0.0 or later. Earlier versions replaced the customer cart with the guest cart rather than merging.
+  </Accordion>
+
+  <Accordion title="Cart transfer not working for certain users">
+    CoCart only transfers carts for customer-type roles. Users with `administrator` or `shop_manager` roles are blocked from cart transfers for security reasons. If you have custom roles that should be treated as customers, use the `cocart_user_customer_roles` filter.
+  </Accordion>
+
+  <Accordion title="Guest cart expired before customer logged in">
+    Guest carts expire after 48 hours by default. If your store has long browsing sessions, extend the guest cart expiration using the `cocart_cart_expiration` filter. See the [Cart Expiration Differences](#cart-expiration-differences) section above.
+  </Accordion>
+</AccordionGroup>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Cart Key" icon="key" href="/knowledge-base/cart-key">
+    Learn how cart keys identify sessions.
+  </Card>
+  <Card title="Load Cart" icon="arrow-right-arrow-left" href="/load-cart">
+    Transfer a headless cart to WooCommerce's native web checkout.
+  </Card>
+</CardGroup>

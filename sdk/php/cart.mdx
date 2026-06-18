@@ -1,0 +1,460 @@
+---
+title: "PHP SDK: Cart API"
+sidebarTitle: "Cart API"
+description: "Manage shopping carts with the CoCart PHP SDK — add items, update quantities, apply coupons, batch requests, shipping, fees, and ETag caching."
+'og:title': "Headless WooCommerce Cart API — CoCart PHP SDK"
+'og:description': "Manage WooCommerce carts from PHP. Add and update items, batch requests, apply coupons, set shipping, add fees, handle guest and customer sessions, and reduce bandwidth with ETags."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+</Info>
+
+The Cart API handles all shopping cart operations.
+
+- **Guest customers** — The first request creates a new guest session. The server returns a `Cart-Key` header which the SDK extracts and persists to the PHP session automatically.
+- **Authenticated customers** — The server identifies the cart by the WordPress user account. No cart key is needed.
+
+```php
+$cart = $client->cart();
+```
+
+## Create Cart
+
+Create a new guest cart session without adding items:
+
+<Note>Only available for non-authenticated (guest) users. Requires CoCart Starter.</Note>
+
+```php
+$response = $client->cart()->create();
+$cartKey = $response->get('cart_key'); // 'guest_abc123...'
+```
+
+## Get Cart
+
+```php
+$response = $client->cart()->get();
+
+// With parameters
+$response = $client->cart()->get([
+    '_fields' => 'items,totals', // Limit returned fields
+    'thumb' => 'true',           // Include product thumbnails
+    'default' => 'true',         // Return default cart data
+]);
+```
+
+## Get Items
+
+Get only the items in the cart (lighter than fetching the full cart):
+
+```php
+$response = $client->cart()->getItems();
+```
+
+### Get a Single Item
+
+```php
+$response = $client->cart()->getItem('abc123def456...');
+```
+
+## Adding Items
+
+### Add a Simple Product
+
+```php
+// Product ID 123, quantity 2
+$response = $client->cart()->addItem(123, 2);
+
+// Shorthand
+$response = $client->cart()->add(123, 2);
+```
+
+### Add with Options
+
+```php
+$response = $client->cart()->addItem(123, 1, [
+    'item_data' => [
+        'gift_message' => 'Happy Birthday!',
+        'engraving' => 'John',
+    ],
+    'email' => 'customer@email.com',
+    'return_item' => true,  // Return only the added item details
+]);
+```
+
+### Add a Variable Product
+
+```php
+$response = $client->cart()->addVariation(456, 1, [
+    'attribute_pa_color' => 'blue',
+    'attribute_pa_size' => 'large',
+]);
+
+// Or using addItem with variation option
+$response = $client->cart()->addItem(456, 1, [
+    'variation' => [
+        'attribute_pa_color' => 'blue',
+        'attribute_pa_size' => 'large',
+    ],
+]);
+```
+
+### Add Multiple Items at Once
+
+```php
+$response = $client->cart()->addItems([
+    ['id' => '123', 'quantity' => '2'],
+    ['id' => '456', 'quantity' => '1', 'variation' => [
+        'attribute_pa_color' => 'red',
+    ]],
+    ['id' => '789', 'quantity' => '3'],
+]);
+```
+
+## Updating Items
+
+Update the quantity of a cart item using its item key:
+
+```php
+$response = $client->cart()->updateItem('abc123def456...', 5);
+
+// With additional options
+$response = $client->cart()->updateItem('abc123def456...', 3, [
+    'item_data' => ['gift_wrap' => true],
+]);
+```
+
+### Update Multiple Items at Once
+
+```php
+// Shorthand: item_key => quantity
+$response = $client->cart()->updateItems([
+    'abc123def456...' => 3,
+    'def789ghi012...' => 1,
+]);
+
+// Full format with additional options
+$response = $client->cart()->updateItems([
+    ['item_key' => 'abc123def456...', 'quantity' => 3],
+    ['item_key' => 'def789ghi012...', 'quantity' => 1],
+]);
+```
+
+## Removing & Restoring Items
+
+### Remove an Item
+
+```php
+$response = $client->cart()->removeItem('abc123def456...');
+```
+
+### Remove Multiple Items at Once
+
+```php
+$response = $client->cart()->removeItems([
+    'abc123def456...',
+    'def789ghi012...',
+]);
+```
+
+### Restore a Removed Item
+
+```php
+$response = $client->cart()->restoreItem('abc123def456...');
+```
+
+### Get Removed Items
+
+```php
+$response = $client->cart()->getRemovedItems();
+```
+
+## Cart Management
+
+### Clear Cart
+
+```php
+$response = $client->cart()->clear();
+
+// Alias
+$response = $client->cart()->empty();
+```
+
+### Calculate Totals
+
+```php
+$response = $client->cart()->calculate();
+```
+
+### Update Cart
+
+```php
+$response = $client->cart()->update([
+    'customer_note' => 'Please gift wrap.',
+]);
+```
+
+## Totals & Counts
+
+### Get Totals
+
+```php
+// Raw values
+$response = $client->cart()->getTotals();
+
+// Formatted with currency (HTML)
+$response = $client->cart()->getTotals(true);
+```
+
+### Get Item Count
+
+```php
+$response = $client->cart()->getItemCount();
+```
+
+## Coupons
+
+<Note>Requires the CoCart Plus plugin.</Note>
+
+### Apply a Coupon
+
+```php
+$response = $client->cart()->applyCoupon('SUMMER20');
+```
+
+### Remove a Coupon
+
+```php
+$response = $client->cart()->removeCoupon('SUMMER20');
+```
+
+### Get Applied Coupons
+
+```php
+$response = $client->cart()->getCoupons();
+```
+
+### Validate Applied Coupons
+
+```php
+$response = $client->cart()->checkCoupons();
+```
+
+## Customer Details
+
+### Update Customer
+
+```php
+// Update billing address
+$response = $client->cart()->updateCustomer(
+    billing: [
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'email' => 'john@example.com',
+        'phone' => '+1234567890',
+        'address_1' => '123 Main St',
+        'city' => 'New York',
+        'state' => 'NY',
+        'postcode' => '10001',
+        'country' => 'US',
+    ]
+);
+
+// Update both at once
+$response = $client->cart()->updateCustomer(
+    billing: ['email' => 'john@example.com'],
+    shipping: ['address_1' => '456 Oak Ave']
+);
+```
+
+### Get Customer Details
+
+```php
+$response = $client->cart()->getCustomer();
+```
+
+## Shipping
+
+### Get Available Shipping Methods
+
+```php
+$response = $client->cart()->getShippingMethods();
+```
+
+### Set Shipping Method
+
+<Note>Requires the CoCart Plus plugin.</Note>
+
+```php
+$response = $client->cart()->setShippingMethod('flat_rate:1');
+```
+
+### Calculate Shipping
+
+```php
+$response = $client->cart()->calculateShipping([
+    'country' => 'US',
+    'state' => 'CA',
+    'postcode' => '90001',
+    'city' => 'Los Angeles',
+]);
+```
+
+## Fees
+
+<Note>Requires the CoCart Plus plugin.</Note>
+
+### Get Cart Fees
+
+```php
+$response = $client->cart()->getFees();
+```
+
+### Add a Fee
+
+```php
+// Non-taxable fee
+$response = $client->cart()->addFee('Rush Processing', 9.99);
+
+// Taxable fee
+$response = $client->cart()->addFee('Gift Wrapping', 4.99, true);
+```
+
+### Remove All Fees
+
+```php
+$response = $client->cart()->removeFees();
+```
+
+## Cross-Sells
+
+Get cross-sell product recommendations based on cart contents:
+
+```php
+$response = $client->cart()->getCrossSells();
+```
+
+## Batch Requests
+
+<Note>Requires the CoCart Plus plugin.</Note>
+
+Submit multiple write operations in a single HTTP request. Up to 25 operations per batch.
+
+```php
+$response = $client->batch()
+    ->add('cart/add-item', ['id' => '123', 'quantity' => '2'])
+    ->add('cart/add-item', ['id' => '456', 'quantity' => '1'])
+    ->add('cart/apply-coupon', ['coupon' => 'SAVE10'])
+    ->execute();
+```
+
+### Available Methods
+
+```php
+// Queue a POST request (default)
+$client->batch()->add('cart/add-item', ['id' => '123', 'quantity' => '1']);
+
+// Queue a PUT request
+$client->batch()->update('cart/item/abc123', ['quantity' => '5']);
+
+// Queue a DELETE request
+$client->batch()->remove('cart/item/abc123');
+```
+
+### Validation Mode
+
+```php
+// Require all requests to pass validation before any are executed
+$response = $client->batch()
+    ->setValidation('require-all-validate')
+    ->add('cart/add-item', ['id' => '123', 'quantity' => '1'])
+    ->add('cart/add-item', ['id' => '456', 'quantity' => '2'])
+    ->execute();
+```
+
+### Managing the Queue
+
+```php
+$batch = $client->batch();
+$batch->add('cart/add-item', ['id' => '123', 'quantity' => '1']);
+
+echo $batch->count(); // 1
+
+$batch->clear(); // Clear without executing
+echo $batch->count(); // 0
+```
+
+## ETag / Conditional Requests
+
+The SDK automatically handles ETags for reduced bandwidth. This is enabled by default.
+
+```php
+// First request — full response with ETag
+$response = $client->cart()->get();
+$etag = $response->getETag();
+$cache = $response->getCacheStatus(); // "MISS"
+
+// Second request — SDK sends If-None-Match automatically
+$response = $client->cart()->get();
+
+if ($response->isNotModified()) {
+    // 304 — cart hasn't changed
+    $cache = $response->getCacheStatus(); // "HIT"
+}
+```
+
+### Skipping the Cache
+
+```php
+$response = $client->cart()->get(['_skip_cache' => true]);
+```
+
+### Disabling ETags
+
+```php
+// Via constructor
+$client = new CoCart('https://your-store.com', ['etag' => false]);
+
+// Or at runtime
+$client->setETag(false);
+
+// Clear stored ETags without disabling
+$client->clearETagCache();
+```
+
+## Working with Responses
+
+```php
+$response = $client->cart()->get();
+
+// Cart items
+$items = $response->getItems();
+
+// Cart totals
+$totals = $response->getTotals();
+
+// Item count
+$count = $response->getItemCount();
+
+// Cart key (from headers)
+$cartKey = $response->getCartKey();
+
+// Dot-notation access
+$subtotal = $response->get('totals.subtotal');
+$firstItemName = $response->get('items.0.name');
+
+// Array-style access
+$items = $response['items'];
+$totals = $response['totals'];
+
+// Check if key exists
+if ($response->has('totals.discount_total')) {
+    echo 'Discount applied!';
+}
+
+// Full data
+$data = $response->toArray();
+$json = $response->toJson();
+```
+
+See [Error Handling](/sdk/php/error-handling) for handling API errors.

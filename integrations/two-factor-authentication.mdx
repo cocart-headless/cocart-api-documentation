@@ -1,0 +1,407 @@
+---
+title: "Two-Factor Authentication"
+sidebarTitle: "2FA"
+description: "Add two-factor authentication support to the CoCart login endpoint using the WordPress Two Factor plugin."
+tag: "New"
+---
+
+<Info>
+  This feature documentation was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 28th, 2026.
+</Info>
+
+The 2FA integration adds support for the [WordPress Two Factor](https://wordpress.org/plugins/two-factor/) plugin to CoCart's login endpoint. When a user has 2FA enabled, the login flow requires an additional verification step before access is granted.
+
+<Info>
+  This integration is available in CoCart Plus since <Tooltip tip="This is the version of CoCart Plus">v1.6.0</Tooltip> and requires the [WordPress Two Factor](https://wordpress.org/plugins/two-factor/) plugin to be installed and active.
+</Info>
+
+## Prerequisites
+
+- [WordPress Two Factor plugin](https://wordpress.org/plugins/two-factor/) installed and active.
+- CoCart Community v4.8.0 or higher.
+- CoCart Plus v1.6.0 or higher.
+
+## How it works
+
+CoCart's login endpoint normally accepts a username and password. With this integration active:
+
+1. You submit credentials as normal.
+2. If the user has 2FA enabled, the endpoint returns a `401` error with `2fa_required: true` and a list of available providers.
+3. If the default provider is `email`, a code is automatically emailed to the user.
+4. You re-submit with the original credentials plus `2fa_code` and optionally `2fa_provider`.
+
+## Login with 2FA
+
+### Step 1 — Initial login attempt
+
+Submit the standard login request. If 2FA is required, the response will tell you which providers are available and which is the default.
+
+<CodeGroup>
+  ```bash cURL
+  curl -s -X POST https://your-store.com/wp-json/cocart/v2/login \
+    -H "Content-Type: application/json" \
+    -d '{
+      "username": "<username>",
+      "password": "<password>"
+    }'
+  ```
+
+  ```javascript JavaScript
+  const response = await fetch('https://your-store.com/wp-json/cocart/v2/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: '<username>', password: '<password>' })
+  });
+
+  const data = await response.json();
+
+  if (response.status === 401 && data.data?.['2fa_required']) {
+    const availableProviders = data.data.available_providers;
+    const defaultProvider    = data.data.default_provider;
+  }
+  ```
+
+  ```php PHP
+  <?php
+  $ch = curl_init();
+
+  curl_setopt_array($ch, [
+    CURLOPT_URL            => 'https://your-store.com/wp-json/cocart/v2/login',
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_POST           => true,
+    CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+    CURLOPT_POSTFIELDS     => json_encode([
+      'username' => '<username>',
+      'password' => '<password>',
+    ]),
+  ]);
+
+  $response  = curl_exec($ch);
+  $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+  curl_close($ch);
+
+  $data = json_decode($response, true);
+
+  if ($http_code === 401 && isset($data['data']['2fa_required'])) {
+    $availableProviders = $data['data']['available_providers'];
+    $defaultProvider    = $data['data']['default_provider'];
+  }
+  ?>
+  ```
+</CodeGroup>
+
+<Info>
+  Using an SDK? The [TypeScript](/sdk/typescript), [PHP](/sdk/php), [Python](/sdk/python), and [Go](/sdk/go) SDKs surface the 2FA challenge as a typed error you can catch and handle.
+</Info>
+
+<Tabs>
+  <Tab title="TypeScript">
+    ```typescript
+    import { CoCart, TwoFactorRequiredError } from '@cocartheadless/sdk';
+
+    const client = new CoCart('https://your-store.com');
+
+    try {
+      await client.login('<username>', '<password>');
+    } catch (error) {
+      if (error instanceof TwoFactorRequiredError) {
+        const { availableProviders, defaultProvider } = error;
+        // Prompt the user for their 2FA code
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="PHP">
+    ```php
+    use CoCart\CoCart;
+    use CoCart\Exceptions\TwoFactorRequiredException;
+
+    $client = new CoCart('https://your-store.com');
+
+    try {
+        $client->login('<username>', '<password>');
+    } catch (TwoFactorRequiredException $e) {
+        $availableProviders = $e->getAvailableProviders();
+        $defaultProvider    = $e->getDefaultProvider();
+    }
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    from cocart import CoCart
+    from cocart.exceptions import TwoFactorRequiredException
+
+    client = CoCart('https://your-store.com')
+
+    try:
+        client.login('<username>', '<password>')
+    except TwoFactorRequiredException as e:
+        available_providers = e.available_providers
+        default_provider    = e.default_provider
+    ```
+  </Tab>
+  <Tab title="Go">
+    ```go
+    import (
+        cocart "github.com/cocart-headless/cocart-sdk-go"
+        "errors"
+    )
+
+    client := cocart.NewClient("https://your-store.com")
+
+    err := client.JWT().Login(ctx, "<username>", "<password>")
+
+    var tfaErr *cocart.TwoFactorRequiredError
+    if errors.As(err, &tfaErr) {
+        availableProviders := tfaErr.AvailableProviders
+        defaultProvider    := tfaErr.DefaultProvider
+    }
+    ```
+  </Tab>
+</Tabs>
+
+**Response when 2FA is required (401):**
+
+```json
+{
+  "code": "cocart_2fa_required",
+  "message": "2FA verification required. Please provide a 2FA code using one of these providers: email, totp",
+  "data": {
+    "status": 401,
+    "2fa_required": true,
+    "available_providers": ["email", "totp"],
+    "default_provider": "email",
+    "email_sent": true
+  }
+}
+```
+
+<Tip>
+  When the default provider is `email`, a verification code is automatically sent to the user's email address and `email_sent` will be `true`.
+</Tip>
+
+### Step 2 — Submit the 2FA code
+
+Re-send the login request with the additional parameters:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `2fa_code` | `string` | The verification code from the user's 2FA provider. |
+| `2fa_provider` | `string` | Provider alias. Defaults to the user's primary provider if omitted. |
+
+**Provider aliases**
+
+| Alias | Provider |
+|-------|----------|
+| `email` | Email-based one-time code |
+| `totp` | Authenticator app (TOTP) |
+| `backup` | Backup codes |
+| `fido` | FIDO U2F hardware key |
+| `dummy` | Development/testing dummy provider |
+
+#### Option A — Use the default provider (recommended)
+
+<CodeGroup>
+  ```bash cURL
+  curl -X POST https://your-store.com/wp-json/cocart/v2/login \
+    -H "Content-Type: application/json" \
+    -d '{
+      "username": "customer@example.com",
+      "password": "password123",
+      "2fa_code": "123456"
+    }'
+  ```
+
+  ```javascript JavaScript
+  await fetch('https://your-store.com/wp-json/cocart/v2/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      username: 'customer@example.com',
+      password: 'password123',
+      '2fa_code': '123456'
+    })
+  });
+  ```
+
+  ```php PHP
+  <?php
+  $ch = curl_init();
+
+  curl_setopt_array($ch, [
+    CURLOPT_URL            => 'https://your-store.com/wp-json/cocart/v2/login',
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_POST           => true,
+    CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+    CURLOPT_POSTFIELDS     => json_encode([
+      'username' => 'customer@example.com',
+      'password' => 'password123',
+      '2fa_code' => '123456',
+    ]),
+  ]);
+
+  curl_exec($ch);
+  curl_close($ch);
+  ?>
+  ```
+</CodeGroup>
+
+<Tabs>
+  <Tab title="TypeScript">
+    ```typescript
+    await client.login('customer@example.com', 'password123', { twoFactorCode: '123456' });
+    ```
+  </Tab>
+  <Tab title="PHP">
+    ```php
+    $client->login('customer@example.com', 'password123', ['2fa_code' => '123456']);
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    client.login('customer@example.com', 'password123', two_factor_code='123456')
+    ```
+  </Tab>
+  <Tab title="Go">
+    ```go
+    err := client.JWT().Login(ctx, "customer@example.com", "password123",
+        cocart.WithTwoFactorCode("123456"),
+    )
+    ```
+  </Tab>
+</Tabs>
+
+#### Option B — Specify a provider explicitly
+
+<CodeGroup>
+  ```bash cURL
+  curl -X POST https://your-store.com/wp-json/cocart/v2/login \
+    -H "Content-Type: application/json" \
+    -d '{
+      "username": "customer@example.com",
+      "password": "password123",
+      "2fa_code": "123456",
+      "2fa_provider": "email"
+    }'
+  ```
+
+  ```javascript JavaScript
+  await fetch('https://your-store.com/wp-json/cocart/v2/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      username: 'customer@example.com',
+      password: 'password123',
+      '2fa_code': '123456',
+      '2fa_provider': 'email'
+    })
+  });
+  ```
+</CodeGroup>
+
+<Tabs>
+  <Tab title="TypeScript">
+    ```typescript
+    await client.login('customer@example.com', 'password123', {
+      twoFactorCode:     '123456',
+      twoFactorProvider: 'email',
+    });
+    ```
+  </Tab>
+  <Tab title="PHP">
+    ```php
+    $client->login('customer@example.com', 'password123', [
+        '2fa_code'     => '123456',
+        '2fa_provider' => 'email',
+    ]);
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    client.login('customer@example.com', 'password123',
+        two_factor_code='123456',
+        two_factor_provider='email',
+    )
+    ```
+  </Tab>
+  <Tab title="Go">
+    ```go
+    err := client.JWT().Login(ctx, "customer@example.com", "password123",
+        cocart.WithTwoFactorCode("123456"),
+        cocart.WithTwoFactorProvider("email"),
+    )
+    ```
+  </Tab>
+</Tabs>
+
+## Default provider selection
+
+When `2fa_provider` is omitted, the integration chooses a provider using this priority order:
+
+1. **Last successfully used provider** — the provider the user most recently authenticated with (CoCart Plus tracks this automatically).
+2. **User's primary provider** — the provider set as primary in the user's WordPress Two Factor settings.
+3. **First enabled provider** — if no primary is set, the first provider in the enabled list.
+4. **Empty string** — if no providers are enabled (should not occur in practice).
+
+The remembered provider is validated to still be enabled before being used.
+
+## Provider-specific behaviour
+
+**TOTP** — Uses authenticator apps such as Google Authenticator or Authy. Codes are 6 digits and rotate every 30 seconds. No additional action is required server-side during login.
+
+**Email** — When email is the default provider and no code is supplied, a code is sent automatically. Codes expire after ~15 minutes. The response includes `"email_sent": true`.
+
+**Backup codes** — Static single-use codes for when the primary method is unavailable. Each code is consumed on use.
+
+**FIDO U2F** — Hardware key authentication requires browser-level interaction that a REST API cannot replicate. Listed for completeness; not usable in a headless context.
+
+## Client implementation example
+
+```javascript JavaScript
+async function loginWithCoCart(username, password, twoFactorCode = null, provider = null) {
+  const payload = { username, password };
+
+  if (twoFactorCode) payload['2fa_code']      = twoFactorCode;
+  if (provider)      payload['2fa_provider']  = provider;
+
+  const response = await fetch('/wp-json/cocart/v2/login', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+
+  if (response.status === 401 && data.data?.['2fa_required']) {
+    const defaultProvider = data.data.default_provider;
+    const emailSent       = data.data.email_sent;
+
+    if (emailSent) {
+      alert('Verification code sent to your email');
+    }
+
+    const code = prompt('Enter your 2FA code:');
+    return loginWithCoCart(username, password, code, defaultProvider);
+  }
+
+  if (!response.ok) throw new Error(data.message);
+
+  return data;
+}
+```
+
+## Error codes
+
+| Code | Status | Meaning |
+|------|--------|---------|
+| `cocart_2fa_required` | `401` | 2FA code not provided; re-submit with `2fa_code`. |
+| `cocart_2fa_invalid_provider` | `400` | The `2fa_provider` value is not enabled for this user. |
+| `cocart_2fa_invalid_code` | `401` | The code supplied is incorrect or expired. |
+
+## Security considerations
+
+- All code validation delegates to the WordPress Two Factor plugin's own security measures, including replay protection and clock-drift tolerance for TOTP.
+- Email codes have built-in expiration; TOTP codes rotate every 30 seconds.
+- Rate limiting is handled by the Two Factor plugin.
+- No 2FA codes are logged or stored by CoCart.
+- The remembered provider (`_cocart_2fa_last_used_provider`) is stored in user meta and is always re-validated against the user's currently enabled providers before use.

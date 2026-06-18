@@ -1,0 +1,765 @@
+---
+title: "ETag Cache Support"
+description: "Reduce bandwidth and improve performance in headless and mobile apps by using HTTP ETags for conditional requests to cart and product endpoints."
+icon: "arrow-right-arrow-left"
+tag: "NEW"
+---
+
+CoCart supports HTTP ETags on cart and product endpoints, enabling clients to make conditional requests that skip full responses when nothing has changed. This is especially valuable for headless storefronts and mobile apps that poll cart state frequently.
+
+<Note>
+  Additional endpoints are supported with **CoCart Starter**. See the [Supported Endpoints](#supported-endpoints) section below for details.
+</Note>
+
+## What Are ETags?
+
+An ETag (Entity Tag) is an HTTP response header that acts as a version identifier for a resource. When the resource changes, the ETag changes. Clients store the ETag and send it back on subsequent requests — the server responds with `304 Not Modified` (no body) if nothing has changed.
+
+<Info>
+  **Why this matters for your app:**
+  - **Reduce bandwidth** — Only download data when it has actually changed
+  - **Improve performance** — 304 responses are nearly instant (no body to serialize)
+  - **Detect stale data** — Know immediately if local state is outdated
+</Info>
+
+## Supported Endpoints
+
+### Cart Endpoints
+
+Cart endpoints return ETags on **all methods** (GET, POST, PUT, DELETE) because mutations return the updated cart state. This allows you to use the ETag from a mutation response immediately in subsequent GET requests.
+
+| Endpoint | Methods | Description |
+|----------|---------|-------------|
+| `/cocart/v2/cart` | GET | Full cart contents |
+| `/cocart/v2/cart/items` | GET | Cart items only |
+| `/cocart/v2/cart/items/count` | GET | Item count |
+| `/cocart/v2/cart/totals` | GET | Cart totals |
+| `/cocart/v2/cart/add-item` | POST | Add single item (returns cart + ETag) |
+| `/cocart/v2/cart/add-items` | POST | Add multiple items (returns cart + ETag) |
+| `/cocart/v2/cart/item/{key}` | GET, PUT, DELETE | Item operations (return cart + ETag) |
+| `/cocart/v2/cart/update` | POST | Update cart (returns cart + ETag) |
+| `/cocart/v2/cart/clear` | POST | Clear cart (returns cart + ETag) |
+| `/cocart/v2/cart/calculate` | POST | Recalculate cart totals (returns cart + ETag) |
+
+### Product Endpoints
+
+Product endpoints return ETags on **GET only** (products are read-only resources).
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /wp-json/cocart/v2/products` | Product collection |
+| `GET /wp-json/cocart/v2/products/{id}` | Single product |
+| `GET /wp-json/cocart/v2/products/categories` | Category collection |
+| `GET /wp-json/cocart/v2/products/categories/{id}` | Single category |
+| `GET /wp-json/cocart/v2/products/tags` | Tag collection |
+| `GET /wp-json/cocart/v2/products/tags/{id}` | Single tag |
+| `GET /wp-json/cocart/v2/products/attributes` | Attribute collection |
+| `GET /wp-json/cocart/v2/products/attributes/{id}` | Single attribute |
+| `GET /wp-json/cocart/v2/products/reviews` | Review collection |
+| `GET /wp-json/cocart/v2/products/reviews/{id}` | Single review |
+
+## Basic Usage
+
+<Steps>
+  <Step title="First Request — Get the ETag">
+    Make a normal request. The response includes an `ETag` header.
+
+    ```bash
+    curl -i https://example.com/wp-json/cocart/v2/cart?cart_key=abc123
+    ```
+
+    ```http
+    HTTP/1.1 200 OK
+    ETag: W/"9f86d081884c7d659a2feaa0c55ad015"
+    Content-Type: application/json
+
+    {"cart_hash":"9f86d081884c7d659a2feaa0c55ad015","items":[...],...}
+    ```
+
+    Store the ETag value alongside your cached response data.
+  </Step>
+  <Step title="Subsequent Requests — Use If-None-Match">
+    Send the stored ETag back in the `If-None-Match` header.
+
+    ```bash
+    curl -i https://example.com/wp-json/cocart/v2/cart?cart_key=abc123 \
+      -H 'If-None-Match: W/"9f86d081884c7d659a2feaa0c55ad015"'
+    ```
+
+    If the cart is **unchanged**:
+
+    ```http
+    HTTP/1.1 304 Not Modified
+    ETag: W/"9f86d081884c7d659a2feaa0c55ad015"
+    ```
+
+    If the cart **changed**:
+
+    ```http
+    HTTP/1.1 200 OK
+    ETag: W/"a1b2c3d4e5f6..."
+    Content-Type: application/json
+
+    {"cart_hash":"a1b2c3d4e5f6...","items":[...],...}
+    ```
+  </Step>
+</Steps>
+
+## JavaScript Example
+
+```javascript
+class CartCache {
+  constructor(cartKey) {
+    this.cartKey = cartKey;
+    this.etag = null;
+    this.cachedCart = null;
+  }
+
+  async getCart() {
+    const headers = {};
+
+    if (this.etag) {
+      headers['If-None-Match'] = this.etag;
+    }
+
+    const response = await fetch(
+      `/wp-json/cocart/v2/cart?cart_key=${this.cartKey}`,
+      { headers }
+    );
+
+    // Store new ETag
+    const newEtag = response.headers.get('ETag');
+    if (newEtag) {
+      this.etag = newEtag;
+    }
+
+    // Cart unchanged - use cached data
+    if (response.status === 304) {
+      return this.cachedCart;
+    }
+
+    // Cart changed - update cache
+    this.cachedCart = await response.json();
+    return this.cachedCart;
+  }
+}
+
+// Usage
+const cart = new CartCache('customer_abc123');
+const data = await cart.getCart(); // Full response
+const data2 = await cart.getCart(); // 304 if unchanged
+```
+
+## React Hook Example
+
+```javascript
+import { useState, useCallback } from 'react';
+
+function useCart(cartKey) {
+  const [cart, setCart] = useState(null);
+  const [etag, setEtag] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const refreshCart = useCallback(async () => {
+    setLoading(true);
+
+    const headers = {};
+    if (etag) {
+      headers['If-None-Match'] = etag;
+    }
+
+    try {
+      const response = await fetch(
+        `/wp-json/cocart/v2/cart?cart_key=${cartKey}`,
+        { headers }
+      );
+
+      const newEtag = response.headers.get('ETag');
+      if (newEtag) {
+        setEtag(newEtag);
+      }
+
+      if (response.status !== 304) {
+        const data = await response.json();
+        setCart(data);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [cartKey, etag]);
+
+  return { cart, loading, refreshCart };
+}
+```
+
+## SDK Usage
+
+<Info>
+  ETags are enabled by default in all official CoCart SDKs. The SDK automatically stores the ETag from each response and sends it back as `If-None-Match` on the next request — no manual header management required. See the [SDK documentation](/sdk) to get started.
+</Info>
+
+### Basic Conditional GET
+
+<Tabs>
+  <Tab title="TypeScript">
+    ```typescript
+    import { CoCart } from '@cocartheadless/sdk';
+
+    const client = new CoCart('https://your-store.com', {
+      cartKey: 'abc123',
+      // etag: true is the default
+    });
+
+    // First request — full response, ETag stored automatically
+    const response = await client.cart().get();
+    console.log('Cache status:', response.getCacheStatus()); // "MISS"
+
+    // Second request — sends If-None-Match automatically
+    const response2 = await client.cart().get();
+
+    if (response2.isNotModified()) {
+      console.log('Cart unchanged — use your cached data');
+      console.log('Cache status:', response2.getCacheStatus()); // "HIT"
+    } else {
+      console.log('Cart updated:', response2.getItems());
+    }
+    ```
+  </Tab>
+  <Tab title="PHP">
+    ```php
+    use CoCart\SDK\CoCart;
+
+    $client = new CoCart('https://your-store.com', [
+        'cart_key' => 'abc123',
+        // 'etag' => true is the default
+    ]);
+
+    // First request — full response, ETag stored automatically
+    $response = $client->cart()->get();
+    echo $response->getCacheStatus(); // "MISS"
+
+    // Second request — sends If-None-Match automatically
+    $response2 = $client->cart()->get();
+
+    if ($response2->isNotModified()) {
+        echo 'Cart unchanged — use your cached data';
+        echo $response2->getCacheStatus(); // "HIT"
+    } else {
+        echo 'Cart updated';
+        print_r($response2->getItems());
+    }
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    from cocart import CoCart
+
+    client = CoCart('https://your-store.com',
+        cart_key='abc123',
+        # etag=True is the default
+    )
+
+    # First request — full response, ETag stored automatically
+    response = client.cart().get()
+    print(response.get_cache_status())  # "MISS"
+
+    # Second request — sends If-None-Match automatically
+    response2 = client.cart().get()
+
+    if response2.is_not_modified():
+        print('Cart unchanged — use your cached data')
+        print(response2.get_cache_status())  # "HIT"
+    else:
+        print('Cart updated:', response2.get_items())
+    ```
+  </Tab>
+  <Tab title="Go">
+    ```go
+    import "github.com/cocart-headless/cocart-sdk-go"
+
+    client := cocart.NewClient("https://your-store.com",
+        cocart.WithCartKey("abc123"),
+        // cocart.WithETag(true) is the default
+    )
+
+    ctx := context.Background()
+
+    // First request — full response, ETag stored automatically
+    response, err := client.Cart().Get(ctx, nil)
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println("Cache status:", response.GetCacheStatus()) // "MISS"
+
+    // Second request — sends If-None-Match automatically
+    response2, err := client.Cart().Get(ctx, nil)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    if response2.IsNotModified() {
+        fmt.Println("Cart unchanged — use your cached data")
+        fmt.Println("Cache status:", response2.GetCacheStatus()) // "HIT"
+    } else {
+        fmt.Println("Cart updated:", response2.GetItems())
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Disabling ETag Caching
+
+If you need to disable ETag support for a specific client instance:
+
+<Tabs>
+  <Tab title="TypeScript">
+    ```typescript
+    const client = new CoCart('https://your-store.com', {
+      etag: false,
+    });
+    ```
+  </Tab>
+  <Tab title="PHP">
+    ```php
+    $client = new CoCart('https://your-store.com', [
+        'etag' => false,
+    ]);
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    client = CoCart('https://your-store.com', etag=False)
+    ```
+  </Tab>
+  <Tab title="Go">
+    ```go
+    client := cocart.NewClient("https://your-store.com",
+        cocart.WithETag(false),
+    )
+    ```
+  </Tab>
+</Tabs>
+
+## Mutation Workflow: ETags from Cart Changes
+
+Cart mutations (POST, PUT, DELETE) return ETags in the response, letting you skip an extra GET request just to establish an ETag baseline.
+
+### Why This Matters
+
+<Tabs>
+  <Tab title="Without Mutation ETags">
+    ```
+    1. User starts with empty cart
+    2. POST /cart/add-item → Returns cart (no ETag)
+    3. GET /cart → Must fetch full response to get ETag
+    4. GET /cart → Now can use If-None-Match
+    ```
+    Requires one extra full cart fetch before conditional requests are possible.
+  </Tab>
+  <Tab title="With Mutation ETags">
+    ```
+    1. User starts with empty cart
+    2. POST /cart/add-item → Returns cart + ETag
+    3. GET /cart → Can immediately use If-None-Match (304 if unchanged)
+    ```
+    One fewer round-trip — saving bandwidth for the most common add-to-cart workflow.
+  </Tab>
+</Tabs>
+
+### Add Item → Conditional GET
+
+```javascript
+// Step 1: Add item to cart (mutation returns cart + ETag)
+const addResponse = await fetch('/wp-json/cocart/v2/cart/add-item', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    product_id: 123,
+    quantity: 1,
+    cart_key: 'customer_abc123'
+  })
+});
+
+const cart = await addResponse.json();
+const etag = addResponse.headers.get('ETag'); // ← Get ETag from mutation response
+
+// Step 2: Store ETag with cart data
+localStorage.setItem('cart', JSON.stringify(cart));
+localStorage.setItem('cart_etag', etag);
+
+// Step 3: Later, check if cart changed (conditional GET)
+const checkResponse = await fetch('/wp-json/cocart/v2/cart?cart_key=customer_abc123', {
+  headers: { 'If-None-Match': etag }
+});
+
+if (checkResponse.status === 304) {
+  // Cart unchanged, use cached data
+  const cachedCart = JSON.parse(localStorage.getItem('cart'));
+  console.log('Using cached cart:', cachedCart);
+} else {
+  // Cart changed, update cache with new data
+  const updatedCart = await checkResponse.json();
+  const newEtag = checkResponse.headers.get('ETag');
+  localStorage.setItem('cart', JSON.stringify(updatedCart));
+  localStorage.setItem('cart_etag', newEtag);
+  console.log('Cart updated:', updatedCart);
+}
+```
+
+### Update Item Quantity
+
+```javascript
+// Update item quantity (returns cart + ETag)
+const updateResponse = await fetch('/wp-json/cocart/v2/cart/item/abc123', {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    quantity: 3,
+    cart_key: 'customer_abc123'
+  })
+});
+
+const updatedCart = await updateResponse.json();
+const newEtag = updateResponse.headers.get('ETag');
+
+// Store new cart state and ETag
+myCache.set('cart', updatedCart);
+myCache.set('etag', newEtag);
+
+// Next GET request can use the new ETag
+const nextCheck = await fetch('/wp-json/cocart/v2/cart?cart_key=customer_abc123', {
+  headers: { 'If-None-Match': newEtag }
+});
+// Returns 304 if cart hasn't changed since the update
+```
+
+### Remove Item
+
+```javascript
+// Remove item from cart (returns updated cart + ETag)
+const deleteResponse = await fetch('/wp-json/cocart/v2/cart/item/abc123?cart_key=customer_abc123', {
+  method: 'DELETE'
+});
+
+const cartAfterDelete = await deleteResponse.json();
+const etagAfterDelete = deleteResponse.headers.get('ETag');
+
+// Poll cart state using ETag from delete operation
+setInterval(async () => {
+  const pollResponse = await fetch('/wp-json/cocart/v2/cart?cart_key=customer_abc123', {
+    headers: { 'If-None-Match': etagAfterDelete }
+  });
+
+  if (pollResponse.status === 304) {
+    console.log('Cart still unchanged');
+  } else {
+    console.log('Cart has changed, updating UI');
+    const newCart = await pollResponse.json();
+    updateUI(newCart);
+  }
+}, 5000);
+```
+
+### Using the SDK
+
+With an official SDK, the mutation ETag workflow is fully automatic — the SDK captures the ETag from every mutation response and uses it on the next GET without any extra code.
+
+<Tabs>
+  <Tab title="TypeScript">
+    ```typescript
+    // Add item — SDK captures ETag from the POST response automatically
+    const addResponse = await client.cart().addItem(123, 1);
+
+    // This GET immediately sends If-None-Match using the ETag from addItem
+    const cartResponse = await client.cart().get();
+
+    if (cartResponse.isNotModified()) {
+      console.log('Cart unchanged since adding item');
+    } else {
+      console.log('Cart state:', cartResponse.getItems());
+    }
+    ```
+  </Tab>
+  <Tab title="PHP">
+    ```php
+    // Add item — SDK captures ETag from the POST response automatically
+    $addResponse = $client->cart()->addItem(123, 1);
+
+    // This GET immediately sends If-None-Match using the ETag from addItem
+    $cartResponse = $client->cart()->get();
+
+    if ($cartResponse->isNotModified()) {
+        echo 'Cart unchanged since adding item';
+    } else {
+        print_r($cartResponse->getItems());
+    }
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    # Add item — SDK captures ETag from the POST response automatically
+    add_response = client.cart().add_item(123, 1)
+
+    # This GET immediately sends If-None-Match using the ETag from add_item
+    cart_response = client.cart().get()
+
+    if cart_response.is_not_modified():
+        print('Cart unchanged since adding item')
+    else:
+        print('Cart state:', cart_response.get_items())
+    ```
+  </Tab>
+  <Tab title="Go">
+    ```go
+    // Add item — SDK captures ETag from the POST response automatically
+    _, err := client.Cart().AddItem(ctx, 123, 1)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // This GET immediately sends If-None-Match using the ETag from AddItem
+    cartResponse, err := client.Cart().Get(ctx, nil)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    if cartResponse.IsNotModified() {
+        fmt.Println("Cart unchanged since adding item")
+    } else {
+        fmt.Println("Cart state:", cartResponse.GetItems())
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## CORS Configuration
+
+For cross-origin requests, CoCart automatically exposes the ETag header and allows `If-None-Match`:
+
+```http
+Access-Control-Expose-Headers: ETag
+Access-Control-Allow-Headers: If-None-Match
+```
+
+No additional configuration is required.
+
+## CoCart-Cache Header
+
+Every ETag-enabled response includes a `CoCart-Cache` header indicating whether the request was served from cache:
+
+| Value | Meaning |
+|-------|---------|
+| `MISS` | Full request processed, 200 response with body |
+| `HIT` | ETag matched, 304 response with no body |
+
+This header is useful for debugging and monitoring cache effectiveness.
+
+## Cache-Control Strategy
+
+CoCart applies different caching policies to cart and product endpoints:
+
+**Cart endpoints** receive:
+
+```http
+Cache-Control: no-cache, no-store, must-revalidate, max-age=0, private
+```
+
+Browsers and proxies will not cache cart responses. ETags on cart endpoints are designed for **API clients** doing conditional polling — not browser-level HTTP caching.
+
+**Product endpoints** receive:
+
+```http
+Cache-Control: public, must-revalidate, max-age=3600, stale-while-revalidate=86400
+Last-Modified: <date>
+```
+
+Product responses are publicly cacheable and work with standard browser and CDN caching. ETags complement `Last-Modified` and `Cache-Control` for full HTTP cache validation support.
+
+## Technical Details
+
+### Weak vs. Strong ETags
+
+CoCart uses **weak ETags** (prefixed with `W/`):
+
+```
+W/"9f86d081884c7d659a2feaa0c55ad015"
+```
+
+Weak ETags indicate semantic equivalence rather than byte-for-byte identity. This is appropriate because:
+
+- Response may include varying timestamps
+- Field ordering in JSON is not guaranteed
+- Query parameters like `fields` affect response structure
+
+### How Cart ETags are Generated
+
+The ETag for cart endpoints is derived from the cart hash but is not identical to it. The cart hash is calculated from:
+
+- Cart session contents (items, quantities, variations)
+- Cart total price
+
+```php
+$cart_hash = md5( wp_json_encode( $cart_session ) . $cart_total['total'] );
+```
+
+The ETag is then generated by hashing the cart hash with a salt and version:
+
+```php
+$etag = md5( 'cocart_etag_' . $cart_hash . COCART_VERSION );
+```
+
+This means:
+- The ETag is opaque and cannot be reverse-engineered to the cart hash
+- ETags automatically invalidate when CoCart is updated
+- The `cart_hash` in the response body remains useful for client-side comparison
+
+### How Product ETags are Generated
+
+Product ETags are based on different data depending on the endpoint:
+
+| Endpoint Type | ETag Based On |
+|---------------|---------------|
+| Single product | Product ID + `post_modified` date + price + stock + stock status |
+| Product collection | Latest `post_modified` + product count + query params |
+| Single category/tag | Term ID + product count in term |
+| Category/tag collection | Total terms + latest term ID + query params |
+| Single review | Review ID + `comment_date` |
+| Review collection | Latest review date + review count + query params |
+| Attributes | Attribute count |
+
+**Single product sensitivity**: The ETag for single products includes price, stock quantity, and stock status. This ensures the ETag changes when an order reduces stock or when prices are updated programmatically (which may not update `post_modified`).
+
+**Query parameter sensitivity**: Product collection ETags include pagination (`page`, `per_page`), sorting (`orderby`, `order`), and filtering (`category`, `tag`, `search`) parameters. This ensures different queries return different ETags.
+
+### Empty Results
+
+- Empty carts do not return an ETag header
+- Product collections with no results will not return an ETag
+- Single resources that don't exist will return a 404, not 304
+
+## Customization
+
+### Adding Custom Routes
+
+Use filters to add ETag support to custom endpoints:
+
+```php
+// Add custom cart-like routes (uses cart hash logic).
+add_filter( 'cocart_etag_cart_routes', function( $routes ) {
+    $routes[] = '/^cocart\/v2\/my-cart-endpoint$/';
+    return $routes;
+});
+
+// Add custom product-like routes (uses product modified date logic).
+add_filter( 'cocart_etag_product_routes', function( $routes ) {
+    $routes[] = '/^cocart\/v2\/my-product-endpoint$/';
+    return $routes;
+});
+
+// Add any additional routes (for third-party plugins like CoCart Plus).
+add_filter( 'cocart_etag_routes', function( $routes ) {
+    $routes[] = '/^cocart\/v2\/customer\/dashboard$/';
+    return $routes;
+});
+```
+
+| Filter | Purpose |
+|--------|---------|
+| `cocart_etag_cart_routes` | Cart endpoints using cart hash logic |
+| `cocart_etag_product_routes` | Product endpoints using modified date logic |
+| `cocart_etag_routes` | Any additional endpoints (third-party plugins) |
+
+## How Performance Benefits Work
+
+Understanding when and how ETags improve performance is important for effective implementation.
+
+### The Client Must Send If-None-Match
+
+ETags only provide a performance benefit when **the client sends the `If-None-Match` header** with the previously received ETag value. Without this header, the server has nothing to compare against and must process the request fully.
+
+| Request Type | Server Processing | Response |
+|--------------|-------------------|----------|
+| No `If-None-Match` header | Full cart load, all queries | 200 + full body |
+| `If-None-Match` with matching ETag | Single DB query only | 304, no body |
+| `If-None-Match` with stale ETag | Full cart load, all queries | 200 + full body |
+
+### What Happens With a Matching ETag
+
+When you send `If-None-Match` and the ETag matches:
+
+1. CoCart intercepts the request **before** the cart endpoint runs
+2. Only a single database query executes (to fetch the cart hash)
+3. The cart is **NOT** loaded into memory
+4. WooCommerce cart calculations are **NOT** performed
+5. A 304 response is returned immediately with no body
+
+This is significantly faster than a full cart request because:
+- No cart session deserialization
+- No product data loading
+- No price calculations
+- No tax calculations
+- No shipping calculations
+- No JSON serialization of the response
+
+### What Happens Without If-None-Match
+
+If you do not send the `If-None-Match` header:
+
+1. The full cart endpoint executes normally
+2. All database queries run
+3. The cart is fully loaded and calculated
+4. A 200 response is returned with the full cart body
+5. The `CoCart-Cache` header will show `MISS`
+
+**This is expected behavior** — without knowing what ETag the client has, the server cannot determine if the cart has changed.
+
+### Testing ETag Performance
+
+To verify ETags are working correctly:
+
+```bash
+# Request 1: Get cart and ETag (full processing)
+curl -i -w "\nTime: %{time_total}s\n" \
+  https://example.com/wp-json/cocart/v2/cart?cart_key=abc123
+
+# Request 2: Send If-None-Match (should be faster, 304 response)
+curl -i -w "\nTime: %{time_total}s\n" \
+  -H 'If-None-Match: W/"your-etag-here"' \
+  https://example.com/wp-json/cocart/v2/cart?cart_key=abc123
+```
+
+The second request should complete noticeably faster and return a 304 status.
+
+## Best Practices
+
+<Tip>
+  The most impactful thing you can do: **always send `If-None-Match`** on every GET request after the first. Simply receiving an ETag does nothing — you must send it back.
+</Tip>
+
+<Info>
+  **Using an official SDK?** Steps 1–4 below are handled automatically. You only need to call `isNotModified()` (or the equivalent in your language) to branch your UI logic. See the [SDK Usage](#sdk-usage) section above.
+</Info>
+
+1. **Always store the ETag** — Save it alongside your cached cart data
+2. **Always send If-None-Match** — Include the stored ETag on every GET request
+3. **Handle both responses** — Your code should work whether you get 200 or 304
+4. **Update on mutations** — POST/PUT/DELETE responses include a new ETag; store it immediately so the next GET can use it
+5. **Do not cache empty carts** — No ETag means no caching benefit
+
+## Troubleshooting
+
+### ETag Header Not Appearing
+
+- Ensure you are making a GET request
+- Check the cart is not empty
+- Verify the endpoint is in the supported list
+
+### Always Getting 200 Instead of 304
+
+<Warning>
+  A common mistake is sending `If-Match` instead of `If-None-Match`. These headers have opposite semantics — `If-Match` is used for write operations and will not trigger a 304.
+</Warning>
+
+- Confirm you are sending `If-None-Match` (not `If-Match`)
+- Check the ETag value includes the `W/` prefix and quotes: `W/"abc123..."`
+- Verify the cart has not changed between requests

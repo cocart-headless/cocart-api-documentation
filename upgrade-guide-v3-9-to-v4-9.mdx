@@ -1,0 +1,191 @@
+---
+title: "Upgrade Guide: CoCart v3.9 to v4.9"
+sidebarTitle: "Upgrade Guide"
+description: "Technical and practical steps for upgrading CoCart from v3.9 to v4.9, including key changes, compatibility, and troubleshooting."
+icon: "arrow-up"
+---
+
+## 1. **Minimum Requirements**
+
+| Dependency | Minimum Version | Since |
+|---|---|---|
+| WordPress | 6.7 | [v4.9.0](/updates/community#april-15-2025) |
+| WooCommerce | 9.0 | [v4.6.2](/updates/community#july-25-2025) |
+| PHP | 8.2 | [v4.9.0](/updates/community#april-15-2025) |
+
+<Warning>
+  **PHP 8.2 is now required.** CoCart [v4.9.0](/updates/community#april-15-2025) dropped support for PHP 7.4, 8.0, and 8.1. If your server runs an older PHP version, you must upgrade PHP before updating CoCart to v4.9.
+</Warning>
+
+---
+
+## 2. **Major Changes & New Features**
+
+### **REST API**
+- **Namespace:** Remains the same, but many endpoints have improved schema and validation.
+- **Authentication:**
+  - Basic [authentication](/authentication) detection improved.
+  - Authentication failures now log debug info.
+  - Authentication via JSON request body supported on the API v2 login endpoint ([v4.7.0](/updates/community#plugin-renamed-for-wordpress-directory)).
+  - Six new [filter hooks](/developers/filters#authentication-&-security) for login and authentication customization, including `cocart_login_permission_callback` and `cocart_trusted_proxies` ([v4.8.0](/updates/community#enhanced-login-security-&-proxy-support)).
+  - Enhanced IP address detection for servers behind proxies or load balancers ([v4.8.0](/updates/community#enhanced-login-security-&-proxy-support)).
+- **Cart API:**
+  - Guest [cart keys](/knowledge-base/cart-key) now prefixed with `t_` ([v4.3.23](/updates/community#guest-session-identification)).
+  - Cart session expiration matches WooCommerce defaults; logged-in carts persist for a week, renewed daily ([v4.4.0](/updates/community#automatic-database-updates)).
+- **Caching & Conditional Requests:**
+  - [ETag-based conditional request](/etag-cache-support) support across all cart and product endpoints ([v4.9.0](/updates/community#april-15-2025)).
+  - New `CoCart-Cache` response header returns `HIT`, `MISS`, or `SKIP` to indicate cache status.
+  - Use the `_skip_cache` query parameter to bypass caching on any request.
+  - Product routes support `stale-while-revalidate` for faster responses.
+
+---
+
+## 3. **Upgrade Steps**
+
+<Steps>
+  <Step title="Backup">
+    Back up your site (files + database) before upgrading.
+  </Step>
+
+  <Step title="Update Plugin">
+    Update CoCart via the WordPress dashboard or [WP-CLI](/wp-cli). If you use custom code or extensions, test on a staging site first.
+  </Step>
+
+  <Step title="Check Compatibility">
+    - Verify your server is running **PHP 8.2 or higher**. CoCart v4.9 will not activate on older PHP versions.
+    - Ensure your theme and other plugins are compatible with the new minimum requirements.
+    - If you use custom API integrations, review the API changes (notably cart session, product filtering, and shipping logic).
+  </Step>
+
+  <Step title="Review Custom Code">
+    - Update any custom code using deprecated [filters](/developers/filters) or [action hooks](/developers/actions).
+    - If you manipulate cart sessions or customer data, review the new filters and session key changes.
+  </Step>
+
+  <Step title="Test Key Flows">
+    - Test cart operations (add, update, remove, restore).
+    - Test [authentication](/authentication) flows (especially if using Basic Auth or JSON body login).
+    - Test shipping calculation and address requirements.
+    - Test conditional requests ([ETags](/etag-cache-support)) if your client uses caching headers.
+    - Verify login flows if you use proxy configurations.
+  </Step>
+</Steps>
+
+---
+
+## 4. **Notable Breaking/Behavioral Changes**
+
+<AccordionGroup>
+  <Accordion title="PHP 8.2 Minimum (v4.9.0)">
+    PHP 7.4, 8.0, and 8.1 are no longer supported. You must upgrade your server's PHP version before updating. See [what's new in v4.9.0](/updates/community#april-15-2025).
+  </Accordion>
+
+  <Accordion title="WooCommerce v10.6 Minimum (v4.9.0)">
+    CoCart [v4.9.0](/updates/community#april-15-2025) requires WooCommerce v10.6 or higher.
+  </Accordion>
+
+  <Accordion title="Guest Cart Key Prefix (v4.3.23)">
+    Guest carts now use a `t_` prefix on [cart keys](/knowledge-base/cart-key). See [what's new in v4.3.23](/updates/community).
+  </Accordion>
+
+  <Accordion title="Session Expiration (v4.4.0)">
+    Cart session expiration now matches WooCommerce defaults; logged-in carts persist for a week. See [what's new in v4.4.0](/updates/community).
+  </Accordion>
+
+  <Accordion title="Shipping Calculation (v4.3.29)">
+    Shipping methods require an address if WooCommerce is set to require it. See [what's new in v4.3.29](/updates/community).
+  </Accordion>
+
+  <Accordion title="Non-ASCII Slugs (v4.9.0)">
+    Product slugs and permalinks with non-ASCII characters (such as Chinese or Arabic) are no longer URL-encoded in API responses. If your client decodes these manually, review your implementation.
+  </Accordion>
+
+  <Accordion title="Guest Session Fix (v4.9.0)">
+    A timing issue causing duplicate guest sessions with custom `rest_url_prefix` has been fixed. If you previously worked around this, you can remove your workaround.
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  For a full list of deprecations and removed features in v4, see [Breaking Changes in CoCart Community v4](/breaking-changes/community-v4).
+</Tip>
+
+---
+
+## 5. **Major Change in v4.2: New Session Handler**
+
+CoCart [v4.2](/updates/community#major-session-handler-refresh) introduced a significant architectural change to how cart sessions are managed:
+
+### **Database-Based Session Handler**
+
+- CoCart now uses its own session handler, storing all session data in a custom table in the WordPress database.
+- This session handler is **independent of WooCommerce's default session handler and cookies**.
+- **[Cart keys](/knowledge-base/cart-key)** are now the primary method for identifying and persisting cart sessions for both guest and authenticated users.
+- All session management is handled by CoCart, making it more reliable for headless and decoupled WooCommerce stores.
+
+<Note>
+  The [cart key](/knowledge-base/cart-key) is required for **guest customers** to identify and persist their cart session. Every Cart API request for a guest must include the correct cart key. For authenticated users, the cart key defaults to the user ID.
+</Note>
+
+#### **Key Implications**
+- **No more WooCommerce session cookies:** Session tracking is now handled exclusively by CoCart.
+- **Cart key is required:** Every Cart API request must include the correct [cart key](/knowledge-base/cart-key) to access or modify the intended cart session.
+- **Improved support for headless and multi-channel applications:** The new session handler is designed for stateless, API-driven architectures.
+
+#### **Developer Impact**
+- If you previously relied on WooCommerce's session cookies or session handler, you must now use the cart key returned by CoCart.
+- All custom integrations, middleware, or client apps must store and send the cart key with every relevant API request.
+- The new session handler is more robust and scalable for modern, decoupled eCommerce builds.
+
+**Reference:**
+- [Changelog for CoCart Community](/updates/community)
+
+---
+
+## 6. **Troubleshooting**
+
+<AccordionGroup>
+  <Accordion title="Debug Logs">
+    Authentication failures log debug info — check your site's debug log. Enhanced debug logging was added in [v4.8.0](/updates/community#enhanced-login-security-&-proxy-support) for more detailed failure information.
+  </Accordion>
+
+  <Accordion title="Database Updates">
+    If you see database errors, deactivate/reactivate the plugin to trigger updates.
+  </Accordion>
+
+  <Accordion title="Cache Issues">
+    If using LiteSpeed or other caching, ensure CoCart endpoints are excluded.
+  </Accordion>
+
+  <Accordion title="ETag/Caching Issues">
+    If conditional requests are not working as expected, use the `_skip_cache` query parameter to bypass caching and check the `CoCart-Cache` response header for `HIT`, `MISS`, or `SKIP` status. See the [ETag Cache Support](/etag-cache-support) guide for details.
+  </Accordion>
+
+  <Accordion title="Duplicate Guest Sessions">
+    If you previously experienced duplicate guest sessions with a custom `rest_url_prefix`, this has been resolved in [v4.9.0](/updates/community#april-15-2025). Clear any stale sessions after upgrading.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## 7. **For Developers**
+
+- Review and update any custom [filters](/developers/filters) or [action hooks](/developers/actions).
+- Use new filters for cart expiration and customer data.
+- Remove usage of deprecated filters.
+- **New authentication filters ([v4.8.0](/updates/community#enhanced-login-security-&-proxy-support)):** Six new filter hooks for login customization, including `cocart_login_permission_callback` and `cocart_trusted_proxies`. See the [Filters reference](/developers/filters) for details.
+- **New caching filters ([v4.9.0](/updates/community#april-15-2025)):** Five new filters for [ETag](/etag-cache-support) and caching behavior: `cocart_etag_cart_routes`, `cocart_etag_product_routes`, `cocart_etag_routes`, `cocart_cache_max_age`, and `cocart_stale_while_revalidate`.
+- **Session handler improvements ([v4.8](/updates/community#enhanced-login-security-&-proxy-support)–[v4.9](/updates/community#april-15-2025)):** Object cache synchronization and cache expiration reliability have been improved. If you have custom session handling code, review it against the latest behavior.
+
+<CardGroup cols={2}>
+  <Card title="Filters Reference" icon="filter" href="/developers/filters">
+    Browse all available PHP filters for customizing CoCart behavior.
+  </Card>
+  <Card title="Action Hooks Reference" icon="bolt" href="/developers/actions">
+    Browse all available action hooks for extending CoCart.
+  </Card>
+</CardGroup>
+
+---
+
+**Summary:**
+Upgrading from v3.9 to v4.9 brings improved API consistency, better session handling, [ETag-based caching](/etag-cache-support), enhanced [authentication](/authentication) and proxy support, and new developer hooks. The most significant breaking change is the PHP 8.2 minimum requirement in [v4.9](/updates/community#april-15-2025) — verify your server's PHP version before upgrading. Review session handling, authentication, caching behavior, and custom code for deprecated filters.

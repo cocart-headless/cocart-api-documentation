@@ -1,0 +1,149 @@
+---
+title: "Session & Customer Management Filters"
+sidebarTitle: "Session & Customer Management"
+description: "PHP filters for session handling, customer data, cart loading, and token behavior."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Filters Reference overview](/developers/filters) for the full plugin key index and all filter categories.
+</Tip>
+
+### `cocart_disable_load_cart`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter checks if the <Tooltip tip="Load Cart is a feature that is not part of the REST API." cta="See the Load Cart feature" href="/load-cart">**Load Cart**</Tooltip> feature is disabled.
+
+<Note>Made available since v3.0.0</Note>
+
+**Returns**: `bool`
+
+**Usage**
+```php
+add_filter( 'cocart_disable_load_cart', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_disable_load_cart` in repository](https://github.com/co-cart/co-cart/search?q=cocart_disable_load_cart&type=code)
+
+---
+
+### `cocart_load_cart_query_name`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows developers to add more white labelling when loading the cart via web.
+
+<Note>Made available since v2.8.2</Note>
+
+**Parameters**
+
+<ParamField query="action_query" type="string">
+  Default is `cocart-load-cart`.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_load_cart_query_name', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_load_cart_query_name` in repository](https://github.com/co-cart/co-cart/search?q=cocart_load_cart_query_name&type=code)
+
+---
+
+### `cocart_requested_cart_key`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows the cart key to be overridden. Developer Note: Really only here so I don't have to create a new session handler to inject a customer ID with the POS Support Add-on.
+
+<Note>Made available since v4.2.0</Note>
+
+**Usage**
+```php
+add_filter( 'cocart_requested_cart_key', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_requested_cart_key` in repository](https://github.com/co-cart/co-cart/search?q=cocart_requested_cart_key&type=code)
+
+---
+
+### `cocart_set_customer_id`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows to set the customer ID.
+
+<Note>Made available since v4.1.0</Note>
+
+**Parameters**
+
+<ParamField query="current_user_id" type="integer">
+  Current user ID.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_set_customer_id', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_set_customer_id` in repository](https://github.com/co-cart/co-cart/search?q=cocart_set_customer_id&type=code)
+
+---
+
+### `cocart_load_cart_from_session`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filter allows you to decide if the cart should load user meta when initialized. Useful for controlling session behavior on specific pages or conditions.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="load_cart" type="boolean">
+  Whether to load the cart from session. Default: `true`.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_load_cart_from_session', function( $load_cart ) {
+    // Prevent cart from loading on specific conditions
+    return $load_cart;
+} );
+```
+
+---
+
+### `cocart_load_cart_redirect_home`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filter allows you to change where to redirect the customer if [loading the cart from session](/load-cart) fails.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="redirect_url" type="string">
+  The URL to redirect to on failure. Default: home URL.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_load_cart_redirect_home', function( $redirect_url ) {
+    // Redirect to a custom error page
+    return home_url( '/cart-error/' );
+} );
+```

@@ -1,0 +1,283 @@
+---
+title: "TypeScript SDK: SvelteKit Adapter"
+sidebarTitle: "SvelteKit"
+description: "Use the CoCart TypeScript SDK with SvelteKit — browser client, server load functions, form actions, and cart key header mechanism."
+icon: "fire"
+'og:title': "Using CoCart with SvelteKit — Headless WooCommerce Guide"
+'og:description': "Add a WooCommerce cart to your SvelteKit app with CoCart. Browser client, server load functions, form actions, and automatic X-Cart-Key header forwarding."
+---
+
+<Info>
+  This guide was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 27th, 2026.
+</Info>
+
+The SvelteKit adapter handles sharing cart state between server-side load functions and client-side components. Cart state is persisted in encrypted `localStorage` on the client — no cookies needed.
+
+## How It Works
+
+1. **Browser**: The client stores the cart key in encrypted `localStorage` using the Web Crypto API.
+2. **Navigation**: When the user navigates or makes a request, `attachCartKeyHeader()` automatically adds an `X-Cart-Key` header by wrapping the browser's built-in `fetch()`.
+3. **Server**: Load functions, form actions, and API routes read the `X-Cart-Key` header from `event.request.headers` to identify the cart.
+
+No cookies are used at any point — avoiding GDPR consent requirements, CORS restrictions, and cookie size limits.
+
+## Browser Client
+
+Create a CoCart client for use in client-side components and scripts:
+
+```ts
+// src/lib/cocart.ts
+import { createBrowserClient, attachCartKeyHeader } from '@cocartheadless/sdk/svelte';
+import { SessionManager } from '@cocartheadless/sdk';
+
+let client: ReturnType<typeof createBrowserClient> | null = null;
+let session: SessionManager | null = null;
+
+export async function getClient() {
+  if (client) return client;
+
+  client = createBrowserClient(import.meta.env.VITE_COCART_STORE_URL, {
+    encryptionKey: import.meta.env.VITE_COCART_ENCRYPTION_KEY,
+  });
+
+  await client.restoreSession();
+  attachCartKeyHeader(client);
+
+  return client;
+}
+
+export async function getSession() {
+  if (session) return session;
+
+  const c = await getClient();
+  session = new SessionManager(c, c.getStorage());
+
+  if (!session.getCartKey()) {
+    await session.initializeCart();
+  }
+
+  return session;
+}
+```
+
+## Server Client
+
+Create a CoCart client in a load function or form action. The server client accepts a SvelteKit `RequestEvent` and reads the cart key from `event.request.headers`:
+
+```ts
+// src/routes/cart/+page.server.ts
+import { createServerClient } from '@cocartheadless/sdk/svelte';
+import { COCART_STORE_URL } from '$env/static/private';
+
+export async function load(event) {
+  const client = createServerClient(COCART_STORE_URL, event);
+  const cart = await client.cart().get();
+
+  return {
+    cart: cart.toObject(),
+    itemCount: cart.getItemCount(),
+  };
+}
+```
+
+### With Authentication
+
+To access a logged-in customer's cart, pass their credentials via Basic Auth:
+
+```ts
+import { createServerClient } from '@cocartheadless/sdk/svelte';
+import { COCART_STORE_URL } from '$env/static/private';
+
+const client = createServerClient(COCART_STORE_URL, event, {
+  username: 'customer@email.com',
+  password: 'customer_password',
+});
+
+const cart = await client.cart().get();
+```
+
+## Form Actions
+
+Use the server client in SvelteKit form actions for progressive enhancement:
+
+```ts
+// src/routes/cart/+page.server.ts
+import type { Actions } from './$types';
+import { createServerClient } from '@cocartheadless/sdk/svelte';
+import { COCART_STORE_URL } from '$env/static/private';
+
+export const actions = {
+  addToCart: async (event) => {
+    const client = createServerClient(COCART_STORE_URL, event);
+    const data = await event.request.formData();
+    const productId = data.get('productId') as string;
+    const quantity = Number(data.get('quantity') || 1);
+
+    try {
+      await client.cart().addItem(productId, { quantity });
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: (e as Error).message };
+    }
+  },
+} satisfies Actions;
+```
+
+## API Routes
+
+Use the server client in SvelteKit server endpoints:
+
+```ts
+// src/routes/api/cart/+server.ts
+import { json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
+import { createServerClient } from '@cocartheadless/sdk/svelte';
+import { COCART_STORE_URL } from '$env/static/private';
+
+export const GET: RequestHandler = async (event) => {
+  const client = createServerClient(COCART_STORE_URL, event);
+  const cart = await client.cart().get();
+  return json(cart.toObject());
+};
+```
+
+## Full Example
+
+### Cart Page Component
+
+```svelte
+<!-- src/routes/cart/+page.svelte -->
+<script lang="ts">
+  import type { PageData } from './$types';
+  import { getClient } from '$lib/cocart';
+
+  export let data: PageData;
+
+  let loading = false;
+
+  async function removeItem(itemKey: string) {
+    loading = true;
+    try {
+      const client = await getClient();
+      await client.cart().removeItem(itemKey);
+      location.reload();
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      loading = false;
+    }
+  }
+</script>
+
+<h1>Shopping Cart ({data.itemCount} items)</h1>
+
+{#if data.cart.items.length === 0}
+  <p>Your cart is empty.</p>
+{:else}
+  <ul>
+    {#each data.cart.items as item}
+      <li>
+        {item.name} — Qty: {item.quantity} — {item.totals.total}
+        <button on:click={() => removeItem(item.item_key)} disabled={loading}>
+          Remove
+        </button>
+      </li>
+    {/each}
+  </ul>
+{/if}
+```
+
+### Client-Side Add to Cart
+
+```svelte
+<!-- src/lib/components/AddToCartButton.svelte -->
+<script lang="ts">
+  import { getClient } from '$lib/cocart';
+
+  export let productId: number;
+
+  let loading = false;
+
+  async function handleAdd() {
+    loading = true;
+    try {
+      const client = await getClient();
+      await client.cart().addItem(productId, 1);
+      window.location.reload();
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      loading = false;
+    }
+  }
+</script>
+
+<button on:click={handleAdd} disabled={loading}>
+  {loading ? 'Adding...' : 'Add to Cart'}
+</button>
+```
+
+### Guest-to-Customer Login
+
+```svelte
+<!-- src/lib/components/LoginForm.svelte -->
+<script lang="ts">
+  import { getSession } from '$lib/cocart';
+
+  let email = '';
+  let password = '';
+
+  async function handleLogin(e: SubmitEvent) {
+    e.preventDefault();
+    const session = await getSession();
+
+    // Login with JWT and merge guest cart into customer cart
+    await session.loginWithJwt(email, password, true);
+    window.location.href = '/cart';
+  }
+</script>
+
+<form on:submit={handleLogin}>
+  <input type="email" bind:value={email} />
+  <input type="password" bind:value={password} />
+  <button type="submit">Login</button>
+</form>
+```
+
+## Hooks
+
+SvelteKit hooks can be used to intercept and modify requests. In SvelteKit, the `X-Cart-Key` header from the client's patched `fetch()` is already available on `event.request.headers` in load functions and actions, so no explicit forwarding is needed:
+
+```ts
+// src/hooks.server.ts
+import type { Handle } from '@sveltejs/kit';
+
+export const handle: Handle = async ({ event, resolve }) => {
+  return resolve(event);
+};
+```
+
+## Environment Variables
+
+```bash
+# .env
+VITE_COCART_STORE_URL=https://your-store.com
+VITE_COCART_ENCRYPTION_KEY=your-secret-encryption-key
+COCART_STORE_URL=https://your-store.com
+```
+
+<Warning>
+In SvelteKit, variables prefixed with `VITE_` are exposed to client-side code. Use `$env/static/private` for server-only variables.
+</Warning>
+
+## How `attachCartKeyHeader` Works
+
+`attachCartKeyHeader()` wraps `globalThis.fetch` so that every same-origin request automatically includes an `X-Cart-Key` header with the current cart key:
+
+- Server load functions receive the cart key without cookies
+- Form actions receive the cart key without cookies
+- API routes receive the cart key without cookies
+- Cross-origin requests are never modified
+- If no cart key is set, no header is added
+
+Call it once after creating the browser client and restoring the session.

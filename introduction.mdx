@@ -1,0 +1,141 @@
+---
+title: "CoCart: The headless REST API for WooCommerce"
+sidebarTitle: "Introduction"
+description: "CoCart is a developer-first REST API that gives WooCommerce a proper headless frontend — cookie-less sessions, customer authentication, and CORS support built in."
+icon: "hand-spock"
+---
+
+## What is CoCart?
+
+You've chosen WooCommerce for your store. Now you want a modern frontend — React, Next.js, Astro, Vue — without being locked into WordPress themes. That's exactly what CoCart is built for.
+
+CoCart gives WooCommerce a proper frontend REST API: cookie-less session management built for stateless frontends, authentication that makes sense, and CORS support built in. Build the storefront you want with any framework. Scale up when you're ready.
+
+## Requirements
+
+| Requirement | Minimum | Recommended |
+|-------------|---------|-------------|
+| WordPress | 6.7 | 6.7+ |
+| WooCommerce | 9.0 | 10.0+ |
+| PHP | 8.2 | 8.3+ |
+
+## Core features
+
+<AccordionGroup>
+    <Accordion title="Cookie-less session management" icon="cookie-bite">
+        Database-stored cart sessions built for concurrent requests and stateless frontends. No cookies, no session conflicts — works for both guest and authenticated customers from day one.
+    </Accordion>
+
+    <Accordion title="Customer authentication" icon="key">
+        No admin API keys required. Customers authenticate with their own credentials:
+
+        - Email and password
+        - Username and password
+        - Phone number and password
+
+        JWT authentication is available via add-on.
+    </Accordion>
+
+    <Accordion title="CORS support built in" icon="globe">
+        First-party CORS handling so your decoupled frontend connects without configuration hell. Enable it in one click with the [free CORS add-on](https://wordpress.org/plugins/cocart-cors/) or control it via filter.
+    </Accordion>
+
+    <Accordion title="Essential cart operations" icon="cart-shopping">
+        Add, update, and remove items via simple POST/PUT/DELETE requests. Name Your Price support is built in for donation-based and flexible pricing. Bulk cart requests let you combine multiple operations into a single API call.
+    </Accordion>
+
+    <Accordion title="Product search" icon="magnifying-glass">
+        Query products by name, SKU, or ID — authenticated or not — with flexible filtering. Return different results based on role type (membership, wholesale, and more).
+    </Accordion>
+
+    <Accordion title="Real-time cart validation" icon="check">
+        Stock, coupons, totals, and fees are validated on every request. Responses are always accurate — no separate verification calls needed.
+    </Accordion>
+
+    <Accordion title="180+ filters" icon="filter">
+        Customize every response, add fields, or remove data you don't need — without writing new routes.
+    </Accordion>
+
+    <Accordion title="Broad plugin compatibility" icon="puzzle-piece">
+        Built on WooCommerce's Data Stores API and mirrors most WooCommerce hooks. Most extensions — subscriptions, memberships, dynamic pricing — work out of the box.
+    </Accordion>
+</AccordionGroup>
+
+## SDKs and tools
+
+### TypeScript SDK
+
+The official TypeScript SDK ships with zero dependencies, typed responses, and framework adapters for Next.js, Astro, Nuxt, SvelteKit, Remix, and more.
+
+```bash
+npm install @cocartheadless/sdk
+```
+
+```typescript
+import { CoCart } from '@cocartheadless/sdk';
+
+const client = new CoCart('https://your-store.com');
+const cart = await client.cart().get();
+```
+
+<CardGroup cols={2}>
+    <Card title="SDK Documentation" icon="book" color="#f7df1e" href="/sdk/typescript">
+        Full setup, configuration, and API reference
+    </Card>
+    <Card title="@cocartheadless/sdk on npm" icon="npm" color="#CB3837" href="https://www.npmjs.com/package/@cocartheadless/sdk">
+        Zero dependencies. Install in seconds.
+    </Card>
+</CardGroup>
+
+### Other SDKs
+
+<Warning>
+    PHP, Python, and Go SDKs are still in development. In the meantime, use the [API Reference](/api-reference/v2/index) for direct API calls.
+</Warning>
+
+<CardGroup cols={3}>
+    <Card title="PHP" icon="php" color="#4F5B93" href="/sdk/php">
+        For WordPress, Laravel, and other PHP applications
+    </Card>
+    <Card title="Python" icon="github" href="https://github.com/cocart-headless/cocart-python">
+        github.com/cocart-headless/cocart-python
+    </Card>
+    <Card title="Go" icon="github" href="https://github.com/cocart-headless/cocart-go">
+        github.com/cocart-headless/cocart-go
+    </Card>
+</CardGroup>
+
+### Developer tools
+
+- **[CoCart OpenAPI Specs](https://github.com/cocart-headless/cocart-openapi)** — generate client libraries or test with Postman, Insomnia, or Yaak
+- **[CoCart for VS Code](https://github.com/cocart-headless/cocart-vscode)** — snippets and autocompletion for functions, classes, and hooks
+- **[Raycast Extension](https://www.raycast.com/cocart_headless/cocart-docs)** — access CoCart docs without leaving your keyboard
+- **[Cart Callback Example](https://github.com/cocart-headless/cocart-cart-callback-example)** — register custom callbacks triggered on cart updates
+
+## Why CoCart instead of WooCommerce's Store API?
+
+WooCommerce's Store API can be used headless, but it was designed for the Gutenberg block editor ecosystem. Its session model relies on nonces passed via response headers — suited for anonymous single-session shoppers, but tied to WordPress's nonce lifecycle and less straightforward to persist across sessions or devices.
+
+CoCart is purpose-built for headless from day one: cart sessions identified by a persistent key (no nonces, no cookies), a single unified endpoint set for both product and cart data, and customer authentication that supports any shop requirement.
+
+<CardGroup cols={2}>
+    <Card title="CoCart vs. WooCommerce Store API" icon="scale-balanced" href="/comparison/woocommerce-store-api">
+        Detailed side-by-side comparison
+    </Card>
+    <Card title="CoCart vs. WooGraphQL" icon="scale-balanced" href="/comparison/woographql">
+        REST vs. GraphQL for headless WooCommerce
+    </Card>
+</CardGroup>
+
+## Open source, community driven
+
+CoCart is GPL 3.0. The codebase is public, the roadmap is open, and feature requests from real stores drive every release.
+
+<CardGroup cols={2}>
+    <Card title="Source Code" icon="github" href="https://github.com/co-cart/co-cart">
+        Browse, contribute, and open issues on GitHub
+    </Card>
+    <Card title="Discord Community" icon="discord" color="#5865F2" href="https://cocartapi.com/community/?ref=mintlify">
+        Chat with the team and fellow CoCart developers
+    </Card>
+</CardGroup>

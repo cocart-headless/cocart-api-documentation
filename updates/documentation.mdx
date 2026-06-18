@@ -1,10 +1,77 @@
 ---
 title: "Documentation"
+sidebarTitle: "Documentation Updates"
 description: "Keep up with new additions or changes to the documentation"
 icon: "book"
-robots: "noindex, follow"
+rss: true
 ---
 
-## ?? ??, 2025
+<Update label="May 18, 2026" description="Restructured from the ground up">
+
+<Note>
+    This is the biggest documentation update since CoCart launched. Improved navigation making it easier to find what you need, and a lot of new content built around the CoCart Starter v5.0.0 release.
+</Note>
+
+**New guides and references:**
+
+* [AI Skills](/ai-skills) — how to use CoCart skills with Claude Code, GitHub Copilot, Cursor, and others
+* [ETag Cache Support](/etag-cache-support) — using conditional requests to reduce bandwidth
+* [Upgrade Guide: v3.9 → v4.9](/upgrade-guide-v3-9-to-v4-9) — step-by-step upgrade instructions
+* [JWT Token Management](/authentication/jwt/token-management) — validating, refreshing, and handling token expiry
+* [Install via Composer](/getting-started/composer) — installing CoCart plugins using Composer with license key authentication
+* [Raycast Extension](/raycast) — searching the docs without leaving your keyboard
+* [Extending the Settings Page](/developers/settings) — developer guide for the new schema-driven Settings API in CoCart Starter v5.0.0
+
+**New API Reference pages:**
+
+* Community v1 and v2 endpoint pages split into their own namespace (`api-reference/community/`)
+* New v2 endpoints: create cart, get items, get item by key, get session items
+* New product endpoints: `by-slug` lookups, `brands`, `reviews/mine`
+* [Cart Item Extras](/api-reference/v2/cart-item-extras) — custom pricing, email capture, and custom product data
+* [v1 → v2 Migration Guide](/api-reference/migration-guide)
+* [Advanced Custom Fields integration](/api-reference/plugins/advanced-custom-fields)
+
+**New SDK documentation:**
+
+Full guides for all four official SDKs — [TypeScript](/sdk/typescript), [PHP](/sdk/php), [Python](/sdk/python), and [Go](/sdk/go) — plus 12 framework integration guides covering Next.js, Nuxt, Astro, Remix, Svelte, Hono, Fastify, ElysiaJS, Vite, Deno, Framer, and Webflow.
+
+**New tutorials:**
+
+* [Getting Started with Yaak](/tutorials/yaak) — importing OpenAPI specs and testing endpoints
+* [Extending the Products API](/tutorials/extending-products-api) — adding custom fields to product responses
+* [Setting Up Consumer Keys](/tutorials/consumer-key-setup) — generating keys for the Sessions API
+
+**Knowledge Base additions:**
+
+* [HTTP Security Headers](/knowledge-base/http-security-headers) — recommended headers for headless storefronts
+* [WordPress Multisite](/knowledge-base/multisite) — how CoCart works on multisite networks
+* [Performance Playbook](/knowledge-base/performance) — field selection, batching, caching, and tuning
+* [CORS Errors](/knowledge-base/troubleshoot/cors) — diagnosing and fixing cross-origin errors
+* [Object Cache Conflicts](/knowledge-base/troubleshoot/object-cache) — resolving stale cart data with Redis and Memcached
+* [Guest to Customer Cart](/knowledge-base/guest-to-customer-cart) — how guest cart data transfers when a customer logs in
+
+**New plugin and support pages:**
+
+* [Integrations](/plugins/integrations) — overview of built-in integrations (2FA, ACF, ShopMagic) and how to enable them
+* [Support](/support) — support channels, community discussions, and bug reporting
+* [Support Policy](/support/support-policy) — what's covered and what's not
+* [Install CoCart Community](/community/install) — dedicated install page for the community edition
+
+**CoCart Starter v5.0.0 release documentation:**
+
+* [CoCart Starter Updates](/updates/basic) — full v5.0.0 release notes
+* [Breaking Changes: CoCart Starter](/breaking-changes/basic-v5) — response changes, renamed headers, hooks, functions, and deprecations
+
+**Site structure changes:**
+
+Navigation has been reorganized with flatter paths throughout. The Knowledge Base replaces the old Support Centre, the SDKs have their own tab, and the navbar now links to Support and Pricing.
+
+</Update>
+
+---
+
+<Update label="July 29, 2025">
 
 * New release of documentation and user guides for all of CoCart.
+
+</Update>

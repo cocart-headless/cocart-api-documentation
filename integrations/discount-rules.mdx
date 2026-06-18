@@ -1,0 +1,80 @@
+---
+title: "Discount Rules for WooCommerce"
+sidebarTitle: "Discount Rules"
+description: "Expose original prices and savings amounts for products and cart items affected by Discount Rules for WooCommerce."
+tag: "In Testing"
+robots: "noindex, follow"
+---
+
+<Info>
+  This feature documentation was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 28th, 2026.
+</Info>
+
+[Discount Rules for WooCommerce](https://wordpress.org/plugins/woo-discount-rules/) applies automatic price rules based on product, category, quantity, user role, and more. The CoCart Plus integration exposes supplementary discount metadata — original price and amount saved — on product and cart item responses so your storefront can render strikethrough prices and "You save X" badges without additional requests.
+
+<Info>
+  This integration is available in CoCart Plus since <Tooltip tip="This is the version of CoCart Plus">v2.0.0</Tooltip> and requires Discount Rules for WooCommerce (free or Pro) to be installed and active.
+</Info>
+
+## How it works
+
+Discount Rules for WooCommerce already mutates product prices via WooCommerce's `woocommerce_product_get_price` hook and cart item prices via `woocommerce_before_calculate_totals`. This means the standard `price` field in CoCart responses is already the discounted price.
+
+The integration adds a `discount` key under `extensions` containing the original price and saved amount — the extra context needed to display a sale badge.
+
+## Product response
+
+Products with an active matching rule receive a `discount` object in their `extensions` key.
+
+```json Example (product extensions excerpt)
+{
+  "price": "800",
+  "extensions": {
+    "discount": {
+      "original_price": "1000",
+      "saved_amount": "200"
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `original_price` | `string` | Price before the discount rule was applied, in the store's smallest currency unit. |
+| `saved_amount` | `string` | Amount saved by the active rule, in the store's smallest currency unit. |
+
+Products with no matching rule do not receive the `discount` key.
+
+## Cart item response
+
+Cart items affected by a discount rule receive a `discount` object in their `extensions` key, with an additional `is_free_item` flag for Buy X Get Y rules.
+
+```json Example (cart item extensions excerpt)
+{
+  "extensions": {
+    "discount": {
+      "original_price": "1000",
+      "saved_amount": "200",
+      "is_free_item": false
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `original_price` | `string` | Original per-unit price before discount. |
+| `saved_amount` | `string` | Amount saved on this line by the active rule. |
+| `is_free_item` | `boolean` | `true` when this item was added for free by a Buy X Get Y rule. |
+
+## Rendering a sale badge
+
+Use `original_price` and the standard `price` field together to render a strikethrough price:
+
+```javascript JavaScript
+const originalPrice = parseFloat(product.extensions?.discount?.original_price ?? 0) / 100;
+const salePrice     = parseFloat(product.price) / 100;
+const saved         = parseFloat(product.extensions?.discount?.saved_amount ?? 0) / 100;
+
+// e.g. "Was $10.00 — now $8.00. You save $2.00!"
+```

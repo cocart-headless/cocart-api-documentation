@@ -1,0 +1,44 @@
+---
+title: "Product Reviews Hooks"
+sidebarTitle: "Product Reviews"
+description: "Action hooks for product review events in CoCart — fires after a product review is created via the REST API."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Action Hooks overview](/developers/actions) for all hook categories and the [Developer Reference](/developers) for the plugin key index.
+</Tip>
+
+### `cocart_insert_product_review`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Fires after a comment is created via the REST API.
+
+<Note>Made available since v2.0.0</Note>
+
+**Parameters**
+
+<ParamField path="review" type="WP_Comment">
+  Inserted comment object.
+</ParamField>
+
+<ParamField path="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
+
+<ParamField path="creating" type="bool">
+  True when creating a comment, false when updating.
+</ParamField>
+
+**Usage**
+```php
+add_action( 'cocart_insert_product_review', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_insert_product_review` in repository](https://github.com/co-cart/co-cart/search?q=cocart_insert_product_review&type=code)

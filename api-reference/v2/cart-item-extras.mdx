@@ -1,0 +1,124 @@
+---
+title: 'Cart Item Extras'
+description: 'Unlock additional capabilities when adding items to the cart — custom pricing, coupon codes, customer capture, and custom product data.'
+icon: 'wand-magic-sparkles'
+---
+
+The add-item endpoint accepts several optional parameters beyond `id` and `quantity`. These extras give you fine-grained control over pricing, customer data collection, and how each cart item is identified.
+
+---
+
+## Name Your Price
+
+Pass a `price` field to override the product's regular or sale price. This is the foundation for "pay what you want" flows, donations, or any scenario where the customer sets the price.
+
+<Tip>
+  This feature is **disabled by default**. Enable it in one of two ways:
+
+  - **Settings UI:** Go to **CoCart → Settings → Features** and enable **Name your price**.
+  - **Filter:** Return `true` from the `cocart_does_product_allow_price_change` filter (available since v4.1.0).
+</Tip>
+
+```bash cURL
+curl -X POST https://your-store.com/wp-json/cocart/v2/cart/add-item \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "42",
+    "quantity": "1",
+    "price": "15.00"
+  }'
+```
+
+To enable the feature via code for specific products only, use the [`cocart_does_product_allow_price_change`](/developers/filters#cocart_does_product_allow_price_change) filter:
+
+```php
+add_filter( 'cocart_does_product_allow_price_change', function( $allow_change, $cart_item, $request ) {
+    // Only allow price changes for products in category ID 12
+    $product = $cart_item['data'];
+    if ( has_term( 12, 'product_cat', $product->get_id() ) ) {
+        return true;
+    }
+    return $allow_change;
+}, 10, 3 );
+```
+
+---
+
+## Capture Customer Email
+
+Pass an `email` field to store the customer's billing email address on the cart session. This is particularly useful for cart abandonment recovery — you can capture the email when a customer adds their first item, before they ever reach checkout.
+
+```bash cURL
+curl -X POST https://your-store.com/wp-json/cocart/v2/cart/add-item \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "42",
+    "quantity": "1",
+    "email": "customer@example.com"
+  }'
+```
+
+---
+
+## Capture Customer Phone
+
+Pass a `phone` field to store the customer's billing phone number on the cart session. Works the same way as email capture — collect it early so you have a contact point if the customer abandons.
+
+```bash cURL
+curl -X POST https://your-store.com/wp-json/cocart/v2/cart/add-item \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "42",
+    "quantity": "1",
+    "phone": "+1-555-867-5309"
+  }'
+```
+
+You can send both `email` and `phone` in the same request.
+
+---
+
+## Apply a Coupon on Add
+
+<Info>
+  Requires **CoCart Plus v1.6** or higher.
+</Info>
+
+Pass a `coupon` field to apply a discount code at the same time as adding an item. This saves a separate API call and is useful for flows where a coupon code is collected on a product or landing page.
+
+```bash cURL
+curl -X POST https://your-store.com/wp-json/cocart/v2/cart/add-item \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "42",
+    "quantity": "1",
+    "coupon": "SAVE10"
+  }'
+```
+
+Coupon validation is handled by WooCommerce. If the coupon is invalid or cannot be applied, a notice is returned alongside the cart response — the item is still added.
+
+---
+
+## Custom Product Data
+
+The `item_data` object lets you attach arbitrary key-value data to a cart item. CoCart uses this to make each item unique — two items with the same product ID but different `item_data` are treated as separate line items.
+
+Plugins like [Name Your Price](/api-reference/plugins/wc-name-your-price) already use `item_data` to store their configuration. You can do the same for your own logic.
+
+**Example: marking an item as a gift**
+
+```bash cURL
+curl -X POST https://your-store.com/wp-json/cocart/v2/cart/add-item \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "42",
+    "quantity": "1",
+    "item_data": {
+        "is_gift": true,
+        "gift_message": "Happy birthday!"
+    }
+  }'
+```
+
+The data stored in `item_data` is persisted with the cart item and returned in cart responses, so your front end can read it back and render accordingly (e.g. showing a gift badge on the item).

@@ -1,0 +1,383 @@
+---
+title: "Performance Playbook"
+sidebarTitle: "Performance"
+description: "A practical guide to optimizing CoCart for high-traffic stores — from quick wins to advanced tuning."
+icon: "gauge-high"
+tag: "NEW"
+'og:title': "Performance Optimization for CoCart"
+---
+
+This playbook walks you through every performance lever available in CoCart, ordered from highest impact to most specialized. Whether you're preparing for a flash sale or scaling to handle thousands of concurrent carts, start at the top and work your way down.
+
+## Level 1: Quick Wins (No Code Required)
+
+These require no PHP and no frontend changes — just adjust how you call the API.
+
+### Use field selection on cart requests
+
+Every cart response includes everything — items, totals, shipping, coupons, cross-sells, customer data, and more. If your frontend only needs a subset, use the `fields` parameter to request just what you need.
+
+```bash
+# Full cart response (~5-15 KB depending on items)
+GET /wp-json/cocart/v2/cart
+
+# Only what a cart icon needs (~200 bytes)
+GET /wp-json/cocart/v2/cart?fields=item_count,totals
+
+# Only what a cart drawer needs (~1-3 KB)
+GET /wp-json/cocart/v2/cart?fields=items,totals,coupons
+```
+
+**Why it matters:** A smaller response means less JSON serialization on the server, less data over the network, and faster parsing on the client. On a cart with 10+ items including cross-sells and full customer data, field selection can reduce response size by 60-80%.
+
+**Available fields:**
+
+| Field | What it contains |
+|-------|-----------------|
+| `cart_hash` | Hash for change detection |
+| `cart_key` | Session identifier |
+| `currency` | Store currency |
+| `customer` | Billing and shipping addresses |
+| `items` | Cart items with product details |
+| `item_count` | Number of items |
+| `items_weight` | Total weight |
+| `coupons` | Applied coupons |
+| `needs_payment` | Whether cart requires payment |
+| `needs_shipping` | Whether cart needs shipping |
+| `shipping` | Shipping methods and packages |
+| `fees` | Applied fees |
+| `taxes` | Tax breakdown |
+| `totals` | Subtotal, total, discounts, etc. |
+| `removed_items` | Items the customer removed |
+| `cross_sells` | Cross-sell product suggestions |
+| `notices` | Cart notices |
+
+Use dot notation for nested fields: `totals:total`, `customer:billing_address`.
+
+### Use ETags for conditional requests
+
+If your frontend polls the cart (e.g., to keep a cart icon updated), ETags let you skip the full response when nothing has changed.
+
+```javascript
+// First request: full response + ETag
+const response = await fetch('/wp-json/cocart/v2/cart?cart_key=abc123');
+const etag = response.headers.get('ETag');
+
+// Subsequent requests: 304 Not Modified if unchanged
+const check = await fetch('/wp-json/cocart/v2/cart?cart_key=abc123', {
+  headers: { 'If-None-Match': etag }
+});
+// check.status === 304 → use cached data, no body transferred
+```
+
+A 304 response skips cart loading, WooCommerce calculations, and JSON serialization entirely — the server runs a single database query to compare the cart hash.
+
+<Tip>
+  If you use an official CoCart SDK, ETag handling is automatic. See [ETag Cache Support](/etag-cache-support) for details.
+</Tip>
+
+### Use batch requests for multiple operations
+
+If your frontend needs to add multiple items at once (e.g., "add all to cart" from a saved list), use a batch request instead of sending individual requests.
+
+```json
+{
+  "requests": [
+    { "method": "POST", "path": "/cocart/v2/cart/add-item", "body": { "id": "42", "quantity": "1" } },
+    { "method": "POST", "path": "/cocart/v2/cart/add-item", "body": { "id": "99", "quantity": "2" } },
+    { "method": "POST", "path": "/cocart/v2/cart/add-item", "body": { "id": "55", "quantity": "1" } }
+  ]
+}
+```
+
+One HTTP round-trip instead of three. See [Batch Requests](/batch-requests) for full documentation.
+
+---
+
+## Level 2: Server-Side Tuning (PHP Filters)
+
+These require adding PHP code — either in your theme's `functions.php` or a [must-use plugin](https://developer.wordpress.org/advanced-administration/plugins/mu-plugins/).
+
+### Tune product cache duration
+
+CoCart caches product API responses for 1 hour by default. If your catalog doesn't change frequently, increase this to reduce server load from product browsing.
+
+```php
+// Cache product responses for 4 hours.
+add_filter( 'cocart_cache_max_age', function() {
+    return 4 * HOUR_IN_SECONDS;
+});
+```
+
+If the catalog is stable (weekly or monthly product updates), you can safely go up to 24 hours:
+
+```php
+add_filter( 'cocart_cache_max_age', function() {
+    return DAY_IN_SECONDS;
+});
+```
+
+<Warning>
+  During a flash sale where prices or stock are changing frequently, temporarily lower this value or append `_skip_cache=true` to your requests. See [Cache Control](/cache) for details.
+</Warning>
+
+### Tune stale-while-revalidate
+
+The `stale-while-revalidate` directive lets caches serve a slightly stale product response instantly while fetching a fresh copy in the background. The default is 24 hours.
+
+Under heavy load, this prevents the "thundering herd" problem — where hundreds of expired cache entries all hit the server at the same moment:
+
+```php
+// Allow stale product responses for up to 3 days during revalidation.
+add_filter( 'cocart_stale_while_revalidate', function() {
+    return 3 * DAY_IN_SECONDS;
+});
+```
+
+### Use smaller thumbnail sizes
+
+Cart item responses include a product thumbnail. By default, CoCart uses the `woocommerce_thumbnail` size (typically 300×300 or 600×600). If your cart UI only shows small thumbnails, serve a smaller image:
+
+```php
+// Use a 150x150 thumbnail in cart responses.
+add_filter( 'cocart_item_thumbnail_size', function() {
+    return 'thumbnail'; // WordPress default 150x150
+});
+```
+
+This reduces image payload size and can improve perceived load time — especially on mobile.
+
+You can also serve different sizes based on context. For example, if your API is called by both a mobile app and a desktop site:
+
+```php
+add_filter( 'cocart_item_thumbnail_size', function( $size ) {
+    // Check for a custom header from your mobile app.
+    if ( ! empty( $_SERVER['HTTP_X_CLIENT_TYPE'] ) && $_SERVER['HTTP_X_CLIENT_TYPE'] === 'mobile' ) {
+        return 'thumbnail'; // 150x150
+    }
+
+    return $size; // Default woocommerce_thumbnail
+});
+```
+
+### Manage session expiration
+
+Every active cart session is a row in the database and an entry in the object cache. More sessions = more storage and slower cleanup. Adjust expiration to match the expected shopping behavior:
+
+```php
+add_filter( 'cocart_cart_expiration', function( $expiration, $is_logged_in ) {
+    if ( $is_logged_in ) {
+        return 14 * DAY_IN_SECONDS; // 2 weeks for customers
+    }
+
+    return DAY_IN_SECONDS; // 24 hours for guests (default is 48h)
+}, 10, 2 );
+```
+
+**Guidelines:**
+
+| Store type | Guest expiration | Customer expiration |
+|-----------|-----------------|---------------------|
+| High-traffic, fast checkout | 12-24 hours | 7 days |
+| Browse-heavy, slow checkout | 48-72 hours | 14 days |
+| B2B / large orders | 72 hours | 30 days |
+
+<Note>
+  CoCart enforces a maximum session expiration of **30 days**. Sessions exceeding this limit will be capped automatically.
+</Note>
+
+---
+
+## Level 3: Infrastructure
+
+These changes are outside of CoCart itself but have a major impact on API response times.
+
+### Set up a persistent object cache
+
+If you haven't already, install Redis or Memcached with an object cache plugin. This is the single biggest infrastructure improvement for any WordPress REST API.
+
+**Without object cache:** Every cart read requires a database query.
+**With object cache:** Cart reads come from memory — typically 10-50× faster than a database query.
+
+Recommended plugins:
+- **Redis Object Cache** (free)
+- **Object Cache Pro** (paid, with advanced features)
+
+<Warning>
+  Object caches can cause stale cart data if misconfigured. See the [Object Cache troubleshooting guide](/knowledge-base/troubleshoot/object-cache) for setup details.
+</Warning>
+
+### Put a CDN in front of product endpoints
+
+CoCart sets `Cache-Control: public, max-age=3600` on product responses, which means any CDN (Cloudflare, CloudFront, Fastly, etc.) will cache them automatically — offloading product browsing traffic from WordPress entirely.
+
+**What to cache (CDN):**
+- `GET /wp-json/cocart/v2/products/*` — product listings, single products, categories, tags, attributes, reviews
+
+**What to never cache (CDN):**
+- `/wp-json/cocart/v2/cart/*` — cart endpoints (CoCart already sends `no-cache` headers, but verify your CDN respects them)
+- `/wp-json/cocart/v2/login` / `logout`
+- `/wp-json/cocart/v2/store`
+
+Most CDNs respect `Cache-Control` headers by default. If yours doesn't, add rules to bypass caching for `/wp-json/cocart/v2/cart/` paths.
+
+### Scale your database for sessions
+
+Under heavy traffic, the `wp_cocart_carts` session table can grow large. A few things help:
+
+1. **Keep guest session expiration short** — Fewer active sessions means a smaller table. 24 hours is sufficient for most use cases.
+2. **Add an index on `cart_expiry`** — CoCart's cleanup cron runs `DELETE FROM wp_cocart_carts WHERE cart_expiry < NOW()`. An index on `cart_expiry` makes this query fast even with millions of rows.
+3. **Monitor table size** — If you see performance degradation during cleanup, it may be worth running cleanup more frequently via a custom cron.
+
+---
+
+## Level 4: Frontend Patterns
+
+How your frontend calls the API matters as much as how the server responds.
+
+### Don't poll the cart — use ETags or event-driven updates
+
+A common mistake is polling the cart on a timer (e.g., every 5 seconds). This creates unnecessary server load that scales linearly with active sessions.
+
+**Better approach:** Only fetch the cart when something changes:
+
+```javascript
+// ❌ Polling every 5 seconds
+setInterval(() => fetchCart(), 5000);
+
+// ✅ Fetch after mutations
+async function addToCart(productId) {
+  const response = await fetch('/wp-json/cocart/v2/cart/add-item', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: String(productId), quantity: '1' }),
+  });
+  // The response already contains the updated cart — no extra GET needed.
+  const cart = await response.json();
+  updateUI(cart);
+}
+```
+
+If you do need to poll (e.g., to detect changes from another tab), always use ETags so unchanged carts return a 304 with no body.
+
+### Use mutation responses instead of extra GETs
+
+Every CoCart cart mutation (add, update, remove, clear) returns the **full updated cart** in its response. There is no need for a separate GET request after each mutation:
+
+```javascript
+// ❌ Two requests
+await fetch('/wp-json/cocart/v2/cart/add-item', { method: 'POST', ... });
+const cart = await fetch('/wp-json/cocart/v2/cart').then(r => r.json());
+
+// ✅ One request — mutation response includes the cart
+const cart = await fetch('/wp-json/cocart/v2/cart/add-item', {
+  method: 'POST', ...
+}).then(r => r.json());
+```
+
+This cuts your cart API calls in half for any add/update/remove flow.
+
+### Cache product data on the client
+
+Product data changes infrequently. Cache it locally (in memory, localStorage, or a state management library) and use ETags to check for changes:
+
+```javascript
+async function getProducts(etag = null) {
+  const headers = {};
+  if (etag) headers['If-None-Match'] = etag;
+
+  const response = await fetch('/wp-json/cocart/v2/products', { headers });
+
+  if (response.status === 304) return null; // Use cached data
+
+  return {
+    data: await response.json(),
+    etag: response.headers.get('ETag'),
+  };
+}
+```
+
+---
+
+## Measuring Impact
+
+After making changes, measure the difference. Here are the key metrics to watch:
+
+### Response time
+
+```bash
+# Time a full cart request
+curl -o /dev/null -s -w "Total: %{time_total}s\n" \
+  https://example.com/wp-json/cocart/v2/cart?cart_key=abc123
+
+# Time an ETag-matched request (should be much faster)
+curl -o /dev/null -s -w "Total: %{time_total}s\n" \
+  -H 'If-None-Match: W/"your-etag"' \
+  https://example.com/wp-json/cocart/v2/cart?cart_key=abc123
+```
+
+### Response size
+
+```bash
+# Full cart response size
+curl -s -o /dev/null -w "Size: %{size_download} bytes\n" \
+  https://example.com/wp-json/cocart/v2/cart?cart_key=abc123
+
+# With field selection
+curl -s -o /dev/null -w "Size: %{size_download} bytes\n" \
+  "https://example.com/wp-json/cocart/v2/cart?cart_key=abc123&fields=items,totals"
+```
+
+### Cache hit rate
+
+Check the `CoCart-Cache` response header:
+
+| Value | Meaning |
+|-------|---------|
+| `MISS` | Full request processed |
+| `HIT` | ETag matched, 304 returned |
+| `SKIP` | Cache was explicitly bypassed |
+
+If most cart requests show `MISS`, your client isn't sending `If-None-Match` headers — the single most impactful fix.
+
+### Object cache hit rate
+
+For Redis:
+```bash
+redis-cli INFO stats | grep keyspace
+```
+
+A hit rate below 90% suggests memory pressure or misconfigured cache groups. See the [Object Cache troubleshooting guide](/knowledge-base/troubleshoot/object-cache).
+
+## Quick Reference
+
+| Optimization | Impact | Effort | Where |
+|-------------|--------|--------|-------|
+| Field selection (`fields` param) | High | None | Frontend |
+| ETags (`If-None-Match`) | High | Low | Frontend |
+| Mutation responses (skip extra GETs) | High | Low | Frontend |
+| Persistent object cache (Redis) | High | Medium | Infrastructure |
+| CDN for product endpoints | High | Medium | Infrastructure |
+| Batch requests | Medium | Low | Frontend |
+| Product cache duration (`cocart_cache_max_age`) | Medium | Low | PHP filter |
+| Stale-while-revalidate tuning | Medium | Low | PHP filter |
+| Smaller thumbnails (`cocart_item_thumbnail_size`) | Medium | Low | PHP filter |
+| Session expiration tuning | Low-Medium | Low | PHP filter |
+| Client-side product caching | Medium | Medium | Frontend |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Cache Control" icon="bolt" href="/cache">
+    How CoCart sets HTTP cache headers and available filters.
+  </Card>
+  <Card title="ETag Cache Support" icon="arrow-right-arrow-left" href="/etag-cache-support">
+    Conditional requests with ETags for bandwidth savings.
+  </Card>
+  <Card title="Batch Requests" icon="layer-group" href="/batch-requests">
+    Combine multiple cart operations into one request.
+  </Card>
+  <Card title="Object Cache Troubleshooting" icon="database" href="/knowledge-base/troubleshoot/object-cache">
+    Fix stale data from Redis or Memcached.
+  </Card>
+</CardGroup>

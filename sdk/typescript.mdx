@@ -1,0 +1,342 @@
+---
+title: "TypeScript SDK"
+sidebarTitle: "Overview"
+description: "Official TypeScript/JavaScript SDK for the CoCart REST API. Zero dependencies, typed responses, JWT support, and framework adapters for Astro and Next.js."
+'og:title': "CoCart TypeScript SDK — Install, Configure & Connect to WooCommerce"
+'og:description': "Install and configure the CoCart TypeScript SDK. npm/yarn/pnpm/bun install, all config options (auth, timeouts, ETag, retries), fluent API, white-labelling, and legacy plugin support."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+</Info>
+
+The official TypeScript SDK for the CoCart REST API. Works in Node.js 20+ and modern browsers.
+
+## Requirements
+
+- Node.js 20+ (uses native `fetch`)
+- CoCart plugin installed on your WooCommerce store
+- [CoCart JWT Authentication](https://wordpress.org/plugins/cocart-jwt-authentication/) plugin _(optional, for JWT features)_
+
+## Installation
+
+<CodeGroup>
+
+```bash npm
+npm install @cocartheadless/sdk
+```
+
+```bash yarn
+yarn add @cocartheadless/sdk
+```
+
+```bash pnpm
+pnpm add @cocartheadless/sdk
+```
+
+```bash bun
+bun add @cocartheadless/sdk
+```
+
+</CodeGroup>
+
+## Configuration Options
+
+The second argument to `new CoCart()` is an optional object where you can set various options. You only need to include the ones relevant to your setup — everything has sensible defaults.
+
+```ts
+const client = new CoCart('https://your-store.com', {
+  // Guest session
+  cartKey: 'existing_cart_key',
+
+  // Basic Auth
+  username: 'customer@email.com',
+  password: 'password',
+
+  // JWT Auth
+  jwtToken: 'your-jwt-token',
+  jwtRefreshToken: 'your-refresh-token',
+
+  // Admin (Sessions API)
+  consumerKey: 'ck_xxxxx',
+  consumerSecret: 'cs_xxxxx',
+
+  // HTTP settings
+  timeout: 30000,        // milliseconds (default: 30000)
+
+  // REST API prefix (default: 'wp-json')
+  restPrefix: 'wp-json',
+
+  // API namespace (default: 'cocart')
+  namespace: 'cocart',
+
+  // CoCart main plugin: 'basic' (default) or 'legacy'
+  mainPlugin: 'basic',
+
+  // Retry transient failures (429, 503, timeouts)
+  maxRetries: 2,
+
+  // Storage adapter (default: MemoryStorage)
+  // See Sessions & Storage docs for options
+  storage: new MemoryStorage(),
+  storageKey: 'cocart_cart_key',
+
+  // Encryption key for EncryptedStorage
+  encryptionKey: 'your-secret-key',
+
+  // Custom auth header name (default: 'Authorization')
+  // Useful when hosting strips the Authorization header
+  authHeaderName: 'X-Auth-Token',
+
+  // Transform every API response before it's returned
+  responseTransformer: (response) => response,
+
+  // Enable ETag conditional requests for reduced bandwidth (default: true)
+  etag: true,
+
+  // Enable debug logging to console (default: false)
+  debug: true,
+});
+```
+
+### Fluent Configuration
+
+A **fluent API** (also called method chaining) lets you call multiple configuration methods in a single expression. Each method returns the client itself, so you can chain them with dots:
+
+```ts
+const client = CoCart.create('https://your-store.com')
+  .setTimeout(60000)
+  .setMaxRetries(2)
+  .setRestPrefix('api')
+  .setNamespace('mystore')
+  .addHeader('X-Custom-Header', 'value')
+  .setAuthHeaderName('X-Auth-Token')
+  .setETag(true)
+  .setMainPlugin('basic')
+  .setDebug(true);
+```
+
+## Storage Adapters
+
+Storage adapters persist cart keys and JWT tokens between page loads. All adapters implement the same `StorageInterface` — methods may return either a value or a `Promise`.
+
+By default, the SDK auto-detects the best adapter for your environment: `LocalStorage` in browsers, `MemoryStorage` in Node.js and SSR.
+
+### MemoryStorage
+
+Stores data in a JavaScript `Map` in memory. Data is lost on page refresh (browser) or process restart (Node.js). Used automatically in Node.js and SSR.
+
+```ts
+import { MemoryStorage } from '@cocartheadless/sdk';
+
+const storage = new MemoryStorage();
+```
+
+### LocalStorage
+
+Wraps `window.localStorage`. Data persists across refreshes but is stored as plain text. Used automatically in browsers when no `encryptionKey` is set.
+
+```ts
+import { LocalStorage } from '@cocartheadless/sdk';
+
+const storage = new LocalStorage('cocart_'); // optional prefix (default: 'cocart_')
+```
+
+### EncryptedStorage
+
+Like `LocalStorage` but encrypted with AES-256-GCM using the Web Crypto API. Recommended for storing JWT tokens in the browser.
+
+The easiest way to use it is via the `encryptionKey` constructor option — the SDK creates `EncryptedStorage` automatically:
+
+```ts
+// Shorthand (recommended)
+const client = new CoCart('https://your-store.com', {
+  encryptionKey: 'your-secret-key',
+});
+
+// Or construct explicitly
+import { EncryptedStorage } from '@cocartheadless/sdk';
+
+const storage = new EncryptedStorage('your-secret-key', {
+  prefix: 'cocart_enc_', // optional
+});
+const client = new CoCart('https://your-store.com', { storage });
+```
+
+**Encryption details:** Your key is processed with PBKDF2 (100,000 iterations, SHA-256). A random 12-byte IV and 16-byte salt are generated per write. If you change the key, old data is silently discarded.
+
+#### Restoring sessions on page load
+
+Because `EncryptedStorage` is async, call `restoreSession()` on every page load before using the cart. This reads the stored cart key back into the client:
+
+```ts
+const client = new CoCart('https://your-store.com', {
+  encryptionKey: 'your-secret-key',
+});
+await client.restoreSession();
+// Cart key is now restored — subsequent cart calls use the existing session
+```
+
+### Custom Storage
+
+Implement `StorageInterface` for any backend. Methods may be synchronous or return Promises:
+
+```ts
+import type { StorageInterface } from '@cocartheadless/sdk';
+
+class IndexedDbStorage implements StorageInterface {
+  async get(key: string): Promise<string | null> {
+    // Read from IndexedDB
+  }
+
+  async set(key: string, value: string): Promise<void> {
+    // Write to IndexedDB
+  }
+
+  async delete(key: string): Promise<void> {
+    // Delete from IndexedDB
+  }
+}
+```
+
+### Getting and Setting Storage at Runtime
+
+```ts
+// Read the current adapter
+const storage = client.getStorage();
+
+// Swap adapter at runtime (e.g. after login)
+client.setStorage(new EncryptedStorage('new-key'));
+```
+
+## Framework Adapters
+
+If you are building with a JavaScript framework, the SDK provides adapters that handle the differences between server-side rendering (SSR) and client-side code automatically.
+
+- [Astro Setup Guide](/sdk/typescript/frameworks/astro)
+- [Next.js Setup Guide](/sdk/typescript/frameworks/nextjs)
+
+## White-Labelling / Custom REST Prefix
+
+WordPress exposes its REST API at `/wp-json/` by default. The SDK builds URLs like `https://your-store.com/wp-json/cocart/v2/cart`. If your site changes this prefix or the CoCart plugin has been white-labelled, configure the SDK to match:
+
+```ts
+// Custom REST prefix (site uses /api/ instead of /wp-json/)
+const client = new CoCart('https://your-store.com', {
+  restPrefix: 'api',
+});
+// Requests go to: https://your-store.com/api/cocart/v2/cart
+
+// White-labelled namespace
+const client2 = new CoCart('https://your-store.com', {
+  namespace: 'mystore',
+});
+// Requests go to: https://your-store.com/wp-json/mystore/v2/cart
+
+// Both together
+const client3 = new CoCart('https://your-store.com', {
+  restPrefix: 'api',
+  namespace: 'mystore',
+});
+// Requests go to: https://your-store.com/api/mystore/v2/cart
+```
+
+## Legacy Plugin Support
+
+The SDK supports both **CoCart Starter** and **CoCart Community** plugin (`cart-rest-api-for-woocommerce` v4.x). By default, the SDK targets CoCart Starter.
+
+To use the SDK with the community plugin, set `mainPlugin` to `'legacy'`:
+
+```ts
+const client = new CoCart('https://your-store.com', {
+  mainPlugin: 'legacy',
+});
+
+// Or use the fluent setter
+client.setMainPlugin('legacy');
+```
+
+### What changes in legacy mode
+
+**Basic-only methods throw immediately.** Methods that require CoCart Starter will throw a `VersionError` before making any HTTP request:
+
+```ts
+import { CoCart, VersionError } from '@cocartheadless/sdk';
+
+const client = new CoCart('https://your-store.com', { mainPlugin: 'legacy' });
+
+try {
+  await client.products().findBySlug('blue-hoodie');
+} catch (e) {
+  if (e instanceof VersionError) {
+    // "products().findBySlug() requires CoCart Starter. Please upgrade..."
+  }
+}
+```
+
+Basic-only methods include:
+
+- `cart().create()`
+- `products().findBySlug()`, `variation()`, `category()`, `tag()`
+- `products().attributeBySlug()`, `attributeTermsBySlug()`, `attributeTermBySlug()`
+- `products().brands()`, `brand()`, `byBrand()`
+- `products().myReviews()`
+
+**Field filtering uses `fields` instead of `_fields`.** the community plugin uses CoCart's custom `fields` query parameter, while CoCart Starter uses the WordPress standard `_fields`. The SDK handles this automatically.
+
+## Quick Start
+
+```ts
+import { CoCart } from '@cocartheadless/sdk';
+
+const client = new CoCart('https://your-store.com');
+
+// Add an item to the cart
+const response = await client.cart().addItem(123, { quantity: 2 });
+
+// Get the cart
+const cart = await client.cart().get();
+console.log(cart.getItemCount());
+```
+
+## Key Features
+
+- **Zero runtime dependencies** — uses native `fetch` (Node.js 20+)
+- **ESM + CJS dual output** — works in any environment
+- **Typed responses** with full TypeScript generics
+- **JWT authentication** with auto-refresh
+- **Encrypted localStorage** for browser session persistence (AES-256-GCM)
+- **ETag conditional requests** for reduced bandwidth
+- **Event system** for request/response lifecycle hooks
+- **Framework adapters** for Astro and Next.js
+- **Legacy plugin support** for older CoCart versions
+
+## Documentation
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="lock" href="/sdk/typescript/authentication">
+    Guest sessions, Basic Auth, JWT, consumer keys, and custom auth headers
+  </Card>
+  <Card title="Cart API" icon="cart-shopping" href="/sdk/typescript/cart">
+    Add, update, remove items, coupons, shipping, fees, and ETag caching
+  </Card>
+  <Card title="Products API" icon="shirt" href="/sdk/typescript/products">
+    Browse, filter, paginate products, variations, categories, and reviews
+  </Card>
+  <Card title="Sessions API" icon="database" href="/sdk/typescript/sessions">
+    Admin sessions endpoint, SessionManager, and cart transfer on login
+  </Card>
+  <Card title="Error Handling" icon="circle-exclamation" href="/sdk/typescript/error-handling">
+    Exception hierarchy, catching errors, and HTTP status code mapping
+  </Card>
+  <Card title="Utilities" icon="wrench" href="/sdk/typescript/utilities">
+    Currency formatting, timezone helpers, and response transformers
+  </Card>
+  <Card title="Framework Guides" icon="code" href="/sdk/typescript/frameworks/astro">
+    Astro and Next.js adapter guides
+  </Card>
+</CardGroup>
+
+## Source
+
+The SDK is open source. View the source and report issues on [GitHub](https://github.com/cocart-headless/cocart-js).

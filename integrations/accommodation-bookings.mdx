@@ -1,0 +1,68 @@
+---
+title: "WooCommerce Accommodation Bookings"
+sidebarTitle: "Accommodation Bookings"
+description: "Expose check-in/check-out times and booking constraints for accommodation products in the CoCart cart and products APIs."
+tag: "In Testing"
+robots: "noindex, follow"
+---
+
+<Info>
+  This feature documentation was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 28th, 2026.
+</Info>
+
+[WooCommerce Accommodation Bookings](https://woocommerce.com/products/woocommerce-accommodation-bookings/) extends WooCommerce Bookings with hotel and accommodation-specific features such as check-in/check-out times and minimum/maximum stay rules.
+
+The CoCart Plus integration surfaces this data on both product responses (for building a booking form) and cart item responses (for confirming selected dates).
+
+<Info>
+  This integration is available in CoCart Plus since <Tooltip tip="This is the version of CoCart Plus">v1.0.0</Tooltip> and requires WooCommerce Accommodation Bookings to be installed and active.
+</Info>
+
+## Product response
+
+An `accommodation_booking_data` object is added to the `extensions` key of every accommodation booking product.
+
+```json Example (product extensions excerpt)
+{
+  "extensions": {
+    "accommodation_booking_data": {
+      "min_nights": 2,
+      "max_nights": 14,
+      "check_in_time": "15:00",
+      "check_out_time": "11:00"
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `min_nights` | `integer` | Minimum number of nights required for a stay. |
+| `max_nights` | `integer` | Maximum number of nights allowed for a stay. |
+| `check_in_time` | `string` | Check-in time in `HH:MM` format. |
+| `check_out_time` | `string` | Check-out time in `HH:MM` format. |
+
+## Cart item response
+
+Once an accommodation booking product is added to the cart, the `extensions` key on that cart item includes the formatted check-in and check-out strings.
+
+```json Example (cart item extensions excerpt)
+{
+  "extensions": {
+    "accommodation_booking_data": {
+      "check_in": "June 10, 2026 at 3:00 pm",
+      "check_out": "June 14, 2026 at 11:00 am"
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `check_in` | `string` | Formatted check-in date and time using the store's date/time format. Empty string if no start date is set. |
+| `check_out` | `string` | Formatted check-out date and time using the store's date/time format. Empty string if no end date is set. |
+
+## Known limitations
+
+- Check-in and check-out times reflect the product's configured times. Guests cannot select a different arrival time through the API.
+- The integration reads data only. Creating or managing booking availability requires WooCommerce Accommodation Bookings' own admin interface.

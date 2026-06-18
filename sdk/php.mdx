@@ -1,0 +1,371 @@
+---
+title: "PHP SDK"
+sidebarTitle: "Overview"
+description: "Official PHP SDK for the CoCart REST API. Supports Guzzle, cURL, WordPress HTTP API, and PHP Streams. JWT, Basic Auth, and multiple storage adapters."
+'og:title': "CoCart PHP SDK — Install, Configure & Connect to WooCommerce"
+'og:description': "Install and configure the CoCart PHP SDK. Composer install, HTTP adapters (Guzzle, cURL, WordPress HTTP API, Streams), all config options, and legacy plugin support."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+</Info>
+
+The official PHP SDK for the CoCart REST API. Works with PHP 8.2+ in any environment — WordPress plugins, Laravel, standalone scripts.
+
+## Requirements
+
+- PHP 8.2 or higher
+- One of: Guzzle (recommended), cURL, or PHP Streams
+- CoCart plugin installed on your WooCommerce store
+- [CoCart JWT Authentication](https://wordpress.org/plugins/cocart-jwt-authentication/) plugin _(optional, for JWT features)_
+
+## Installation
+
+```bash
+composer require cocart/sdk
+
+# Install Guzzle for best performance (recommended)
+composer require guzzlehttp/guzzle
+```
+
+### Manual Installation
+
+1. Download or clone the repository
+2. Include the autoloader:
+
+```php
+require_once 'path/to/cocart-sdk/autoload.php';
+```
+
+## HTTP Adapters
+
+The SDK automatically selects the best available HTTP adapter in this order:
+
+| Priority | Adapter | Package | Notes |
+|----------|---------|---------|-------|
+| 1 | **Guzzle** | `guzzlehttp/guzzle` | Most feature-rich and performant |
+| 2 | **cURL** | Built-in PHP extension | Widely available, good performance |
+| 3 | **WordPress HTTP API** | WordPress core | For WordPress plugin/theme development |
+| 4 | **PHP Streams** | Built-in PHP | Fallback — limited features |
+
+### Specifying an Adapter
+
+```php
+use CoCart\Http\GuzzleAdapter;
+
+// Auto-detect best available adapter (default)
+$client = new CoCart('https://your-store.com');
+
+// Specify adapter by name
+$client = new CoCart('https://your-store.com', [
+    'http_adapter' => 'guzzle'  // or 'curl', 'wordpress', 'stream'
+]);
+
+// Or inject a custom adapter instance
+$client = new CoCart('https://your-store.com', [
+    'http_adapter' => new GuzzleAdapter()
+]);
+
+// Change adapter at runtime
+$client->setHttpAdapter('curl');
+
+// Check which adapter is being used
+echo $client->getHttpAdapterName(); // 'guzzle', 'curl', etc.
+
+// List all available adapters
+print_r(CoCart::getAvailableHttpAdapters());
+```
+
+### Configuring Guzzle
+
+```php
+use CoCart\Http\GuzzleAdapter;
+use GuzzleHttp\Client;
+
+// Configure Guzzle with custom options
+$guzzle = new Client([
+    'proxy' => 'http://proxy.example.com:8080',
+    'allow_redirects' => true,
+    'debug' => true,
+]);
+
+$adapter = new GuzzleAdapter();
+$adapter->setClient($guzzle);
+
+$client = new CoCart('https://your-store.com', [
+    'http_adapter' => $adapter
+]);
+```
+
+### Using in WordPress Plugins
+
+When building a WordPress plugin, the SDK will automatically detect and use WordPress's built-in HTTP API:
+
+```php
+// In a WordPress environment, auto-detects wp_remote_request
+$client = new CoCart('https://your-store.com');
+
+// Or explicitly use WordPress adapter
+$client = new CoCart('https://your-store.com', [
+    'http_adapter' => 'wordpress'
+]);
+```
+
+### Environments Without cURL
+
+**Option 1: Install Guzzle (recommended)**
+```bash
+composer require guzzlehttp/guzzle
+```
+
+**Option 2: Use PHP Streams** (no installation needed)
+```php
+$client = new CoCart('https://your-store.com', [
+    'http_adapter' => 'stream'
+]);
+```
+
+<Note>The stream adapter has limitations — less performant, may have SSL issues on some configurations, and limited timeout control.</Note>
+
+## Configuration Options
+
+```php
+$client = new CoCart('https://your-store.com', [
+    // Guest session
+    'cart_key' => 'existing_cart_key',
+
+    // Basic Auth
+    'username' => 'customer@email.com',
+    'password' => 'password',
+
+    // JWT Auth
+    'jwt_token' => 'your-jwt-token',
+    'jwt_refresh_token' => 'your-refresh-token',
+
+    // Admin (Sessions API)
+    'consumer_key' => 'ck_xxxxx',
+    'consumer_secret' => 'cs_xxxxx',
+
+    // HTTP settings
+    'timeout' => 30,
+    'verify_ssl' => true,
+
+    // Custom auth header (for reverse proxies that strip Authorization)
+    'auth_header' => 'Authorization',
+
+    // REST API prefix (default: 'wp-json')
+    'rest_prefix' => 'wp-json',
+
+    // API namespace (default: 'cocart')
+    'namespace' => 'cocart',
+
+    // CoCart main plugin: 'basic' (default) or 'legacy'
+    'main_plugin' => 'basic',
+
+    // Retry transient failures (429, 503, timeouts)
+    'max_retries' => 2,
+
+    // ETag conditional requests (default: true)
+    'etag' => true,
+
+    // Cart key persistence (default: true, uses $_SESSION)
+    'auto_storage' => true,
+    'session_key' => 'cocart_cart_key',
+]);
+```
+
+### Fluent Configuration
+
+```php
+$client = CoCart::create('https://your-store.com')
+    ->setTimeout(60)
+    ->setVerifySsl(false)
+    ->setMaxRetries(2)
+    ->setRestPrefix('api')
+    ->setNamespace('mystore')
+    ->setAuthHeader('X-Authorization')
+    ->setETag(true)
+    ->setMainPlugin('legacy')
+    ->addHeader('X-Custom-Header', 'value');
+```
+
+## Storage Adapters
+
+Storage adapters implement `SessionStorageInterface` and are used by both `SessionManager` (for cart keys) and `JwtManager` (for JWT tokens).
+
+### PHP Session Storage
+
+Stores data in PHP's `$_SESSION`:
+
+```php
+use CoCart\Storage\PhpSessionStorage;
+
+$storage = new PhpSessionStorage();
+```
+
+### Cookie Storage
+
+Stores data in HTTP cookies:
+
+```php
+use CoCart\Storage\CookieStorage;
+
+$storage = new CookieStorage(
+    expiration: 604800,       // 7 days (seconds)
+    path: '/',
+    domain: 'your-store.com',
+    secure: true,             // HTTPS only
+    httpOnly: true            // Not accessible via JavaScript
+);
+```
+
+### File Storage
+
+Stores data in the filesystem:
+
+```php
+use CoCart\Storage\FileStorage;
+
+$storage = new FileStorage('/tmp/cocart-sessions');
+```
+
+### Custom Storage
+
+Implement `SessionStorageInterface` for any backend:
+
+```php
+use CoCart\SessionStorageInterface;
+
+class RedisStorage implements SessionStorageInterface
+{
+    private \Redis $redis;
+
+    public function __construct(\Redis $redis)
+    {
+        $this->redis = $redis;
+    }
+
+    public function get(string $key): ?string
+    {
+        $value = $this->redis->get($key);
+        return $value === false ? null : $value;
+    }
+
+    public function set(string $key, string $value): void
+    {
+        $this->redis->set($key, $value);
+    }
+
+    public function delete(string $key): void
+    {
+        $this->redis->del($key);
+    }
+}
+```
+
+Pass your custom storage to `SessionManager` or `JwtManager`:
+
+```php
+$redis = new \Redis();
+$redis->connect('127.0.0.1', 6379);
+
+$storage = new RedisStorage($redis);
+$session = new SessionManager($client, $storage);
+$jwt = new JwtManager($client, $storage);
+```
+
+## Legacy Plugin Support
+
+The SDK supports both **CoCart Starter** and **CoCart Community** plugin (`cart-rest-api-for-woocommerce` v4.x). By default, the SDK targets CoCart Starter.
+
+To use the SDK with the community plugin, set `main_plugin` to `'legacy'`:
+
+```php
+$client = new CoCart('https://your-store.com', [
+    'main_plugin' => 'legacy',
+]);
+
+// Or use the fluent setter
+$client->setMainPlugin('legacy');
+```
+
+### What changes in legacy mode
+
+**Basic-only methods throw immediately.** Methods that require CoCart Starter will throw a `VersionException` before making any HTTP request:
+
+```php
+use CoCart\Exceptions\VersionException;
+
+$client = new CoCart('https://your-store.com', ['main_plugin' => 'legacy']);
+
+try {
+    $client->products()->findBySlug('blue-hoodie');
+} catch (VersionException $e) {
+    // "products()->findBySlug() requires CoCart Starter. Please upgrade..."
+}
+```
+
+Basic-only methods include:
+
+- `cart()->create()`
+- `products()->findBySlug()`, `variation()`, `category()`, `tag()`
+- `products()->attributeBySlug()`, `attributeTermsBySlug()`, `attributeTermBySlug()`
+- `products()->brands()`, `brand()`, `byBrand()`
+- `products()->myReviews()`
+- `batch()->execute()`
+
+**Field filtering uses `fields` instead of `_fields`.** The SDK handles this automatically based on the configured main plugin.
+
+## Quick Start
+
+```php
+use CoCart\CoCart;
+
+$client = new CoCart('https://your-store.com');
+
+// Add an item to the cart
+$response = $client->cart()->addItem(123, ['quantity' => 2]);
+
+// Get the cart
+$cart = $client->cart()->get();
+echo $cart->getItemCount();
+```
+
+## Key Features
+
+- **Multiple HTTP adapters** — Guzzle, cURL, WordPress HTTP API, PHP Streams
+- **Full cart management** — add, update, remove items, coupons, shipping, fees
+- **JWT authentication** with auto-refresh
+- **Guest customer support** with automatic cart key tracking
+- **Batch requests** support
+- **Multiple storage adapters** — Cookie, File, PHP Session
+- **ETag conditional requests** for reduced bandwidth
+- **Legacy plugin support** for older CoCart versions
+- **PSR-4 autoloading**
+
+## Documentation
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="lock" href="/sdk/php/authentication">
+    Guest sessions, Basic Auth, JWT, consumer keys, and custom auth headers
+  </Card>
+  <Card title="Cart API" icon="cart-shopping" href="/sdk/php/cart">
+    Add, update, remove items, coupons, shipping, fees, and ETag caching
+  </Card>
+  <Card title="Products API" icon="shirt" href="/sdk/php/products">
+    Browse, filter, paginate products, variations, categories, and reviews
+  </Card>
+  <Card title="Sessions API" icon="database" href="/sdk/php/sessions">
+    Admin sessions endpoint, SessionManager, and cart transfer on login
+  </Card>
+  <Card title="Error Handling" icon="circle-exclamation" href="/sdk/php/error-handling">
+    Exception hierarchy, catching errors, and HTTP status code mapping
+  </Card>
+  <Card title="Utilities" icon="wrench" href="/sdk/php/utilities">
+    Currency formatting, timezone helpers, and response transformers
+  </Card>
+</CardGroup>
+
+## Source
+
+The SDK is open source. View the source and report issues on [GitHub](https://github.com/cocart-headless/cocart-php).

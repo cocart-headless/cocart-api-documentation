@@ -1,32 +1,40 @@
 # About CoCart
 
-## Our Story
+## From a Developer's Frustration to a Global Mission
 
-What started as a simple solution to a common problem has grown into something much bigger. CoCart was born from the real-world challenges of integrating WooCommerce with modern headless architectures. As developers ourselves, we understood the frustration of working with traditional REST APIs that weren't built for the headless commerce era.
+CoCart began with a simple but powerful idea: eCommerce should be flexible, not frustrating.
 
-## Who We Are
+Back in 2018, our founder—a passionate WooCommerce developer—found themselves tangled in the limitations of monolithic WordPress structures while trying to build modern, dynamic shopping experiences. Every project felt like a compromise. REST API support was limited. Decoupling WooCommerce felt like reinventing the wheel. There had to be a better way.
 
-CoCart is more than just an API - we're a team of passionate developers and e-commerce enthusiasts dedicated to making headless commerce accessible to everyone. Led by Sébastien Dumont, a veteran WordPress developer with over a decade of experience, we're committed to building tools that empower developers to create exceptional shopping experiences.
+So we built one.
 
-## Our Mission
+CoCart was born to give developers the freedom to use WooCommerce how they want—headless, API-first, fast, and scalable. What started as a side project quickly gained traction and has grown into something much bigger.
 
-We believe that e-commerce should be limitless. Our mission is to provide developers with the tools they need to build fast, flexible, and future-proof shopping experiences. We're democratizing headless commerce by making it accessible to businesses of all sizes.
+## Why We Exist
+
+We believe WooCommerce shouldn't hold you back. You should be able to create seamless, modern shopping experiences without fighting how it functions.
+
+With CoCart, you can:
+- Decouple your WooCommerce store with ease
+- Access powerful REST APIs out-of-the-box
+- Build lightning-fast frontends using React, Vue, Next.js, or whatever stack you love
+- Focus on customer experience, not infrastructure headaches
+
+We turn WooCommerce into a flexible backend engine—so you can focus on building bold, beautiful frontends.
+
+## Our Core Values
+
+- **Transparency First**: We're open about what we offer, how it works, and where we're going
+- **Developer-First Thinking**: Built by developers, for developers—everything we do is designed to empower and simplify
+- **Security and Reliability**: Your data and your store's stability are non-negotiable
+- **Sustainable Growth**: We're bootstrapped, independent, and proud—our success depends on your success
 
 ## Why Choose CoCart?
 
-- **Built by Developers, for Developers**: We understand your challenges because we've faced them ourselves
-- **Open Source at Heart**: We believe in transparency and community-driven development
+- **Built for Modern Commerce**: Purpose-built for headless architectures
 - **Enterprise-Ready**: Trusted by businesses worldwide, from startups to enterprises
 - **Dedicated Support**: Our team is committed to your success with personal, responsive support
 - **Continuous Innovation**: Regular updates and new features based on community feedback
-
-## Our Values
-
-- **Simplicity**: We believe great software should be easy to use
-- **Transparency**: Open communication and clear documentation
-- **Community**: Your feedback shapes our roadmap
-- **Quality**: Rigorous testing and high coding standards
-- **Innovation**: Constantly pushing the boundaries of what's possible
 
 ## Get Started with CoCart
 
@@ -35,14 +43,10 @@ We believe that e-commerce should be limitless. Our mission is to provide develo
 3. **Start Building**: Try our free tier or choose a plan that fits your needs
 4. **Get Support**: Reach out to our team for personalized assistance
 
-## Let's Build Something Amazing Together
-
-Ready to revolutionize your WooCommerce setup? CoCart is here to help you create the headless commerce experience your customers deserve.
-
 [Get Started Now →](#)
 [View Our Products →](#)
 [Contact Us →](#)
 
 ---
 
-*Join the hundreds of developers who trust CoCart to power their headless commerce solutions.*
+*Join the growing community of developers who trust CoCart to power their headless commerce solutions.*

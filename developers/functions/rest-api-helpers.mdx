@@ -1,0 +1,237 @@
+---
+title: "REST API Helpers Functions"
+sidebarTitle: "REST API Helpers"
+description: "Functions for date formatting, currency data, notices, permalinks, and namespace utilities in REST API contexts."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Functions Reference overview](/developers/functions) for all function categories and the [Developer Reference](/developers) for the plugin key index.
+</Tip>
+
+### `cocart_prepare_date_response()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Parses and formats a date for ISO8601/RFC3339 format.
+
+<Note>Made available since v3.0.0</Note>
+
+**Parameters**
+
+<ParamField query="date" type="string|null|CoCart_DateTime">
+  Date to format.
+</ParamField>
+
+<ParamField query="utc" type="bool">
+  Send `false` to get local/offset time. Default: `true`.
+</ParamField>
+
+**Returns**: `string|null` — ISO8601/RFC3339 formatted datetime.
+
+- **Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-rest-functions.php)
+
+---
+
+### `cocart_get_store_currency()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Prepares a list of store currency data to return in responses.
+
+<Note>Made available since v3.1.0</Note>
+
+**Returns**: `array` — Currency data including `code`, `symbol`, `position`, `decimals`, `separators`, `prefix`, and `suffix`.
+
+- **Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-rest-functions.php)
+
+---
+
+### `cocart_get_notice_types()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Get notice types for the cart to return.
+
+<Note>Made available since v4.1.0</Note>
+
+**Returns**: `array` — Notice types array.
+
+- **Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-rest-functions.php)
+
+---
+
+### `cocart_add_to_cart_message()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Add to cart messages. Forked from `wc_add_to_cart_message()` for REST API use without HTML context.
+
+<Note>Made available since v3.0.0</Note>
+
+**Parameters**
+
+<ParamField query="products" type="int|array">
+  List of Product IDs or single ID.
+</ParamField>
+
+<ParamField query="show_qty" type="bool">
+  Should quantities be shown. Default: `false`.
+</ParamField>
+
+<ParamField query="return_msg" type="bool">
+  Return message rather than add it. Default: `false`.
+</ParamField>
+
+**Returns**: `mixed` — Message string or void.
+
+- **Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-rest-functions.php)
+
+---
+
+### `cocart_rest_should_load_namespace()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Checks if a REST namespace should be loaded. Useful to maintain site performance by disabling unused API versions.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="ns" type="string">
+  The namespace to check (e.g. `cocart/v1`, `cocart/v2`).
+</ParamField>
+
+<ParamField query="rest_route" type="string">
+  The REST route being checked. Optional.
+</ParamField>
+
+**Returns**: `bool` — True if the namespace should be loaded.
+
+- **Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-rest-functions.php)
+
+---
+
+### `cocart_get_requested_namespace()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Get the CoCart requested namespace.
+
+<Note>Made available since v5.0.0</Note>
+
+**Returns**: `string` — The current namespace.
+
+- **Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-rest-functions.php)
+
+---
+
+### `cocart_get_requested_namespace_version()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Get the CoCart requested namespace version.
+
+<Note>Made available since v5.0.0</Note>
+
+**Returns**: `string` — The current namespace version.
+
+- **Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-rest-functions.php)
+
+---
+
+### `cocart_get_requested_api()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Get the CoCart requested API in namespace/version format.
+
+<Note>Made available since v5.0.0</Note>
+
+**Returns**: `string` — API identifier (e.g. `cocart/v2`).
+
+- **Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-rest-functions.php)
+
+---
+
+### `cocart_get_frontend_url()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Get the frontend URL with fallback to `home_url()`.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="settings" type="array">
+  CoCart settings array. Optional.
+</ParamField>
+
+**Returns**: `string` — Frontend URL.
+
+- **Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-rest-functions.php)
+
+---
+
+### `cocart_is_wp_disabled_access()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Checks if WordPress frontend access has been disabled.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="settings" type="array">
+  CoCart settings array. Optional.
+</ParamField>
+
+**Returns**: `string` — `yes` or `no`.
+
+- **Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-rest-functions.php)
+
+---
+
+### `cocart_get_permalink()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Returns the permalink for a page, post, or product, replacing the site URL with the frontend URL if configured.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="url" type="string">
+  Permalink of the page, post, or product.
+</ParamField>
+
+<ParamField query="settings" type="array">
+  CoCart settings array. Optional.
+</ParamField>
+
+**Returns**: `string` — Permalink.
+
+- **Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-rest-functions.php)
+
+---
+
+### `cocart_allowed_image_mime_types()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Returns image mime types users are allowed to upload via the API.
+
+<Note>Made available since v3.0.0</Note>
+
+**Returns**: `array` — Array of allowed mime types.
+
+- **Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-rest-functions.php)
+
+---

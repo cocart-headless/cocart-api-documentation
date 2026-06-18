@@ -1,20 +1,22 @@
 ---
 title: "Generate TypeScript Types"
 sidebarTitle: "TypeScript Types"
-description: "Learn how to automatically generate TypeScript types from CoCart OpenAPI specifications for type-safe development"
+description: "Generate TypeScript types from CoCart's OpenAPI specs for type-safe fetch, Axios, or React Query integrations — without using the SDK."
 icon: "code"
 tag: "NEW"
 ---
 
-<Warning>
-    This tutorial was written by [Claude Code (an AI)](https://claude.com/product/claude-code) and has not yet been reviewed. Follow along with caution. If the tutorial was helpful or a specific part was not clear/correct, please provide feedback at the bottom of the page. Thank you.
-</Warning>
+<Info>
+  This tutorial was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 27th, 2026.
+</Info>
 
-# Introduction
+<Info>
+  **Using `@cocartheadless/sdk`?** TypeScript types are already included — no generation step needed. This tutorial is for developers using raw `fetch()`, Axios, or React Query directly. [See the TypeScript SDK docs →](/sdk/typescript)
+</Info>
 
-TypeScript provides strong typing that helps catch errors at compile time and improves developer experience with better autocompletion. CoCart provides OpenAPI specification files that can be used to automatically generate TypeScript types for all API endpoints, request bodies, and response schemas.
+TypeScript provides strong typing that helps catch errors at compile time and improves developer experience with better autocompletion. CoCart publishes official OpenAPI 3.0.3 specification files in the [`cocart-headless/cocart-openapi`](https://github.com/cocart-headless/cocart-openapi) repository that you can use to automatically generate TypeScript types for all API endpoints, request bodies, and response schemas.
 
-This tutorial will show you how to generate and use TypeScript types from the CoCart OpenAPI specifications in your TypeScript projects.
+This tutorial shows you how to generate and use those types in your TypeScript projects.
 
 ## Why Use Generated Types?
 
@@ -33,17 +35,35 @@ This tutorial will show you how to generate and use TypeScript types from the Co
 
 ## Available OpenAPI Specifications
 
-CoCart provides several OpenAPI specification files depending on which API version you're using:
+All official specs live in [`cocart-headless/cocart-openapi`](https://github.com/cocart-headless/cocart-openapi) and follow the OpenAPI 3.0.3 standard.
 
-| API Version | Specification File | Recommended For |
-|-------------|-------------------|-----------------|
-| **v2 Stable** | `openapi-v2-stable.yaml` | Production applications |
-| **v2 Pre-release** | `openapi-v2-pre-release.yaml` | Testing upcoming features |
-| **v1 Cart** | `openapi-cart-v1.yaml` | Legacy v1 cart endpoints |
-| **v1 Products** | `openapi-products-v1.yaml` | Legacy v1 product endpoints |
+### CoCart Starter (latest, v5.0.0)
+
+| Specification File | Covers |
+|-------------------|--------|
+| `basic/v2/openapi-cocart-v2-collection.yaml` | **All v2 endpoints combined** — cart, products, sessions, store, login/logout |
+| `basic/v2/openapi-cocart-cart-v2.yaml` | Cart endpoints only |
+| `basic/v2/openapi-cocart-products-v2.yaml` | Products endpoints only |
+| `basic/v2/openapi-cocart-sessions-v2.yaml` | Sessions endpoints only |
+| `basic/v2/openapi-cocart-others-v2.yaml` | Login, logout, and store endpoints |
+
+### CoCart Community (v4.9.0)
+
+| Specification File | Covers |
+|-------------------|--------|
+| `community/v2/openapi-cocart-v2-stable.yaml` | All community v2 endpoints combined |
+| `community/v1/openapi-cocart-cart-v1.yaml` | Legacy v1 cart endpoints |
+| `community/v1/openapi-cocart-products-v1.yaml` | Legacy v1 product endpoints |
+
+### Add-ons
+
+| Specification File | Covers |
+|-------------------|--------|
+| `jwt-authentication/openapi-cocart-jwt-auth.yaml` | JWT token refresh and validation |
+| `plus/v1/openapi-cocart-plus-v1-collection.yaml` | CoCart Plus v1 — coupons, fees, shipping, and granular totals |
 
 <Note>
-  This tutorial focuses on the **v2 Stable API**, which is recommended for all new projects.
+  This tutorial focuses on **CoCart Starter v2** (the collection spec), which is recommended for all new projects. The same approach works with any of the specs above.
 </Note>
 
 ## Installation
@@ -65,7 +85,7 @@ yarn add -D openapi-typescript
 The easiest way to generate types is directly from the GitHub repository:
 
 ```bash
-npx openapi-typescript https://raw.githubusercontent.com/cocart-headless/cocart-api-documentation/main/api-reference/v2/openapi-v2-stable.yaml -o src/types/cocart.ts
+npx openapi-typescript https://raw.githubusercontent.com/cocart-headless/cocart-openapi/main/basic/v2/openapi-cocart-v2-collection.yaml -o src/types/cocart.ts
 ```
 
 This command:
@@ -79,7 +99,7 @@ Add this command to your `package.json` scripts for easy regeneration:
 ```json
 {
   "scripts": {
-    "generate-types": "openapi-typescript https://raw.githubusercontent.com/cocart-headless/cocart-api-documentation/main/api-reference/v2/openapi-v2-stable.yaml -o src/types/cocart.ts"
+    "generate-types": "openapi-typescript https://raw.githubusercontent.com/cocart-headless/cocart-openapi/main/basic/v2/openapi-cocart-v2-collection.yaml -o src/types/cocart.ts"
   }
 }
 ```
@@ -94,13 +114,13 @@ If you have the OpenAPI specification file locally:
 1. **Download the specification file** to your project:
 
 ```bash
-curl -o openapi-v2-stable.yaml https://raw.githubusercontent.com/cocart-headless/cocart-api-documentation/main/api-reference/v2/openapi-v2-stable.yaml
+curl -o openapi-cocart-v2.yaml https://raw.githubusercontent.com/cocart-headless/cocart-openapi/main/basic/v2/openapi-cocart-v2-collection.yaml
 ```
 
 2. **Generate types from the local file**:
 
 ```bash
-npx openapi-typescript ./openapi-v2-stable.yaml -o src/types/cocart.ts
+npx openapi-typescript ./openapi-cocart-v2.yaml -o src/types/cocart.ts
 ```
 
 ## Using Generated Types
@@ -348,7 +368,7 @@ The `openapi-typescript` CLI supports various options:
 
 ```bash
 # Generate with additional options
-npx openapi-typescript https://raw.githubusercontent.com/cocart-headless/cocart-api-documentation/main/api-reference/v2/openapi-v2-stable.yaml \
+npx openapi-typescript https://raw.githubusercontent.com/cocart-headless/cocart-openapi/main/basic/v2/openapi-cocart-v2-collection.yaml \
   -o src/types/cocart.ts \
   --alphabetize \
   --export-type
@@ -360,18 +380,26 @@ Available options:
 - `--path-params-as-types` - Generate path parameters as types
 - `--additional-properties` - Allow additional properties in objects
 
-### Generating Multiple API Versions
+### Generating Types for Multiple Specs
 
-If you need types for multiple API versions:
+You can generate types for different parts of the API separately, or include add-on specs like JWT:
 
 ```json
 {
   "scripts": {
-    "generate-types:v2": "openapi-typescript https://raw.githubusercontent.com/cocart-headless/cocart-api-documentation/main/api-reference/v2/openapi-v2-stable.yaml -o src/types/cocart-v2.ts",
-    "generate-types:v2-pre": "openapi-typescript https://raw.githubusercontent.com/cocart-headless/cocart-api-documentation/main/api-reference/v2/openapi-v2-pre-release.yaml -o src/types/cocart-v2-pre.ts",
-    "generate-types:all": "npm run generate-types:v2 && npm run generate-types:v2-pre"
+    "generate-types:v2": "openapi-typescript https://raw.githubusercontent.com/cocart-headless/cocart-openapi/main/basic/v2/openapi-cocart-v2-collection.yaml -o src/types/cocart-v2.ts",
+    "generate-types:jwt": "openapi-typescript https://raw.githubusercontent.com/cocart-headless/cocart-openapi/main/jwt-authentication/openapi-cocart-jwt-auth.yaml -o src/types/cocart-jwt.ts",
+    "generate-types:plus": "openapi-typescript https://raw.githubusercontent.com/cocart-headless/cocart-openapi/main/plus/v1/openapi-cocart-plus-v1-collection.yaml -o src/types/cocart-plus.ts",
+    "generate-types:all": "npm run generate-types:v2 && npm run generate-types:jwt"
   }
 }
+```
+
+You can then import from each generated file as needed:
+
+```typescript
+import type { paths as CartPaths } from './types/cocart-v2';
+import type { paths as JwtPaths } from './types/cocart-jwt';
 ```
 
 ### Using with Your Own WordPress Instance
@@ -525,6 +553,10 @@ Now that you have TypeScript types set up:
 ## Resources
 
 <CardGroup cols={2}>
+  <Card title="CoCart OpenAPI Specs" icon="github" href="https://github.com/cocart-headless/cocart-openapi">
+    Official OpenAPI specification files for all CoCart editions
+  </Card>
+
   <Card title="openapi-typescript Docs" icon="book" href="https://openapi-ts.pages.dev/">
     Official documentation for openapi-typescript
   </Card>
@@ -535,9 +567,5 @@ Now that you have TypeScript types set up:
 
   <Card title="TypeScript Handbook" icon="book-open" href="https://www.typescriptlang.org/docs/handbook/intro.html">
     Learn more about TypeScript
-  </Card>
-
-  <Card title="OpenAPI Specification" icon="file-code" href="https://swagger.io/specification/">
-    OpenAPI specification documentation
   </Card>
 </CardGroup>

@@ -1,0 +1,61 @@
+---
+title: "Dokan Multivendor"
+sidebarTitle: "Dokan"
+description: "Expose vendor store information on product responses so headless storefronts can display the selling vendor without a separate API call."
+tag: "In Testing"
+robots: "noindex, follow"
+---
+
+<Info>
+  This feature documentation was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 28th, 2026.
+</Info>
+
+[Dokan](https://wedevs.com/dokan/) is a multivendor marketplace plugin for WooCommerce. The CoCart Plus integration appends vendor store data directly to each product response, so your headless storefront can display the selling vendor's name, store URL, avatar, and rating without a separate call to the Dokan vendor endpoint.
+
+<Info>
+  This integration is available in CoCart Plus since <Tooltip tip="This is the version of CoCart Plus">v2.0.0</Tooltip> and requires Dokan (free or Pro) to be installed and active.
+</Info>
+
+## Product response
+
+Every product response includes a `vendor` object in its `extensions` key.
+
+```json Example (product extensions excerpt)
+{
+  "extensions": {
+    "vendor": {
+      "id": 7,
+      "store_name": "Artisan Goods Co.",
+      "store_url": "https://your-store.com/store/artisan-goods-co/",
+      "avatar": "https://your-store.com/wp-content/uploads/artisan-avatar.jpg",
+      "rating": {
+        "average": "4.8",
+        "count": 312
+      }
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `integer` | Unique vendor user ID. `0` if no vendor is assigned. |
+| `store_name` | `string` | Vendor's store display name. |
+| `store_url` | `string` | URL to the vendor's store page. |
+| `avatar` | `string` | URL to the vendor's avatar image. |
+| `rating.average` | `string` | Average vendor rating as a string (e.g. `"4.8"`). |
+| `rating.count` | `integer` | Total number of reviews for the vendor. |
+
+Products not assigned to a vendor return `id: 0` and empty strings for name, URL, and avatar.
+
+## Usage
+
+```javascript JavaScript
+const response = await fetch('https://your-store.com/wp-json/cocart/v2/products/42');
+const product  = await response.json();
+
+const vendor = product.extensions?.vendor;
+if (vendor?.id > 0) {
+  console.log(`Sold by ${vendor.store_name} — rated ${vendor.rating.average}/5`);
+}
+```

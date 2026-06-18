@@ -1,426 +1,535 @@
 ---
 title: "Convert Cart to Order"
 sidebarTitle: "Order Creation"
-description: "Learn how to convert a cart session into an order"
+description: "Convert a CoCart cart session into a WooCommerce order using the WooCommerce REST API, with examples in JavaScript, PHP, and cURL."
 icon: "file-invoice-dollar"
-tag: "WIP"
-robots: "noindex, follow"
 ---
 
-In this tutorial, we'll walk through the process of converting a shopping cart into an order using the WooCommerce REST API. This is particularly useful when you need to programmatically create orders from cart sessions.
-
 <Info>
-  CoCart will provide it's own checkout API in the future that will stream line the process. In the mean time, this is the best method.
+  This tutorial was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 27th, 2026.
 </Info>
 
-<Tip>
-  You will need WooCommerce API credentials (consumer key and secret) for this.
-</Tip>
+This tutorial walks through converting a CoCart cart session into a WooCommerce order. You'll retrieve the cart, map its data to the WooCommerce Orders API format, create the order, and clear the cart.
 
-## Step 1: Retrieve the Cart Data
+<Info>
+  CoCart will provide its own checkout API in the future that will streamline this process. In the meantime, this is the recommended method.
+</Info>
 
-First, we'll fetch the current cart data using the CoCart API:
+## Prerequisites
 
-<Tip>
-  In the following request examples, you would replace `<cart_key>`, `<username>` and `<password>` before sending the request.
-</Tip>
+- CoCart installed and activated
+- WooCommerce REST API credentials (consumer key and secret) — [generate them in WooCommerce settings](https://woocommerce.com/document/woocommerce-rest-api/)
+- A cart session with items (guest or authenticated customer)
 
-<AccordionGroup>
-  <Accordion title="Guest Customer">
-    <CodeGroup>
+## Overview
 
-    ```bash cURL
-    curl -X GET \
-      https://your-store.com/wp-json/cocart/v2/cart?cart_key=<cart_key> \
-      -H 'Accept: application/json' \
-      -H 'Content-Type: application/json' \
-      -H 'User-Agent: CoCart API/v2' // Not a requirement.
-    ```
+The flow has five steps:
 
-    ```php PHP
-    $curl = curl_init();
+1. **Get the cart** — retrieve cart data from CoCart
+2. **Map addresses** — extract billing and shipping from the cart
+3. **Map line items** — convert cart items to WooCommerce order line items
+4. **Map shipping** — add the chosen shipping method if set
+5. **Create the order** — POST to the WooCommerce Orders API
+6. **Clear the cart** — remove items after the order is placed
 
-    curl_setopt_array( $curl, array(
-      CURLOPT_URL => "https://your-store.com/wp-json/cocart/v2/cart?cart_key=<cart_key>",
-      CURLOPT_CUSTOMREQUEST => "GET",
-      CURLOPT_RETURNTRANSFER => true,
-      CURLOPT_TIMEOUT => 30,
-      CURLOPT_HTTPHEADER => array(
-        'Accept: application/json',
-        'Content-Type: application/json;charset=utf-8'
-        'User-Agent: CoCart API/v2', // Not a requirement.
-      )
-    ) );
+## Step 1: Retrieve the cart
 
-    $cart = curl_exec($curl);
-    curl_close($curl);
-    ```
-
-    ```javascript JavaScript
-    const getCart = async () => {
-      const response = await fetch('https://your-store.com/wp-json/cocart/v2/cart?cart_key=<cart_key>', {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'User-Agent': 'CoCart API/v2' // Not a requirement.
-        }
-      });
-      
-      return await response.json();
-    };
-    ```
-    </CodeGroup>
-  </Accordion>
-
-  <Accordion title="Registered Customer Authenticated">
-    <CodeGroup>
-
-    ```bash cURL
-    curl -X GET \
-      https://your-store.com/wp-json/cocart/v2/cart \
-      -H 'Accept: application/json' \
-      -H 'Content-Type: application/json' \
-      -H 'Authorization: Basic base64_encode(<username>:<password>)'
-      -H 'User-Agent: CoCart API/v2' // Not a requirement.
-    ```
-
-    ```php PHP
-    $curl = curl_init();
-
-    curl_setopt_array( $curl, array(
-      CURLOPT_URL => "https://your-store.com/wp-json/cocart/v2/cart",
-      CURLOPT_CUSTOMREQUEST => "GET",
-      CURLOPT_RETURNTRANSFER => true,
-      CURLOPT_TIMEOUT => 30,
-      CURLOPT_HTTPHEADER => array(
-        'Accept: application/json',
-        'Content-Type: application/json;charset=utf-8'
-        'Authorization: Basic ' . base64_encode(<username> . ':' . <password>)
-        'User-Agent: CoCart API/v2', // Not a requirement.
-      )
-    ) );
-
-    $cart = curl_exec($curl);
-    curl_close($curl);
-    ```
-
-    ```javascript JavaScript
-    const auth = btoa('<username>:<password>');
-    const getCart = async () => {
-      const response = await fetch('https://your-store.com/wp-json/cocart/v2/cart', {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${auth}`
-          'User-Agent': 'CoCart API/v2' // Not a requirement.
-        }
-      });
-      
-      return await response.json();
-    };
-    ```
-    </CodeGroup>
-  </Accordion>
-</AccordionGroup>
-
-## Step 2: Prepare Order Data
-
-Next, we'll prepare the order data using the cart information. We'll need to:
-
-1. Decode the cart JSON
-2. Set up billing and shipping information
-3. Configure payment details
+Fetch the current cart using the CoCart API. For guest carts, pass the `cart_key`. For authenticated customers, use Basic Auth or a JWT token.
 
 <CodeGroup>
 
-  ```bash cURL
-  # First decode and store the cart response from Step 1
-  CART_DATA=$(cat cart-response.json)
+```javascript JavaScript
+const STORE_URL = 'https://yourstore.com';
 
-  # Prepare the order data structure
-  ORDER_DATA=$(jq -n \
-    --arg payment_method "bacs" \
-    --arg payment_title "Direct Bank Transfer" \
-    --argjson paid true \
-    --argjson cart "$CART_DATA" \
-  '{
-    payment_method: $payment_method,
-    payment_method_title: $payment_title,
-    set_paid: $paid,
-    billing: {
-      first_name: $cart.customer.billing_address.billing_first_name,
-      last_name: $cart.customer.billing_address.billing_last_name,
-      address_1: $cart.customer.billing_address.billing_address_1,
-      address_2: $cart.customer.billing_address.billing_address_2,
-      city: $cart.customer.billing_address.billing_city,
-      state: $cart.customer.billing_address.billing_state,
-      postcode: $cart.customer.billing_address.billing_postcode,
-      country: $cart.customer.billing_address.billing_country,
-      email: $cart.customer.billing_address.billing_email,
-      phone: $cart.customer.billing_address.billing_phone
-    },
-    shipping: {
-      first_name: $cart.customer.shipping_address.shipping_first_name,
-      last_name: $cart.customer.shipping_address.shipping_last_name,
-      address_1: $cart.customer.shipping_address.shipping_address_1,
-      address_2: $cart.customer.shipping_address.shipping_address_2,
-      city: $cart.customer.shipping_address.shipping_city,
-      state: $cart.customer.shipping_address.shipping_state,
-      postcode: $cart.customer.shipping_address.shipping_postcode,
-      country: $cart.customer.shipping_address.shipping_country
-    }
-  }')
-  ```
-
-  ```javascript JavaScript
-  const cart = await getCart();
-
-  const orderData = {
-      payment_method: 'bacs',
-      payment_method_title: 'Direct Bank Transfer',
-      set_paid: true,
-      billing: {
-          first_name: cart.customer.billing_address.billing_first_name,
-          last_name: cart.customer.billing_address.billing_last_name,
-          address_1: cart.customer.billing_address.billing_address_1,
-          address_2: cart.customer.billing_address.billing_address_2,
-          city: cart.customer.billing_address.billing_city,
-          state: cart.customer.billing_address.billing_state,
-          postcode: cart.customer.billing_address.billing_postcode,
-          country: cart.customer.billing_address.billing_country,
-          email: cart.customer.billing_address.billing_email,
-          phone: cart.customer.billing_address.billing_phone
-      },
-      shipping: {
-          first_name: cart.customer.shipping_address.shipping_first_name,
-          last_name: cart.customer.shipping_address.shipping_last_name,
-          address_1: cart.customer.shipping_address.shipping_address_1,
-          address_2: cart.customer.shipping_address.shipping_address_2,
-          city: cart.customer.shipping_address.shipping_city,
-          state: cart.customer.shipping_address.shipping_state,
-          postcode: cart.customer.shipping_address.shipping_postcode,
-          country: cart.customer.shipping_address.shipping_country
-      },
-      line_items: [],
-      shipping_lines: []
-  };
-  ```
-
-  ```php PHP
-  // Decode cart data
-  $cart = json_decode($cart);
-
-  // Prepare order data
-  $order_data = array(
-      'payment_method' => 'bacs',
-      'payment_method_title' => 'Direct Bank Transfer',
-      'set_paid' => true,
-      'billing' => array(
-          'first_name' => $cart->customer->billing_address->billing_first_name,
-          'last_name' => $cart->customer->billing_address->billing_last_name,
-          'address_1' => $cart->customer->billing_address->billing_address_1,
-          'address_2' => $cart->customer->billing_address->billing_address_2,
-          'city' => $cart->customer->billing_address->billing_city,
-          'state' => $cart->customer->billing_address->billing_state,
-          'postcode' => $cart->customer->billing_address->billing_postcode,
-          'country' => $cart->customer->billing_address->billing_country,
-          'email' => $cart->customer->billing_address->billing_email,
-          'phone' => $cart->customer->billing_address->billing_phone
-      ),
-      'shipping' => array(
-          'first_name' => $cart->customer->shipping_address->shipping_first_name,
-          'last_name' => $cart->customer->shipping_address->shipping_last_name,
-          'address_1' => $cart->customer->shipping_address->shipping_address_1,
-          'address_2' => $cart->customer->shipping_address->shipping_address_2,
-          'city' => $cart->customer->shipping_address->shipping_city,
-          'state' => $cart->customer->shipping_address->shipping_state,
-          'postcode' => $cart->customer->shipping_address->shipping_postcode,
-          'country' => $cart->customer->shipping_address->shipping_country
-      ),
-      'line_items' => array(),
-      'shipping_lines' => array()
+// Guest cart
+async function getCart(cartKey) {
+  const response = await fetch(
+    `${STORE_URL}/wp-json/cocart/v2/cart?cart_key=${cartKey}`
   );
-  ```
-</CodeGroup>
 
-## Step 3: Add Shipping Method
-
-If shipping is selected in the cart, we'll add it to the order:
-
-<CodeGroup>
-  ```bash cURL
-  # Add shipping lines if shipping method exists
-  if [[ $(echo "$CART_DATA" | jq -r '.shipping.packages.default.chosen_method') != "null" ]]; then
-    CHOSEN_METHOD=$(echo "$CART_DATA" | jq -r '.shipping.packages.default.chosen_method')
-    ORDER_DATA=$(echo "$ORDER_DATA" | jq \
-      --arg method_id "$(echo "$CART_DATA" | jq -r ".shipping.packages.default.rates.$CHOSEN_METHOD.method_id")" \
-      --arg title "$(echo "$CART_DATA" | jq -r ".shipping.packages.default.rates.$CHOSEN_METHOD.label")" \
-      --arg cost "$(echo "$CART_DATA" | jq -r ".shipping.packages.default.rates.$CHOSEN_METHOD.cost")" \
-      '. + {shipping_lines: [{method_id: $method_id, method_title: $title, total: $cost}]}')
-  fi
-  ```
-
-  ```javascript JavaScript
-  if (cart.shipping?.packages?.default?.chosen_method) {
-      const chosenMethod = cart.shipping.packages.default.rates[cart.shipping.packages.default.chosen_method];
-      orderData.shipping_lines.push({
-          method_id: chosenMethod.method_id,
-          method_title: chosenMethod.label,
-          total: chosenMethod.cost
-      });
+  if (!response.ok) {
+    throw new Error(`Failed to get cart: ${response.status}`);
   }
-  ```
 
-  ```php PHP
-  if (isset($cart->shipping->packages->default->chosen_method)) {
-      $chosen_method = $cart->shipping->packages->default->rates->{$cart->shipping->packages->default->chosen_method};
-      $order_data['shipping_lines'][] = array(
-          'method_id' => $chosen_method->method_id,
-          'method_title' => $chosen_method->label,
-          'total' => $chosen_method->cost
-      );
+  return response.json();
+}
+
+// Authenticated customer
+async function getAuthenticatedCart(username, password) {
+  const response = await fetch(`${STORE_URL}/wp-json/cocart/v2/cart`, {
+    headers: {
+      'Authorization': `Basic ${btoa(`${username}:${password}`)}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to get cart: ${response.status}`);
   }
-  ```
-</CodeGroup>
 
-## Step 4: Process Line Items
-
-We'll convert cart items into order line items:
-
-<CodeGroup>
-
-```php PHP
-foreach ($cart->items as $item) {
-    $line_item = array(
-        'product_id' => $item->id,
-        'quantity' => $item->quantity->value,
-        'name' => $item->name,
-        'total' => $item->totals->total
-    );
-
-    if (!empty($item->meta->product_type) && $item->meta->product_type === 'variation') {
-        $line_item['variation_id'] = $item->id;
-        $line_item['product_id'] = $item->parent_id;
-    }
-
-    $order_data['line_items'][] = $line_item;
+  return response.json();
 }
 ```
 
-```javascript JavaScript
-orderData.line_items = cart.items.map(item => {
-    const lineItem = {
-        product_id: item.id,
-        quantity: item.quantity.value,
-        name: item.name,
-        total: item.totals.total
-    };
+```php PHP
+$store_url = 'https://yourstore.com';
 
-    if (item.meta?.product_type === 'variation') {
-        lineItem.variation_id = item.id;
-        lineItem.product_id = item.parent_id;
+// Guest cart
+function get_cart( $cart_key ) {
+    global $store_url;
+
+    $response = wp_remote_get( $store_url . '/wp-json/cocart/v2/cart?cart_key=' . $cart_key );
+
+    if ( is_wp_error( $response ) ) {
+        throw new Exception( $response->get_error_message() );
     }
 
-    return lineItem;
-});
+    return json_decode( wp_remote_retrieve_body( $response ) );
+}
+
+// Authenticated customer
+function get_authenticated_cart( $username, $password ) {
+    global $store_url;
+
+    $response = wp_remote_get( $store_url . '/wp-json/cocart/v2/cart', array(
+        'headers' => array(
+            'Authorization' => 'Basic ' . base64_encode( $username . ':' . $password ),
+        ),
+    ) );
+
+    if ( is_wp_error( $response ) ) {
+        throw new Exception( $response->get_error_message() );
+    }
+
+    return json_decode( wp_remote_retrieve_body( $response ) );
+}
 ```
 
 ```bash cURL
-# Process line items
-ORDER_DATA=$(echo "$ORDER_DATA" | jq \
-  --argjson cart "$CART_DATA" \
-  '. + {line_items: ($cart.items | map({
-    product_id: .id,
-    quantity: .quantity.value,
-    name: .name,
-    total: .totals.total,
-    variation_id: (if .meta.product_type == "variation" then .id else null end),
-    product_id: (if .meta.product_type == "variation" then .parent_id else .id end)
-  }))}')
+# Guest cart
+curl -X GET "https://yourstore.com/wp-json/cocart/v2/cart?cart_key=<cart_key>"
+
+# Authenticated customer
+curl -X GET "https://yourstore.com/wp-json/cocart/v2/cart" \
+  -H "Authorization: Basic $(echo -n '<username>:<password>' | base64)"
 ```
 
 </CodeGroup>
 
-## Step 5: Create the Order
+## Step 2: Build the order data
 
-Finally, we'll send the prepared data to the WooCommerce API to create the order:
+Extract billing and shipping addresses from the cart response and map them to the WooCommerce order format. The cart stores address fields with prefixes (e.g. `billing_first_name`), but the Orders API expects them without prefixes.
 
 <CodeGroup>
-  ```bash cURL
-  ```
 
-  ```javascript JavaScript
-  const createOrder = async (orderData) => {
-      const consumerKey = 'your_consumer_key';
-      const consumerSecret = 'your_consumer_secret';
-      const domain = 'https://example-store.com';
-      
-      try {
-          const response = await fetch(`${domain}/wp-json/wc/v3/orders`, {
-              method: 'POST',
-              headers: {
-                  'Accept': 'application/json',
-                  'Content-Type': 'application/json',
-                  'Authorization': `Basic ${btoa(`${consumerKey}:${consumerSecret}`)}`
-              },
-              body: JSON.stringify(orderData)
-          });
+```javascript JavaScript
+function buildOrderData(cart, paymentMethod = 'bacs') {
+  const billing = cart.customer.billing_address;
+  const shipping = cart.customer.shipping_address;
 
-          if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-          }
-
-          const order = await response.json();
-          console.log(`Order created successfully. Order ID: ${order.id}`);
-          return order;
-      } catch (error) {
-          console.error('Error creating order:', error);
-          throw error;
-      }
+  return {
+    payment_method: paymentMethod,
+    payment_method_title: getPaymentTitle(paymentMethod),
+    set_paid: false,
+    billing: {
+      first_name: billing.billing_first_name,
+      last_name: billing.billing_last_name,
+      address_1: billing.billing_address_1,
+      address_2: billing.billing_address_2,
+      city: billing.billing_city,
+      state: billing.billing_state,
+      postcode: billing.billing_postcode,
+      country: billing.billing_country,
+      email: billing.billing_email,
+      phone: billing.billing_phone,
+    },
+    shipping: {
+      first_name: shipping.shipping_first_name,
+      last_name: shipping.shipping_last_name,
+      address_1: shipping.shipping_address_1,
+      address_2: shipping.shipping_address_2,
+      city: shipping.shipping_city,
+      state: shipping.shipping_state,
+      postcode: shipping.shipping_postcode,
+      country: shipping.shipping_country,
+    },
+    line_items: buildLineItems(cart),
+    shipping_lines: buildShippingLines(cart),
   };
+}
 
-  // Usage
-  try {
-      const order = await createOrder(orderData);
-      // Handle successful order creation
-  } catch (error) {
-      // Handle error
-  }
-  ```
+function getPaymentTitle(method) {
+  const titles = {
+    bacs: 'Direct Bank Transfer',
+    cheque: 'Check Payment',
+    cod: 'Cash on Delivery',
+    stripe: 'Credit Card (Stripe)',
+  };
+  return titles[method] || method;
+}
+```
 
-  ```php PHP
-  $consumer_key = 'your_consumer_key';
-  $consumer_secret = 'your_consumer_secret';
-  $domain = 'https://example-store.com';
+```php PHP
+function build_order_data( $cart, $payment_method = 'bacs' ) {
+    $billing  = $cart->customer->billing_address;
+    $shipping = $cart->customer->shipping_address;
 
-  $response = wp_remote_post($domain . "/wp-json/wc/v3/orders", array(
-      'headers' => array(
-          'Accept' => 'application/json',
-          'Content-Type' => 'application/json',
-          'Authorization' => 'Basic ' . base64_encode($consumer_key . ':' . $consumer_secret)
-      ),
-      'body' => json_encode($order_data),
-      'timeout' => 30
-  ));
+    return array(
+        'payment_method'       => $payment_method,
+        'payment_method_title' => get_payment_title( $payment_method ),
+        'set_paid'             => false,
+        'billing' => array(
+            'first_name' => $billing->billing_first_name,
+            'last_name'  => $billing->billing_last_name,
+            'address_1'  => $billing->billing_address_1,
+            'address_2'  => $billing->billing_address_2,
+            'city'       => $billing->billing_city,
+            'state'      => $billing->billing_state,
+            'postcode'   => $billing->billing_postcode,
+            'country'    => $billing->billing_country,
+            'email'      => $billing->billing_email,
+            'phone'      => $billing->billing_phone,
+        ),
+        'shipping' => array(
+            'first_name' => $shipping->shipping_first_name,
+            'last_name'  => $shipping->shipping_last_name,
+            'address_1'  => $shipping->shipping_address_1,
+            'address_2'  => $shipping->shipping_address_2,
+            'city'       => $shipping->shipping_city,
+            'state'      => $shipping->shipping_state,
+            'postcode'   => $shipping->shipping_postcode,
+            'country'    => $shipping->shipping_country,
+        ),
+        'line_items'     => build_line_items( $cart ),
+        'shipping_lines' => build_shipping_lines( $cart ),
+    );
+}
 
-  if (is_wp_error($response)) {
-      echo "Error: " . $response->get_error_message();
-  } else {
-      $order = json_decode(wp_remote_retrieve_body($response));
-      echo "Order created successfully. Order ID: " . $order->id;
-  }
-  ```
+function get_payment_title( $method ) {
+    $titles = array(
+        'bacs'   => 'Direct Bank Transfer',
+        'cheque' => 'Check Payment',
+        'cod'    => 'Cash on Delivery',
+        'stripe' => 'Credit Card (Stripe)',
+    );
+    return isset( $titles[ $method ] ) ? $titles[ $method ] : $method;
+}
+```
+
 </CodeGroup>
 
-## Conclusion
+## Step 3: Map line items
 
-You've now successfully converted a CoCart cart into a WooCommerce order! The response will contain the newly created order details. Remember to:
+Convert each cart item to a WooCommerce order line item. Variable products need the `variation_id` set separately from the `product_id`.
 
-- Replace `example-store.com` with your actual domain
-- Insert your WooCommerce API credentials
-- Handle any potential errors in the response
-- Consider adding error checking and validation
+<CodeGroup>
 
-For more information about the available order parameters, consult the [WooCommerce REST API documentation](https://woocommerce.github.io/woocommerce-rest-api-docs/#orders).
+```javascript JavaScript
+function buildLineItems(cart) {
+  return cart.items.map(item => {
+    const lineItem = {
+      product_id: item.id,
+      quantity: item.quantity.value,
+    };
+
+    // For variable products, set the variation_id and use the parent as product_id
+    if (item.meta?.product_type === 'variation') {
+      lineItem.variation_id = item.id;
+      lineItem.product_id = item.parent_id;
+    }
+
+    return lineItem;
+  });
+}
+```
+
+```php PHP
+function build_line_items( $cart ) {
+    $line_items = array();
+
+    foreach ( $cart->items as $item ) {
+        $line_item = array(
+            'product_id' => $item->id,
+            'quantity'   => $item->quantity->value,
+        );
+
+        // For variable products, set the variation_id and use the parent as product_id
+        if ( ! empty( $item->meta->product_type ) && $item->meta->product_type === 'variation' ) {
+            $line_item['variation_id'] = $item->id;
+            $line_item['product_id']   = $item->parent_id;
+        }
+
+        $line_items[] = $line_item;
+    }
+
+    return $line_items;
+}
+```
+
+</CodeGroup>
+
+<Note>
+  You don't need to pass `name` or `total` for each line item — WooCommerce calculates totals from the product data. Passing totals manually can cause discrepancies if prices changed since the cart was built.
+</Note>
+
+## Step 4: Map shipping
+
+If the cart has a chosen shipping method, add it to the order.
+
+<CodeGroup>
+
+```javascript JavaScript
+function buildShippingLines(cart) {
+  if (!cart.shipping?.packages?.default?.chosen_method) {
+    return [];
+  }
+
+  const chosenMethodId = cart.shipping.packages.default.chosen_method;
+  const chosenMethod = cart.shipping.packages.default.rates[chosenMethodId];
+
+  return [{
+    method_id: chosenMethod.method_id,
+    method_title: chosenMethod.label,
+    total: chosenMethod.cost,
+  }];
+}
+```
+
+```php PHP
+function build_shipping_lines( $cart ) {
+    if ( empty( $cart->shipping->packages->default->chosen_method ) ) {
+        return array();
+    }
+
+    $chosen_method_id = $cart->shipping->packages->default->chosen_method;
+    $chosen_method    = $cart->shipping->packages->default->rates->{ $chosen_method_id };
+
+    return array(
+        array(
+            'method_id'    => $chosen_method->method_id,
+            'method_title' => $chosen_method->label,
+            'total'        => $chosen_method->cost,
+        ),
+    );
+}
+```
+
+</CodeGroup>
+
+## Step 5: Create the order
+
+Send the prepared order data to the WooCommerce REST API. This requires WooCommerce API credentials (consumer key and secret), not the customer's credentials.
+
+<Warning>
+  Never expose WooCommerce API credentials in client-side code. Make this call from your server (Node.js, PHP, or a serverless function).
+</Warning>
+
+<CodeGroup>
+
+```javascript JavaScript
+async function createOrder(orderData) {
+  const consumerKey = process.env.WC_CONSUMER_KEY;
+  const consumerSecret = process.env.WC_CONSUMER_SECRET;
+  const storeUrl = process.env.STORE_URL;
+
+  const response = await fetch(`${storeUrl}/wp-json/wc/v3/orders`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Basic ${Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64')}`,
+    },
+    body: JSON.stringify(orderData),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(`Order creation failed: ${error.message}`);
+  }
+
+  return response.json();
+}
+```
+
+```php PHP
+function create_order( $order_data ) {
+    $consumer_key    = 'ck_your_consumer_key';
+    $consumer_secret = 'cs_your_consumer_secret';
+    $store_url       = 'https://yourstore.com';
+
+    $response = wp_remote_post( $store_url . '/wp-json/wc/v3/orders', array(
+        'headers' => array(
+            'Content-Type'  => 'application/json',
+            'Authorization' => 'Basic ' . base64_encode( $consumer_key . ':' . $consumer_secret ),
+        ),
+        'body'    => json_encode( $order_data ),
+        'timeout' => 30,
+    ) );
+
+    if ( is_wp_error( $response ) ) {
+        throw new Exception( 'Order creation failed: ' . $response->get_error_message() );
+    }
+
+    $body = json_decode( wp_remote_retrieve_body( $response ) );
+    $code = wp_remote_retrieve_response_code( $response );
+
+    if ( $code !== 201 ) {
+        throw new Exception( 'Order creation failed: ' . $body->message );
+    }
+
+    return $body;
+}
+```
+
+```bash cURL
+curl -X POST "https://yourstore.com/wp-json/wc/v3/orders" \
+  -H "Content-Type: application/json" \
+  -u "ck_your_consumer_key:cs_your_consumer_secret" \
+  -d '{
+    "payment_method": "bacs",
+    "payment_method_title": "Direct Bank Transfer",
+    "set_paid": false,
+    "billing": {
+      "first_name": "John",
+      "last_name": "Doe",
+      "address_1": "123 Main St",
+      "city": "San Francisco",
+      "state": "CA",
+      "postcode": "94105",
+      "country": "US",
+      "email": "john@example.com",
+      "phone": "555-1234"
+    },
+    "line_items": [
+      { "product_id": 42, "quantity": 2 },
+      { "product_id": 99, "variation_id": 101, "quantity": 1 }
+    ],
+    "shipping_lines": [
+      { "method_id": "flat_rate", "method_title": "Flat Rate", "total": "5.00" }
+    ]
+  }'
+```
+
+</CodeGroup>
+
+A successful response returns the created order with a `201` status code and includes the order ID, status, totals, and all line items.
+
+## Step 6: Clear the cart
+
+After the order is created, clear the cart so the customer starts fresh.
+
+<CodeGroup>
+
+```javascript JavaScript
+async function clearCart(cartKey) {
+  const response = await fetch(
+    `${STORE_URL}/wp-json/cocart/v2/cart/clear${cartKey ? `?cart_key=${cartKey}` : ''}`,
+    { method: 'POST' }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to clear cart: ${response.status}`);
+  }
+
+  return response.json();
+}
+```
+
+```php PHP
+function clear_cart( $cart_key = '' ) {
+    global $store_url;
+
+    $url = $store_url . '/wp-json/cocart/v2/cart/clear';
+    if ( ! empty( $cart_key ) ) {
+        $url .= '?cart_key=' . $cart_key;
+    }
+
+    $response = wp_remote_post( $url );
+
+    if ( is_wp_error( $response ) ) {
+        throw new Exception( $response->get_error_message() );
+    }
+
+    return json_decode( wp_remote_retrieve_body( $response ) );
+}
+```
+
+```bash cURL
+# Guest cart
+curl -X POST "https://yourstore.com/wp-json/cocart/v2/cart/clear?cart_key=<cart_key>"
+
+# Authenticated customer
+curl -X POST "https://yourstore.com/wp-json/cocart/v2/cart/clear" \
+  -H "Authorization: Basic $(echo -n '<username>:<password>' | base64)"
+```
+
+</CodeGroup>
+
+## Putting it all together
+
+<CodeGroup>
+
+```javascript JavaScript
+async function convertCartToOrder(cartKey, paymentMethod = 'bacs') {
+  // 1. Get the cart
+  const cart = await getCart(cartKey);
+
+  if (!cart.items || cart.items.length === 0) {
+    throw new Error('Cart is empty');
+  }
+
+  // 2-4. Build the order data
+  const orderData = buildOrderData(cart, paymentMethod);
+
+  // 5. Create the order
+  const order = await createOrder(orderData);
+
+  // 6. Clear the cart
+  await clearCart(cartKey);
+
+  return order;
+}
+
+// Usage
+const order = await convertCartToOrder('abc123', 'bacs');
+console.log(`Order #${order.id} created — status: ${order.status}`);
+```
+
+```php PHP
+function convert_cart_to_order( $cart_key, $payment_method = 'bacs' ) {
+    // 1. Get the cart
+    $cart = get_cart( $cart_key );
+
+    if ( empty( $cart->items ) ) {
+        throw new Exception( 'Cart is empty' );
+    }
+
+    // 2-4. Build the order data
+    $order_data = build_order_data( $cart, $payment_method );
+
+    // 5. Create the order
+    $order = create_order( $order_data );
+
+    // 6. Clear the cart
+    clear_cart( $cart_key );
+
+    return $order;
+}
+
+// Usage
+$order = convert_cart_to_order( 'abc123', 'bacs' );
+echo 'Order #' . $order->id . ' created — status: ' . $order->status;
+```
+
+</CodeGroup>
+
+## Important notes
+
+- **`set_paid`** — Set to `true` only if you handle payment externally and know it succeeded. For most payment gateways, leave it `false` and let WooCommerce manage the payment status.
+- **Coupons** — If the cart has applied coupons, add them to the order with `coupon_lines: [{ code: 'SAVE10' }]`. WooCommerce will validate and apply the discount.
+- **Customer ID** — For registered customers, include `customer_id` in the order data to associate the order with their account.
+- **Taxes** — WooCommerce calculates taxes automatically based on the addresses. You do not need to pass tax amounts.
+
+## Next steps
+
+- [Explore the Cart API](/api-reference/v2/cart/get-cart) for all available cart operations
+- [WooCommerce Orders REST API](https://woocommerce.github.io/woocommerce-rest-api-docs/#orders) for additional order parameters
+- [Authentication guide](/authentication/index) for details on Basic Auth and JWT

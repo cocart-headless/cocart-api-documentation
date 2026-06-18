@@ -1,0 +1,185 @@
+---
+title: "Frequently Asked Questions"
+sidebarTitle: "FAQ"
+description: "Quick answers to the questions we hear most about CoCart."
+icon: "question"
+---
+
+## Getting started
+
+<AccordionGroup>
+    <Accordion title="Who is CoCart for?">
+        Developers building headless or decoupled WooCommerce storefronts. If you can make HTTP requests and read JSON, you're ready. No WordPress development experience required — CoCart abstracts the complexity and gives you clean, predictable API responses. Perfect for:
+
+        - Frontend developers building with React, Next.js, Astro, Vue, or any modern framework
+        - Agencies creating high-performance client storefronts
+        - Mobile app developers who need a reliable eCommerce API
+    </Accordion>
+
+    <Accordion title="How do I get started?">
+        Install WooCommerce and configure your store, then install and activate CoCart. You're immediately ready to call the API — no additional setup required.
+
+        See the [WordPress setup guide](/getting-started/wordpress-setup) for requirements, then follow the [quick start](/community/quick-start) to make your first request.
+    </Accordion>
+
+    <Accordion title="What are the minimum requirements?">
+        - WordPress 6.7
+        - WooCommerce 9.0
+        - PHP 8.2
+
+        PHP 8.3+ and WooCommerce 10.0+ are recommended for best performance.
+    </Accordion>
+
+    <Accordion title="What is a REST API?">
+        REST (Representational State Transfer) is an architectural style for building web services that communicate over HTTP, similar to how web browsers interact with servers. It provides a standardized way for applications to exchange data and perform operations.
+
+        See the [REST API handbook](https://developer.wordpress.org/rest-api/) for more background.
+    </Accordion>
+
+    <Accordion title="What are the benefits of a headless store?">
+        A headless store separates your frontend from WordPress, so you can use any technology stack for the UI while still leveraging WooCommerce's powerful commerce capabilities.
+
+        Benefits include:
+
+        - Freedom to choose your frontend framework (React, Next.js, Astro, Vue, etc.)
+        - Improved performance and user experience
+        - Easier integration with third-party services
+        - Enhanced scalability and maintainability
+    </Accordion>
+</AccordionGroup>
+
+## Plugin
+
+<AccordionGroup>
+    <Accordion title="Do I need to modify WooCommerce to use CoCart?">
+        No. CoCart is a standalone WordPress plugin that provides its own REST API. Install it, activate it, and your existing WooCommerce setup works as-is. No core modifications, no theme changes.
+    </Accordion>
+
+    <Accordion title="What happens to the free community version if I don't upgrade?">
+        Nothing. The free community version stays fully functional. It covers sessions, authentication, CORS, cart operations, and product queries — everything you need to build a working headless cart. CoCart Plus adds advanced features like coupons, shipping, fees, and rate limiting for when you need them.
+    </Accordion>
+
+    <Accordion title="Will my existing WooCommerce plugins still work?">
+        Plugins that modify backend functionality — payment gateways, shipping, tax, inventory — continue to work. Plugins that only modify the PHP frontend (themes, shortcodes, widgets) won't apply to the REST API layer, which is expected in a headless setup.
+    </Accordion>
+
+    <Accordion title="What WooCommerce extensions are supported?">
+        CoCart is built on WooCommerce's Data Stores API and mirrors most WooCommerce hooks, so many extensions work out of the box. CoCart Plus adds dedicated integrations for extensions like WooCommerce Subscriptions, Product Add-Ons, Bookings, and more.
+
+        See the [integrations overview](/integrations/index) for what's supported, and the [incompatible plugins](/plugins/incompatible) list for known conflicts.
+    </Accordion>
+
+    <Accordion title="Does CoCart work on multisite?">
+        Yes. Install and activate CoCart on each site in the network where you want to use it. The base URL follows your network configuration.
+    </Accordion>
+
+    <Accordion title="Do WooCommerce emails still work in a headless setup?">
+        Yes. WooCommerce sends transactional emails (order confirmations, shipping notifications, password resets) from the WordPress backend regardless of how the frontend is built. No additional configuration is needed.
+    </Accordion>
+
+    <Accordion title="Can I use the same domain for WordPress and my headless store?">
+        Yes, though we recommend a subdomain or separate domain to avoid conflicts and improve performance. See the [WordPress setup guide](/getting-started/wordpress-setup) for recommendations.
+    </Accordion>
+
+    <Accordion title="Can I run WordPress on one domain and my storefront on another?">
+        Yes — that's the primary use case CoCart is built for. Enable CORS via the [free CORS add-on](https://wordpress.org/plugins/cocart-cors/) or configure it manually via the [CORS filter](/cors).
+    </Accordion>
+
+    <Accordion title="Is my store or customer data sent to CoCart's servers?">
+        No. CoCart runs entirely on your WordPress server. No customer data, cart contents, or store information is ever sent to CoCart's servers. The plugin collects no analytics without your consent. [Full privacy policy →](https://cocartapi.com/privacy-policy/)
+    </Accordion>
+</AccordionGroup>
+
+## Sessions and authentication
+
+<AccordionGroup>
+    <Accordion title="How are cart sessions identified without cookies?">
+        Each cart is assigned a unique cart key. Your frontend passes this key as a request header (`X-Cart-Key`) or query parameter on subsequent API calls. Sessions are fully stateless and safe for concurrent requests — no cookies, no session conflicts.
+
+        See the [session documentation](/authentication/index) for implementation details.
+    </Accordion>
+
+    <Accordion title="Why does CoCart use a custom session handler?">
+        Headless storefronts are stateless by nature — there's no browser session to rely on, and concurrent requests are common. WooCommerce's default session handler only supports cookies, has no support for concurrent requests, and doesn't support guest customers without cookies. CoCart's session handler is cookie-less, database-stored, and safe for concurrent requests, with full support for both guest and authenticated customers.
+    </Accordion>
+
+    <Accordion title="Can CoCart support SSO?">
+        CoCart does not implement SSO itself — it authenticates customers against WordPress user accounts using Basic Auth or JWT (via add-on). It does not natively speak SAML, OAuth 2.0, or OIDC.
+
+        That said, CoCart can work alongside SSO in a headless setup. The typical pattern is:
+
+        1. Your identity provider (Google, Okta, Auth0, etc.) authenticates the user via your frontend.
+        2. A WordPress SSO plugin (e.g. one handling OAuth 2.0 or SAML) creates or matches a WordPress user account for that identity.
+        3. Your frontend then authenticates with CoCart using Basic Auth or JWT as that WordPress user.
+
+        The SSO layer handles identity; CoCart handles the commerce session from that point on. Whether this works smoothly depends on how your chosen SSO plugin manages WordPress user creation and session state — that part is outside CoCart's scope.
+    </Accordion>
+
+    <Accordion title="Can I call other WordPress or WooCommerce APIs alongside CoCart?">
+        Yes. CoCart doesn't block or replace any other API. Your frontend can access CoCart endpoints, WooCommerce endpoints, and any custom endpoints simultaneously.
+    </Accordion>
+</AccordionGroup>
+
+## Performance
+
+<AccordionGroup>
+    <Accordion title="Does CoCart slow down my WordPress site?">
+        No. CoCart is purpose-built for API performance. It adds one database table for session management and only loads when API requests are made. Your WordPress admin and frontend remain unaffected.
+    </Accordion>
+
+    <Accordion title="Does CoCart work with caching plugins like LiteSpeed or WP Rocket?">
+        Yes. CoCart automatically excludes its API endpoints from page caching, so caching plugins won't interfere with cart sessions or API responses. LiteSpeed Cache is explicitly supported out of the box. Some hosts may require manual configuration to exclude CoCart API endpoints.
+    </Accordion>
+
+    <Accordion title="Is there a hosted version, or does it run on my server?">
+        CoCart runs entirely on your WordPress server — there's no external service, no cloud dependency, and no data leaving your environment. You own your stack.
+    </Accordion>
+</AccordionGroup>
+
+## Customisation
+
+<AccordionGroup>
+    <Accordion title="Can I change the format of API responses?">
+        Yes. There are 180+ filters available to customize responses, add fields, or remove data you don't need — without writing new routes.
+    </Accordion>
+
+    <Accordion title="Is 'WooCommerce Shipping and Tax' plugin supported?">
+        No — it restricts tax calculation to WooCommerce Blocks and Jetpack only and is not recommended for headless setups. [TaxJar for WooCommerce](https://wordpress.org/plugins/taxjar-simplified-taxes-for-woocommerce/) (v3.2.5+) is supported.
+    </Accordion>
+</AccordionGroup>
+
+## Support and community
+
+<AccordionGroup>
+    <Accordion title="Where can I get help?">
+        **Free users:** Post in the [WordPress support forum](https://wordpress.org/support/plugin/cart-rest-api-for-woocommerce/) or join the [CoCart Discord community](https://cocartapi.com/community/?ref=mintlify).
+
+        **CoCart Plus customers** receive priority support with faster response times. See our [support policy](/support-policy) for what is and isn't covered.
+    </Accordion>
+
+    <Accordion title="Where can I report a bug?">
+        On the [CoCart GitHub repository](https://github.com/co-cart/co-cart/issues) or in the `#bug-report` channel on [Discord](https://cocartapi.com/community/?ref=mintlify). Search first to avoid duplicates.
+    </Accordion>
+
+    <Accordion title="Is CoCart actively maintained?">
+        Yes. CoCart follows [Semver](https://semver.org/) and is actively maintained with regular releases. Security updates are provided for the current and previous major versions. See the [security policy](/security-policy) for supported versions.
+    </Accordion>
+
+    <Accordion title="Do you have a public roadmap?">
+        Yes. [View the roadmap →](https://cocartheadless.featurebase.app/roadmap/status)
+    </Accordion>
+
+    <Accordion title="Where are the SDKs?">
+        The official [TypeScript SDK](https://www.npmjs.com/package/@cocartheadless/sdk) is published on npm. Install it with `npm install @cocartheadless/sdk`. See the [SDK documentation](/sdk/typescript) for setup and usage.
+
+        PHP, Python, and Go SDKs are in development. If you'd like an SDK for a specific language, [make a feature request](https://cocartapi.com/suggest-a-feature/?ref=mintlify).
+    </Accordion>
+
+    <Accordion title="Can I translate CoCart?">
+        Yes. Visit [translate.wordpress.org](https://translate.wordpress.org/projects/wp-plugins/cart-rest-api-for-woocommerce), select a language, and start contributing. If the language you need isn't listed, [contact us](mailto:support@cocartapi.com) with the subject **Requesting Translation Set**.
+    </Accordion>
+
+    <Accordion title="My question isn't listed here.">
+        Check the [full FAQ on cocartapi.com](https://cocartapi.com/faq/?ref=mintlify) or [browse the documentation](/introduction).
+    </Accordion>
+</AccordionGroup>

@@ -1,0 +1,74 @@
+---
+title: "Smart Coupons for WooCommerce"
+sidebarTitle: "Smart Coupons"
+description: "Expose Smart Coupons metadata on cart coupon responses and enforce role and start-date restrictions in headless CoCart storefronts."
+tag: "In Testing"
+robots: "noindex, follow"
+---
+
+<Info>
+  This feature documentation was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 28th, 2026.
+</Info>
+
+[Smart Coupons for WooCommerce](https://wordpress.org/plugins/wt-woocommerce-coupon-referral-program/) extends WooCommerce coupons with BOGO deals, auto-apply, start dates, giveaway products, and role restrictions. The CoCart Plus integration exposes Smart Coupons metadata on cart coupon responses and enforces role and start-date restrictions that WooCommerce core does not validate during REST coupon application.
+
+<Info>
+  This integration is available in CoCart Plus since <Tooltip tip="This is the version of CoCart Plus">v2.0.0</Tooltip> and requires Smart Coupons for WooCommerce to be installed and active.
+</Info>
+
+## Cart coupon response
+
+Each coupon entry in the cart response includes a `smart_coupon` object with extended metadata.
+
+```json Example (cart coupon excerpt)
+{
+  "code": "SUMMER20",
+  "discount_type": "percent",
+  "discount_amount": "20",
+  "smart_coupon": {
+    "is_auto_apply": false,
+    "is_bogo": false,
+    "bogo_type": "",
+    "start_date": "",
+    "free_product_ids": []
+  }
+}
+```
+
+### BOGO coupon example
+
+```json Example (BOGO coupon excerpt)
+{
+  "code": "BUY2GET1",
+  "smart_coupon": {
+    "is_auto_apply": false,
+    "is_bogo": true,
+    "bogo_type": "buy_x_get_y",
+    "start_date": "",
+    "free_product_ids": [55, 56]
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `is_auto_apply` | `boolean` | Whether the coupon is flagged as auto-apply. Storefronts can use this to prioritise suggesting the coupon. |
+| `is_bogo` | `boolean` | Whether the coupon is a Buy X Get Y deal. |
+| `bogo_type` | `string` | The BOGO deal type (e.g. `buy_x_get_y`, `buy_x_get_same`). Empty string for non-BOGO coupons. |
+| `start_date` | `string` | The coupon's start date, formatted using the store's date format. Empty string if no start date is set. |
+| `free_product_ids` | `array` | Product IDs offered for free by a BOGO deal. Empty array for non-BOGO coupons. |
+
+## Validation enforcement
+
+When a coupon is applied via the CoCart apply-coupon endpoint, the integration automatically enforces two additional restrictions that WooCommerce core does not check:
+
+**User role restriction** — If the coupon is restricted to specific user roles and the current user does not have one of those roles, the coupon is removed and an error notice is added.
+
+**Start date restriction** — If the coupon has a configured start date that has not yet passed, the coupon is removed and an error notice is added.
+
+These validations mirror WooCommerce's own invalid-coupon flow and return standard coupon validation error responses.
+
+## Known limitations
+
+- **Auto-apply** — The `is_auto_apply` flag is informational. Smart Coupons does not auto-apply coupons headlessly; your storefront is responsible for applying the coupon code via the API if desired.
+- **BOGO fulfilment** — The integration exposes BOGO metadata but does not add free products to the cart automatically. Your storefront or checkout logic must handle the free product addition based on `free_product_ids`.

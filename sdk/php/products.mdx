@@ -1,0 +1,376 @@
+---
+title: "PHP SDK: Products API"
+sidebarTitle: "Products API"
+description: "Browse your WooCommerce catalog with the CoCart PHP SDK — list, filter, search, paginate products, variations, categories, attributes, brands, and reviews."
+'og:title': "WooCommerce Products API — CoCart PHP SDK"
+'og:description': "Query the WooCommerce product catalog from PHP. Filter by category, price, and stock; search; paginate with helpers; fetch variations, attributes, brands, and SEO data."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+</Info>
+
+The Products API is publicly accessible and does not require authentication.
+
+```php
+$products = $client->products();
+```
+
+## List Products
+
+```php
+$response = $client->products()->all();
+$response = $client->products()->all(['per_page' => '20', 'page' => '1']);
+```
+
+## Parameters Reference
+
+All list methods accept an optional `$params` array:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `page` | int | Page number (default: 1) |
+| `per_page` | int | Items per page (default: 10, max: 100) |
+| `search` | string | Search term |
+| `category` | string | Filter by category slug |
+| `tag` | string | Filter by tag slug |
+| `status` | string | Product status |
+| `featured` | bool | Show only featured products |
+| `on_sale` | bool | Show only products on sale |
+| `min_price` | string | Minimum price |
+| `max_price` | string | Maximum price |
+| `stock_status` | string | Stock status (`instock`, `outofstock`, `onbackorder`) |
+| `orderby` | string | Sort field (`date`, `id`, `title`, `slug`, `price`, `popularity`, `rating`) |
+| `order` | string | Sort direction (`asc`, `desc`) |
+
+## Filtering
+
+### By Category
+
+```php
+$response = $client->products()->byCategory('electronics');
+
+// With additional params
+$response = $client->products()->byCategory('electronics', [
+    'per_page' => '20',
+    'orderby' => 'price',
+    'order' => 'asc',
+]);
+```
+
+### By Tag
+
+```php
+$response = $client->products()->byTag('new-arrival');
+```
+
+### Featured Products
+
+```php
+$response = $client->products()->featured();
+$response = $client->products()->featured(['per_page' => '4']);
+```
+
+### Products on Sale
+
+```php
+$response = $client->products()->onSale();
+```
+
+### By Price Range
+
+```php
+$response = $client->products()->byPriceRange(10.00, 50.00); // $10–$50
+$response = $client->products()->byPriceRange(null, 25.00);  // Under $25
+$response = $client->products()->byPriceRange(100.00);       // Over $100
+```
+
+### Search
+
+```php
+$response = $client->products()->search('wireless headphones');
+
+// Search within a category
+$response = $client->products()->search('headphones', [
+    'category' => 'electronics',
+]);
+```
+
+### Combining Filters
+
+```php
+$response = $client->products()->all([
+    'category' => 'clothing',
+    'on_sale' => true,
+    'min_price' => '20',
+    'max_price' => '100',
+    'orderby' => 'popularity',
+    'order' => 'desc',
+    'per_page' => '12',
+]);
+```
+
+### By Stock Status
+
+```php
+$response = $client->products()->byStockStatus('instock');
+$response = $client->products()->byStockStatus('outofstock');
+$response = $client->products()->byStockStatus('onbackorder');
+```
+
+## Pagination & Sorting
+
+### Paginate Helper
+
+```php
+$response = $client->products()->paginate(1, 12); // Page 1, 12 per page
+$response = $client->products()->paginate(2, 12); // Page 2
+```
+
+### Sort Helper
+
+```php
+$response = $client->products()->sortBy('price');           // Cheapest first
+$response = $client->products()->sortBy('price', 'desc');   // Most expensive first
+$response = $client->products()->sortBy('date', 'desc');    // Newest first
+$response = $client->products()->sortBy('popularity', 'desc');
+$response = $client->products()->sortBy('rating', 'desc');
+
+// Combine with filters
+$response = $client->products()->sortBy('price', 'asc', [
+    'category' => 'electronics',
+    'on_sale' => true,
+]);
+```
+
+### Paginated Loop
+
+```php
+$page = 1;
+$perPage = 20;
+
+do {
+    $response = $client->products()->paginate($page, $perPage);
+    $products = $response->toArray();
+    $totalPages = $response->getTotalPages();
+
+    foreach ($products as $product) {
+        echo $product['name'] . ' - $' . $product['price'] . "\n";
+    }
+
+    $page++;
+} while ($page <= $totalPages);
+```
+
+## Single Product
+
+### By ID
+
+```php
+$response = $client->products()->find(123);
+
+$data = $response->toArray();
+echo $data['name'];
+echo $data['price'];
+echo $data['description'];
+```
+
+### By Slug
+
+```php
+$response = $client->products()->findBySlug('blue-hoodie');
+```
+
+## Variations
+
+### List All Variations
+
+```php
+$response = $client->products()->variations(123);
+
+foreach ($response->toArray() as $variation) {
+    echo $variation['id'] . ': ' . $variation['price'] . "\n";
+}
+```
+
+### Get a Specific Variation
+
+```php
+$response = $client->products()->variation(123, 456);
+```
+
+## Categories
+
+### List All Categories
+
+```php
+$response = $client->products()->categories();
+$response = $client->products()->categories(['per_page' => '50']);
+```
+
+### Get a Single Category
+
+```php
+$response = $client->products()->category(15);
+```
+
+## Tags
+
+### List All Tags
+
+```php
+$response = $client->products()->tags();
+```
+
+### Get a Single Tag
+
+```php
+$response = $client->products()->tag(8);
+```
+
+## Attributes
+
+### List All Attributes
+
+```php
+$response = $client->products()->attributes();
+```
+
+### Get a Single Attribute
+
+```php
+$response = $client->products()->attribute(1);
+```
+
+### Get a Single Attribute by Slug
+
+```php
+$response = $client->products()->attributeBySlug('color');
+```
+
+### Get Attribute Terms
+
+```php
+$response = $client->products()->attributeTerms(1);
+$response = $client->products()->attributeTermsBySlug('color');
+```
+
+### Get a Single Attribute Term
+
+```php
+$response = $client->products()->attributeTerm(1, 5);
+$response = $client->products()->attributeTermBySlug('color', 'blue');
+```
+
+## Brands
+
+### List All Brands
+
+```php
+$response = $client->products()->brands();
+$response = $client->products()->brands(['per_page' => '50']);
+```
+
+### Get a Single Brand
+
+```php
+$response = $client->products()->brand(5);
+```
+
+### Filter Products by Brand
+
+```php
+$response = $client->products()->byBrand('nike');
+
+// With additional params
+$response = $client->products()->byBrand('nike', [
+    'per_page' => '20',
+    'orderby' => 'price',
+    'order' => 'asc',
+]);
+```
+
+## Reviews
+
+### List All Reviews
+
+```php
+$response = $client->products()->reviews();
+```
+
+### Reviews for a Specific Product
+
+```php
+$response = $client->products()->productReviews(123);
+```
+
+### My Reviews
+
+Get reviews written by the authenticated user:
+
+```php
+$response = $client->products()->myReviews();
+```
+
+## SEO Data
+
+<Note>Requires the CoCart SEO Pack plugin.</Note>
+
+### By Product ID
+
+```php
+$response = $client->products()->seo(123);
+
+$provider = $response->get('provider');               // 'yoast', 'rankmath', etc.
+$title = $response->get('meta_data.meta_title');
+$ogTitle = $response->get('meta_data.opengraph.title');
+$schema = $response->get('schema');                   // JSON-LD structured data
+```
+
+### By Product Slug
+
+```php
+$response = $client->products()->seoBySlug('premium-t-shirt');
+```
+
+### Rendering in HTML
+
+```php
+$response = $client->products()->seo(123);
+$meta = $response->get('meta_data');
+$schema = $response->get('schema');
+?>
+
+<title><?= htmlspecialchars($meta['meta_title']) ?></title>
+<meta name="description" content="<?= htmlspecialchars($meta['meta_description']) ?>">
+<link rel="canonical" href="<?= htmlspecialchars($meta['canonical_url']) ?>">
+
+<meta property="og:title" content="<?= htmlspecialchars($meta['opengraph']['title']) ?>">
+<meta property="og:image" content="<?= htmlspecialchars($meta['opengraph']['image']) ?>">
+
+<script type="application/ld+json"><?= json_encode($schema) ?></script>
+```
+
+## Working with Responses
+
+```php
+$response = $client->products()->all(['per_page' => '5']);
+
+// As array
+$products = $response->toArray();
+
+// Check success
+if ($response->isSuccessful()) {
+    foreach ($response->toArray() as $product) {
+        echo $product['name'] . "\n";
+    }
+}
+
+// Dot-notation access
+$response = $client->products()->find(123);
+echo $response->get('name');
+echo $response->get('price');
+echo $response->get('categories.0.name');
+```
+
+See [Error Handling](/sdk/php/error-handling) for handling API errors.

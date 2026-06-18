@@ -1,0 +1,659 @@
+---
+title: "Cart Helpers Functions"
+sidebarTitle: "Cart Helpers"
+description: "Static methods on CoCart_Utilities_Cart_Helpers for cart key, shipping, fees, totals, coupons, taxes, and validation in REST API contexts."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Functions Reference overview](/developers/functions) for all function categories and the [Developer Reference](/developers) for the plugin key index.
+</Tip>
+
+### `CoCart_Utilities_Cart_Helpers::get_cart_key()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Returns the current session's cart key.
+
+<Note>Made available since v3.0.0</Note>
+
+**Returns**: `string` — The cart key, or empty string if unavailable.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::get_customer_fields()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Returns the customer's checkout field values for a given field group (`billing` or `shipping`), including any custom meta-backed fields.
+
+<Note>Made available since v3.0.0</Note>
+
+**Parameters**
+
+<ParamField query="fields" type="string">
+  Field group to return. Accepts `billing` or `shipping`. Default: `billing`.
+</ParamField>
+
+<ParamField query="customer" type="WC_Customer|null">
+  The customer object. Returns an empty array if not provided.
+</ParamField>
+
+**Returns**: `array` — Customer field key/value pairs.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::get_variable_product_attributes()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Returns the attributes for a variable product. If a variation is passed, the parent product's attributes are used. Throws `CoCart_Data_Exception` if the product is invalid.
+
+<Note>Made available since v2.1.2</Note>
+
+**Parameters**
+
+<ParamField query="product" type="WC_Product">
+  The product or variation object.
+</ParamField>
+
+**Returns**: `array` — Product attributes.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::get_shipping_details()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Returns full shipping details for the cart, including packages, rates, chosen method, and destination. Returns an empty array if the cart does not need shipping.
+
+<Note>Made available since v3.0.0</Note>
+
+**Parameters**
+
+<ParamField query="cart" type="WC_Cart">
+  The cart class instance.
+</ParamField>
+
+<ParamField query="recurring_cart" type="bool">
+  Whether the cart is a recurring cart. Default: `false`.
+</ParamField>
+
+**Returns**: `array` — Shipping details including packages and rates.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::clean_meta_data()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Cleans up shipping method meta data for API output (normalizes the `Items` key and strips HTML).
+
+<Note>Made available since v3.1.0</Note>
+
+**Parameters**
+
+<ParamField query="method" type="object">
+  Shipping method data object.
+</ParamField>
+
+<ParamField query="type" type="string">
+  Meta data type to clean. Currently accepts `shipping`. Default: `shipping`.
+</ParamField>
+
+**Returns**: `array` — Cleaned meta data.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::get_tax_display_mode()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Returns the effective tax display mode for the **cart**, validating the supplied value against `incl` or `excl`. Falls back to the `woocommerce_tax_display_cart` option.
+
+<Note>Made available since v4.3.8</Note>
+
+<Tip>
+  This is the cart equivalent of `CoCart_Utilities_Product_Helpers::get_tax_display_mode()`, which reads the shop setting. Use this one when working with cart totals and items; use the product helper when working with product prices.
+</Tip>
+
+**Parameters**
+
+<ParamField query="tax_display_mode" type="string">
+  Provided tax display mode. Optional — omit to read from store settings.
+</ParamField>
+
+**Returns**: `string` — `incl` or `excl`.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::get_fees()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Returns the cart fees formatted for API responses.
+
+<Note>Made available since v3.0.0</Note>
+
+**Parameters**
+
+<ParamField query="cart" type="WC_Cart">
+  The cart class instance.
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
+
+**Returns**: `array` — Cart fees with `name` and `fee` keys.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::get_cart_totals()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Returns the full set of cart totals (subtotal, fees, discounts, shipping, and tax) formatted for API responses.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="cart" type="WC_Cart">
+  The cart class instance.
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
+
+**Returns**: `array` — Cart totals keyed by `subtotal`, `subtotal_tax`, `fee_total`, `fee_tax`, `discount_total`, `discount_tax`, `shipping_total`, `shipping_tax`, `total`, `total_tax`.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::get_applied_coupons()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Returns the applied coupons with label, discount type, plain saving amount, and HTML saving amount.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="cart" type="WC_Cart">
+  The cart class instance.
+</ParamField>
+
+**Returns**: `array` — Applied coupons with `coupon`, `label`, `discount_type`, `saving`, and `saving_html` keys.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::get_taxes()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Returns tax data for the cart based on store tax settings. Returns itemized lines when `woocommerce_tax_total_display` is set to `itemized`.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="cart" type="WC_Cart">
+  The cart class instance.
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
+
+**Returns**: `array` — Tax data, or empty array if tax is disabled or prices include tax.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::get_tax_lines()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Returns itemized tax lines from the cart formatted for API responses.
+
+<Note>Made available since v3.0.0</Note>
+
+**Parameters**
+
+<ParamField query="cart" type="WC_Cart">
+  The cart class instance.
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
+
+**Returns**: `array` — Tax lines keyed by tax code, each with `name` and `price`.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::maybe_return_notices()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Collects WooCommerce session notices, runs postcode and country validation, and returns any notice messages grouped by type.
+
+<Note>Made available since v3.0.0</Note>
+
+**Parameters**
+
+<ParamField query="cart" type="WC_Cart">
+  The cart class instance.
+</ParamField>
+
+**Returns**: `array` — Notices grouped by type (`error`, `notice`, `success`), or empty array if none.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::print_notices()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Returns WooCommerce notices stored in the session, then clears them.
+
+<Note>Made available since v3.0.0</Note>
+
+**Parameters**
+
+<ParamField query="all_notices" type="array">
+  Pre-fetched notices array. Optional — reads from session if empty.
+</ParamField>
+
+**Returns**: `array` — Notices grouped by type.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::get_item_thumbnail_id()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Returns the thumbnail attachment ID for a cart item's product, falling back to the parent product image or the WooCommerce placeholder.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  The cart item data.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  The cart item key.
+</ParamField>
+
+<ParamField query="removed_item" type="bool">
+  Whether the item is a removed item. Default: `false`.
+</ParamField>
+
+**Returns**: `int` — Thumbnail attachment ID.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::get_thumbnail_size()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Returns the thumbnail image size name to use for cart item images, filtered via `cocart_item_thumbnail_size`.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="removed_item" type="bool">
+  Whether the item is a removed item. Default: `false`.
+</ParamField>
+
+**Returns**: `string` — Thumbnail size name (e.g. `woocommerce_thumbnail`).
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::get_thumbnail_source()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Returns the escaped URL for a cart item thumbnail given an attachment ID and size.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="thumbnail_id" type="int">
+  Product thumbnail attachment ID. Default: `0`.
+</ParamField>
+
+<ParamField query="thumbnail_size" type="string">
+  Image size name. Default: `woocommerce_thumbnail`.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  The cart item data.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  The cart item key.
+</ParamField>
+
+<ParamField query="removed_item" type="bool">
+  Whether the item is a removed item. Default: `false`.
+</ParamField>
+
+**Returns**: `string` — Escaped thumbnail URL, or empty string if no ID provided.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::get_item_basic()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Returns basic item data (key, id, name, price, quantity, variation, and any extra cart item data) formatted for API responses.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="product" type="int|WC_Product">
+  The product ID or object.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  The cart item data.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  The cart item key.
+</ParamField>
+
+**Returns**: `array` — Basic item data.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::set_cart_item_quantity_sold_individually()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Normalizes the quantity in a request to `1` for sold-individually products, filtered via `cocart_add_to_cart_sold_individually_quantity`.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
+
+**Returns**: `WP_REST_Request` — Updated request object.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::set_cart_item_data()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Applies the `cocart_add_cart_item_data` filter to allow plugins to inject custom item data before an item is added to the cart.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
+
+**Returns**: `array` — Cart item data.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::are_coupons_enabled()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Returns whether WooCommerce coupons are enabled.
+
+<Note>Made available since v4.2.0</Note>
+
+**Returns**: `bool`
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::coupon_exists()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Returns whether a coupon code exists in the store.
+
+<Note>Made available since v4.2.0</Note>
+
+**Parameters**
+
+<ParamField query="coupon_code" type="string">
+  Coupon code to check.
+</ParamField>
+
+**Returns**: `bool`
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::is_shipping_enabled()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Returns whether shipping is enabled and at least one shipping method is configured.
+
+<Note>Made available since v4.2.0</Note>
+
+**Returns**: `bool`
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::validate_product_for_cart()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Validates that a product exists and is not in the trash. Throws `CoCart_Data_Exception` on failure.
+
+<Note>Made available since v3.0.0</Note>
+
+**Parameters**
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object containing the product `id`.
+</ParamField>
+
+**Returns**: `WC_Product` — The validated product object.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::validate_product_id()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Validates a product ID or SKU, resolving SKUs to their numeric ID. Returns a `WP_Error` on failure.
+
+<Note>Made available since v1.0.0</Note>
+
+**Parameters**
+
+<ParamField query="product_id" type="int|string">
+  Product ID or SKU.
+</ParamField>
+
+**Returns**: `int|WP_Error` — Validated product ID or error.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::validate_variable_product()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Validates the variation data in a request against the expected attributes for the variable product. Returns a `WP_Error` if validation fails.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The variable product object.
+</ParamField>
+
+<ParamField query="variable_product_attributes" type="array">
+  Product attributes to validate against. Optional.
+</ParamField>
+
+**Returns**: `WP_REST_Request|WP_Error` — Updated request or error.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::has_enough_stock()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Checks whether the product in a cart item has sufficient stock for the requested quantity. Returns a `WP_Error` if stock is insufficient.
+
+<Note>Made available since v1.0.6</Note>
+
+**Parameters**
+
+<ParamField query="current_data" type="array">
+  Cart item data containing `product_id` and `variation_id`.
+</ParamField>
+
+<ParamField query="quantity" type="int|float">
+  Quantity to check. Default: `1`.
+</ParamField>
+
+**Returns**: `bool|WP_Error` — `true` if sufficient stock, or error.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::is_postcode_valid()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Validates a billing or shipping postcode against the WooCommerce validator for the relevant country. Accepts either a `WC_Customer` or `WP_REST_Request` object.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="data" type="WC_Customer|WP_REST_Request">
+  The data object to read the postcode and country from.
+</ParamField>
+
+<ParamField query="field_type" type="string">
+  Field set to validate. Accepts `billing` or `shipping`.
+</ParamField>
+
+**Returns**: `bool|WP_Error` — `true` if valid, or error.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::is_country_valid()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Validates a billing or shipping country code against the WooCommerce country list and allowed shipping countries. Accepts either a `WC_Customer` or `WP_REST_Request` object.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="data" type="WC_Customer|WP_REST_Request">
+  The data object to read the country from.
+</ParamField>
+
+<ParamField query="field_type" type="string">
+  Field set to validate. Accepts `billing` or `shipping`.
+</ParamField>
+
+**Returns**: `bool|WP_Error` — `true` if valid, or error.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::prepare_item()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Strips internal WooCommerce cart item keys (e.g. `key`, `data`, `line_total`) from a cart item array, leaving only custom data.
+
+<Note>Made available since v3.0.0</Note>
+
+**Parameters**
+
+<ParamField query="cart_item" type="array">
+  The raw cart item data.
+</ParamField>
+
+**Returns**: `array` — Cart item with internal keys removed.
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::convert_notices_to_exceptions()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Converts any WooCommerce error notices in the session into a thrown `CoCart_Data_Exception`. Clears all notices once complete.
+
+<Note>Made available since v3.0.1</Note>
+
+**Parameters**
+
+<ParamField query="error_code" type="string">
+  Error code for the thrown exception. Default: `unknown_server_error`.
+</ParamField>
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::throw_product_not_purchasable()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Throws a `CoCart_Data_Exception` with a formatted message when a product cannot be purchased.
+
+<Note>Made available since v3.0.4</Note>
+
+**Parameters**
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+---
+
+### `CoCart_Utilities_Cart_Helpers::throw_missing_item_key()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Throws a `CoCart_Data_Exception` if the item key is `0` (missing). Returns the item key string if valid.
+
+<Note>Made available since v3.0.17</Note>
+
+**Parameters**
+
+<ParamField query="item_key" type="string">
+  Generated cart item key.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Status context for the error message (e.g. `removing`, `updating`).
+</ParamField>
+
+**Returns**: `string` — The item key.
+
+---

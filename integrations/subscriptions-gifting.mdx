@@ -1,0 +1,113 @@
+---
+title: "WooCommerce Subscriptions Gifting"
+sidebarTitle: "Subscriptions Gifting"
+description: "Let customers gift subscriptions to a recipient email address when adding subscription products to the cart in a headless storefront."
+tag: "In Testing"
+robots: "noindex, follow"
+---
+
+<Info>
+  This feature documentation was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 28th, 2026.
+</Info>
+
+[WooCommerce Subscriptions Gifting](https://woocommerce.com/products/woocommerce-subscriptions-gifting/) allows customers to purchase a subscription on behalf of someone else by specifying a recipient's email address. The CoCart Plus integration adds a `recipient_email` parameter to the add-item endpoint and exposes gifting eligibility and recipient details in product and cart item responses.
+
+<Info>
+  This integration is available in CoCart Plus since <Tooltip tip="This is the version of CoCart Plus">v2.0.0</Tooltip> and requires WooCommerce Subscriptions Gifting to be installed and active.
+</Info>
+
+## Product response
+
+Subscription products eligible for gifting include a `gifting` object in their `extensions` key.
+
+```json Example (product extensions excerpt)
+{
+  "extensions": {
+    "gifting": {
+      "giftable": true
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `giftable` | `boolean` | Whether this product can be purchased as a gift for a recipient. |
+
+Use this flag to conditionally render a recipient email field in your add-to-cart form.
+
+## Adding a gift to cart
+
+Pass `recipient_email` as a parameter when calling the add-item endpoint.
+
+<CodeGroup>
+  ```bash cURL
+  curl -X POST https://your-store.com/wp-json/cocart/v2/cart/add-item \
+    -H "Content-Type: application/json" \
+    -d '{
+      "id": 42,
+      "quantity": 1,
+      "recipient_email": "recipient@example.com"
+    }'
+  ```
+
+  ```javascript JavaScript
+  await fetch('https://your-store.com/wp-json/cocart/v2/cart/add-item', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: 42,
+      quantity: 1,
+      recipient_email: 'recipient@example.com'
+    })
+  });
+  ```
+
+  ```php PHP
+  <?php
+  $ch = curl_init();
+
+  curl_setopt_array($ch, [
+    CURLOPT_URL            => 'https://your-store.com/wp-json/cocart/v2/cart/add-item',
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_POST           => true,
+    CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+    CURLOPT_POSTFIELDS     => json_encode([
+      'id'              => 42,
+      'quantity'        => 1,
+      'recipient_email' => 'recipient@example.com',
+    ]),
+  ]);
+
+  curl_exec($ch);
+  curl_close($ch);
+  ?>
+  ```
+</CodeGroup>
+
+The `recipient_email` value must be a valid email address. Invalid addresses are silently ignored.
+
+## Cart item response
+
+Cart items with a recipient set include a `gift_recipient` object in their `extensions` key.
+
+```json Example (cart item extensions excerpt)
+{
+  "extensions": {
+    "gift_recipient": {
+      "email": "recipient@example.com"
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `email` | `string` | Email address of the gift recipient. |
+
+Items without a recipient do not include the `gift_recipient` key.
+
+## Known limitations
+
+- The `recipient_email` parameter is only accepted on the add-item endpoint. The gifting plugin's standard nonce-based `$_POST` flow is bypassed transparently — no separate handling is needed.
+- WooCommerce Subscriptions must also be active for subscription products to be giftable.

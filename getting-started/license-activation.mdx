@@ -1,45 +1,98 @@
 ---
 title: "License Activation"
-description: "Enter your CoCart license key to activate your license."
+description: "Activate your CoCart license key to receive automatic updates and support."
 icon: "key"
-robots: "noindex, follow"
-tag: "WIP"
 ---
 
-> Dev Note: Needs to be completed with some additional updates for new license system.
+A valid license key is required to receive automatic updates for your CoCart plugins. After purchasing a CoCart plan, you will receive a license key via email and through your [Polar account](https://polar.sh/cocartheadless/portal/request).
 
-Once CoCart is installed you should see a new menu item named **CoCart** in your WordPress dashboard, plus the following notification that prompts you to activate your license for CoCart:
+Each CoCart plugin you have installed requires its own license key to be activated.
 
-<Card title="Activation Notification" img="/images/card-with-image.png">
-    This notification will ask you to enter your license key.
-</Card>
+## Activating via the Updates page
 
-Go to **CoCart > Updates** or click the **Activate License** link. This should bring up the license activation screen:
+This is the recommended way to activate your license.
 
-<Card title="Updates Screen" img="/images/card-with-image.png">
-    Here you enter your license key.
-</Card>
+<Steps>
+    <Step title="Open the Updates page">
+        In your WordPress dashboard, go to **CoCart > Updates**. You will see a license card for each installed CoCart plugin, showing its current status.
+    </Step>
+    <Step title="Enter your license key">
+        Click the **Enter License Key** button on the plugin you want to activate. A text field will appear where you can paste your license key.
+    </Step>
+    <Step title="Activate">
+        Click **Activate**. Your license key will be verified and, on production sites, activated against your site URL.
 
-Copy your CoCart license key provided and paste it into the license field. Click **Save Changes**.
+        Once activated, the card will show:
 
-Your license should now be active:
+        - **Status** — Active
+        - **Key** — A masked version of your license key
+        - **Expires** — The expiry date of your license (or "Never expires" for lifetime licenses)
+    </Step>
+</Steps>
 
-<Card title="Updates Screen" img="/images/card-with-image.png">
-    Confirmation that you have activated your license.
-</Card>
+## Activating via the Plugins page
 
-That’s it! You will now automatically receive updates for CoCart when they become available.
+If an update is available for a CoCart plugin and no license key has been entered, you will see an inline **enter your license key** link directly on the **Plugins** page beneath that plugin. Clicking it opens a license activation modal where you can paste your key and activate without leaving the page.
+
+On multisite installations, the link will direct you to the **Updates** page on the main site instead.
+
+## Activating via wp-config.php
+
+For automated deployments or environments where you prefer not to manage licenses through the UI, you can define license keys as constants in your `wp-config.php` file. CoCart will automatically detect and activate these on each admin page load.
+
+Add the appropriate constant for your plugin:
+
+```php
+// CoCart Starter
+define( 'COCART_LICENSE_BASIC', 'your-license-key-here' );
+
+// CoCart Plus
+define( 'COCART_LICENSE_PLUS', 'your-license-key-here' );
+
+// CoCart White Label
+define( 'COCART_LICENSE_WHITE_LABEL', 'your-license-key-here' );
+
+// CoCart SEO Pack
+define( 'COCART_LICENSE_SEO_PACK', 'your-license-key-here' );
+```
+
+Licenses defined in `wp-config.php` are indicated with a lock icon on the Updates page and cannot be deactivated from the WordPress admin. To change or remove them, update the constant in your `wp-config.php` file directly.
+
+<Note>
+If a previously activated license key differs from the one defined in `wp-config.php`, CoCart will automatically deactivate the old key and activate the new one.
+</Note>
+
+## Deactivating a license
+
+To deactivate a license, go to **CoCart > Updates** and click the **Deactivate** button on the license card for that plugin. This frees up the activation slot so you can use the key on another site.
+
+Licenses defined via `wp-config.php` constants cannot be deactivated from the UI. Remove or update the constant in your `wp-config.php` file instead.
+
+## Pausing and resuming updates
+
+If you need to temporarily prevent CoCart from checking for new updates (for example, during a critical sale period), you can pause update checks from the **CoCart > Updates** page.
+
+1. Under the **Pause Updates** section, select a duration from the dropdown (1 week, 2 weeks, 4 weeks, 2 months, 3 months, or 6 months).
+2. Click **Pause Updates**.
+
+Updates will automatically resume after the selected period, or you can click **Resume Updates** at any time to resume immediately.
+
+<Warning>
+While updates are paused, your site will not receive any CoCart plugin updates, including security patches. Only pause updates when necessary.
+</Warning>
+
+## FAQ
 
 <AccordionGroup>
     <Accordion title="Where can I find my license key?">
         After purchasing, you will receive a unique license key via email and your [Polar account](https://polar.sh/cocartheadless/portal/request) with your purchase.
     </Accordion>
 
-    <Accordion title="Will Local & staging installations count against my license limit?">
+    <Accordion title="Will local and staging installations count against my license limit?">
         No, local and staging installations do not count against your license limit. You can use CoCart on as many local or staging sites as you like without affecting your active site limit.
     </Accordion>
 
-    <Accordion title="What is qualified as local or staging site?">
+    <Accordion title="What is qualified as a local or staging site?">
         The following URLs are considered local or staging sites and will not count against your active site limit.
 
         **Local URLs**:
@@ -73,6 +126,55 @@ That’s it! You will now automatically receive updates for CoCart when they bec
         * .platformsh.site (Platform.sh)
         * .wpstage.net (WP Stagecoach)
     </Accordion>
-</AccordionGroup>
 
-You can also always deactivate the license key from your site from your WordPress dashboard under CoCart > Updates, and activate it on another site.
+    <Accordion title="I see 'Could not connect to the license server' — what do I do?">
+        This error means WordPress could not reach CoCart's license server (`packages.cocartapi.com`) to verify the key defined in your `wp-config.php`. Common causes:
+
+        * **Firewall or hosting restriction** — your server is blocking outbound HTTPS requests. Ask your host to allow outbound connections to `packages.cocartapi.com`.
+        * **DNS failure** — the server cannot resolve the domain. Try flushing the server's DNS cache or contact your host.
+        * **Timeout** — the request timed out. CoCart allows up to 15 seconds on non-cron requests. Check for high server load or network latency.
+
+        CoCart retries the connection on the next admin page load. It will not spam the server — failed attempts are cached for 1 hour before retrying. If the problem persists, [contact support](mailto:support@cocartapi.com).
+    </Accordion>
+
+    <Accordion title="I see 'License key is not active' — how do I fix it?">
+        This means the license key was found on the server but its status is not `granted`. The license may be:
+
+        * **Revoked** — the license was cancelled or refunded. Log in to your [Polar account](https://polar.sh/cocartheadless/portal/request) to check the status.
+        * **Disabled** — the license has been administratively disabled. [Contact support](mailto:support@cocartapi.com).
+        * **Expired** — the license term has ended. Renew your license from the [billing portal](https://cocartapi.com/billing/).
+
+        Once the license is back in a valid state, CoCart will automatically re-verify it on the next admin page load.
+    </Accordion>
+
+    <Accordion title="I see 'Invalid license key format' — what format is expected?">
+        CoCart license keys use UUID format: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` (hexadecimal characters separated by hyphens). Make sure you copied the full key without any leading or trailing spaces. You can retrieve your key from your [Polar account](https://polar.sh/cocartheadless/portal/request).
+    </Accordion>
+
+    <Accordion title="My site has moved and updates are now disabled — what do I do?">
+        When CoCart detects that the current site URL no longer matches the URL the license was originally activated on, it disables updates and shows a warning on the Updates page. To resolve this:
+
+        1. Go to **CoCart > Updates** and click **Deactivate** on the affected plugin.
+        2. Re-enter and activate your license key for the new site URL.
+
+        If you defined the license in `wp-config.php`, remove or update the constant, then re-add it — CoCart will automatically deactivate the old activation and activate the new one.
+    </Accordion>
+
+    <Accordion title="I can't deactivate a license defined in wp-config.php — why?">
+        Licenses set via `wp-config.php` constants (e.g. `COCART_LICENSE_BASIC`) are managed through code, not the UI. The **Deactivate** button is intentionally hidden for these. To deactivate, remove the constant from your `wp-config.php` file and save. CoCart will then treat the plugin as unlicensed on the next admin page load.
+    </Accordion>
+
+    <Accordion title="No 'Enter License Key' button appears on the Updates page — why?">
+        The Updates page only shows license cards for CoCart plugins that require a license (CoCart Starter and any paid add-ons). If no cards appear, check that the plugin is installed and activated. The community version (`cart-rest-api-for-woocommerce`) does not require a license and is not listed.
+    </Accordion>
+
+    <Accordion title="I activated my license but no updates are appearing — what should I check?">
+        Update availability is cached. After activating, CoCart immediately clears the update transient, but WordPress itself may take a moment to reflect the change. Try the following:
+
+        1. Go to **Dashboard > Updates** and click **Check Again**.
+        2. On the **CoCart > Updates** page, confirm the license status shows **Active**.
+        3. If updates are paused, click **Resume Updates**.
+
+        If the installed version is already the latest, no update will appear — check the Recent Updates feed on the Updates page to confirm.
+    </Accordion>
+</AccordionGroup>

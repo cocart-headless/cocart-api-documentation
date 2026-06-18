@@ -1,0 +1,75 @@
+---
+title: "WooCommerce Shipping"
+sidebarTitle: "WooCommerce Shipping"
+description: "Expose purchased shipping label data on order responses in the CoCart My Account orders API."
+tag: "In Testing"
+robots: "noindex, follow"
+---
+
+<Info>
+  This feature documentation was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 28th, 2026.
+</Info>
+
+[WooCommerce Shipping](https://woocommerce.com/woocommerce-shipping/) (by Automattic) lets merchants purchase and print discounted shipping labels directly from the WooCommerce order screen. The CoCart Plus integration appends purchased label data to the single-order response so customers can access carrier, tracking number, and tracking URL from a headless storefront.
+
+<Info>
+  This integration is available in CoCart Plus since <Tooltip tip="This is the version of CoCart Plus">v2.0.0</Tooltip> and requires WooCommerce Shipping to be installed and active.
+</Info>
+
+## Order response
+
+Each order response from the CoCart My Account orders endpoint includes a `shipping_labels` array. An empty array is returned when no labels have been purchased.
+
+```json Example (order response excerpt)
+{
+  "order_id": 101,
+  "shipping_labels": [
+    {
+      "label_id": "label_abc123",
+      "carrier": "usps",
+      "service_name": "USPS Priority Mail",
+      "tracking_number": "9400111899223397619600",
+      "tracking_url": "https://tools.usps.com/go/TrackConfirmAction?tLabels=9400111899223397619600",
+      "status": "PURCHASED",
+      "created_date": "May 28, 2026, 9:00 am",
+      "is_return": false,
+      "is_refunded": false,
+      "package_name": "Small Flat Rate Box",
+      "product_names": ["Widget", "Gadget"]
+    }
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `label_id` | `string` | Unique label identifier from the carrier API. |
+| `carrier` | `string` | Carrier identifier (e.g. `usps`, `fedex`, `ups`, `dhl`). |
+| `service_name` | `string` | Human-readable shipping service name. |
+| `tracking_number` | `string` | Shipment tracking number. |
+| `tracking_url` | `string` | URL to track the shipment on the carrier's website. |
+| `status` | `string` | Label purchase status (e.g. `PURCHASED`, `VOIDED`). |
+| `created_date` | `string` | Formatted date and time the label was purchased. |
+| `is_return` | `boolean` | Whether this label is for a return shipment. |
+| `is_refunded` | `boolean` | Whether this label has been refunded. |
+| `package_name` | `string` | Name of the package type used for this label. |
+| `product_names` | `array` | Names of the products included in this shipment. |
+
+Labels with a status of `PURCHASE_ERROR` are excluded from the response.
+
+## Usage
+
+```javascript JavaScript
+const response = await fetch(
+  'https://your-store.com/wp-json/cocart/v2/account/orders/101',
+  { headers: { 'Authorization': 'Basic ...' } }
+);
+const order = await response.json();
+
+for (const label of order.shipping_labels) {
+  if (label.tracking_url) {
+    console.log(`Track your ${label.service_name} shipment:`);
+    console.log(label.tracking_url);
+  }
+}
+```

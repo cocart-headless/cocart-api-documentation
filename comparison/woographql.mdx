@@ -1,0 +1,330 @@
+---
+title: "CoCart vs WooGraphQL"
+sidebarTitle: "VS WooGraphQL"
+description: "A detailed comparison of CoCart and WooGraphQL for building headless WooCommerce storefronts — features, SDKs, pricing, and developer experience."
+mode: "custom"
+---
+
+{/* ===== HERO ===== */}
+<div className="flex flex-col items-center text-center max-w-4xl mx-auto" id="about-hero">
+    <h1 className="text-gray-900 dark:text-zinc-50">
+        CoCart vs WooGraphQL
+    </h1>
+    <p className="text-lg text-gray-500 dark:text-zinc-400 max-w-2xl mx-auto mb-8">
+        Two approaches to headless WooCommerce. One uses REST, the other GraphQL. Here's how they compare — so you can pick the right tool for your store.
+    </p>
+    <div className="flex flex-wrap gap-4 justify-center">
+        <a className="cta-primary" href="/getting-started/wordpress-setup">Get Started with CoCart</a>
+        <a className="cta-secondary" href="/api-reference">See API Reference</a>
+    </div>
+</div>
+
+{/* ===== OVERVIEW ===== */}
+<div className="landing-section">
+    <div className="text-center mb-8">
+        <h2 className="section-heading">At a glance</h2>
+        <p className="section-subheading">
+            Both solutions decouple WooCommerce from WordPress themes. They take different approaches to get there.
+        </p>
+    </div>
+
+    <div className="grid sm:grid-cols-2 gap-6">
+        <div className="comparison-card comparison-card-highlight">
+            <div className="card-tag">CoCart</div>
+            <h3>REST API</h3>
+            <p>
+                A dedicated REST API built specifically for headless WooCommerce. Cookie-free sessions, built-in ETag caching, CORS handling, and official SDKs for TypeScript, PHP, Python, and Go.
+            </p>
+            <ul>
+                <li>Purpose-built headless API</li>
+                <li>Cookie-free session management</li>
+                <li>4 official SDKs + 12 framework adapters</li>
+                <li>Built-in caching, CORS, and rate limiting</li>
+            </ul>
+        </div>
+
+        <div className="comparison-card">
+            <div className="card-tag">WooGraphQL</div>
+            <h3>GraphQL</h3>
+            <p>
+                A WPGraphQL extension that exposes WooCommerce data through GraphQL. Flexible queries, cursor-based pagination, and interactive query building via GraphiQL IDE.
+            </p>
+            <ul>
+                <li>GraphQL query flexibility</li>
+                <li>Fetch only the fields you need</li>
+                <li>JWT or Cart-Token sessions</li>
+                <li>CORS via optional WPGraphQL-CORS plugin</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+{/* ===== FEATURE COMPARISON TABLE ===== */}
+<div className="section-alt">
+    <div className="landing-section">
+        <div className="text-center mb-8">
+            <h2 className="section-heading">Feature comparison</h2>
+            <p className="section-subheading">
+                A side-by-side look at what each solution provides out of the box.
+            </p>
+        </div>
+
+        <div className="comparison-table-wrapper">
+            <table className="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>CoCart</th>
+                        <th>WooGraphQL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td className="label-cell">API Type</td>
+                        <td>REST</td>
+                        <td>GraphQL</td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">Cart Management</td>
+                        <td className="check">&#10003;</td>
+                        <td className="check">&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">Product Queries</td>
+                        <td className="check">&#10003;</td>
+                        <td className="check">&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">Checkout API</td>
+                        <td className="check">&#10003; <span className="note">Plus tier</span></td>
+                        <td>Limited</td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">Cookie-Free Sessions</td>
+                        <td className="check">&#10003; <span className="note">Database-backed</span></td>
+                        <td className="check">&#10003; <span className="note">JWT or Cart-Token</span></td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">ETag Caching</td>
+                        <td className="check">&#10003; <span className="note">Built-in</span></td>
+                        <td className="cross">&#10007;</td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">CORS Handling</td>
+                        <td className="check">&#10003; <span className="note">Built-in</span></td>
+                        <td>Optional <span className="note">WPGraphQL-CORS plugin</span></td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">Batch Requests</td>
+                        <td className="check">&#10003; <span className="note">Standard + Premium</span></td>
+                        <td className="check">&#10003; <span className="note">Native</span></td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">Real-Time Validation</td>
+                        <td className="check">&#10003;</td>
+                        <td>Partial</td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">Name Your Price</td>
+                        <td className="check">&#10003; <span className="note">Built-in</span></td>
+                        <td className="cross">&#10007;</td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">Rate Limiting</td>
+                        <td className="check">&#10003; <span className="note">Plus tier</span></td>
+                        <td className="cross">&#10007;</td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">Extension Compatibility</td>
+                        <td className="check">&#10003; <span className="note">Hooks-based</span></td>
+                        <td className="check">&#10003; <span className="note">Pro for Subs/Bundles</span></td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">Open Source</td>
+                        <td className="check">&#10003; <span className="note">GPL 3.0</span></td>
+                        <td className="check">&#10003; <span className="note">GPL 3.0</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{/* ===== SDK & FRAMEWORK SUPPORT ===== */}
+<div className="landing-section">
+    <div className="text-center mb-8">
+        <h2 className="section-heading">SDK and framework support</h2>
+        <p className="section-subheading">
+            How quickly can you go from install to working storefront?
+        </p>
+    </div>
+
+    <div className="grid sm:grid-cols-2 gap-6">
+        <div className="comparison-card comparison-card-highlight">
+            <div className="card-tag">CoCart</div>
+            <h3>Official SDKs + Framework Adapters</h3>
+            <ul>
+                <li>TypeScript SDK — zero deps, fully typed</li>
+                <li>Framework adaptors for Next.js, Astro, Nuxt, SvelteKit,</li>
+                <li>Remix, Vite, Hono, and Deno</li>
+                <li>SDKs also for PHP, Python, and Go</li>
+                <li>OpenAPI specs for code generation</li>
+                <li>Works with any HTTP client (fetch, curl, Axios)</li>
+                <li>All available for free, no subscription required</li>
+            </ul>
+        </div>
+
+        <div className="comparison-card">
+            <div className="card-tag">WooGraphQL</div>
+            <h3>GraphQL Ecosystem</h3>
+            <ul>
+                <li>Works with any GraphQL client (Apollo, urql)</li>
+                <li>@woographql npm packages with React hooks (Pro, annual)</li>
+                <li>create-woonext-app CLI for Next.js (Pro, annual)</li>
+                <li>GraphiQL IDE for interactive query exploration</li>
+                <li>WPGraphQL-CORS plugin for cross-origin support</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+{/* ===== DEVELOPER EXPERIENCE ===== */}
+<div className="section-alt">
+    <div className="landing-section">
+        <div className="text-center mb-8">
+            <h2 className="section-heading">Developer experience</h2>
+            <p className="section-subheading">
+                The details that matter when you're deep in an integration.
+            </p>
+        </div>
+
+        <div className="grid sm:grid-cols-3 gap-8">
+            <div>
+                <div className="pillar-label">Authentication</div>
+
+                <h3 className="pillar-title">CoCart</h3>
+                <p className="pillar-body">
+                    Basic Auth with email, username, or phone number — plus JWT for token-based flows. No admin API keys required for customer actions.
+                </p>
+
+                <h3 className="pillar-title">WooGraphQL</h3>
+                <p className="pillar-body">
+                    JWT via the optional WPGraphQL-JWT-Authentication plugin, or OAuth2 via WPGraphQL Headless Login. Also supports WooCommerce Cart-Tokens for session-only access. Multiple plugins required.
+                </p>
+            </div>
+
+            <div>
+                <div className="pillar-label">Session Management</div>
+
+                <h3 className="pillar-title">CoCart</h3>
+                <p className="pillar-body">
+                    Database-backed cart keys passed via <code>X-Cart-Key</code> header. No cookies, no GDPR consent banners, works across any client.
+                </p>
+
+                <h3 className="pillar-title">WooGraphQL</h3>
+                <p className="pillar-body">
+                    JWT tokens or WooCommerce Cart-Tokens for session persistence. Supports multiple state changes per request via a Session Transaction Manager, but you manage token storage and renewal yourself.
+                </p>
+            </div>
+
+            <div>
+                <div className="pillar-label">Caching</div>
+
+                <h3 className="pillar-title">CoCart</h3>
+                <p className="pillar-body">
+                    Built-in ETag support with HTTP 304 responses. Cart and product endpoints return ETags automatically. SDKs handle <code>If-None-Match</code> headers for you.
+                </p>
+
+                <h3 className="pillar-title">WooGraphQL</h3>
+                <p className="pillar-body">
+                    No server-side caching. Relies on GraphQL client-side caching (Apollo normalized cache, urql document cache) which varies by client library.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{/* ===== WHY CHOOSE COCART ===== */}
+<div className="section-alt">
+    <div className="landing-section">
+        <div className="text-center mb-8">
+            <h2 className="section-heading">Why choose CoCart</h2>
+            <p className="section-subheading">
+                Four reasons developers choose REST over GraphQL for headless WooCommerce.
+            </p>
+        </div>
+
+        <div style={{maxWidth: '48rem', marginLeft: 'auto', marginRight: 'auto'}}>
+            <div className="problem-solution">
+                <div className="problem">Your team is more familiar with REST than GraphQL</div>
+                <div className="solution">REST works with any HTTP client — debug with curl, test with Postman, integrate from any language without a GraphQL client dependency.</div>
+            </div>
+
+            <div className="problem-solution">
+                <div className="problem">You want cookie-free sessions without managing JWT tokens</div>
+                <div className="solution">CoCart sessions use a simple cart key header — no token expiry to handle, no refresh logic to write.</div>
+            </div>
+
+            <div className="problem-solution">
+                <div className="problem">WooGraphQL's npm packages and CLI are locked behind annual Pro subscriptions</div>
+                <div className="solution">CoCart's SDKs and all 12 framework adapters are available to every user — free tier included.</div>
+            </div>
+
+            <div className="problem-solution">
+                <div className="problem">CORS requires an additional plugin (WPGraphQL-CORS)</div>
+                <div className="solution">CoCart has built-in CORS with configurable origin control via a single filter — no extra plugins needed.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{/* ===== FAQ ===== */}
+<div className="landing-section">
+    <div className="text-center mb-8">
+        <h2 className="section-heading">Frequently asked questions</h2>
+    </div>
+
+    <div style={{maxWidth: '48rem', marginLeft: 'auto', marginRight: 'auto'}}>
+        <AccordionGroup>
+            <Accordion title="Can I use CoCart and WooGraphQL together?">
+                Yes. They're separate WordPress plugins that don't conflict. Some teams use CoCart for cart and checkout operations and WooGraphQL for complex product queries. That said, most projects are simpler with a single API.
+            </Accordion>
+
+            <Accordion title="Is REST or GraphQL better for headless WooCommerce?">
+                It depends on your team. REST is simpler to debug, test, and integrate — any HTTP client works. GraphQL gives you precise field selection and fewer round trips for complex queries. CoCart's REST API covers the vast majority of headless commerce use cases without the added complexity of GraphQL.
+            </Accordion>
+
+            <Accordion title="Does WooGraphQL have an official SDK?">
+                WooGraphQL works with any GraphQL client (Apollo, urql) out of the box. Pro subscribers also get @woographql npm packages with React hooks and session utilities, plus a create-woonext-app CLI for Next.js scaffolding. CoCart provides official SDKs for TypeScript, PHP, Python, and Go with 12 framework adapters — available to all users at every tier.
+            </Accordion>
+
+            <Accordion title="How does pricing compare?">
+                Both have a free tier. CoCart's paid plans are {"$59"} and {"$99"}/year. WooGraphQL Pro starts at {"$99.99"}/year (or {"$19.99"}/month) and goes up to {"$449.99"}/year for unlimited sites. The entry prices are similar, but CoCart includes official SDKs and framework adapters at every tier — WooGraphQL's npm packages and CLI require an annual Pro subscription.
+            </Accordion>
+
+            <Accordion title="Do I need to learn GraphQL to use WooGraphQL?">
+                Yes. WooGraphQL requires understanding GraphQL queries, mutations, fragments, and how to work with a GraphQL client. CoCart uses standard REST endpoints that work with any HTTP client — no specialized knowledge needed.
+            </Accordion>
+
+            <Accordion title="How does CORS differ between the two?">
+                CoCart has built-in CORS handling with configurable origin control via the `cocart_allow_origin` filter — no extra plugins needed. WooGraphQL requires installing the separate WPGraphQL-CORS plugin for cross-origin support. For headless stores where your frontend and backend are on different domains, CoCart's approach is simpler to set up and maintain.
+            </Accordion>
+
+            <Accordion title="Which one handles WooCommerce extensions better?">
+                Both use WooCommerce's hooks system for extension compatibility, so most extensions work with either solution. CoCart has a [tested extensions list](/integrations) you can check for specific plugins.
+            </Accordion>
+        </AccordionGroup>
+    </div>
+</div>
+
+{/* ===== FINAL CTA ===== */}
+<div className="landing-section" style={{paddingBottom: '5rem'}}>
+    <div className="final-cta">
+        <h2>Ready to build your headless store?</h2>
+        <p>Install CoCart in minutes and connect your WooCommerce store to any frontend.</p>
+        <div className="flex flex-wrap gap-4 justify-center">
+            <a className="cta-primary" href="/getting-started/wordpress-setup">Get Started</a>
+            <a className="cta-secondary" href="/api-reference">API Reference</a>
+        </div>
+    </div>
+</div>

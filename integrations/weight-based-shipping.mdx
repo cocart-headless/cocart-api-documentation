@@ -1,0 +1,74 @@
+---
+title: "Weight Based Shipping for WooCommerce"
+sidebarTitle: "Weight Based Shipping"
+description: "Parse Weight Based Shipping multi-shipment solution data into a structured shipments array in CoCart cart shipping responses."
+tag: "In Testing"
+robots: "noindex, follow"
+---
+
+<Info>
+  This feature documentation was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 28th, 2026.
+</Info>
+
+[Weight Based Shipping for WooCommerce](https://wordpress.org/plugins/weight-based-shipping-for-woocommerce/) calculates shipping rates based on cart weight. Its modern UI (`wbsng`) can split a single shipment across multiple parcels. The CoCart Plus integration converts the raw JSON solution stored in the shipping rate's meta data into a clean `shipments` array, so headless storefronts can render a cost breakdown per parcel without parsing raw JSON.
+
+<Info>
+  This integration is available in CoCart Plus since <Tooltip tip="This is the version of CoCart Plus">v2.0.0</Tooltip> and requires Weight Based Shipping for WooCommerce to be installed and active.
+</Info>
+
+## How it works
+
+When the `wbsng` method covers multiple shipments, it stores a JSON-encoded solution in the rate's `meta_data` under the key `wbsng_solution`. CoCart normally exposes this as raw JSON — not useful for display.
+
+The integration intercepts the shipping packages after rates are built and, for any `wbsng` rate with a solution, replaces the raw JSON with a structured `shipments` array.
+
+The legacy `wbs` method never adds `wbsng_solution` and is unaffected.
+
+## Cart shipping response
+
+Shipping rates from the `wbsng` method that cover multiple parcels include a `shipments` array in their `meta_data`.
+
+```json Example (shipping rate meta_data excerpt)
+{
+  "id": "wbsng:1",
+  "method_id": "wbsng",
+  "label": "Standard Shipping",
+  "cost": "1500",
+  "meta_data": {
+    "shipments": [
+      {
+        "title": "Parcel 1 (up to 5kg)",
+        "cost": "800"
+      },
+      {
+        "title": "Parcel 2 (up to 3kg)",
+        "cost": "700"
+      }
+    ]
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `shipments[].title` | `string` | Human-readable label for this parcel shipment. |
+| `shipments[].cost` | `string` | Cost for this parcel (smallest currency unit). |
+
+Rates with a single shipment (no `wbsng_solution` in meta) are returned as-is, without a `shipments` key.
+
+## Usage
+
+```javascript JavaScript
+const packages = cart.shipping.packages;
+
+for (const pkg of Object.values(packages)) {
+  for (const rate of Object.values(pkg.rates)) {
+    if (rate.meta_data?.shipments?.length > 0) {
+      // Show breakdown
+      for (const shipment of rate.meta_data.shipments) {
+        console.log(`${shipment.title}: ${shipment.cost}`);
+      }
+    }
+  }
+}
+```

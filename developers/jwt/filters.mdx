@@ -1,0 +1,258 @@
+---
+title: "JWT Authentication Filters"
+sidebarTitle: "JWT Auth Filters"
+description: "PHP filter hooks for the CoCart JWT Authentication plugin. Customize token issuance, expiration, algorithms, refresh tokens, and revocation policies."
+---
+
+<Note>
+    Download the [JWT Authentication for CoCart](https://wordpress.org/plugins/cocart-jwt-authentication/) plugin to use these filters.
+</Note>
+
+<Tip>
+    See the [Developer Reference](/developers) for the full plugin key index. All hooks on this page apply to the <Badge color="green">JWT</Badge> add-on.
+</Tip>
+
+## Authentication Filters
+
+### `cocart_jwt_auth_issued_at`
+
+<Info>
+    Made available since v2.0.0
+</Info>
+
+Allows you to change the token issuance timestamp (iat claim) for token timing synchronization.
+
+```php
+add_filter( 'cocart_jwt_auth_issued_at', function( $timestamp ) {
+    // Add a 5-minute buffer
+    return $timestamp + (5 * MINUTE_IN_SECONDS);
+} );
+```
+
+### `cocart_jwt_auth_issuer`
+
+<Info>
+    Made available since v2.0.0
+</Info>
+
+Allows you to change the token issuer (iss claim) for multi-site setups or custom API endpoints.
+
+```php
+add_filter( 'cocart_jwt_auth_issuer', function( $issuer ) {
+    return 'https://api.yoursite.com';
+} );
+```
+
+### `cocart_jwt_auth_not_before`
+
+<Info>
+    Made available since v2.0.0
+</Info>
+
+Allows you to set when the token becomes valid (nbf claim) for token activation control.
+
+```php
+add_filter( 'cocart_jwt_auth_not_before', function( $time, $issued_at ) {
+    // Token becomes valid 5 minutes after issuance
+    return $issued_at + (5 * MINUTE_IN_SECONDS);
+}, 10, 2);
+```
+
+### `cocart_jwt_auth_expire`
+
+<Info>
+    Made available since v2.0.0
+</Info>
+
+Allows you to customize when the token will expire (exp claim) based on roles or conditions.
+
+```php
+add_filter( 'cocart_jwt_auth_expire', function( $expiration, $issued_at ) {
+    // Set expiration to 2 days
+    return 2 * DAY_IN_SECONDS;
+}, 10, 2);
+```
+
+### `cocart_jwt_auth_algorithm`
+
+<Info>
+    Made available since v2.0.0
+</Info>
+
+Allows you to change the algorithm used for token signing.
+
+```php
+add_filter( 'cocart_jwt_auth_algorithm', function( $algorithm ) {
+    return 'RS256'; // Use RSA SHA-256 instead of default HS256
+});
+```
+
+### `cocart_jwt_auth_token_user_data`
+
+<Info>
+    Made available since v2.2.0
+</Info>
+
+Allows additional user data to be applied to the payload before the token is generated.
+
+```php
+add_filter( 'cocart_jwt_auth_token_user_data', function( $data, $user ) {
+    return array_merge( $data, array(
+        'role'         => $user->roles[0],
+        'display_name' => $user->display_name,
+        'email'        => $user->user_email
+    ) );
+}, 10, 2);
+```
+
+## Refresh Token Filters
+
+### `cocart_jwt_auth_refresh_token_generation`
+
+<Info>
+    Made available since v2.0.0
+</Info>
+
+Allows you to change how refresh tokens are generated.
+
+```php
+add_filter( 'cocart_jwt_auth_refresh_token_generation', function( $token ) {
+    return md5( uniqid() . time() ); // Use MD5 for token generation
+});
+```
+
+### `cocart_jwt_auth_refresh_token_expiration`
+
+<Info>
+    Made available since v2.0.0
+</Info>
+
+Allows you to customize refresh token lifetime based on roles or conditions.
+
+```php
+add_filter( 'cocart_jwt_auth_refresh_token_expiration', function( $expiration ) {
+    return 60 * DAY_IN_SECONDS; // Set to 60 days
+});
+```
+
+## Token Management
+
+### `cocart_jwt_auth_revoke_tokens_on_email_change`
+
+<Info>
+    Made available since v2.3.0
+</Info>
+
+Allows you to control token revocation on email changes.
+
+```php
+add_filter( 'cocart_jwt_auth_revoke_tokens_on_email_change', function( $should_revoke, $user_id ) {
+    return true; // Always revoke tokens on email change.
+}, 10, 2);
+```
+
+### `cocart_jwt_auth_revoke_tokens_on_password_change`
+
+<Info>
+    Made available since v2.3.0
+</Info>
+
+Allows you to control token revocation on password changes for security policies.
+
+```php
+add_filter( 'cocart_jwt_auth_revoke_tokens_on_password_change', function( $should_revoke, $user_id ) {
+    return $user_id !== 1; // Don't revoke tokens for admin user
+}, 10, 2);
+```
+
+### `cocart_jwt_auth_revoke_tokens_on_after_password_reset`
+
+<Info>
+    Made available since v2.3.0
+</Info>
+
+Allows you to control token revocation on password reset for security policies.
+
+```php
+add_filter( 'cocart_jwt_auth_revoke_tokens_on_after_password_reset', function( $should_revoke, $user_id ) {
+    return true; // Always revoke tokens after password reset.
+}, 10, 2);
+```
+
+### `cocart_jwt_auth_revoke_tokens_on_profile_update`
+
+<Info>
+    Made available since v2.3.0
+</Info>
+
+Allows you to control token revocation on profile update.
+
+```php
+add_filter( 'cocart_jwt_auth_revoke_tokens_on_profile_update', function( $should_revoke, $user_id ) {
+    return true; // Always revoke tokens on profile change.
+}, 10, 2);
+```
+
+### `cocart_jwt_auth_revoke_tokens_on_delete_user`
+
+<Info>
+    Made available since v2.3.0
+</Info>
+
+Allows you to control token revocation when a user is deleted.
+
+```php
+add_filter( 'cocart_jwt_auth_revoke_tokens_on_delete_user', function( $should_revoke, $user_id ) {
+    return true; // Always revoke tokens when user is deleted.
+}, 10, 2);
+```
+
+### `cocart_jwt_auth_revoke_tokens_on_wp_logout`
+
+<Info>
+    Made available since v2.3.0
+</Info>
+
+Allows you to control token revocation when a user logs out.
+
+```php
+add_filter( 'cocart_jwt_auth_revoke_tokens_on_wp_logout', function( $should_revoke, $user_id ) {
+    return true; // Always revoke tokens on logout.
+}, 10, 2);
+```
+
+### `cocart_jwt_auth_token_prefix`
+
+<Info>
+    Made available since v2.5.0
+</Info>
+
+This prefix is used to identify the token type. It can be useful if you want to use different token types or to avoid conflicts with other JWT implementations.
+
+<Note>It is **NOT required** to use a prefix, but it can help to distinguish tokens from different sources or implementations so use a unique prefix.</Note>
+
+```php
+add_filter( 'cocart_jwt_auth_token_prefix', function( $prefix ) {
+    return 'cocart_';
+}, 10, 2);
+```
+
+### `cocart_jwt_auth_max_user_tokens`
+
+<Info>
+    Made available since v3.0.0
+</Info>
+
+Allows changing the maximum number of tokens a user can have. Default is 5 tokens.
+
+```php
+add_filter( 'cocart_jwt_auth_max_user_tokens', function( $max_tokens, $user ) {
+    // Allow administrators to have more tokens
+    if ( in_array( 'administrator', $user->roles ) ) {
+        return 20;
+    }
+
+    // Limit regular users to 3 tokens
+    return 3;
+}, 10, 2);
+```

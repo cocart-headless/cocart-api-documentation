@@ -1,0 +1,79 @@
+---
+title: "WP-CLI for CoCart"
+sidebarTitle: "WP-CLI"
+description: "CoCart offers the ability to manage the plugin via the command-line, using WP CLI."
+icon: "terminal"
+tag: "Updated"
+---
+
+<Tip>
+    Before you make any changes, always take a backup of your site. This keeps your data safe if anything goes wrong.
+</Tip>
+
+## Core Commands
+
+<Note>
+    WP-CLI commands where introduced since v3
+</Note>
+
+All CoCart related commands are grouped into wp cocart command.
+
+| Command                | Description                                       |
+| ---------------------- | ------------------------------------------------- |
+| `wp cocart update`     | Updates the CoCart database.                      |
+| `wp cocart version`    | Returns the version of CoCart installed.          |
+| `wp cocart db-version` | Returns the database version of CoCart installed. |
+
+## Basic Commands
+
+These commands are exclusive to CoCart Starter.
+
+| Command              | Description                                            |
+| ---------------------| ------------------------------------------------------ |
+| `wp cocart status`   | View the status of all carts in session |
+| `wp cocart sessions` | Inspect session details and check if specific sessions exist |
+
+## Plus Commands
+
+These commands are exclusive to CoCart Plus.
+
+| Command                  | Description                                            |
+| ------------------------ | ------------------------------------------------------ |
+| `wp cocart plus version` | Returns the version of CoCart Plus you have installed. |
+
+## Plugin Slugs
+
+Use the following slugs to manage CoCart plugins with WP-CLI. The slugs are used in the command line to identify the specific plugin you want to work with.
+
+| Plugin                    | Plugin Slug                   |
+| ------------------------- | ----------------------------- |
+| CoCart Community          | cart-rest-api-for-woocommerce |
+| CoCart Starter              | cocart-basic                  |
+| CoCart Plus               | cocart-plus                   |
+| CoCart JWT Authentication | cocart-jwt-authentication     |
+
+## Frequently Asked Questions
+
+<AccordionGroup>
+    <Accordion title="What is WP-CLI?">
+        WP-CLI is a powerful set of command-line tools for managing WordPress installations in the terminal saving you time and effort. You can update plugins, configure multisite installations, and much more, all without using a web browser.
+    </Accordion>
+
+    <Accordion title="How can I update a plugin using WP-CLI?">
+        To update a plugin using WP-CLI, first go to your WordPress directory in the terminal. Then type the command `wp plugin update <plugin-slug>`, replacing **plugin-slug** with the name of the plugin you want to update. This will update the plugin to its latest version.
+    </Accordion>
+
+    <Accordion title="Why can I not install a specific CoCart plugin using WP-CLI?">
+        Not all CoCart plugins are available for installation via WP-CLI as they are not hosted on the WordPress plugin directory. Other plugins must be installed manually by downloading them.
+    </Accordion>
+
+    <Accordion title="What are the advantages of using WP-CLI for plugin management?">
+        WP-CLI helps you manage plugins much faster by using simple commands in the terminal. You do not need to log in to the WordPress dashboard or click many buttons.
+
+        It can save time, reduce mistakes, and make it easier to manage many sites. WP-CLI is useful for both beginners and advanced users.
+    </Accordion>
+
+    <Accordion title="Where can I find more information about WP-CLI?">
+        For more information about WP-CLI visit the official site https://wp-cli.org/
+    </Accordion>
+</AccordionGroup>

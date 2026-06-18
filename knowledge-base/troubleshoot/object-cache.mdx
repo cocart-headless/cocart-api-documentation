@@ -1,0 +1,189 @@
+---
+title: "Object Cache Conflicts"
+sidebarTitle: "Object Cache"
+description: "Fix stale cart data and session issues caused by Redis, Memcached, or other persistent object caches."
+icon: "database"
+'og:title': "Troubleshooting Object Cache Conflicts with CoCart"
+---
+
+If your store uses a persistent object cache like Redis or Memcached, you may run into issues where cart data becomes stale, sessions don't update properly, or changes seem to disappear. This guide explains why that happens and how to fix it.
+
+## What Is an Object Cache?
+
+WordPress has a built-in caching layer called the **object cache**. By default, it only lasts for a single page load — every new request starts fresh.
+
+Persistent object cache plugins (like Redis Object Cache, Memcached, or Object Cache Pro) change this behavior so cached data **survives between requests**. This makes your site faster because WordPress doesn't need to re-query the database for every request.
+
+The problem is that cart data is **highly dynamic** — it changes every time a customer adds, removes, or updates an item. If the object cache serves a stale version of the cart, the customer sees outdated data even though the database has the correct information.
+
+## How CoCart Uses the Object Cache
+
+CoCart stores cart sessions in a custom database table (`wp_cocart_carts`) and uses the object cache as a fast lookup layer in front of it:
+
+1. **Reading a cart** — CoCart first checks the object cache. If the cart is found there, it skips the database query entirely. If not, it reads from the database and stores the result in the object cache for next time.
+2. **Saving a cart** — CoCart writes to the database **and** updates the object cache at the same time.
+3. **Deleting a cart** — CoCart removes it from both the database and the object cache.
+
+All cart cache entries live under the `cocart_cart_id` cache group.
+
+## Common Symptoms
+
+<AccordionGroup>
+  <Accordion title="Cart shows items that were already removed">
+    **What's happening:** The object cache is returning a stale copy of the cart from before the item was removed. The database has the correct data, but CoCart reads the cache first and never reaches the database.
+
+    **Likely cause:** The cache entry wasn't properly invalidated after the cart was updated. This can happen if:
+    - Your object cache plugin has a write-back delay
+    - A cache replication lag exists between cache nodes (in clustered setups)
+    - The cache set operation silently failed (e.g., Memcached memory limit reached)
+  </Accordion>
+
+  <Accordion title="Adding items to the cart doesn't persist">
+    **What's happening:** The item is added and saved to the database, but a subsequent request reads the old cart from cache — which doesn't include the new item.
+
+    **Likely cause:** The cache update after the database write isn't reaching the cache layer that serves the next read request. Common in setups with:
+    - Multiple Redis replicas where writes go to the primary but reads come from a replica
+    - Memcached with multiple servers where keys hash to different nodes for read vs. write
+  </Accordion>
+
+  <Accordion title="Cart works fine for a while, then suddenly resets">
+    **What's happening:** The object cache entry expired, and when CoCart fell back to the database, it found a different version of the cart (or no cart at all).
+
+    **Likely cause:** The cache TTL (time-to-live) and the database session expiry are out of sync. CoCart sets the cache TTL based on the session expiration:
+
+    | Customer type | Session expiry | Cache TTL |
+    |---------------|---------------|-----------|
+    | Logged-in | 7 days | Matches session expiry |
+    | Guest | 48 hours | Matches session expiry |
+
+    If your object cache evicts entries earlier (due to memory pressure or a lower max TTL setting), the cache and database fall out of sync.
+  </Accordion>
+
+  <Accordion title="Two customers see each other's cart data">
+    **What's happening:** Cart data from one session is being served to a different session. This is a serious issue.
+
+    **Likely cause:** The cache key prefix has been misconfigured or the object cache is ignoring the cache group, causing key collisions between different carts. This can happen when:
+    - A custom `WP_CACHE_KEY_SALT` is not set on a multisite installation
+    - The object cache plugin doesn't properly support cache groups
+    - A CDN or page cache is caching the full API response (this is a different issue — see [REST API Caching](/knowledge-base/troubleshoot/rest-api-caching))
+  </Accordion>
+</AccordionGroup>
+
+## Fixes
+
+### 1. Ensure your object cache plugin is up to date
+
+Many of the stale cache issues described above were bugs in earlier versions of object cache plugins that have since been fixed. Make sure you're running the latest version of your object cache plugin:
+
+- **Redis Object Cache** — v2.5+
+- **Object Cache Pro** — v1.20+
+- **W3 Total Cache** — v2.7+
+- **LiteSpeed Cache** — v6.0+ (CoCart automatically excludes itself from LiteSpeed Cache since v4.4)
+
+### 2. Exclude CoCart sessions from the persistent object cache
+
+If stale data issues persist, the most reliable fix is to tell WordPress not to persist CoCart's cache group. This means cart lookups will always hit the database, but the database queries are fast and the trade-off is worth it for data consistency.
+
+Add this to your theme's `functions.php` or a [must-use plugin](https://developer.wordpress.org/advanced-administration/plugins/mu-plugins/):
+
+```php
+wp_cache_add_non_persistent_groups( array(
+    'cocart_cart_id',
+    'wc_session_id',
+) );
+```
+
+<Note>
+  This must run **early** — before any CoCart or WooCommerce code executes. A [must-use plugin](https://developer.wordpress.org/advanced-administration/plugins/mu-plugins/) (`wp-content/mu-plugins/`) is the most reliable place for it.
+</Note>
+
+### 3. Check your Redis/Memcached memory limits
+
+When an object cache runs out of memory, it evicts old entries to make room. If cart data is evicted while the customer is still shopping, the next request falls back to the database, which may have a different version of the cart.
+
+**For Redis**, check the `maxmemory` setting:
+
+```bash
+redis-cli INFO memory | grep maxmemory
+```
+
+If `maxmemory` is set too low, increase it or set an eviction policy that protects recently-used keys:
+
+```
+maxmemory-policy allkeys-lru
+```
+
+**For Memcached**, check the `-m` flag (memory limit in MB) in your startup configuration.
+
+<Tip>
+  Monitor your object cache hit rate. If it drops below 90%, your cache is likely under memory pressure and evicting entries prematurely. Most hosting dashboards show this metric, or you can check with `redis-cli INFO stats` (look at `keyspace_hits` vs `keyspace_misses`).
+</Tip>
+
+### 4. Check for replication lag (clustered setups)
+
+If you run Redis or Memcached in a clustered or primary-replica configuration, there may be a delay between when data is written to the primary and when it's available on the replica. If CoCart writes to the primary but reads from a replica, the read may return stale data.
+
+**For Redis Cluster or Sentinel:** Ensure your object cache plugin is configured to read from the primary for session-related cache groups, or use the non-persistent groups approach from fix #2 above.
+
+### 5. Verify WP_CACHE_KEY_SALT is set
+
+If you run multiple WordPress sites using the same Redis or Memcached instance, each site needs a unique cache key salt to prevent key collisions:
+
+```php
+// wp-config.php
+define( 'WP_CACHE_KEY_SALT', 'your-unique-site-identifier_' );
+```
+
+Without this, two sites could read each other's cached cart data if the cart keys happen to match.
+
+## Confirming the Fix
+
+After applying a fix, verify that cart operations work consistently:
+
+<Steps>
+  <Step title="Add an item to the cart">
+    ```bash
+    curl -X POST https://example.com/wp-json/cocart/v2/cart/add-item \
+      -H "Content-Type: application/json" \
+      -d '{"id":"123","quantity":"1"}'
+    ```
+  </Step>
+  <Step title="Immediately read the cart back">
+    ```bash
+    curl https://example.com/wp-json/cocart/v2/cart
+    ```
+
+    The item you just added should appear. If it doesn't, the object cache is serving stale data.
+  </Step>
+  <Step title="Remove the item and read again">
+    ```bash
+    curl -X DELETE https://example.com/wp-json/cocart/v2/cart/item/{item_key}
+    ```
+
+    Then fetch the cart again. The item should be gone.
+  </Step>
+  <Step title="Repeat from a different client">
+    Run the same steps from a different machine or browser to confirm the issue isn't client-side caching.
+  </Step>
+</Steps>
+
+## Hosting-Specific Notes
+
+| Host | Object cache | Notes |
+|------|-------------|-------|
+| **WP Engine** | Redis (built-in) | Contact support to exclude `cocart_cart_id` group if issues persist. See also [REST API Caching](/knowledge-base/troubleshoot/rest-api-caching). |
+| **Kinsta** | Redis (built-in) | Supports `wp_cache_add_non_persistent_groups` out of the box. |
+| **Pantheon** | Object Cache Pro (optional) | Use `oc_ignored_groups` filter — see [REST API Caching](/knowledge-base/troubleshoot/rest-api-caching). |
+| **Cloudways** | Redis or Memcached (configurable) | Accessible via server settings panel. Increase memory if needed. |
+| **GridPane** | Redis (built-in) | Set `WP_CACHE_KEY_SALT` in `wp-config.php` for multi-site setups. |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="REST API Caching" icon="server" href="/knowledge-base/troubleshoot/rest-api-caching">
+    Fix page-level and CDN caching issues on managed hosts.
+  </Card>
+  <Card title="Cache Control" icon="bolt" href="/cache">
+    Learn how CoCart sets HTTP cache headers automatically.
+  </Card>
+</CardGroup>

@@ -1,0 +1,144 @@
+---
+title: "TypeScript SDK: Utilities"
+sidebarTitle: "Utilities"
+description: "Utility classes in the CoCart TypeScript SDK — currency formatting, timezone helpers, and response transformers."
+'og:title': "Currency, Timezone & Response Utilities — CoCart TypeScript SDK"
+'og:description': "Format WooCommerce prices correctly for any locale and currency using CurrencyFormatter, convert store timezone dates with TimezoneHelper, and hook into every API response with a transformer."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+</Info>
+
+The SDK includes standalone utility classes for common tasks. These are optional and don't affect core SDK behavior.
+
+## Currency Formatter
+
+CoCart returns prices as **smallest-unit integers** — `4599` means $45.99 (4599 cents). This avoids floating-point rounding errors. `CurrencyFormatter` converts these integers into human-readable price strings using the built-in `Intl.NumberFormat` API.
+
+```ts
+import { CurrencyFormatter } from '@cocartheadless/sdk';
+
+const fmt = new CurrencyFormatter();
+```
+
+### Formatting Prices
+
+```ts
+const response = await client.cart().get();
+const currency = response.getCurrency();
+// currency => { currency_code: 'USD', currency_minor_unit: 2, ... }
+
+fmt.format(4599, currency);  // "$45.99"
+fmt.format(100, currency);   // "$1.00"
+fmt.format(0, currency);     // "$0.00"
+```
+
+### Decimal String (No Symbol)
+
+```ts
+fmt.formatDecimal(4599, currency); // "45.99"
+```
+
+### Different Currencies
+
+```ts
+// Euro (2 decimal places)
+const eur = { currency_code: 'EUR', currency_minor_unit: 2 } as CurrencyInfo;
+fmt.format(1299, eur);  // "€12.99"
+
+// Japanese Yen (0 decimal places)
+const jpy = { currency_code: 'JPY', currency_minor_unit: 0 } as CurrencyInfo;
+fmt.format(1500, jpy);  // "¥1,500"
+```
+
+### Custom Locale
+
+A locale code controls number formatting (decimal separator, currency symbol placement):
+
+```ts
+const fmt = new CurrencyFormatter('de-DE');
+fmt.format(4599, eur); // "12,99 €"
+```
+
+---
+
+## Timezone Helper
+
+WooCommerce stores dates in the store's configured timezone. `TimezoneHelper` converts these to any timezone using the built-in `Intl.DateTimeFormat` API.
+
+```ts
+import { TimezoneHelper } from '@cocartheadless/sdk';
+
+const tz = new TimezoneHelper();
+```
+
+### Detect User Timezone
+
+```ts
+const timezone = tz.detectTimezone();
+// "America/New_York", "Europe/London", "Asia/Tokyo", etc.
+```
+
+### Convert Between Timezones
+
+```ts
+tz.convert('2025-01-15T10:00:00', 'UTC', 'America/New_York');
+// "2025-01-15T05:00:00" (EST is UTC-5)
+
+tz.convert('2025-06-15T10:00:00', 'UTC', 'America/New_York');
+// "2025-06-15T06:00:00" (EDT is UTC-4)
+```
+
+### Convert Store Time to Local Time
+
+```ts
+// Store is in UTC, user is in America/New_York
+tz.toLocal('2025-01-15T10:00:00', 'UTC');
+
+// If no store timezone is provided, defaults to UTC
+tz.toLocal('2025-01-15T10:00:00');
+```
+
+---
+
+## Response Transformer
+
+A response transformer is a function the SDK calls on every API response before returning it to your code. Use it for logging, metrics, or data enrichment.
+
+### Via Constructor
+
+```ts
+const client = new CoCart('https://your-store.com', {
+  responseTransformer: (response) => {
+    console.log(`[${response.statusCode}] Response received`);
+    return response;
+  },
+});
+```
+
+### Via Fluent Setter
+
+```ts
+const client = new CoCart('https://your-store.com')
+  .setResponseTransformer((response) => {
+    // Add timing metadata, format currencies, etc.
+    return response;
+  });
+```
+
+### Clearing the Transformer
+
+```ts
+client.setResponseTransformer(null);
+```
+
+### Example: Logging All Responses
+
+```ts
+client.setResponseTransformer((response) => {
+  console.log(`Status: ${response.statusCode}`);
+  console.log(`Items: ${response.getItemCount()}`);
+  return response;
+});
+```

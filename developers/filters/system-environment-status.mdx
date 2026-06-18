@@ -1,0 +1,314 @@
+---
+title: "System Environment & Status Filters"
+sidebarTitle: "System Environment & Status"
+description: "PHP filters for environment detection, pricing overrides, REST API status, and frontend access control."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Filters Reference overview](/developers/filters) for the full plugin key index and all filter categories.
+</Tip>
+
+### `cocart_does_product_allow_price_change`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter which products that can be allowed to override the price if not all.
+
+<Note>Made available since v4.1.0</Note>
+
+**Parameters**
+
+<ParamField query="allow_change" type="boolean">
+  Allow price change.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  Cart item.
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_does_product_allow_price_change', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_does_product_allow_price_change` in repository](https://github.com/co-cart/co-cart/search?q=cocart_does_product_allow_price_change&type=code)
+
+---
+
+### `cocart_is_rest_api_request`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters the REST API requested.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="is_rest_api_request" type="boolean">
+  True if CoCart REST API is requested.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_is_rest_api_request', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_is_rest_api_request` in repository](https://github.com/co-cart/co-cart/search?q=cocart_is_rest_api_request&type=code)
+
+---
+
+### `cocart_rest_should_load_namespace`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filter allows you to determine whether a specific API namespace should be loaded. Use this to disable certain API namespaces for performance or security.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="should_load" type="boolean">
+  Whether to load the namespace. Default: `true`.
+</ParamField>
+
+<ParamField query="namespace" type="string">
+  The namespace being loaded (e.g. `'cocart/v2'`).
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_rest_should_load_namespace', function( $should_load, $namespace ) {
+    // Disable API v1 entirely
+    if ( $namespace === 'cocart/v1' ) {
+        return false;
+    }
+    return $should_load;
+}, 10, 2 );
+```
+
+---
+
+### `cocart_wp_disable_access`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filter allows you to disable frontend access to the WordPress site entirely. When enabled, visitors are redirected to your headless storefront instead of seeing the WordPress theme.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="disable" type="string">
+  Whether to disable WordPress frontend access. Accepts `yes` or `no`. Default: `no`.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_wp_disable_access', '__return_true' );
+```
+
+---
+
+### `cocart_wp_frontend_url`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filter allows you to control where visitors are redirected when accessing your WordPress site, if you have [disabled frontend access](#cocart_wp_disable_access).
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="frontend_url" type="string">
+  The frontend URL to redirect to.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_wp_frontend_url', function() {
+    return 'https://my-headless-store.com';
+} );
+```
+
+---
+
+### `cocart_wp_accessible_page_ids`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filter allows you to specify which WordPress page IDs remain accessible when frontend access is disabled. By default, cart and checkout pages remain accessible to support the [Load Cart from Session](/load-cart) feature.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="page_ids" type="array">
+  Array of page IDs that remain accessible.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_wp_accessible_page_ids', function( $page_ids ) {
+    // Also keep the privacy policy page accessible
+    $page_ids[] = get_option( 'wp_page_for_privacy_policy' );
+    return $page_ids;
+} );
+```
+
+---
+
+### `cocart_return_default_response`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+**See Also:**
+- `cocart_{$endpoint}_response`
+Filter decides if the responses return as default or use the modified response which is filtered by the rest base.
+
+<Note>Made available since v3.0.0</Note>
+
+**Usage**
+```php
+add_filter( 'cocart_return_default_response', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_return_default_response` in repository](https://github.com/co-cart/co-cart/search?q=cocart_return_default_response&type=code)
+
+---
+
+### `cocart_totals_calculated_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about cart totals have been calculated.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_totals_calculated_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_totals_calculated_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_totals_calculated_message&type=code)
+
+---
+
+### `cocart_is_offline_mode`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Filters whether CoCart considers the site to be in offline mode.
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Parameters**
+
+<ParamField query="offline_mode" type="bool">
+  Whether the site is in offline mode.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_is_offline_mode', function( $offline_mode ) {
+    // Force offline mode during maintenance
+    return true;
+} );
+```
+
+---
+
+### `cocart_is_local_site`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Filters whether the current site is detected as a local development environment.
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Parameters**
+
+<ParamField query="is_local" type="bool">
+  Whether the site is a local development site.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_is_local_site', function( $is_local ) {
+    // Treat custom TLD as local
+    if ( strpos( site_url(), '.test' ) !== false ) {
+        return true;
+    }
+    return $is_local;
+} );
+```
+
+---
+
+### `cocart_known_staging`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Filters the list of known staging environment patterns used to detect staging sites. Includes URL patterns and PHP constants to check.
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Parameters**
+
+<ParamField query="known_staging" type="array">
+  Array with `urls` (array of regex patterns) and `constants` (array of PHP constant names to check).
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_known_staging', function( $known_staging ) {
+    // Add your custom staging URL pattern
+    $known_staging['urls'][] = '#\.staging\.yourcompany\.com#i';
+    return $known_staging;
+} );
+```
+
+---
+
+### `cocart_is_staging_site`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Filters whether the current site is detected as a staging environment.
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Parameters**
+
+<ParamField query="is_staging" type="bool">
+  Whether the site is a staging site.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_is_staging_site', function( $is_staging ) {
+    return $is_staging;
+} );
+```

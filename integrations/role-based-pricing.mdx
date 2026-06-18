@@ -1,0 +1,61 @@
+---
+title: "Role-Based Pricing for WooCommerce"
+sidebarTitle: "Role-Based Pricing"
+description: "Automatically serve role-resolved product prices to authenticated users in the CoCart products API."
+tag: "In Testing"
+robots: "noindex, follow"
+---
+
+<Info>
+  This feature documentation was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 28th, 2026.
+</Info>
+
+[Role-Based Pricing for WooCommerce by Addify](https://wordpress.org/plugins/addify-role-based-pricing/) lets store owners set different prices for different user roles (e.g. wholesale, VIP, trade). The CoCart Plus integration automatically overrides the `price` field in product responses with the role-resolved price for the currently authenticated user, so your headless storefront always receives the correct price without any extra logic.
+
+<Info>
+  This integration is available in CoCart Plus since <Tooltip tip="This is the version of CoCart Plus">v2.0.0</Tooltip> and requires Role-Based Pricing for WooCommerce (Addify) to be installed and active.
+</Info>
+
+## How it works
+
+When an authenticated user fetches a product through the CoCart products API:
+
+1. The integration calls the Addify pricing engine to resolve the role-specific price for that user.
+2. If a rule matches, the `price` field in the response is replaced with the role-resolved price.
+3. If no rule matches, the standard product price is returned unchanged.
+
+Cart item prices are handled automatically by the plugin's own `woocommerce_before_calculate_totals` hook — no additional work is required for the cart.
+
+## Product response
+
+The standard `price` field in the product response reflects the role-resolved price.
+
+```json Example — wholesale user response (excerpt)
+{
+  "id": 42,
+  "name": "Widget",
+  "price": "750",
+  "regular_price": "1000",
+  "sale_price": ""
+}
+```
+
+A guest or standard customer fetching the same product would see `price: "1000"`.
+
+## Usage
+
+Make product API requests with the customer's authentication token. No extra parameters are needed — the price override happens automatically.
+
+```bash cURL
+curl https://your-store.com/wp-json/cocart/v2/products/42 \
+  -H "Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ="
+```
+
+<Tip>
+  Always authenticate users before fetching products if you need role-specific pricing. Guest requests return the standard price.
+</Tip>
+
+## Known limitations
+
+- The price override applies to the products API only. The `regular_price` and `sale_price` fields continue to reflect the store's base prices — they are not overridden.
+- Variable product variation prices are not overridden by this integration at the product level; the plugin handles those through its own cart-level hooks.

@@ -1,0 +1,43 @@
+---
+title: "Deprecated Functions"
+sidebarTitle: "Deprecated"
+description: "Functions that have been deprecated in CoCart and their recommended replacements."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Functions Reference overview](/developers/functions) for all function categories and the [Developer Reference](/developers) for the plugin key index.
+</Tip>
+
+### `cocart_prepare_money_response()`
+
+<Warning>
+  **Deprecated:** v5.0.0 — Replaced with [cocart_format_money()](/developers/functions/formatting#cocart_format_money)
+</Warning>
+
+Convert monetary values from WooCommerce to string based integers.
+
+<Note>Made available since v3.1.0</Note>
+
+**Parameters**
+
+<ParamField query="amount" type="string|float">
+  Monetary amount with decimals.
+</ParamField>
+
+<ParamField query="decimals" type="int">
+  Number of decimals. Default: `2`.
+</ParamField>
+
+<ParamField query="rounding_mode" type="int">
+  Rounding mode. Default: `PHP_ROUND_HALF_UP`.
+</ParamField>
+
+**Returns**: `string` — The new amount.
+
+- **Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-rest-functions.php)
+
+---

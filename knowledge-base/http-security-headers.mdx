@@ -1,0 +1,371 @@
+---
+title: "HTTP Security Headers"
+description: "Recommended HTTP security headers for your headless storefront and hosting environment."
+icon: "shield-halved"
+tag: "NEW"
+---
+
+CoCart sets API-level response headers like `X-Content-Type-Options: nosniff` automatically. However, your **frontend application** and **hosting environment** are responsible for the remaining HTTP security headers that protect your storefront from common browser-based attacks.
+
+This guide covers which headers to set, where to set them, and which to remove.
+
+## Headers to Set in Your Frontend Application
+
+These headers should be set in your application's middleware or framework configuration — they protect the HTML pages your customers interact with.
+
+### Content-Security-Policy (CSP)
+
+Controls which resources (scripts, styles, images, fonts, connections) the browser is allowed to load. This is your primary defense against cross-site scripting (XSS) attacks.
+
+A storefront calling the CoCart API needs at minimum:
+
+```
+Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://your-store.com; font-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'
+```
+
+Replace `https://your-store.com` with your WordPress/WooCommerce backend URL. If you use payment gateways or third-party services, add their domains to the appropriate directives — see [common CSP domains](#common-csp-domains) below.
+
+<Tip>
+  Use `Content-Security-Policy-Report-Only` first to test your policy without breaking anything. It logs violations to the browser console without blocking resources. Once you are confident in your policy, switch to the enforcing `Content-Security-Policy` header.
+</Tip>
+
+### X-Frame-Options
+
+Prevents your storefront from being embedded in an `<iframe>` on another site (clickjacking protection).
+
+```
+X-Frame-Options: DENY
+```
+
+Use `SAMEORIGIN` instead if your storefront legitimately embeds itself (for example, a preview iframe in an admin panel).
+
+### Referrer-Policy
+
+Controls how much URL information is sent to other sites when your customers navigate away or load external resources.
+
+```
+Referrer-Policy: strict-origin-when-cross-origin
+```
+
+This sends the full URL for same-origin requests but only the origin (domain) for cross-origin requests — a good balance of functionality and privacy.
+
+### Permissions-Policy
+
+Restricts which browser features your storefront can use. A typical storefront does not need access to the camera, microphone, or geolocation.
+
+```
+Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+```
+
+The `interest-cohort=()` directive opts out of Google's FLoC tracking (now deprecated in favor of the Topics API, but still worth including for older browsers).
+
+### Cross-Origin-Embedder-Policy (COEP)
+
+Controls whether your page can load cross-origin resources that do not explicitly grant permission.
+
+```
+Cross-Origin-Embedder-Policy: require-corp
+```
+
+<Warning>
+  Setting `require-corp` blocks cross-origin resources (images, scripts, fonts) that lack a `Cross-Origin-Resource-Policy` header. If your storefront loads images from external CDNs or payment gateway scripts, use `unsafe-none` (the default) or `credentialless` until all resources are CORP-compatible.
+</Warning>
+
+### Cross-Origin-Opener-Policy (COOP)
+
+Isolates your storefront's browsing context from cross-origin popups. Prevents other windows opened from your site from accessing `window.opener`.
+
+```
+Cross-Origin-Opener-Policy: same-origin
+```
+
+<Note>
+  If your checkout flow opens a payment gateway in a popup (common with PayPal), use `same-origin-allow-popups` instead of `same-origin`.
+</Note>
+
+## Framework Examples
+
+<CodeGroup>
+```javascript Next.js (next.config.js)
+const securityHeaders = [
+  {
+    key: 'Content-Security-Policy',
+    value: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://your-store.com; font-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'"
+  },
+  {
+    key: 'X-Frame-Options',
+    value: 'DENY'
+  },
+  {
+    key: 'Referrer-Policy',
+    value: 'strict-origin-when-cross-origin'
+  },
+  {
+    key: 'Permissions-Policy',
+    value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()'
+  },
+  {
+    key: 'Cross-Origin-Opener-Policy',
+    value: 'same-origin'
+  }
+];
+
+module.exports = {
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: securityHeaders,
+      },
+    ];
+  },
+};
+```
+
+```javascript Express.js (helmet)
+const helmet = require('helmet');
+
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https://your-store.com"],
+      fontSrc: ["'self'"],
+      frameSrc: ["'none'"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+    },
+  },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  frameguard: { action: 'deny' },
+  permissionsPolicy: {
+    features: {
+      camera: [],
+      microphone: [],
+      geolocation: [],
+    },
+  },
+}));
+```
+
+```json Vercel (vercel.json)
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://your-store.com; font-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+        },
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin"
+        }
+      ]
+    }
+  ]
+}
+```
+</CodeGroup>
+
+---
+
+## Headers to Set at Your Host / Server
+
+These headers are best configured at the server or hosting level — they apply globally and are typically set once.
+
+### Strict-Transport-Security (HSTS)
+
+Tells browsers to only connect to your site over HTTPS. Once set, the browser refuses HTTP connections for the specified duration — even if the user types `http://`.
+
+```
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+```
+
+- `max-age=31536000` — enforce for 1 year (in seconds)
+- `includeSubDomains` — apply to all subdomains
+- `preload` — eligible for inclusion in the [browser preload list](https://hstspreload.org/)
+
+<Warning>
+  Only add `preload` after you have confirmed that HTTPS works correctly on your domain and all subdomains. Once your domain is in the preload list, removing it is slow and difficult. Test with a shorter `max-age` (e.g., `300`) first.
+</Warning>
+
+### Cross-Origin-Resource-Policy (CORP)
+
+Controls whether other origins can load your resources. For a headless storefront where the frontend and backend are on different domains, the **backend** (WordPress) should set:
+
+```
+Cross-Origin-Resource-Policy: cross-origin
+```
+
+This explicitly allows your frontend to fetch API responses and assets from the backend. Without it, browsers may block cross-origin resource loads when COEP is enabled on the frontend.
+
+### Server Configuration Examples
+
+<CodeGroup>
+```nginx Nginx
+server {
+    # HSTS
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+
+    # CORP (on your WordPress/WooCommerce backend)
+    add_header Cross-Origin-Resource-Policy "cross-origin" always;
+}
+```
+
+```apache Apache (.htaccess)
+# HSTS
+Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+# CORP (on your WordPress/WooCommerce backend)
+Header always set Cross-Origin-Resource-Policy "cross-origin"
+```
+</CodeGroup>
+
+Most managed hosting providers (Cloudflare, Vercel, Netlify) let you enable HSTS from their dashboard without editing server config files.
+
+---
+
+## Headers to Remove
+
+### X-Powered-By
+
+This header reveals your server technology (e.g., `X-Powered-By: PHP/8.2`, `X-Powered-By: Express`). It provides no functionality and gives attackers information about your stack.
+
+<CodeGroup>
+```nginx Nginx
+server {
+    # Hides the Nginx version from the Server header
+    server_tokens off;
+}
+```
+
+```apache Apache (.htaccess)
+# Remove X-Powered-By
+Header unset X-Powered-By
+Header always unset X-Powered-By
+
+# Hide Apache version
+ServerTokens Prod
+ServerSignature Off
+```
+
+```javascript Express.js
+// Disable the X-Powered-By header
+app.disable('x-powered-by');
+
+// Or if using helmet, it's disabled automatically
+const helmet = require('helmet');
+app.use(helmet());
+```
+
+```ini PHP (php.ini)
+; Disable PHP version in X-Powered-By
+expose_php = Off
+```
+</CodeGroup>
+
+---
+
+## Deprecated and Unnecessary Headers
+
+### X-Content-Security-Policy
+
+The legacy, non-standard predecessor to `Content-Security-Policy`. All modern browsers support the standard `Content-Security-Policy` header. Do not use `X-Content-Security-Policy`.
+
+### FLoC Opt-Out
+
+Google's Federated Learning of Cohorts (FLoC) has been deprecated in favor of the Topics API. The opt-out directive `Permissions-Policy: interest-cohort=()` is still recognized by some browsers and is included in the `Permissions-Policy` example above as a precaution.
+
+### Content-Security-Policy-Report-Only
+
+This is not deprecated — it is a useful testing tool. Use it to trial a CSP without blocking resources. Violations are reported to the browser console (or to a reporting endpoint if configured) without affecting your storefront. Switch to the enforcing `Content-Security-Policy` header once your policy is validated.
+
+---
+
+## Common CSP Domains
+
+If your storefront uses third-party services, add their domains to the relevant CSP directives:
+
+| Service | CSP Directives |
+|---|---|
+| **Stripe** | `script-src js.stripe.com`; `frame-src js.stripe.com` |
+| **PayPal** | `script-src www.paypal.com`; `frame-src www.paypal.com www.sandbox.paypal.com` |
+| **Square** | `script-src js.squareup.com`; `frame-src connect.squareup.com` |
+| **Google Fonts** | `style-src fonts.googleapis.com`; `font-src fonts.gstatic.com` |
+| **Google Analytics** | `script-src www.googletagmanager.com`; `connect-src www.google-analytics.com` |
+| **Google Maps** | `script-src maps.googleapis.com`; `img-src maps.gstatic.com maps.googleapis.com` |
+| **Cloudflare CDN** | `script-src cdnjs.cloudflare.com` |
+| **YouTube embeds** | `frame-src www.youtube.com` |
+| **Vimeo embeds** | `frame-src player.vimeo.com` |
+
+---
+
+## Quick Reference
+
+| Header | Where to Set | Example Value | Notes |
+|---|---|---|---|
+| `Content-Security-Policy` | Frontend app | `default-src 'self'; connect-src 'self' https://your-store.com` | Primary XSS defense |
+| `X-Frame-Options` | Frontend app | `DENY` | Clickjacking protection |
+| `Referrer-Policy` | Frontend app | `strict-origin-when-cross-origin` | Privacy control |
+| `Permissions-Policy` | Frontend app | `camera=(), microphone=(), geolocation=()` | Feature restriction |
+| `Cross-Origin-Embedder-Policy` | Frontend app | `require-corp` or `unsafe-none` | Use with caution |
+| `Cross-Origin-Opener-Policy` | Frontend app | `same-origin` | Window isolation |
+| `Strict-Transport-Security` | Host / server | `max-age=31536000; includeSubDomains; preload` | HTTPS enforcement |
+| `Cross-Origin-Resource-Policy` | Host / server | `cross-origin` | Set on your WooCommerce backend |
+| `X-Powered-By` | Host / server | *(remove it)* | Information disclosure |
+
+---
+
+## Testing Tools
+
+Validate your security headers before and after deployment:
+
+| Tool | What It Tests |
+|---|---|
+| [Security Headers](https://securityheaders.com/) | Scans any URL and grades all security headers at once |
+| [HSTS Preload](https://hstspreload.org/) | Checks HSTS preload eligibility and submits your domain to browser preload lists |
+| [WebPageTest](https://www.webpagetest.org/) | Full page load analysis including security header audit |
+| [HSTS Test](https://gf.dev/hsts-test/) | Dedicated HSTS configuration tester |
+| [Csper Evaluator](https://csper.io/evaluator) | Evaluates and suggests improvements for your CSP policy |
+| [Google CSP Evaluator](https://csp-evaluator.withgoogle.com/) | Finds weaknesses and bypasses in your CSP |
+
+<Tip>
+  Run [securityheaders.com](https://securityheaders.com/) against your storefront after deploying header changes. Aim for an **A** or **A+** grade.
+</Tip>
+
+---
+
+## Related
+
+<CardGroup cols={2}>
+    <Card title="Security" icon="shield" href="/security">
+        Built-in security features in CoCart's API.
+    </Card>
+    <Card title="Security Practices" icon="lock" href="/knowledge-base/security-practices">
+        Credentials, token storage, HTTPS, and authentication guidance.
+    </Card>
+    <Card title="CORS" icon="door-open" href="/cors">
+        Enable cross-origin requests for your frontend.
+    </Card>
+    <Card title="AI Skills" icon="sparkles" href="/ai-skills">
+        Use the CSP Generator skill to create a tailored Content-Security-Policy.
+    </Card>
+</CardGroup>

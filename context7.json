@@ -1,6 +1,6 @@
 {
   "title": "CoCart API Documentation",
-  "description": "Decoupling WooCommerce for the modern storefront. CoCart is a headless WooCommerce REST API that provides cart and checkout functionality for building modern, decoupled storefronts.",
+  "description": "Ship your headless WooCommerce storefront faster. CoCart is the REST API built for modern frontend frameworks — open, powerful, and developer-first.",
   "version": "stable",
   "homepage": "https://docs.cocartapi.com",
   "repository": "https://github.com/cocart-headless/cocart-api-documentation",

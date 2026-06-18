@@ -1,0 +1,141 @@
+---
+title: "Quantity Limits Functions"
+sidebarTitle: "Quantity Limits"
+description: "Instance methods on CoCart_Utilities_Quantity_Limits for calculating and validating product and cart item quantities."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Functions Reference overview](/developers/functions) for all function categories and the [Developer Reference](/developers) for the plugin key index.
+</Tip>
+
+<Tip>
+  `CoCart_Utilities_Quantity_Limits` is an instantiated class, not a static helper. Create an instance before calling its methods: `$limits = new CoCart_Utilities_Quantity_Limits();`
+</Tip>
+
+### `CoCart_Utilities_Quantity_Limits::get_cart_item_quantity_limits()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Returns the full set of quantity limits for a cart item: `minimum`, `maximum`, `multiple_of`, and `editable`.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="cart_item" type="array">
+  A cart item array containing a `data` key with a `WC_Product` instance.
+</ParamField>
+
+**Returns**: `array` — Keys: `minimum` (int|float), `maximum` (int|float), `multiple_of` (int|float), `editable` (bool).
+
+---
+
+### `CoCart_Utilities_Quantity_Limits::get_add_to_cart_limits()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Returns the quantity limits (`minimum`, `maximum`, `multiple_of`) for a product's add-to-cart context, accounting for stock, sold-individually status, and filters.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="product" type="WC_Product">
+  The product instance.
+</ParamField>
+
+<ParamField query="cart_item" type="array|null">
+  Optional cart item associated with the product.
+</ParamField>
+
+**Returns**: `array` — Keys: `minimum`, `maximum`, `multiple_of`.
+
+---
+
+### `CoCart_Utilities_Quantity_Limits::normalize_cart_item_quantity()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Adjusts a quantity to the nearest valid value according to the cart item's limits (minimum, maximum, and step). Returns `0` if the input is zero or negative.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="quantity" type="int|float">
+  The quantity to normalize.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  The cart item array.
+</ParamField>
+
+**Returns**: `int|float` — Normalized quantity.
+
+---
+
+### `CoCart_Utilities_Quantity_Limits::validate_quantity()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Single entry point for quantity validation. Checks the value is numeric, then validates it against the product or cart item limits. Pass a `WC_Product` for new-item validation or a cart item array for existing-item validation.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="quantity" type="int|float">
+  Quantity to validate.
+</ParamField>
+
+<ParamField query="context" type="WC_Product|array">
+  A `WC_Product` instance (for add-to-cart) or a cart item array (for update).
+</ParamField>
+
+**Returns**: `int|float|WP_Error` — Validated quantity, or error if invalid.
+
+---
+
+### `CoCart_Utilities_Quantity_Limits::validate_cart_item_quantity()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Validates a quantity against the limits for an existing cart item, returning a `WP_Error` if below minimum, above maximum, not a valid multiple, or not editable.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="quantity" type="int|float">
+  Quantity to validate.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  The cart item array.
+</ParamField>
+
+**Returns**: `true|WP_Error` — `true` if valid, or error.
+
+---
+
+### `CoCart_Utilities_Quantity_Limits::get_remaining_stock_for_product()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Returns the remaining stock for a product after subtracting reserved stock from any pending draft orders.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="product" type="WC_Product">
+  The product instance.
+</ParamField>
+
+**Returns**: `int|float|null` — Remaining stock, or `null` if the product does not manage stock.
+
+---

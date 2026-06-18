@@ -1,0 +1,69 @@
+---
+title: "Cart Update Hooks"
+sidebarTitle: "Cart Updates"
+description: "Action hooks that fire before and after cart totals are recalculated. Use these to run custom logic at precise points in the cart update lifecycle."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Action Hooks overview](/developers/actions) for all hook categories and the [Developer Reference](/developers) for the plugin key index.
+</Tip>
+
+### `cocart_update_cart_before_totals`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Fires before the cart has updated via a callback, but before cart totals are re-calculated.
+
+<Note>Made available since v4.1.0</Note>
+
+**Parameters**
+
+<ParamField path="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
+
+<ParamField path="controller" type="object">
+  The cart controller.
+</ParamField>
+
+**Usage**
+```php
+add_action( 'cocart_update_cart_before_totals', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_update_cart_before_totals` in repository](https://github.com/co-cart/co-cart/search?q=cocart_update_cart_before_totals&type=code)
+
+---
+
+### `cocart_update_cart_after_totals`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Fires after the cart has updated via a callback and the cart totals are re-calculated.
+
+<Note>Made available since v4.1.0</Note>
+
+**Parameters**
+
+<ParamField path="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
+
+<ParamField path="controller" type="object">
+  The cart controller.
+</ParamField>
+
+**Usage**
+```php
+add_action( 'cocart_update_cart_after_totals', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_update_cart_after_totals` in repository](https://github.com/co-cart/co-cart/search?q=cocart_update_cart_after_totals&type=code)

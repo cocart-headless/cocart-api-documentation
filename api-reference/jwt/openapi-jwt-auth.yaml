@@ -1,0 +1,230 @@
+openapi: 3.0.3
+info:
+  title: CoCart - JWT Authentication
+  version: 3.0.2
+  description: |
+    JWT Authentication for CoCart REST API.
+
+    Provides token-based authentication for CoCart endpoints. Tokens are issued during login
+    via the CoCart login endpoint and returned in the `extras` field as `jwt_token` and `jwt_refresh`.
+
+    Token defaults:
+    - JWT token expiry: 10 days (filterable via `cocart_jwt_auth_expire`)
+    - Refresh token expiry: 30 days (filterable via `cocart_jwt_auth_refresh_token_expiration`)
+    - Max tokens per user: 5 (filterable via `cocart_jwt_auth_max_user_tokens`)
+    - Default algorithm: HS256 (supports HS256/384/512, RS256/384/512, ES256/384/512, PS256/384/512)
+
+    Requires `COCART_JWT_AUTH_SECRET_KEY` constant to be defined in `wp-config.php`.
+  termsOfService: https://cocartapi.com/terms-of-conditions-polar/
+  contact:
+    email: support@cocartapi.com
+  license:
+    name: GNU General Public License v3.0
+    url: http://www.gnu.org/licenses/gpl-3.0.html
+externalDocs:
+  description: Find out more about CoCart API
+  url: https://docs.cocartapi.com
+servers:
+- url: '{protocol}://{host}/wp-json/cocart/jwt'
+  description: JWT Authentication API
+  variables:
+    protocol:
+      enum:
+      - http
+      - https
+      default: https
+    host:
+      default: example-store.com
+      description: Your store domain
+tags:
+- name: jwt-authentication
+  description: JWT token management endpoints
+paths:
+  /refresh-token:
+    post:
+      tags:
+      - jwt-authentication
+      summary: Refresh JWT token
+      description: |
+        Generates a new JWT token and refresh token using an existing refresh token.
+        The old token's PAT (Personal Access Token) session is destroyed and a new one is created.
+      x-rateLimit:
+        limit: 10
+        period: 60 seconds
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+                  description: The refresh token received during login or a previous refresh.
+              required:
+              - refresh_token
+      responses:
+        '200':
+          description: Token refreshed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+              example:
+                token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+                refresh_token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+        '403':
+          description: Forbidden - bad configuration, missing refresh token, or authentication error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                bad_config:
+                  summary: Secret key not configured
+                  value:
+                    code: cocart_jwt_auth_bad_config
+                    message: JWT is not configured properly.
+                    data:
+                      status: 403
+                missing_refresh_token:
+                  summary: Missing refresh token
+                  value:
+                    code: cocart_jwt_auth_missing_refresh_token
+                    message: Refresh token is missing.
+                    data:
+                      status: 403
+                authentication_error:
+                  summary: Invalid or expired refresh token
+                  value:
+                    code: cocart_authentication_error
+                    message: Authentication failed.
+                    data:
+                      status: 403
+      security:
+      - {}
+  /validate-token:
+    post:
+      tags:
+      - jwt-authentication
+      summary: Validate JWT token
+      description: |
+        Validates an existing JWT token. Requires a valid Bearer token in the Authorization header.
+        Returns a success message if the token is valid.
+      x-rateLimit:
+        limit: 2
+        period: 60 seconds
+      responses:
+        '200':
+          description: Token is valid.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Validation success message.
+              example:
+                message: Token is valid.
+        '401':
+          description: Unauthorized - invalid or expired token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_authentication_error
+                message: Authentication failed.
+                data:
+                  status: 401
+        '403':
+          description: Forbidden - bad configuration.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_jwt_auth_bad_config
+                message: JWT is not configured properly.
+                data:
+                  status: 403
+      security:
+      - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Bearer token authentication (JWT). Tokens are issued via the CoCart login endpoint
+        and returned in the response extras as `jwt_token` and `jwt_refresh`.
+  schemas:
+    TokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: New JWT token (expires in 10 days by default).
+        refresh_token:
+          type: string
+          description: New refresh token (expires in 30 days by default).
+    TokenPayload:
+      type: object
+      description: JWT token payload structure (for reference).
+      properties:
+        iss:
+          type: string
+          description: Token issuer (site URL).
+        iat:
+          type: integer
+          description: Issued at timestamp.
+        nbf:
+          type: integer
+          description: Not valid before timestamp.
+        exp:
+          type: integer
+          description: Expiration timestamp.
+        data:
+          type: object
+          properties:
+            user:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  description: User ID.
+                username:
+                  type: string
+                  description: Username.
+                ip:
+                  type: string
+                  description: IP address of the client.
+                device:
+                  type: string
+                  description: Device identifier from User-Agent.
+                pat:
+                  type: string
+                  description: Personal Access Token identifier.
+    ErrorResponse:
+      type: object
+      description: Standard error response structure.
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code.
+          example: cocart_authentication_error
+        message:
+          type: string
+          description: Human-readable error message.
+          example: Authentication failed.
+        data:
+          type: object
+          description: Additional error data.
+          properties:
+            status:
+              type: integer
+              description: HTTP status code.
+              example: 403
+          additionalProperties: true

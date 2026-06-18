@@ -1,0 +1,208 @@
+---
+title: "PHP SDK: Error Handling"
+sidebarTitle: "Error Handling"
+description: "Handle errors from the CoCart PHP SDK — exception hierarchy, catching exceptions, JWT token expiry, and HTTP status code mapping."
+'og:title': "Error Handling in the CoCart PHP SDK"
+'og:description': "Handle CoCart REST API errors in PHP. Exception hierarchy, catch by class, detect expired JWT tokens, extract field-level validation errors, and map HTTP status codes."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+</Info>
+
+## Exception Hierarchy
+
+```
+CoCartException (base)
+├── AuthenticationException   (401, 403)
+└── ValidationException       (400)
+```
+
+All exceptions extend `CoCart\Exceptions\CoCartException`, which extends PHP's built-in `\Exception`.
+
+## Catching Exceptions
+
+```php
+use CoCart\Exceptions\CoCartException;
+use CoCart\Exceptions\AuthenticationException;
+use CoCart\Exceptions\ValidationException;
+
+try {
+    $response = $client->cart()->addItem(999, 1);
+} catch (ValidationException $e) {
+    // 400 — product not found, out of stock, invalid quantity, etc.
+    echo "Validation Error: " . $e->getMessage();
+    echo "Error Code: " . $e->getErrorCode();     // e.g. 'cocart_product_not_found'
+    echo "HTTP Code: " . $e->getHttpCode();        // 400
+} catch (AuthenticationException $e) {
+    // 401 or 403 — invalid credentials, expired token, forbidden
+    echo "Auth Error: " . $e->getMessage();
+    echo "Error Code: " . $e->getErrorCode();
+    echo "HTTP Code: " . $e->getHttpCode();        // 401 or 403
+} catch (CoCartException $e) {
+    // Any other API error (404, 500, etc.)
+    echo "API Error: " . $e->getMessage();
+    echo "HTTP Code: " . $e->getHttpCode();
+}
+```
+
+## Exception Methods
+
+All exceptions provide these methods:
+
+| Method | Return | Description |
+|--------|--------|-------------|
+| `getMessage()` | `string` | Human-readable error message from the API |
+| `getErrorCode()` | `?string` | API error code (e.g. `cocart_product_not_found`) |
+| `getHttpCode()` | `int` | HTTP status code (400, 401, 403, 500, etc.) |
+| `getCode()` | `int` | Same as `getHttpCode()` (inherited from `\Exception`) |
+| `getResponseData()` | `array` | Full API response body for debugging |
+
+### ValidationException Methods
+
+| Method | Return | Description |
+|--------|--------|-------------|
+| `getValidationErrors()` | `array` | Field-level validation errors (e.g. `['email' => 'required']`) |
+
+### AuthenticationException Methods
+
+| Method | Return | Description |
+|--------|--------|-------------|
+| `isTokenExpired()` | `bool` | Whether the error is due to an expired JWT token |
+
+## Inspecting the Full API Response
+
+Every exception carries the full API response data for debugging:
+
+```php
+try {
+    $client->cart()->addItem(999, 1);
+} catch (CoCartException $e) {
+    $data = $e->getResponseData();
+    // e.g. ['code' => 'cocart_product_not_found', 'message' => '...', 'data' => [...]]
+    print_r($data);
+}
+```
+
+## Validation Errors
+
+When the API returns field-level errors, extract them directly:
+
+```php
+try {
+    $client->cart()->updateCustomer(billing: ['email' => 'not-an-email']);
+} catch (ValidationException $e) {
+    $errors = $e->getValidationErrors();
+    // e.g. ['email' => 'Invalid email format']
+
+    foreach ($errors as $field => $reason) {
+        echo "{$field}: {$reason}\n";
+    }
+}
+```
+
+## Expired JWT Tokens
+
+Check if an auth error is specifically a token expiration:
+
+```php
+try {
+    $client->cart()->get();
+} catch (AuthenticationException $e) {
+    if ($e->isTokenExpired()) {
+        // Token expired — refresh and retry
+        $jwt->refresh();
+        $cart = $client->cart()->get();
+    } else {
+        // Credentials are wrong, not just expired
+        throw $e;
+    }
+}
+```
+
+Or let the SDK handle it automatically:
+
+```php
+use CoCart\JwtManager;
+
+$jwt = new JwtManager($client, null, ['auto_refresh' => true]);
+$client->setJwtManager($jwt);
+
+// Expired tokens are refreshed and retried automatically
+$cart = $client->cart()->get();
+```
+
+See [Authentication](/sdk/php/authentication#auto-refresh) for details.
+
+## HTTP Status Code Mapping
+
+| HTTP Status | Exception Thrown | Typical Causes |
+|-------------|-----------------|----------------|
+| 400 | `ValidationException` | Invalid product ID, out of stock, invalid quantity, missing required fields |
+| 401 | `AuthenticationException` | Missing or invalid credentials |
+| 403 | `AuthenticationException` | Expired JWT token, insufficient permissions |
+| 404 | `CoCartException` | Endpoint not found, item key not found |
+| 500 | `CoCartException` | Server error |
+
+## Response Error Helpers
+
+When you have a `Response` object, you can check for errors directly:
+
+```php
+$response = $client->cart()->get();
+
+if ($response->isError()) {
+    echo $response->getErrorCode();    // API error code
+    echo $response->getErrorMessage(); // Human-readable message
+    echo $response->getStatusCode();   // HTTP status code
+}
+
+if ($response->isSuccessful()) {
+    $data = $response->toArray();
+}
+```
+
+## Response as Array
+
+The `Response` object implements `ArrayAccess`:
+
+```php
+$response = $client->cart()->get();
+
+// Array-style access
+$items = $response['items'];
+$totals = $response['totals'];
+$currency = $response['currency'];
+
+// Cart state helpers
+$response->hasItems();    // true if cart has items
+$response->isEmpty();     // true if cart is empty
+$response->hasCoupons();  // true if coupons are applied
+
+// Pagination helpers (for product listings)
+$response->getTotalResults(); // total items across all pages
+$response->getTotalPages();   // total number of pages
+```
+
+## Common Error Scenarios
+
+### Product Not Found
+
+```php
+try {
+    $client->cart()->addItem(999999, 1);
+} catch (ValidationException $e) {
+    // $e->getMessage()   => 'Product not found'
+    // $e->getErrorCode() => 'cocart_product_not_found'
+}
+```
+
+### Out of Stock
+
+```php
+try {
+    $client->cart()->addItem(123, 100);
+} catch (ValidationException $e) {
+    // $e->getErrorCode() => 'cocart_not_enough_in_stock'
+}
+```

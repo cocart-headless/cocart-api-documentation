@@ -1,0 +1,190 @@
+---
+title: "CoCart Starter"
+description: "These breaking changes improve the core of CoCart and provides better support for these specific features."
+icon: "rectangle-code"
+robots: "noindex, follow"
+'og:title': "Breaking changes in CoCart Starter"
+---
+
+## REST API
+
+<Tip>
+    If you have not been using CoCart for long, we recommend reviewing the documentation to understand how to use the API and its features. Exploring the documentation will help you much better than looking at the changes below.
+</Tip>
+
+<Warning>
+    If you have been using CoCart for a while, you may have custom code that interacts with the API or extends it so reviewing the changes is important to prevent any unexpected issues. The REST API has had changes that affect the schema and default behaviors. Please review the [API Reference](/api-reference/introduction) and check if an endpoint has been tagged "Updated" to see the specific changes for that endpoint using the information below.
+</Warning>
+
+### Response Changes
+
+* Avatars only return if requested when using the login endpoint.
+* Store API now returns an array of all CoCart versions installed, not just the core version.
+* Product meta is **no longer returned by default**. To prevent PII exposure, meta must now be whitelisted using the `cocart_products_allowed_meta_keys` filter.
+* Variation data for items is moved above item totals when fetching the cart.
+* Product attributes response structure has been rewritten.
+* Product Categories `image_src` changed from a single thumbnail to return all available image sizes.
+* Product reviews updated to support better query parameters. Affects both API versions.
+* New product reviews are set to `hold` status by default.
+
+### Quantity Parameter Changes
+
+* The quantity parameter when adding an item now accepts both a `numeric` or an `array` value, allowing support for grouped product types.
+* When updating an item in cart, the quantity parameter is no longer required—you can now change just the variation of a variable product while keeping the current quantity.
+* Cart item `quantity` object now returns `minimum`, `maximum`, `multiple_of` and `editable` instead of `min_purchase` and `max_purchase`. These values are stock-aware and respect WooCommerce quantity input step settings.
+* Product `purchase_quantity` object now returns `minimum`, `maximum` and `multiple_of` instead of `min_purchase` and `max_purchase`.
+
+### Features
+
+* [Load Cart from Session](/load-cart#cocart-basic) has been completely rewritten to support both guest and registered customers.
+* Cart expiration timestamp headers (`Cart-Expiring`, `Cart-Expiration`) only show when `WP_DEBUG` is enabled. The default expiration header now uses the cart expiry timestamp for better cache support.
+
+## Returned Headers
+
+The following headers have been renamed for security.
+
+| Previous Header            | New Header           |
+| -------------------------- | -------------------- |
+| CoCart-API-Cart-Key        | Cart-Key             |
+
+The following headers only appear when `WP_DEBUG` is `true`:
+
+| Previous Header            | New Header           |
+| -------------------------- | -------------------- |
+| CoCart-Timestamp           | Timestamp            |
+| CoCart-API-Cart-Expiring   | Cart-Expiring        |
+| CoCart-API-Cart-Expiration | Cart-Expiration      |
+
+## Action Hooks
+
+The following action hooks have changed parameter order.
+
+| Action Hook                         | Change                                            |
+| ----------------------------------- | ------------------------------------------------- |
+| `cocart_item_restored`              | Added the request object as the second parameter. |
+| `cocart_item_removed`               | Added the request object as the second parameter. |
+| `cocart_item_added_updated_in_cart` | Moved the request object parameter to be first.   |
+| `cocart_item_added_to_cart`         | Moved the request object parameter to be first.   |
+
+The request object has also been added as a parameter to:
+
+* `cocart_before_cart_emptied`
+* `cocart_cart_emptied`
+* `cocart_cart_cleared`
+
+## Filters
+
+### Changed Parameters
+
+* `cocart_cart_item_quantity` — the order of `$cart_item` and `$item_key` parameters has been swapped for consistency with other filters. The request object has also been added as a parameter.
+* `cocart_allow_origin` — added the request object as a parameter.
+* `cocart_cart_item_data` — added the request object as a parameter.
+* `cocart_add_to_cart_sold_individually_quantity` — added additional parameters.
+* `cocart_shipping_package_name` — added the cart class as a parameter.
+* `cocart_cross_sells` — added the request object as a parameter.
+* `cocart_deprecated_function` — added a `$message` parameter.
+
+### Deprecated Filters
+
+* `cocart_{$object_type}_schema` — use version-specific `cocart_rest_v{version}_{object_type}_schema` filters instead.
+* `cocart_secure_registered_users` — unauthenticated access to registered user carts is now always blocked and can no longer be disabled.
+
+### Removed Filters
+
+The following filters are no longer used:
+
+* `cocart_load_cart_override`
+* `cocart_load_cart`
+* `cocart_merge_cart_content`
+* `cocart_cart_loaded_successful_message`
+* `cocart_use_cookie_monster`
+* `cocart_filter_request_data`
+* `cocart_products_ignore_private_meta_keys`
+* `cocart_return_default_response`
+* `cocart_{$endpoint}_response`
+* `cocart_add_to_cart_quantity`
+
+### Removed Hooks
+
+* `cocart_add_to_cart`
+
+## Renamed Functions
+
+If you have extended CoCart or used any public functions for your own API endpoints, review the following renames:
+
+| Previous Name                  | New Name                         |
+| ------------------------------ | -------------------------------- |
+| `return_cart_contents()`       | `prepare_object_for_response()`  |
+| `get_cart()`                   | `get_items()`                    |
+| `get_cart_item()`              | `get_item_from_cart()`           |
+| `get_items()`                  | `get_items_in_cart()`            |
+| `$add_to_cart_handler`         | `$product_type`                  |
+
+Additionally, `$variation_id` and `$variation` parameters have been replaced with `$request` in variation handling.
+
+## Plugin
+
+* The text domain (plugin slug) has changed from `cart-rest-api-for-woocommerce` to `cocart-basic`. This affects all translations including custom ones. If you have a custom translation, rename the text domain to match.
+
+* The plugin will automatically deactivate the community edition if detected. We recommend deleting the community version after upgrading.
+
+<Tip>
+    If you have `COCART_REMOVE_ALL_DATA` set to `true`, change it to `false` before uninstalling the community version from your WordPress dashboard to prevent data loss. Otherwise, use FTP to delete the community plugin instead.
+</Tip>
+
+## Update Customer Callback
+
+The `CoCart_Update_Customer_Callback` class has been rewritten to use WooCommerce checkout fields natively, enabling better support for custom fields and partial updates.
+
+### Behavioral Changes
+
+* Required billing fields are only enforced when explicitly submitted, enabling partial updates without triggering validation errors for omitted fields.
+* Shipping address is now handled natively. When `ship_to_different_address` is set, `s_*` params are applied to the shipping address. When not set, billing values are mirrored to shipping. This previously required CoCart Plus.
+* Shipping country and postcode are validated and formatted using the same helpers as billing.
+
+### Filter Changes
+
+* `cocart_update_customer_fields` — now receives both billing and shipping WooCommerce address field definitions under `$fields['billing']` and `$fields['shipping']`. Use this filter for custom or third-party fields only, not standard address fields.
+
+### Error Response Changes
+
+* Error responses for billing field validation failures now include `field` and `value` in the response data.
+* Error responses for country and postcode validation failures now include `field` and `value` in the response data.
+
+---
+
+## Deprecations
+
+<Tip>
+**Developer Impact** — If you have extended CoCart or used any public functions for your own API endpoints, please check the list below.
+</Tip>
+
+### Classes
+
+* `CoCart_Response` — deprecated in favor of new utility response classes.
+* `CoCart_REST_Terms_Controller` — replaced with `CoCart_REST_Taxonomy_Terms_Controller`.
+
+### Functions
+
+* `cocart_prepare_money_response()` — replaced with `cocart_format_money()`.
+* `CoCart_Utilities_Cart_Helpers::get_remaining_stock_for_product()` — replaced with `CoCart_Utilities_Quantity_Limits::get_remaining_stock_for_product()`.
+* `cocart_format_money` — replaced with `format_money` in the monetary utility class.
+* `remove_exposed_product_meta` — deprecated from using the `cocart_products_ignore_private_meta_keys` filter.
+
+## Architecture Changes
+
+1. The main cart controller `CoCart_REST_Cart_V2_Controller` for API v2 now extends a new abstract controller `CoCart_REST_Cart_Controller`.
+
+<Note>
+This allows you to extend specific cart behavior rather than overriding the entire cart controller.
+</Note>
+
+2. Cart API v2 endpoints (`cart/add-item`, `cart/add-items`, `cart/calculate`) now extend `CoCart_REST_Cart_V2_Controller` instead of the API v1 controller, paving the way for a future v1 deprecation.
+
+3. API v2 taxonomy controllers have been reorganized to use a new shared abstract controller instead of extending API v1.
+
+4. All controllers now use abstract classes compatible with WordPress REST API standards.
+
+5. The `filter_request_data` function has been undeprecated and rewritten in the abstract class.
+
+6. Cart-key permission checks have been moved to the abstract Cart Controller so all cart endpoints enforce it via inheritance.

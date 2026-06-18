@@ -1,0 +1,201 @@
+---
+title: "API Schema & Parameters Filters"
+sidebarTitle: "API Schema & Parameters"
+description: "PHP filters for REST schema fields, query parameters, namespaces, and how data is structured in API responses."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Filters Reference overview](/developers/filters) for the full plugin key index and all filter categories.
+</Tip>
+
+### `cocart_add_item_query_parameters`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters the query parameters for adding item to cart. This filter allows you to extend the query parameters without removing any default parameters.
+
+<Note>Made available since v3.1.0</Note>
+
+**Usage**
+```php
+add_filter( 'cocart_add_item_query_parameters', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_add_item_query_parameters` in repository](https://github.com/co-cart/co-cart/search?q=cocart_add_item_query_parameters&type=code)
+
+---
+
+### `cocart_add_items_query_parameters`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Extends the query parameters. Dev Note: Nothing needs to pass so your safe if you think you will remove any default parameters.
+
+<Note>Made available since v3.1.0</Note>
+
+**Usage**
+```php
+add_filter( 'cocart_add_items_query_parameters', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_add_items_query_parameters` in repository](https://github.com/co-cart/co-cart/search?q=cocart_add_items_query_parameters&type=code)
+
+---
+
+### `cocart_cart_items_schema`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Extend the cart schema properties for items. This filter allows you to extend the cart schema properties for items without removing any default properties.
+
+<Note>Made available since v3.1.0</Note>
+
+**Usage**
+```php
+add_filter( 'cocart_cart_items_schema', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_cart_items_schema` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cart_items_schema&type=code)
+
+---
+
+### `cocart_cart_query_parameters`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Extend the query parameters for the cart. This filter allows you to extend the query parameters without removing any default parameters.
+
+<Note>Made available since v3.1.0</Note>
+
+**Usage**
+```php
+add_filter( 'cocart_cart_query_parameters', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_cart_query_parameters` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cart_query_parameters&type=code)
+
+---
+
+### `cocart_prevent_wc_admin_note_created`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter to prevent note from being created.
+
+<Note>Made available since v3.2.0</Note>
+
+**Parameters**
+
+<ParamField query="prevent_note_creation" type="boolean">
+  False by default.
+</ParamField>
+
+<ParamField query="args" type="array">
+  Arguments to create the note.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_prevent_wc_admin_note_created', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_prevent_wc_admin_note_created` in repository](https://github.com/co-cart/co-cart/search?q=cocart_prevent_wc_admin_note_created&type=code)
+
+---
+
+### `cocart_store_index`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters the API store index data. This contains the data describing the API. This includes information about the store, routes available on the API, and a small amount of data about the site.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="response" type="WP_REST_Response">
+  Response data.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_store_index', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_store_index` in repository](https://github.com/co-cart/co-cart/search?q=cocart_store_index&type=code)
+
+---
+
+### `cocart_rest_v1_product_schema`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filter allows you to modify the product schema for API v1 responses. Use this to add custom fields or adjust the schema for your storefront needs.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="schema" type="array">
+  The product schema properties.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_rest_v1_product_schema', function( $schema ) {
+    $schema['custom_field'] = array(
+        'description' => 'My custom field',
+        'type'        => 'string',
+        'context'     => array( 'view' ),
+    );
+    return $schema;
+} );
+```
+
+<Note>
+This replaces the deprecated `cocart_{$object_type}_schema` filter. See the [breaking changes guide](/breaking-changes/basic-v5) for details.
+</Note>
+
+---
+
+### `cocart_rest_v2_product_schema`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filter allows you to modify the product schema for API v2 responses. Same as the v1 filter but applies to the v2 product response structure.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="schema" type="array">
+  The product schema properties.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_rest_v2_product_schema', function( $schema ) {
+    $schema['custom_field'] = array(
+        'description' => 'My custom field',
+        'type'        => 'string',
+        'context'     => array( 'view' ),
+    );
+    return $schema;
+} );
+```

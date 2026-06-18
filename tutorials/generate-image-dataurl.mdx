@@ -1,9 +1,228 @@
 ---
-title: "Generate Image Data URL"
-description: ""
+title: "Serving Images Without a CDN"
+description: "Embed product images directly in your cart and product API responses as base64 data URLs — useful for offline apps, strict CSP environments, or self-contained cart data."
 icon: "image"
-tag: "WIP"
-robots: "noindex, follow"
+keywords: ["base64", "data URL", "product images", "gallery images", "offline", "headless", "cocart_cart_items", "cocart_prepare_product_object", "cocart_product_schema"]
 ---
 
-> Dev Note: Needs to be completed!
+Headless stores sometimes can't rely on CDN image URLs — think offline-capable apps, environments with strict CSP headers, or clients that need self-contained cart data. This example shows how to embed product images directly in the cart response as base64 data URLs using two CoCart filters.
+
+This tutorial covers two independent use cases — pick whichever applies to your project:
+
+- **[Cart API](#add-the-featured-image-to-cart-items)** — embed the featured image on each cart item.
+- **[Products API](#add-gallery-images-to-product-responses)** — embed the full gallery on each product response.
+
+## Filters used
+
+For the cart, CoCart exposes two filters that work together:
+
+- **`cocart_cart_items`** — called for each item in the cart, letting you append extra fields to the item data before it is returned.
+- **`cocart_cart_items_schema`** — lets you declare any new fields you added, so the cart schema stays accurate for API consumers and tools like [TypeScript type generation](/tutorials/typescript-types-generation).
+
+For the products API, a single filter handles the response:
+
+- **`cocart_prepare_product_object`** — fires after a product response is assembled, giving you access to both the response data and the `WC_Product` object.
+
+## Build the image helper
+
+Start with a function that converts a WordPress attachment ID into a `data:image/...;base64,...` string:
+
+```php
+function generate_image_dataurl( int $image_id ): ?string {
+    $src  = wp_get_attachment_image_src( $image_id, 'woocommerce_thumbnail' );
+    $url  = $src[0] ?? null;
+
+    if ( ! $url ) {
+        return null;
+    }
+
+    $type = pathinfo( $url, PATHINFO_EXTENSION );
+    $data = file_get_contents( $url );
+
+    if ( $data === false ) {
+        return null;
+    }
+
+    return 'data:image/' . $type . ';base64,' . base64_encode( $data );
+}
+```
+
+The second argument to `wp_get_attachment_image_src()` is the image size. WooCommerce registers three sizes you can use:
+
+| Size name | Default dimensions | Cropped | Used for |
+|---|---|---|---|
+| `woocommerce_thumbnail` | 300px wide | Square (1:1) | Product grids, shop page |
+| `woocommerce_single` | 600px wide | Uncropped | Single product page main image |
+| `woocommerce_gallery_thumbnail` | 100 × 100px | Square (1:1) | Gallery navigation thumbnails |
+
+Store owners can adjust these dimensions in **Appearance → Customize → WooCommerce → Product Images**. Standard WordPress sizes (`thumbnail`, `medium`, `large`, `full`) are also valid values.
+
+What each step does:
+
+1. `wp_get_attachment_image_src()` returns the URL for the `woocommerce_thumbnail` image size registered by WooCommerce.
+2. `pathinfo( $url, PATHINFO_EXTENSION )` extracts the file extension (`jpeg`, `png`, `webp`, etc.) to build the correct MIME type.
+3. `file_get_contents()` reads the raw image bytes. If the read fails, `null` is returned so the caller can skip the field cleanly.
+4. `base64_encode()` encodes the bytes, and the result is prefixed with the data URI scheme.
+
+<Warning>
+  `file_get_contents()` on a remote URL requires `allow_url_fopen` to be enabled in PHP. Some hosts disable this. If that is the case on your server, use `wp_remote_get()` instead and pass the response body to `base64_encode()`.
+</Warning>
+
+## Add the featured image to cart items
+
+This filter receives every cart item one at a time. Use it to call the helper and attach the result:
+
+```php
+add_filter( 'cocart_cart_items', function( $items, $item_key, $cart_item, $_product ) {
+    $thumbnail_id = ! empty( $_product->get_image_id() )
+        ? $_product->get_image_id()
+        : get_option( 'woocommerce_placeholder_image', 0 );
+
+    $data_url = generate_image_dataurl( (int) $thumbnail_id );
+
+    if ( $data_url ) {
+        $items[ $item_key ]['featured_image_dataurl'] = $data_url;
+    }
+
+    return $items;
+}, 10, 4 );
+```
+
+<Note>
+  The `get_option( 'woocommerce_placeholder_image' )` fallback means products without a featured image still receive a data URL — the WooCommerce placeholder image is used instead.
+</Note>
+
+### Declare the new field in the cart schema
+
+Declare the new field so it appears in the cart schema:
+
+```php
+add_filter( 'cocart_cart_items_schema', function( $schema ) {
+    $schema['featured_image_dataurl'] = array(
+        'description' => __( 'Base64 data URL of the featured image for the item in cart.' ),
+        'type'        => 'string',
+        'context'     => array( 'view' ),
+        'readonly'    => true,
+    );
+
+    return $schema;
+} );
+```
+
+This keeps the schema truthful for anything that reads it — including OpenAPI exports and generated TypeScript types.
+
+### Cart item response example
+
+Once the filters are registered, each cart item in the response will include the new field:
+
+```json
+{
+  "item_key": "404dcc91b2b7c5b1f0c6d62a1c3b4e5f",
+  "id": 42,
+  "name": "Beanie with Logo",
+  "featured_image": "https://your-store.com/wp-content/uploads/beanie-with-logo.jpg",
+  "featured_image_dataurl": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBg...",
+  "quantity": {
+    "value": 1,
+    "min_purchase": 1,
+    "max_purchase": -1
+  }
+}
+```
+
+The value is a standard [data URI](https://developer.mozilla.org/en-US/docs/Web/URI/Schemes/data) and can be used directly in an `<img src="...">` tag on any client without an additional network request.
+
+## Add gallery images to product responses
+
+The `cocart_prepare_product_object` filter fires after the product response is built. The response data is a plain array accessible via `$response->data`, so you can append fields directly to it.
+
+Use `$product->get_gallery_image_ids()` to get every gallery attachment ID, then convert each one with the same helper:
+
+```php
+add_filter( 'cocart_prepare_product_object', function( $response, $product, $request ) {
+    $gallery_ids = $product->get_gallery_image_ids();
+
+    if ( empty( $gallery_ids ) ) {
+        return $response;
+    }
+
+    $data_urls = array();
+
+    foreach ( $gallery_ids as $image_id ) {
+        $data_url = generate_image_dataurl( (int) $image_id );
+
+        if ( $data_url ) {
+            $data_urls[] = $data_url;
+        }
+    }
+
+    $response->data['gallery_dataurls'] = $data_urls;
+
+    return $response;
+}, 10, 3 );
+```
+
+<Note>
+  `get_gallery_image_ids()` returns only the extra gallery images — it does not include the featured image returned by `get_image_id()`. If you also need the featured image in the array, prepend it: `array_merge( array( $product->get_image_id() ), $gallery_ids )`.
+</Note>
+
+### Declare the new field in the product schema
+
+<Note>
+  This applies to the **CoCart Community** edition. CoCart Starter introduces dedicated per-version filters (`cocart_v1_product_schema` and `cocart_v2_product_schema`) for more accurate schema extension, with `cocart_product_schema` deprecated in favour of those. Update your code when upgrading to Basic.
+</Note>
+
+In CoCart Community, the `cocart_product_schema` filter is available to extend the product schema:
+
+```php
+add_filter( 'cocart_product_schema', function( $properties ) {
+    $properties['gallery_dataurls'] = array(
+        'description' => __( 'Base64 data URLs for each image in the product gallery.' ),
+        'type'        => 'array',
+        'items'       => array( 'type' => 'string' ),
+        'context'     => array( 'view' ),
+        'readonly'    => true,
+    );
+
+    return $properties;
+} );
+```
+
+### Product response example
+
+The product endpoint at `/wp-json/cocart/v2/products/<id>` will now include `gallery_dataurls` alongside the existing `images` array:
+
+```json
+{
+  "id": 42,
+  "name": "Beanie with Logo",
+  "images": [
+    {
+      "id": 101,
+      "src": "https://your-store.com/wp-content/uploads/beanie-1.jpg"
+    },
+    {
+      "id": 102,
+      "src": "https://your-store.com/wp-content/uploads/beanie-2.jpg"
+    }
+  ],
+  "gallery_dataurls": [
+    "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBg...",
+    "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABsSFA..."
+  ]
+}
+```
+
+## Filter reference
+
+<CardGroup cols={2}>
+  <Card title="cocart_cart_items" icon="filter" href="/developers/community/filters#cocart_cart_items">
+    Full parameter reference for the cart items filter.
+  </Card>
+  <Card title="cocart_cart_items_schema" icon="brackets-curly" href="/developers/community/filters#cocart_cart_items_schema">
+    Full reference for extending the cart item schema.
+  </Card>
+  <Card title="cocart_prepare_product_object" icon="box" href="/developers/community/filters#cocart_prepare_product_object">
+    Full parameter reference for the product response filter.
+  </Card>
+</CardGroup>

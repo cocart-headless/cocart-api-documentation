@@ -1,0 +1,248 @@
+---
+title: "Token Management"
+sidebarTitle: "Token Management"
+description: "Learn how to validate, refresh, and handle JWT token expiry in your CoCart integration."
+'og:title': "JWT Token Management for CoCart"
+---
+
+Before reading this guide, make sure you have completed the [setup](/authentication/jwt) and understand the [token lifecycle](/authentication/jwt/concepts#token-lifecycle).
+
+## Token Invalidation
+
+A JWT access token can become invalid before it expires. CoCart JWT Authentication embeds claims — including a device fingerprint — into the token at login time. If those claims no longer match the incoming request, the token is rejected with a `401` response.
+
+Common causes:
+
+- **User-agent mismatch** — the `User-Agent` header sent with the request differs from the one present at login. If you pass a `User-Agent` on login, you must send the same value on every subsequent request.
+- **Token expiry** — the access token has passed its configured expiration time.
+- **Security event** — the token was revoked automatically due to a password change, email change, logout, or account deletion.
+
+<Warning>
+  If you pass a `User-Agent` header when logging in, you must include the same value on every API request. Changing or omitting it after login will immediately invalidate the token.
+</Warning>
+
+## Validate a Token
+
+Use the validation endpoint to check whether a token is still accepted. Call this periodically in background sessions or before making a series of authenticated requests.
+
+```bash cURL
+curl -X POST \
+    https://your-store.com/wp-json/cocart/jwt/validate-token \
+    -H "Authorization: Bearer <JWT-TOKEN>"
+```
+
+**Valid token response**
+
+```json
+{
+    "message": "Token is valid."
+}
+```
+
+**Invalid token response**
+
+```json
+{
+    "code": "cocart_authentication_error",
+    "message": "Authentication failed.",
+    "data": {
+        "status": 401
+    }
+}
+```
+
+<Info>
+  Token validation is rate-limited to **10 requests per minute per token** when CoCart Plus is active. Avoid calling this endpoint on every single request — use it at session start or on a timed interval.
+</Info>
+
+## Refresh a Token
+
+When an access token expires, use the refresh token to get a new one without requiring the user to log in again.
+
+<CodeGroup>
+```bash cURL
+curl -X POST \
+    https://your-store.com/wp-json/cocart/jwt/refresh-token \
+    -H "Content-Type: application/json" \
+    -d '{"refresh_token": "<REFRESH-TOKEN>"}'
+```
+
+```php PHP
+<?php
+$refreshToken = '<REFRESH-TOKEN>';
+$ch = curl_init();
+
+curl_setopt_array($ch, [
+    CURLOPT_URL            => 'https://your-store.com/wp-json/cocart/jwt/refresh-token',
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_CUSTOMREQUEST  => 'POST',
+    CURLOPT_HTTPHEADER     => [
+        'Content-Type: application/json',
+    ],
+    CURLOPT_POSTFIELDS     => json_encode(['refresh_token' => $refreshToken]),
+]);
+
+$response = json_decode(curl_exec($ch), true);
+curl_close($ch);
+
+$newToken        = $response['token'];
+$newRefreshToken = $response['refresh_token'];
+```
+
+```javascript JavaScript
+async function refreshAccessToken(refreshToken) {
+    const response = await fetch('https://your-store.com/wp-json/cocart/jwt/refresh-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+
+    if (!response.ok) {
+        throw new Error('Token refresh failed — user must log in again.');
+    }
+
+    return response.json(); // { token, refresh_token }
+}
+```
+</CodeGroup>
+
+**Successful response**
+
+```json
+{
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refresh_token": "7dfc00d346277468b975a22768f861702b056e20..."
+}
+```
+
+Store both the new `token` and `refresh_token` — refresh tokens rotate on each use.
+
+<Info>
+  Token refresh is rate-limited to **2 requests per minute per refresh token** when CoCart Plus is active.
+</Info>
+
+## Handling 401 Errors
+
+When a request returns `401`, follow this decision tree:
+
+1. **Try to refresh** using the stored refresh token.
+2. **If refresh succeeds** — store the new tokens and retry the original request.
+3. **If refresh fails** — the session is fully expired or was revoked. Prompt the user to log in again.
+
+<CodeGroup>
+```javascript JavaScript
+async function callWithAuth(url, options = {}) {
+    let token = getStoredToken(); // retrieve from your storage
+
+    const response = await fetch(url, {
+        ...options,
+        headers: {
+            ...options.headers,
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+    if (response.status !== 401) {
+        return response;
+    }
+
+    // Access token rejected — attempt refresh
+    const refreshToken = getStoredRefreshToken();
+
+    try {
+        const { token: newToken, refresh_token: newRefresh } =
+            await refreshAccessToken(refreshToken);
+
+        storeTokens(newToken, newRefresh); // update your storage
+
+        // Retry original request with new token
+        return fetch(url, {
+            ...options,
+            headers: {
+                ...options.headers,
+                Authorization: `Bearer ${newToken}`,
+            },
+        });
+    } catch {
+        // Refresh failed — session is over
+        redirectToLogin();
+    }
+}
+```
+
+```php PHP
+<?php
+function callWithAuth(string $url, array $options = []): array {
+    $token = getStoredToken();
+
+    $response = makeRequest($url, $token, $options);
+
+    if ($response['status'] != 401) {
+        return $response;
+    }
+
+    // Access token rejected — attempt refresh
+    $refreshToken = getStoredRefreshToken();
+
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL            => 'https://your-store.com/wp-json/cocart/jwt/refresh-token',
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CUSTOMREQUEST  => 'POST',
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+        CURLOPT_POSTFIELDS     => json_encode(['refresh_token' => $refreshToken]),
+    ]);
+
+    $refreshResponse = json_decode(curl_exec($ch), true);
+    $refreshStatus   = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($refreshStatus != 200) {
+        // Refresh failed — session is over, prompt re-login
+        throw new RuntimeException('Session expired. Please log in again.');
+    }
+
+    storeTokens($refreshResponse['token'], $refreshResponse['refresh_token']);
+
+    return makeRequest($url, $refreshResponse['token'], $options);
+}
+```
+</CodeGroup>
+
+<Tabs>
+  <Tab title="TypeScript SDK">
+    ```typescript
+    // The SDK handles token refresh and retry automatically after login()
+    const cart = await client.cart().get();
+    ```
+  </Tab>
+  <Tab title="PHP SDK">
+    ```php
+    // The SDK handles token refresh and retry automatically after login()
+    $cart = $client->cart()->get();
+    ```
+  </Tab>
+  <Tab title="Python SDK">
+    ```python
+    # The SDK handles token refresh and retry automatically after login()
+    cart = client.cart().get()
+    ```
+  </Tab>
+  <Tab title="Go SDK">
+    ```go
+    // The SDK handles token refresh and retry automatically after JWT().Login()
+    cart, err := client.Cart().Get(ctx, nil)
+    ```
+  </Tab>
+</Tabs>
+
+## Token Revocation
+
+The following events automatically revoke all tokens for a user — no refresh will succeed after these occur:
+
+<Check>User changes their password.</Check>
+<Check>User changes their email address.</Check>
+<Check>User logs out.</Check>
+<Check>User account is deleted.</Check>
+
+After any of these events, the user must authenticate again to obtain new tokens.

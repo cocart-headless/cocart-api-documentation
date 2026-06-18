@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "Bash(grep -En '^\\\\s+\"\"\"\"\\\\s*[,\\\\]\\\\}]|^\\\\s+\"\"\"\"$' \"g:\\\\PROJECTS\\\\CoCart\\\\cocart-api-documentation\\\\docs.json\")",
+      "WebFetch(domain:polar.sh)",
+      "WebFetch(domain:mintlify.com)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

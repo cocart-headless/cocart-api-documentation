@@ -1,0 +1,622 @@
+---
+title: "Cart Items & Operations Filters"
+sidebarTitle: "Cart Items & Operations"
+description: "PHP filters for cart item data, adding, removing, and restoring items, and item-specific messages."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Filters Reference overview](/developers/filters) for the full plugin key index and all filter categories.
+</Tip>
+
+### `cocart_can_not_remove_item_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about can not remove item.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_can_not_remove_item_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_can_not_remove_item_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_can_not_remove_item_message&type=code)
+
+---
+
+### `cocart_can_not_restore_item_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about can not restore item.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_can_not_restore_item_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_can_not_restore_item_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_can_not_restore_item_message&type=code)
+
+---
+
+### `cocart_cart_item_data`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to alter the remaining cart item data.
+
+<Note>Made available since v3.0.0</Note>
+
+**Parameters**
+
+<ParamField query="cart_item" type="array">
+  The cart item data.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  Generated ID based on the product information when added to the cart.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_cart_item_data', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_cart_item_data` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cart_item_data&type=code)
+
+---
+
+### `cocart_cart_item_key_required_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about cart item key required.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Status of which we are checking the item key.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_cart_item_key_required_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_cart_item_key_required_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cart_item_key_required_message&type=code)
+
+---
+
+### `cocart_cart_item_name`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows the product name of the item to change.
+
+<Note>Made available since v3.0.0</Note>
+
+**Parameters**
+
+<ParamField query="product_name" type="string">
+  Product name.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  The cart item data.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  The item key generated based on the details of the item.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_cart_item_name', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_cart_item_name` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cart_item_name&type=code)
+
+---
+
+### `cocart_cart_item_removed_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter message about item removed from the cart.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_cart_item_removed_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_cart_item_removed_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cart_item_removed_message&type=code)
+
+---
+
+### `cocart_cart_item_restored_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about item restored.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="restored_message" type="string">
+  Message.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_cart_item_restored_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_cart_item_restored_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cart_item_restored_message&type=code)
+
+---
+
+### `cocart_cart_item_restored_title`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Re-calculate totals now an item has been restored.
+
+<Note>Made available since v2.1.0</Note>
+
+**Usage**
+```php
+add_filter( 'cocart_cart_item_restored_title', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_cart_item_restored_title` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cart_item_restored_title&type=code)
+
+---
+
+### `cocart_cart_item_title`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows the product title of the item to change.
+
+<Note>Made available since v3.0.0</Note>
+
+**Parameters**
+
+<ParamField query="product_title" type="string">
+  Product title.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  The cart item data.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  The item key generated based on the details of the item.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_cart_item_title', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_cart_item_title` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cart_item_title&type=code)
+
+---
+
+### `cocart_item_added`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows additional data to be returned.
+
+<Note>Made available since v2.0.0</Note>
+
+**Parameters**
+
+<ParamField query="item_added" type="array">
+  Item added to cart.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  Item key of the item added.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_item_added', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_item_added` in repository](https://github.com/co-cart/co-cart/search?q=cocart_item_added&type=code)
+
+---
+
+### `cocart_item_product`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to alter the item product data returned.
+
+<Note>Made available since v2.0.0</Note>
+
+**Parameters**
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  The cart item data.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  The item key currently looped.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_item_product', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_item_product` in repository](https://github.com/co-cart/co-cart/search?q=cocart_item_product&type=code)
+
+---
+
+### `cocart_item_removed_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about item removed from cart.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_item_removed_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_item_removed_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_item_removed_message&type=code)
+
+---
+
+### `cocart_item_restored_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about item already restored to cart.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_item_restored_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_item_restored_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_item_restored_message&type=code)
+
+---
+
+### `cocart_item_thumbnail`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters the item thumbnail ID.
+
+<Note>Made available since v2.0.0</Note>
+
+**Parameters**
+
+<ParamField query="thumbnail_id" type="integer">
+  Product thumbnail ID.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  Cart item.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  Item key.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_item_thumbnail', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_item_thumbnail` in repository](https://github.com/co-cart/co-cart/search?q=cocart_item_thumbnail&type=code)
+
+---
+
+### `cocart_item_thumbnail_size`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters the thumbnail size of the product image.
+
+<Note>Made available since v2.0.0</Note>
+
+**Parameters**
+
+<ParamField query="removed_item" type="boolean">
+  Determines if the item in the cart is removed.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_item_thumbnail_size', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_item_thumbnail_size` in repository](https://github.com/co-cart/co-cart/search?q=cocart_item_thumbnail_size&type=code)
+
+---
+
+### `cocart_item_thumbnail_src`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters the source of the product thumbnail.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="thumbnail_src" type="string">
+  URL of the product thumbnail.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  Cart item.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  Item key.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_item_thumbnail_src', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_item_thumbnail_src` in repository](https://github.com/co-cart/co-cart/search?q=cocart_item_thumbnail_src&type=code)
+
+---
+
+### `cocart_update_cart_validation`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to determine if the updated item in cart passed validation.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="cart_valid" type="boolean">
+  True by default.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  Item key.
+</ParamField>
+
+<ParamField query="current_data" type="array">
+  Product data of the item in cart.
+</ParamField>
+
+<ParamField query="quantity" type="float">
+  The requested quantity to change to.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_update_cart_validation', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_update_cart_validation` in repository](https://github.com/co-cart/co-cart/search?q=cocart_update_cart_validation&type=code)
+
+---
+
+### `cocart_update_item`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters the update status.
+
+<Note>Made available since v2.0.1</Note>
+
+**Parameters**
+
+<ParamField query="response" type="array">
+  Status response.
+</ParamField>
+
+<ParamField query="new_data" type="array">
+  Cart item.
+</ParamField>
+
+<ParamField query="quantity" type="integer">
+  Quantity.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_update_item', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_update_item` in repository](https://github.com/co-cart/co-cart/search?q=cocart_update_item&type=code)
+
+---
+
+### `cocart_item_not_in_cart_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about cart item key required.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="method" type="string">
+  Method.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_item_not_in_cart_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_item_not_in_cart_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_item_not_in_cart_message&type=code)
+
+---
+
+### `cocart_no_items_in_cart_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about no items in the cart.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_no_items_in_cart_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_no_items_in_cart_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_no_items_in_cart_message&type=code)
+
+---
+
+### `cocart_no_items_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about no items in cart.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_no_items_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_no_items_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_no_items_message&type=code)

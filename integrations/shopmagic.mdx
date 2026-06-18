@@ -1,0 +1,119 @@
+---
+title: "ShopMagic for WooCommerce"
+sidebarTitle: "ShopMagic"
+description: "Enable ShopMagic customer tracking and marketing automations for headless CoCart storefronts without relying on cookies."
+tag: "In Testing"
+robots: "noindex, follow"
+---
+
+[ShopMagic](https://wordpress.org/plugins/shopmagic-for-woocommerce/) is a WooCommerce marketing automation plugin that tracks guest customers, captures email addresses, and triggers automations such as abandoned cart recovery, follow-up emails, and subscriber workflows.
+
+By default, ShopMagic identifies customers via browser cookies and WooCommerce's native session. In a headless setup neither mechanism is available — CoCart uses its own session handler backed by a separate `wp_cocart_carts` database table and does not set cookies.
+
+The built-in ShopMagic integration bridges this gap without touching ShopMagic's internals.
+
+<Info>
+    The ShopMagic integration is available (as a beta) in CoCart Plus since <Tooltip tip="This is the version of CoCart Plus">v1.6.0</Tooltip> and requires ShopMagic for WooCommerce to be installed and active.
+</Info>
+
+## How it works
+
+CoCart keeps ShopMagic's tracking data in sync across both session stores:
+
+- **Tracking data** (email, name, billing fields) is stored inside the CoCart cart value in `wp_cocart_carts` under the key `shopmagic_tracking`, and mirrored into the WooCommerce session under ShopMagic's own key `shopmagic_customer_token`.
+- **Cookies are suppressed** on CoCart API requests so ShopMagic never sets a `shopmagic_visitor_*` cookie for headless clients.
+- **Customer identification** on API requests is handled by hydrating the WooCommerce session from the stored CoCart cart data after the session loads, so ShopMagic's `SessionCustomerProvider` can resolve the guest customer normally.
+
+## Capture customer details
+
+To associate a guest customer with their cart — enabling ShopMagic automations such as abandoned cart recovery — send the customer's billing details via the [update customer](../api-reference/v2/cart/update-customer) endpoint. ShopMagic's tracking pipeline is populated automatically.
+
+<Tip>
+    Call this endpoint as early as possible in your checkout flow, ideally when the customer enters their email address, so ShopMagic can identify them before the order is placed.
+</Tip>
+
+<CodeGroup>
+    ```bash cURL
+    curl -X POST https://your-store.com/wp-json/cocart/v2/cart/update-customer \
+    -H "Content-Type: application/json" \
+    -H "Cart-Key: <cart-key>" \
+    -d '{
+        "email": "customer@example.com",
+        "first_name": "Jane",
+        "last_name": "Doe",
+        "country": "US"
+    }'
+    ```
+
+    ```javascript JavaScript
+    await fetch('https://your-store.com/wp-json/cocart/v2/cart/update-customer', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Cart-Key': '<cart-key>'
+        },
+        body: JSON.stringify({
+            email: 'customer@example.com',
+            first_name: 'Jane',
+            last_name: 'Doe',
+            country: 'US'
+        })
+    });
+    ```
+
+    ```php PHP
+    <?php
+    $ch = curl_init();
+
+    curl_setopt_array($ch, [
+        CURLOPT_URL => 'https://your-store.com/wp-json/cocart/v2/cart/update-customer',
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Cart-Key: <cart-key>'
+        ],
+        CURLOPT_POSTFIELDS => json_encode([
+            'email'      => 'customer@example.com',
+            'first_name' => 'Jane',
+            'last_name'  => 'Doe',
+            'country'    => 'US'
+        ])
+    ]);
+
+    curl_exec($ch);
+    curl_close($ch);
+    ?>
+    ```
+</CodeGroup>
+
+After this call, ShopMagic will have the guest's email and billing details stored against the cart session. Any automations configured for guest tracking (e.g. abandoned cart emails) will fire as expected.
+
+## Extend the integration
+
+The integration fires a dedicated WordPress action hook immediately after customer details are saved to the session. You can use this hook in your own plugin or theme to perform additional processing.
+
+```php PHP
+/**
+ * Fires after customer details are saved to the CoCart cart session.
+ *
+ * @param array       $details  The saved customer field values (e.g. billing_email, billing_first_name).
+ * @param WC_Customer $customer The WooCommerce customer object.
+ */
+add_action( 'cocart_customer_updated', function( $details, $customer ) {
+    // Example: sync the email to a third-party CRM.
+    if ( ! empty( $details['billing_email'] ) ) {
+        my_crm_sync_contact( $details['billing_email'], $details );
+    }
+}, 10, 2 );
+```
+
+## Known limitations
+
+<Warning>
+    ShopMagic's **Abandoned Carts** feature requires the [ShopMagic – Abandoned Carts](https://shopmagic.app/products/shopmagic-abandoned-carts/) add-on. The CoCart integration enables guest identification so that add-on can work headlessly, but it does not replace the add-on itself.
+</Warning>
+
+- **Pre-submit capture on the web** — ShopMagic's JavaScript pre-submit capture (which fires when a guest types their email into the standard WooCommerce checkout form) does not apply to headless storefronts. Use the update customer endpoint described above instead.
+- **Session tracking toggle** — ShopMagic's *Enable session tracking* setting must remain enabled for the WooCommerce session persistence layer to function. The CoCart integration operates alongside it, not as a replacement.
+- **Cookie-based tracking disabled on API requests only** — Cookies are suppressed for CoCart REST API requests. Standard WooCommerce web requests are unaffected; ShopMagic continues to set its visitor cookie on those requests as normal.

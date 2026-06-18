@@ -1,0 +1,267 @@
+---
+title: "TypeScript SDK: Nuxt Adapter"
+sidebarTitle: "Nuxt"
+description: "Use the CoCart TypeScript SDK with Nuxt — browser client, server routes, middleware, and cart key header mechanism."
+icon: "mountain"
+'og:title': "Using CoCart with Nuxt — Headless WooCommerce Guide"
+'og:description': "Add a WooCommerce cart to your Nuxt app with CoCart. Browser client for composables, server routes with H3 events, and automatic X-Cart-Key header forwarding."
+---
+
+<Info>
+  This guide was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 27th, 2026.
+</Info>
+
+The Nuxt adapter handles sharing cart state between server-side and client-side. Cart state is persisted in encrypted `localStorage` on the client — no cookies needed.
+
+## How It Works
+
+1. **Browser**: The client stores the cart key in encrypted `localStorage` using the Web Crypto API.
+2. **Navigation**: When the user navigates or makes a request, `attachCartKeyHeader()` automatically adds an `X-Cart-Key` header by wrapping the browser's built-in `fetch()`.
+3. **Server**: Server routes and middleware read the `X-Cart-Key` header to identify the cart.
+
+No cookies are used — avoiding GDPR consent requirements, CORS restrictions, and cookie size limits.
+
+## Browser Client
+
+Create the browser CoCart client in a Nuxt client plugin. This runs only in the browser and provides the client and session to the rest of your app via `useNuxtApp()`:
+
+```ts
+// plugins/cocart.client.ts
+import { createBrowserClient, attachCartKeyHeader } from '@cocartheadless/sdk/nuxt';
+import { SessionManager } from '@cocartheadless/sdk';
+
+export default defineNuxtPlugin(async () => {
+  const config = useRuntimeConfig();
+
+  const client = createBrowserClient(config.public.cocartStoreUrl, {
+    encryptionKey: config.public.cocartEncryptionKey,
+  });
+
+  await client.restoreSession();
+  attachCartKeyHeader(client);
+
+  const session = new SessionManager(client, client.getStorage());
+  if (!session.getCartKey()) {
+    await session.initializeCart();
+  }
+
+  return {
+    provide: {
+      cocart: client,
+      cocartSession: session,
+    },
+  };
+});
+```
+
+## Server Client
+
+Server routes run on the server. They receive an H3 `event` object which carries the incoming request headers, including `X-Cart-Key`:
+
+```ts
+// server/api/cart.get.ts
+import { createServerClient } from '@cocartheadless/sdk/nuxt';
+
+export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig();
+  const client = createServerClient(config.cocartStoreUrl, event);
+  const cart = await client.cart().get();
+  return cart.toObject();
+});
+```
+
+### With Authentication
+
+To access a logged-in customer's cart, pass their credentials via Basic Auth:
+
+```ts
+import { createServerClient } from '@cocartheadless/sdk/nuxt';
+
+const config = useRuntimeConfig();
+const client = createServerClient(config.cocartStoreUrl, event, {
+  username: 'customer@email.com',
+  password: 'customer_password',
+});
+
+const cart = await client.cart().get();
+```
+
+## Server Routes
+
+```ts
+// server/api/cart/add.post.ts
+import { createServerClient } from '@cocartheadless/sdk/nuxt';
+
+export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig();
+  const client = createServerClient(config.cocartStoreUrl, event);
+  const body = await readBody(event);
+
+  try {
+    const response = await client.cart().addItem(body.productId, body.quantity);
+    return response.toObject();
+  } catch (e) {
+    throw createError({
+      statusCode: 400,
+      message: (e as Error).message,
+    });
+  }
+});
+```
+
+```ts
+// server/api/cart.get.ts
+import { createServerClient } from '@cocartheadless/sdk/nuxt';
+
+export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig();
+  const client = createServerClient(config.cocartStoreUrl, event);
+  const cart = await client.cart().get();
+  return cart.toObject();
+});
+```
+
+## Full Example
+
+### Composable — useCoCart
+
+```ts
+// composables/useCoCart.ts
+export function useCoCart() {
+  const { $cocart, $cocartSession } = useNuxtApp();
+  return { client: $cocart, session: $cocartSession };
+}
+```
+
+### Cart Page
+
+```vue
+<!-- pages/cart.vue -->
+<script setup lang="ts">
+const { client } = useCoCart();
+
+const { data: cart, refresh } = await useAsyncData('cart', async () => {
+  const response = await client.cart().get();
+  return response.toObject();
+});
+
+const removeItem = async (itemKey: string) => {
+  await client.cart().removeItem(itemKey);
+  await refresh();
+};
+</script>
+
+<template>
+  <div>
+    <h1>Shopping Cart ({{ cart?.item_count ?? 0 }} items)</h1>
+
+    <p v-if="!cart || cart.items.length === 0">Your cart is empty.</p>
+
+    <ul v-else>
+      <li v-for="item in cart.items" :key="item.item_key">
+        {{ item.name }} — Qty: {{ item.quantity }} — {{ item.totals.total }}
+        <button @click="removeItem(item.item_key)">Remove</button>
+      </li>
+    </ul>
+  </div>
+</template>
+```
+
+### Product Listing
+
+```vue
+<!-- pages/products.vue -->
+<script setup lang="ts">
+import { CoCart } from '@cocartheadless/sdk';
+
+const config = useRuntimeConfig();
+const { client } = useCoCart();
+
+const { data: products } = await useAsyncData('products', async () => {
+  const publicClient = new CoCart(config.public.cocartStoreUrl);
+  const response = await publicClient.products().all({ per_page: '12' });
+  return response.toObject() as any[];
+});
+
+const addToCart = async (productId: number) => {
+  await client.cart().addItem(productId, 1);
+  navigateTo('/cart');
+};
+</script>
+
+<template>
+  <div>
+    <h1>Products</h1>
+    <div class="grid">
+      <div v-for="product in products" :key="product.id">
+        <h2>{{ product.name }}</h2>
+        <p>{{ product.price }}</p>
+        <button @click="addToCart(product.id)">Add to Cart</button>
+      </div>
+    </div>
+  </div>
+</template>
+```
+
+### Guest-to-Customer Login
+
+```vue
+<!-- pages/login.vue -->
+<script setup lang="ts">
+const { session } = useCoCart();
+
+const email = ref('');
+const password = ref('');
+
+const handleLogin = async () => {
+  // Login with JWT and merge guest cart into customer cart
+  await session.loginWithJwt(email.value, password.value, true);
+  navigateTo('/cart');
+};
+</script>
+
+<template>
+  <form @submit.prevent="handleLogin">
+    <input v-model="email" type="email" placeholder="Email" />
+    <input v-model="password" type="password" placeholder="Password" />
+    <button type="submit">Login</button>
+  </form>
+</template>
+```
+
+## Environment Variables
+
+```ts
+// nuxt.config.ts
+export default defineNuxtConfig({
+  runtimeConfig: {
+    cocartStoreUrl: 'https://your-store.com',
+    public: {
+      cocartStoreUrl: 'https://your-store.com',
+      cocartEncryptionKey: 'your-secret-encryption-key',
+    },
+  },
+});
+```
+
+```bash
+# .env
+NUXT_COCART_STORE_URL=https://your-store.com
+NUXT_PUBLIC_COCART_STORE_URL=https://your-store.com
+NUXT_PUBLIC_COCART_ENCRYPTION_KEY=your-secret-encryption-key
+```
+
+<Warning>
+In Nuxt, only variables under `runtimeConfig.public` are available in the browser. Keep sensitive credentials in the private `runtimeConfig` only.
+</Warning>
+
+## How `attachCartKeyHeader` Works
+
+`attachCartKeyHeader()` wraps `globalThis.fetch` so that every same-origin request includes an `X-Cart-Key` header with the current cart key:
+
+- Server routes receive the cart key without cookies
+- Middleware receives the cart key without cookies
+- Cross-origin requests are never modified
+- If no cart key is set, no header is added
+
+Call it once after creating the browser client and restoring the session.

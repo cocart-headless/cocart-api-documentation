@@ -1,0 +1,288 @@
+---
+title: "TypeScript SDK: Framer"
+sidebarTitle: "Framer"
+description: "Use the CoCart TypeScript SDK in Framer to build headless WooCommerce storefronts with a visual design tool. Load the SDK via CDN and use Code Overrides."
+tag: "Beta"
+'og:title': "Using CoCart with Framer — Headless WooCommerce Guide"
+'og:description': "Add a WooCommerce cart to your Framer site with CoCart. Load the SDK via CDN, use Code Overrides for cart count, product display, and add-to-cart functionality."
+---
+
+<Info>
+  This guide was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 30th, 2026.
+</Info>
+
+Use the CoCart SDK in [Framer](https://www.framer.com/) to build headless WooCommerce storefronts with a visual design tool. Since Framer doesn't support npm packages, you load the SDK from a CDN via a `<script>` tag.
+
+## Setup
+
+### 1. Add the SDK Script
+
+In your Framer project, go to **Site Settings > General > Custom Code** and paste the following into the **End of `<head>` tag** section:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/@cocartheadless/sdk/dist/index.global.js"></script>
+```
+
+Or use unpkg:
+
+```html
+<script src="https://unpkg.com/@cocartheadless/sdk/dist/index.global.js"></script>
+```
+
+This loads the SDK globally as `window.CoCart`, making it available to all Code Overrides and Code Components.
+
+<Tip>
+  Pin a specific version to avoid unexpected changes:
+
+  ```html
+  <!-- jsDelivr -->
+  <script src="https://cdn.jsdelivr.net/npm/@cocartheadless/sdk@1.1.0/dist/index.global.js"></script>
+
+  <!-- unpkg -->
+  <script src="https://unpkg.com/@cocartheadless/sdk@1.1.0/dist/index.global.js"></script>
+  ```
+</Tip>
+
+### 2. Create a Code Override
+
+Framer uses [Code Overrides](https://www.framer.com/developers/guides/overrides) to add custom logic to components. Create a new Code Override file and initialize the SDK:
+
+```tsx
+import type { ComponentType } from "react"
+import { useState, useEffect } from "react"
+
+const client = new window.CoCart("https://your-store.com")
+
+// Override that displays the cart item count on any text element
+export function withCartCount(Component: ComponentType): ComponentType {
+  return (props) => {
+    const [count, setCount] = useState(0)
+
+    useEffect(() => {
+      client.cart().get().then((cart) => {
+        setCount(cart.get("item_count") ?? 0)
+      })
+    }, [])
+
+    return <Component {...props} text={`Cart (${count})`} />
+  }
+}
+```
+
+Apply the `withCartCount` override to a text element in the Framer canvas to display the live cart count.
+
+### 3. Display Products
+
+```tsx
+import type { ComponentType } from "react"
+import { useState, useEffect } from "react"
+
+const client = new window.CoCart("https://your-store.com")
+
+export function withProducts(Component: ComponentType): ComponentType {
+  return (props) => {
+    const [products, setProducts] = useState([])
+
+    useEffect(() => {
+      client.products().all({ per_page: "6" }).then((response) => {
+        setProducts(response.toArray())
+      })
+    }, [])
+
+    return <Component {...props} products={products} />
+  }
+}
+```
+
+### 4. Add to Cart
+
+```tsx
+import type { ComponentType } from "react"
+
+const client = new window.CoCart("https://your-store.com")
+
+export function withAddToCart(Component: ComponentType): ComponentType {
+  return (props) => {
+    const handleClick = async () => {
+      await client.cart().addItem(props.productId, 1)
+    }
+
+    return <Component {...props} onClick={handleClick} />
+  }
+}
+```
+
+## Authenticating Customers
+
+By default, the SDK operates as a guest — each visitor gets their own cart session automatically. To support registered customers (personal carts, saved addresses, order history), use [JWT authentication](/authentication/jwt).
+
+<Warning>
+  Never use Basic Auth (username/password) in Framer. Since all code runs in the browser, credentials would be visible to anyone inspecting the page. JWT tokens are short-lived and auto-refresh, making them safe for client-side use.
+</Warning>
+
+### Login with JWT
+
+Create a Code Override for a login form:
+
+```tsx
+import type { ComponentType } from "react"
+import { useState } from "react"
+
+const client = new window.CoCart("https://your-store.com")
+
+export function withLogin(Component: ComponentType): ComponentType {
+  return (props) => {
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [status, setStatus] = useState("")
+
+    const handleLogin = async () => {
+      try {
+        setStatus("Logging in...")
+        const response = await client.login(email, password)
+        setStatus(`Welcome, ${response.get("display_name")}!`)
+
+        // The client now uses JWT for all subsequent requests
+        // The customer's personal cart is loaded automatically
+      } catch (error) {
+        setStatus("Login failed. Check your credentials.")
+      }
+    }
+
+    return (
+      <Component
+        {...props}
+        onEmailChange={setEmail}
+        onPasswordChange={setPassword}
+        onLogin={handleLogin}
+        status={status}
+      />
+    )
+  }
+}
+```
+
+### Logout
+
+```tsx
+export function withLogout(Component: ComponentType): ComponentType {
+  return (props) => {
+    const handleLogout = async () => {
+      await client.logout()
+      // Client reverts to guest mode with a fresh cart session
+    }
+
+    return <Component {...props} onClick={handleLogout} />
+  }
+}
+```
+
+### Check Authentication Status
+
+```tsx
+export function withAuthStatus(Component: ComponentType): ComponentType {
+  return (props) => {
+    const isLoggedIn = client.isAuthenticated()
+
+    return (
+      <Component
+        {...props}
+        text={isLoggedIn ? "My Account" : "Sign In"}
+      />
+    )
+  }
+}
+```
+
+### Guest-to-Customer Cart Transfer
+
+When a guest adds items to the cart and then logs in, you can merge their guest cart into their customer cart:
+
+```tsx
+const handleLogin = async () => {
+  // Items added as a guest are preserved
+  const response = await client.login(email, password)
+
+  // Fetch the merged cart
+  const cart = await client.cart().get()
+  console.log("Cart items after login:", cart.getItems())
+}
+```
+
+<Tip>
+  The [CoCart JWT Authentication](https://wordpress.org/plugins/cocart-jwt-authentication/) plugin (v3.0+) must be installed on your WordPress site for `client.login()` to work. See the [JWT setup guide](/authentication/jwt) for installation steps.
+</Tip>
+
+## TypeScript Types
+
+Framer's Code Override editor supports TypeScript. To tell TypeScript about the `CoCart` global on `window`, add this type declaration at the top of your override file:
+
+```tsx
+declare global {
+  interface Window {
+    CoCart: typeof import("@cocartheadless/sdk")
+  }
+}
+```
+
+## Important Considerations
+
+<Info>
+  **Code Overrides run per-component.** Each override is applied to a specific element on the canvas. Keep SDK initialization (the `new CoCart(...)` call) outside the override function so it's shared across renders.
+</Info>
+
+<Warning>
+  **No server-side rendering.** Framer sites are client-side only, so all API calls happen in the browser. Never expose sensitive credentials (consumer keys/secrets) — use guest sessions or [JWT authentication](/authentication/jwt) instead.
+</Warning>
+
+### CORS
+
+Your WooCommerce store must allow requests from your Framer domain. First enable [CORS](/cors), then restrict it to your domain. Add both filters to your theme's `functions.php` or a custom plugin:
+
+```php
+// Enable CORS
+add_filter( 'cocart_disable_all_cors', function() { return false; } );
+
+// Restrict to your Framer domain
+add_filter( 'cocart_allow_origin', function() {
+    return 'https://your-framer-site.framer.app';
+} );
+```
+
+See the [CORS documentation](/cors) for more details.
+
+## FAQ
+
+<AccordionGroup>
+  <Accordion title="Can I use npm packages in Framer?">
+    No. Framer doesn't support npm or `import` from node_modules. You must load the SDK via a CDN `<script>` tag, which makes it available as `window.CoCart`.
+  </Accordion>
+
+  <Accordion title="Where should I initialize the CoCart client?">
+    At the **module level** of your Code Override file — outside any override function. This ensures a single client instance is shared across all renders and overrides.
+  </Accordion>
+
+  <Accordion title="Can I use Basic Auth to authenticate customers?">
+    No. Framer runs entirely in the browser, so any credentials in your code are visible to end users. Use [JWT authentication](/authentication/jwt) instead — tokens are short-lived and auto-refresh safely on the client side.
+  </Accordion>
+
+  <Accordion title="How do I persist the cart across page navigations?">
+    The SDK automatically stores the [cart key](/knowledge-base/cart-key) in `localStorage`. When the visitor navigates to another page, the same cart key is used and their cart is restored.
+  </Accordion>
+
+  <Accordion title="Do I need to configure CORS?">
+    Yes. You must first enable CORS with the `cocart_disable_all_cors` filter, then restrict the allowed origin to your Framer domain (e.g., `your-site.framer.app`) using `cocart_allow_origin`. See the [CORS guide](/cors).
+  </Accordion>
+
+  <Accordion title="Will the SDK work on the Framer canvas (editor)?">
+    Code Overrides execute in the Framer preview and published site, but API calls may fail in the editor if CORS is not configured for the editor's origin. Test in the preview or published site for reliable results.
+  </Accordion>
+
+  <Accordion title="Can I use CoCart with Framer's CMS collections?">
+    CoCart replaces Framer's CMS for product data — products are pulled from WooCommerce via the SDK's Products API. You can use Code Overrides to populate Framer components with WooCommerce product data dynamically.
+  </Accordion>
+
+  <Accordion title="How do I handle errors from the API?">
+    Wrap SDK calls in a `try/catch` block. The SDK throws typed errors you can inspect. See the [error handling guide](/sdk/typescript/error-handling) for details.
+  </Accordion>
+</AccordionGroup>

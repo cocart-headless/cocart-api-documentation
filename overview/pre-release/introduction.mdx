@@ -7,7 +7,7 @@ robots: "noindex, follow"
 ---
 
 <Warning>
-    **CoCart Core v5** is still in development but feel free to review the documentation for it and provide feedback on changes, improvements and new features. **Beta releases will be out soon**.
+    **CoCart Starter** is still in development but feel free to review the documentation for it and provide feedback on changes, improvements and new features. **Beta releases will be out soon**.
 </Warning>
 
 ## What is CoCart?
@@ -106,26 +106,52 @@ Build the modern and scalable storefront of your dreams with confidence independ
 
 ## Integration options
 
-<Warning>
-    These SDKs are still in development so in the mean time please refer to our [API Reference](/reference/core) for direct API calls.
-</Warning>
+### TypeScript SDK
 
-### Native SDKs
+The official TypeScript SDK is available on npm. Zero dependencies, typed responses, JWT support, and framework adapters for Astro and Next.js.
+
+```bash
+npm install @cocartheadless/sdk
+```
+
+```ts
+import { CoCart } from '@cocartheadless/sdk';
+
+const client = new CoCart('https://your-store.com');
+const cart = await client.cart().get();
+```
 
 <CardGroup cols={2}>
     <Card
-        title="JS/TS"
-        icon="js"
+        title="SDK Documentation"
+        icon="book"
         color="#f7df1e"
-        href="/integrate/sdk/typescript"
+        href="/sdk/typescript"
     >
-        For web and Node.js applications
+        Full setup, configuration, and API reference
     </Card>
+    <Card
+        title="npm"
+        icon="npm"
+        color="#CB3837"
+        href="https://www.npmjs.com/package/@cocartheadless/sdk"
+    >
+        @cocartheadless/sdk on npm
+    </Card>
+</CardGroup>
+
+### Other SDKs
+
+<Warning>
+    The PHP, Python, and Go SDKs are still in development. In the mean time please refer to our [API Reference](/api-reference/introduction) for direct API calls.
+</Warning>
+
+<CardGroup cols={2}>
     <Card
         title="PHP"
         icon="php"
         color="#4F5B93"
-        href="/integrate/sdk/php"
+        href="/sdk/php"
     >
         For WordPress, Laravel, and other PHP applications
     </Card>

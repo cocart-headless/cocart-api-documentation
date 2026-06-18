@@ -1,0 +1,419 @@
+---
+title: "Python SDK: Products API"
+sidebarTitle: "Products API"
+description: "Browse your WooCommerce catalog with the CoCart Python SDK — list, filter, search, paginate products, variations, categories, attributes, brands, and reviews."
+'og:title': "WooCommerce Products API — CoCart Python SDK"
+'og:description': "Query the WooCommerce product catalog from Python. Filter by category, price, and stock; search; iterate pages with Python's iterator protocol; fetch variations, attributes, and brands."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+</Info>
+
+The Products API is publicly accessible and does not require authentication.
+
+```python
+products = client.products()
+```
+
+## List Products
+
+```python
+response = client.products().all()
+response = client.products().all({"per_page": 20, "page": 1})
+```
+
+## Parameters Reference
+
+All list methods accept an optional `params` dict with these query parameters:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `page` | int | Page number (default: 1) |
+| `per_page` | int | Items per page (default: 10, max: 100) |
+| `search` | str | Search term |
+| `category` | str | Filter by category slug |
+| `tag` | str | Filter by tag slug |
+| `status` | str | Product status |
+| `featured` | bool | Show only featured products |
+| `on_sale` | bool | Show only products on sale |
+| `min_price` | str | Minimum price |
+| `max_price` | str | Maximum price |
+| `stock_status` | str | Stock status (`instock`, `outofstock`, `onbackorder`) |
+| `orderby` | str | Sort field (`date`, `id`, `title`, `slug`, `price`, `popularity`, `rating`) |
+| `order` | str | Sort direction (`asc`, `desc`) |
+
+## Filtering
+
+### By Category
+
+```python
+response = client.products().by_category("electronics")
+
+# With additional params
+response = client.products().by_category("electronics", {
+    "per_page": 20,
+    "orderby": "price",
+    "order": "asc",
+})
+```
+
+### By Tag
+
+```python
+response = client.products().by_tag("new-arrival")
+```
+
+### Featured Products
+
+```python
+response = client.products().featured()
+response = client.products().featured({"per_page": 4})
+```
+
+### Products on Sale
+
+```python
+response = client.products().on_sale()
+```
+
+### By Price Range
+
+```python
+# Products between $10 and $50
+response = client.products().by_price_range(10, 50)
+
+# Products under $25
+response = client.products().by_price_range(max_price=25)
+
+# Products over $100
+response = client.products().by_price_range(100)
+```
+
+### Search
+
+```python
+response = client.products().search("wireless headphones")
+
+# Search within a category
+response = client.products().search("headphones", {
+    "category": "electronics",
+})
+```
+
+### Combining Filters
+
+```python
+response = client.products().all({
+    "category": "clothing",
+    "on_sale": True,
+    "min_price": "20",
+    "max_price": "100",
+    "orderby": "popularity",
+    "order": "desc",
+    "per_page": 12,
+})
+```
+
+### By Stock Status
+
+```python
+response = client.products().by_stock_status("instock")
+response = client.products().by_stock_status("outofstock")
+response = client.products().by_stock_status("onbackorder")
+```
+
+## Pagination & Sorting
+
+### Paginate Helper
+
+```python
+# Page 1, 12 products per page
+response = client.products().paginate(1, 12)
+
+# Page 2
+response = client.products().paginate(2, 12)
+```
+
+### Sort Helper
+
+```python
+# Cheapest first
+response = client.products().sort_by("price")
+
+# Most expensive first
+response = client.products().sort_by("price", "desc")
+
+# Newest first
+response = client.products().sort_by("date", "desc")
+
+# Most popular
+response = client.products().sort_by("popularity", "desc")
+
+# Highest rated
+response = client.products().sort_by("rating", "desc")
+
+# Combine with other filters
+response = client.products().sort_by("price", "asc", {
+    "category": "electronics",
+    "on_sale": True,
+})
+```
+
+### Paginated Iterator
+
+The SDK provides a `Paginator` that implements Python's iterator protocol. Use it with a standard `for` loop:
+
+```python
+for page in client.products().all_paginated({"per_page": 20}):
+    for product in page.to_dict():
+        print(f"{product['name']} - ${product['price']}")
+```
+
+Or collect all pages into a list:
+
+```python
+pages = client.products().all_paginated({"per_page": 50}).to_list()
+```
+
+### Manual Pagination
+
+```python
+page = 1
+per_page = 20
+
+while True:
+    response = client.products().paginate(page, per_page)
+    products = response.to_dict()
+    total_pages = response.get_total_pages()
+
+    for product in products:
+        print(f"{product['name']} - ${product['price']}")
+
+    if total_pages is None or page >= total_pages:
+        break
+    page += 1
+```
+
+## Single Product
+
+### By ID
+
+```python
+response = client.products().find(123)
+
+data = response.to_dict()
+print(data["name"])
+print(data["price"])
+print(data["description"])
+```
+
+### By Slug
+
+```python
+response = client.products().find_by_slug("blue-hoodie")
+```
+
+## Variations
+
+### List All Variations
+
+```python
+response = client.products().variations(123)
+
+for variation in response.to_dict():
+    print(f"{variation['id']}: {variation['price']}")
+```
+
+### Get a Specific Variation
+
+```python
+response = client.products().variation(123, 456)
+```
+
+## Categories
+
+### List All Categories
+
+```python
+response = client.products().categories()
+response = client.products().categories({"per_page": "50"})
+```
+
+### Get a Single Category
+
+```python
+response = client.products().category(15)
+```
+
+## Tags
+
+### List All Tags
+
+```python
+response = client.products().tags()
+```
+
+### Get a Single Tag
+
+```python
+response = client.products().tag(8)
+```
+
+## Attributes
+
+### List All Attributes
+
+```python
+response = client.products().attributes()
+```
+
+### Get a Single Attribute
+
+```python
+response = client.products().attribute(1)
+```
+
+### Get a Single Attribute by Slug
+
+```python
+response = client.products().attribute_by_slug("color")
+```
+
+### Get Attribute Terms
+
+```python
+# Get all terms for attribute ID 1 (e.g., all colors)
+response = client.products().attribute_terms(1)
+
+# By attribute slug
+response = client.products().attribute_terms_by_slug("color")
+```
+
+### Get a Single Attribute Term
+
+```python
+# By attribute ID and term ID
+response = client.products().attribute_term(1, 5)
+
+# By attribute slug and term slug
+response = client.products().attribute_term_by_slug("color", "blue")
+```
+
+## Brands
+
+### List All Brands
+
+```python
+response = client.products().brands()
+response = client.products().brands({"per_page": "50"})
+```
+
+### Get a Single Brand
+
+```python
+response = client.products().brand(5)
+```
+
+### Filter Products by Brand
+
+```python
+response = client.products().by_brand("nike")
+
+# With additional params
+response = client.products().by_brand("nike", {
+    "per_page": 20,
+    "orderby": "price",
+    "order": "asc",
+})
+```
+
+## Reviews
+
+### List All Reviews
+
+```python
+response = client.products().reviews()
+```
+
+### Reviews for a Specific Product
+
+```python
+response = client.products().product_reviews(123)
+```
+
+### My Reviews
+
+Get reviews written by the authenticated user:
+
+```python
+response = client.products().my_reviews()
+```
+
+## SEO Data
+
+<Note>Requires the CoCart SEO Pack plugin.</Note>
+
+Get SEO metadata, Open Graph, Twitter cards, and Schema.org structured data for products.
+
+### By Product ID
+
+```python
+response = client.products().seo(123)
+
+# SEO provider (yoast, rankmath, aioseo, etc.)
+provider = response.get("provider")
+
+# Meta tags
+title = response.get("meta_data.meta_title")
+description = response.get("meta_data.meta_description")
+canonical = response.get("meta_data.canonical_url")
+
+# Open Graph
+og_title = response.get("meta_data.opengraph.title")
+og_image = response.get("meta_data.opengraph.image")
+
+# Twitter Card
+twitter_card = response.get("meta_data.twitter.card")
+twitter_image = response.get("meta_data.twitter.image")
+
+# Robots
+index = response.get("meta_data.robots.index")    # True/False
+follow = response.get("meta_data.robots.follow")   # True/False
+
+# Schema.org structured data (ready to embed as JSON-LD)
+schema = response.get("schema")
+```
+
+### By Product Slug
+
+```python
+response = client.products().seo_by_slug("premium-t-shirt")
+
+title = response.get("meta_data.meta_title")
+schema = response.get("schema")
+```
+
+## Working with Responses
+
+All methods return a `Response` object:
+
+```python
+response = client.products().all({"per_page": 5})
+
+# As dict
+products = response.to_dict()
+
+# Check success
+if response.is_successful():
+    for product in response.to_dict():
+        print(product["name"])
+
+# Access nested data with dot notation
+response = client.products().find(123)
+print(response.get("name"))
+print(response.get("price"))
+print(response.get("categories.0.name"))
+```
+
+See [Error Handling](/sdk/python/error-handling) for handling API errors.

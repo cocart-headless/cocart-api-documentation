@@ -1,0 +1,128 @@
+---
+title: "WooCommerce Composite Products"
+sidebarTitle: "Composite Products"
+description: "Expose composite product layout and component configuration in the CoCart products and cart APIs for headless form rendering."
+tag: "In Testing"
+robots: "noindex, follow"
+---
+
+<Info>
+  This feature documentation was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 28th, 2026.
+</Info>
+
+[WooCommerce Composite Products](https://woocommerce.com/products/composite-products/) lets you build configurable products assembled from multiple components, each with its own product options, quantity rules, and pricing.
+
+The CoCart Plus integration exposes the composite layout and component definitions on product responses for building add-to-cart forms, and normalises component configuration data on container cart items.
+
+<Info>
+  This integration is available in CoCart Plus since <Tooltip tip="This is the version of CoCart Plus">v2.0.0</Tooltip> and requires WooCommerce Composite Products to be installed and active.
+</Info>
+
+## Product response
+
+Composite products receive a `composite_data` object in their `extensions` key.
+
+```json Example (product extensions excerpt)
+{
+  "extensions": {
+    "composite_data": {
+      "layout": "single",
+      "components": [
+        {
+          "id": "1",
+          "title": "Base",
+          "optional": false,
+          "quantity_min": 1,
+          "quantity_max": 1,
+          "priced_individually": true,
+          "discount": null,
+          "default_option_id": 15,
+          "options_style": "dropdowns"
+        },
+        {
+          "id": "2",
+          "title": "Topping",
+          "optional": true,
+          "quantity_min": 0,
+          "quantity_max": 3,
+          "priced_individually": true,
+          "discount": null,
+          "default_option_id": 0,
+          "options_style": "thumbnails"
+        }
+      ]
+    }
+  }
+}
+```
+
+### `composite_data` fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `layout` | `string` | Composite layout mode (e.g. `single`, `progressive`, `paged`). |
+| `components` | `array` | Array of component definitions. |
+
+### Component fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Component ID. |
+| `title` | `string` | Component title shown to the customer. |
+| `optional` | `boolean` | Whether the component can be skipped. |
+| `quantity_min` | `integer` | Minimum quantity for this component. |
+| `quantity_max` | `integer` \| `null` | Maximum quantity, or `null` if unlimited. |
+| `priced_individually` | `boolean` | Whether this component contributes its own price to the total. |
+| `discount` | `number` \| `null` | Percentage discount on this component's price, or `null` if none. |
+| `default_option_id` | `integer` | Product ID pre-selected by default. `0` if none. |
+| `options_style` | `string` | Display style for component options (e.g. `dropdowns`, `thumbnails`, `radios`). |
+
+## Cart item response
+
+Container cart items (the composite product itself) receive a `composite_data` object in their `extensions` key. Child items remain in the cart as separate entries.
+
+```json Example (cart item extensions excerpt)
+{
+  "extensions": {
+    "composite_data": {
+      "components": {
+        "1": {
+          "id": 15,
+          "quantity": {
+            "value": 1,
+            "minimum": 1,
+            "maximum": 1
+          },
+          "variation": {},
+          "discount": null,
+          "optional": false,
+          "priced_individually": true,
+          "shipped_individually": false,
+          "title": "Base"
+        }
+      },
+      "child_item_keys": ["def456ghi789"]
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `components` | `object` | Component configuration indexed by component ID. |
+| `child_item_keys` | `array` | Cart item keys of the child items belonging to this container. |
+
+### Component cart fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `integer` | Selected product or variation ID for this component. |
+| `quantity.value` | `integer` | Selected quantity. |
+| `quantity.minimum` | `integer` | Minimum allowed quantity. |
+| `quantity.maximum` | `integer` \| `null` | Maximum allowed quantity, or `null` if unlimited. |
+| `variation` | `object` | Selected variation attributes (key/value pairs). |
+| `discount` | `number` \| `null` | Applied discount percentage, or `null`. |
+| `optional` | `boolean` | Whether this component is optional. |
+| `priced_individually` | `boolean` | Whether this component is priced individually. |
+| `shipped_individually` | `boolean` | Whether this component is shipped individually. |
+| `title` | `string` | Component title. |

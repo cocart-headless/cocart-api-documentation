@@ -1,0 +1,246 @@
+---
+title: "Caching & ETag Filters"
+sidebarTitle: "Caching & ETag"
+description: "PHP filters for Cache-Control headers, ETag support, and cache duration."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Filters Reference overview](/developers/filters) for the full plugin key index and all filter categories.
+</Tip>
+
+### `cocart_send_cache_control_patterns`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to control which route patterns should not be cached. Use this to prevent sensitive or dynamic routes from being served from browser or proxy caches.
+
+<Note>Made available since v3.5.0</Note>
+
+**Parameters**
+
+<ParamField query="patterns" type="array">
+  Array of route patterns that should not be cached.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_send_cache_control_patterns', function( $patterns ) {
+    $patterns[] = '/my-custom-route/';
+    return $patterns;
+} );
+```
+
+[Search `cocart_send_cache_control_patterns` in repository](https://github.com/co-cart/co-cart/search?q=cocart_send_cache_control_patterns&type=code)
+
+---
+
+### `cocart_etag_cart_routes`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to customize which cart routes support ETag-based conditional requests. When enabled, clients can send the `If-None-Match` header and receive `304 Not Modified` responses when the cart hasn't changed.
+
+<Note>Made available since v4.9.0</Note>
+
+**Parameters**
+
+<ParamField query="routes" type="array">
+  Array of cart route patterns that support ETag.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_etag_cart_routes', function( $routes ) {
+    // Add a custom cart route
+    $routes[] = '/cocart/v2/cart/my-custom-endpoint';
+    return $routes;
+} );
+```
+
+[Search `cocart_etag_cart_routes` in repository](https://github.com/co-cart/co-cart/search?q=cocart_etag_cart_routes&type=code)
+
+---
+
+### `cocart_etag_product_routes`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to customize which product routes support ETag caching. Applies to products, categories, tags, attributes, and reviews.
+
+<Note>Made available since v4.9.0</Note>
+
+**Parameters**
+
+<ParamField query="routes" type="array">
+  Array of product route patterns that support ETag.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_etag_product_routes', function( $routes ) {
+    // Remove a specific product route from ETag support
+    return array_filter( $routes, function( $route ) {
+        return strpos( $route, 'reviews' ) === false;
+    });
+} );
+```
+
+[Search `cocart_etag_product_routes` in repository](https://github.com/co-cart/co-cart/search?q=cocart_etag_product_routes&type=code)
+
+---
+
+### `cocart_etag_routes`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to add ETag support for third-party plugin routes. Use this to extend ETag caching beyond the default cart and product endpoints.
+
+<Note>Made available since v4.9.0</Note>
+
+**Parameters**
+
+<ParamField query="routes" type="array">
+  Array of additional route patterns that should support ETag. Empty by default.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_etag_routes', function( $routes ) {
+    // Add ETag support for a custom plugin endpoint
+    $routes[] = '/my-plugin/v1/data';
+    return $routes;
+} );
+```
+
+[Search `cocart_etag_routes` in repository](https://github.com/co-cart/co-cart/search?q=cocart_etag_routes&type=code)
+
+---
+
+### `cocart_cache_max_age`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to customize the maximum cache duration for cacheable responses. This controls the `max-age` directive in the `Cache-Control` header.
+
+<Note>Made available since v4.9.0</Note>
+
+**Parameters**
+
+<ParamField query="max_age" type="integer">
+  Cache duration in seconds. Default: `3600` (1 hour).
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_cache_max_age', function( $max_age ) {
+    // Cache for 30 minutes instead of 1 hour
+    return 1800;
+} );
+```
+
+[Search `cocart_cache_max_age` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cache_max_age&type=code)
+
+---
+
+### `cocart_stale_while_revalidate`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to customize the `stale-while-revalidate` duration for cacheable routes. This directive allows serving stale content while fetching a fresh response in the background.
+
+<Note>Made available since v4.9.0</Note>
+
+**Parameters**
+
+<ParamField query="duration" type="integer">
+  Stale-while-revalidate duration in seconds. Default: `86400` (24 hours).
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_stale_while_revalidate', function( $duration ) {
+    // Allow stale content for 12 hours while revalidating
+    return 43200;
+} );
+```
+
+<Tip>
+Learn more about how ETag and caching works in CoCart in the [ETag Cache Support](/etag-cache-support) guide.
+</Tip>
+
+[Search `cocart_stale_while_revalidate` in repository](https://github.com/co-cart/co-cart/search?q=cocart_stale_while_revalidate&type=code)
+
+---
+
+### `cocart_cacheable_route_patterns`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filter allows you to control which route patterns support ETag caching. Use this to add or remove routes from ETag support beyond the defaults.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="patterns" type="array">
+  Array of route patterns that support ETag caching.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_cacheable_route_patterns', function( $patterns ) {
+    // Add a custom route to ETag caching
+    $patterns[] = '/my-plugin/v1/data';
+    return $patterns;
+} );
+```
+
+---
+
+### `cocart_cache_header_name`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filter allows you to customize the cache response header name. By default, CoCart returns a `CoCart-Cache` header indicating cache status.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="header_name" type="string">
+  The cache header name. Default: `CoCart-Cache`.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_cache_header_name', function() {
+    return 'X-Store-Cache';
+} );
+```
+
+---
+
+### `cocart_version_header_name`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filter allows you to customize the CoCart version response header name. Useful for white-labelling or if you need to avoid exposing the CoCart version.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="header_name" type="string">
+  The version header name.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_version_header_name', function() {
+    return 'X-API-Version';
+} );
+```

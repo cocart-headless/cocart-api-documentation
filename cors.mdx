@@ -1,0 +1,101 @@
+---
+title: "Cross-Origin Resource Sharing (CORS)"
+sidebarTitle: "CORS"
+description: "Learn how to configure CORS for the CoCart REST API — enable cross-origin access, restrict to specific domains, and control allowed ports."
+"og:title": "Cross-Origin Resource Sharing (CORS) for CoCart API"
+icon: "door-open"
+tag: "Updated"
+---
+
+<Info>
+    For security reasons, browsers restrict cross-origin HTTP requests initiated from scripts. Only in a local environment does the REST API simulate CORS enabled.
+</Info>
+
+If you are getting a warning about the cross origin headers then you will need to set it up.
+
+## Configure via Settings
+
+<Badge color="red">Only in CoCart Starter</Badge>
+
+CoCart Starter lets you configure CORS directly from the WordPress admin without any code. Go to **CoCart → Settings → API & CORS**.
+
+<img src="/assets/settings-CORS.png" alt="CoCart Starter settings panel showing the API & CORS tab with CORS support toggle enabled and an Allowed Origins textarea" />
+
+- **CORS support** — toggle to enable or disable cross-origin requests.
+- **Allowed Origins** — enter one origin per line. Wildcards are supported (e.g. `https://*.example.com`).
+
+<Info>
+    Filters always take priority over settings. If you use `cocart_disable_all_cors` or `cocart_allowed_http_origins` in code, they will override whatever is configured in the settings panel.
+</Info>
+
+## Enable CORS
+
+<Note>
+    If you use CoCart Community and simply want to enable but don't want to add any code snippets, you can simply [install CoCart CORS Support](https://wordpress.org/plugins/cocart-cors/) plugin.
+</Note>
+
+```php
+<?php
+add_filter( 'cocart_disable_all_cors', function() { return false; });
+```
+
+For added security when you go into production. Set the **[Access-Control-Allow-Origin](#access-control-allow-origin)** header to be more specific.
+
+## Access-Control-Allow-Origin
+
+### Single Domain Access
+
+Access via a single domain access should be enough.
+
+```php
+<?php
+add_filter( 'cocart_allow_origin', function() { return 'https://example-store.com'; });
+```
+
+### Multiple Domain Access
+
+<Badge color="red">Only in CoCart Starter</Badge>
+
+You can support many domains access using the `cocart_allowed_http_origins` filter.
+
+<Warning>
+    Do not use `cocart_allow_origin` filter at the same time as it will break.
+</Warning>
+
+| Parameter | Type | Description |
+| --------- | ---- | ----------- |
+| `$allowed_origins` | `string[]` | Array of default allowed HTTP origins. |
+
+```php
+<?php
+add_filter( 'cocart_allowed_http_origins', function( $allowed_origins ) {
+    $allowed_origins[] = 'https://example-store.com'; // Replace with your origin.
+
+    return $allowed_origins;
+} );
+```
+
+## Allowed Ports
+
+<Badge color="red">Only in CoCart Starter</Badge>
+
+You can change the list of ports considered safe for accessing the REST API. The ports can also be restricted by the host and/or requested URL.
+
+<Note>
+    Default Ports: 80, 443, 8080
+</Note>
+
+| Parameter | Type | Description |
+| --------- | ---- | ----------- |
+| `$ports` | `int[]` | Array of integers for valid ports. |
+| `$host` | `string` | Host name of the requested URL. |
+| `$url` | `string` | Requested URL. |
+
+```php
+<?php
+add_filter( 'cocart_http_allowed_safe_ports', function( $ports, $host, $url ) {
+    $ports[] = 123; // Replace with port number to allow.
+
+    return $ports;
+} );
+```

@@ -115,6 +115,9 @@ mkdir -p src/api src/components src/screens src/navigation src/context src/hooks
 Install the necessary packages for a complete e-commerce app:
 
 ```bash
+# CoCart SDK
+npm install @cocartheadless/sdk
+
 # Navigation
 npm install @react-navigation/native @react-navigation/native-stack @react-navigation/bottom-tabs
 
@@ -129,9 +132,6 @@ npm install @react-native-async-storage/async-storage
 
 # Image handling
 npm install react-native-fast-image
-
-# Additional utilities
-npm install axios
 ```
 
 For iOS, install pods:
@@ -171,160 +171,27 @@ STORE_URL=https://yourstore.com
 
 ## Creating the CoCart API Client
 
-Create a centralized API client at `src/api/cocart.ts`:
-
-<Info>
-  We are currently building out this client, so for now just make standard fetch/axios requests to the CoCart API endpoints as needed.
-</Info>
+The CoCart TypeScript SDK works in React Native out of the box since it uses native `fetch`. Create `src/api/cocart.ts`:
 
 ```typescript
-import axios, { AxiosInstance } from 'axios';
+import { CoCart } from '@cocartheadless/sdk';
 import Config from 'react-native-config';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE = Config.API_URL || 'https://yourstore.com/wp-json/cocart/v2';
+const STORE_URL = Config.STORE_URL || 'https://yourstore.com';
 
-// Create axios instance
-const api: AxiosInstance = axios.create({
-  baseURL: API_BASE,
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+let client: CoCart | null = null;
 
-// Add cart key to requests
-api.interceptors.request.use(
-  async (config) => {
-    const cartKey = await AsyncStorage.getItem('cart_key');
-    if (cartKey && config.headers) {
-      config.headers['Cart-Key'] = cartKey;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// Save cart key from responses
-api.interceptors.response.use(
-  async (response) => {
-    const cartKey = response.headers['cart-key'];
-    if (cartKey) {
-      await AsyncStorage.setItem('cart_key', cartKey);
-    }
-    return response;
-  },
-  (error) => Promise.reject(error)
-);
-
-/**
- * Fetch products from CoCart API
- */
-export async function getProducts(params: {
-  per_page?: number;
-  page?: number;
-  category?: string;
-  search?: string;
-  [key: string]: any;
-} = {}) {
-  try {
-    const response = await api.get('/products', { params });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching products:', error);
-    throw error;
+export function getClient() {
+  if (!client) {
+    client = new CoCart(STORE_URL);
   }
+  return client;
 }
-
-/**
- * Get a single product by ID
- */
-export async function getProduct(productId: string | number) {
-  try {
-    const response = await api.get(`/products/${productId}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching product:', error);
-    throw error;
-  }
-}
-
-/**
- * Get current cart
- */
-export async function getCart() {
-  try {
-    const response = await api.get('/cart');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching cart:', error);
-    throw error;
-  }
-}
-
-/**
- * Add item to cart
- */
-export async function addToCart(
-  productId: string,
-  quantity: number = 1,
-  options: Record<string, any> = {}
-) {
-  try {
-    const response = await api.post('/cart/add-item', {
-      id: productId,
-      quantity,
-      ...options,
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error adding to cart:', error);
-    throw error;
-  }
-}
-
-/**
- * Update cart item quantity
- */
-export async function updateCartItem(itemKey: string, quantity: number) {
-  try {
-    const response = await api.post(`/cart/item/${itemKey}`, { quantity });
-    return response.data;
-  } catch (error) {
-    console.error('Error updating cart item:', error);
-    throw error;
-  }
-}
-
-/**
- * Remove item from cart
- */
-export async function removeCartItem(itemKey: string) {
-  try {
-    const response = await api.delete(`/cart/item/${itemKey}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error removing cart item:', error);
-    throw error;
-  }
-}
-
-/**
- * Clear cart
- */
-export async function clearCart() {
-  try {
-    const response = await api.post('/cart/clear');
-    await AsyncStorage.removeItem('cart_key');
-    return response.data;
-  } catch (error) {
-    console.error('Error clearing cart:', error);
-    throw error;
-  }
-}
-
-export default api;
 ```
+
+<Tip>
+  The SDK handles cart key tracking, authentication, and request formatting automatically. See the [SDK documentation](/sdk/typescript) for the full API including JWT authentication.
+</Tip>
 
 ## Setting Up React Query
 
@@ -350,22 +217,21 @@ Create a cart hook at `src/hooks/useCart.ts`:
 
 ```typescript
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCart, addToCart, updateCartItem, removeCartItem, clearCart } from '../api/cocart';
+import { getClient } from '../api/cocart';
 import { Alert } from 'react-native';
 
 export function useCart() {
   const queryClient = useQueryClient();
+  const client = getClient();
 
-  // Get cart query
   const { data: cart, isLoading, error } = useQuery({
     queryKey: ['cart'],
-    queryFn: getCart,
+    queryFn: () => client.cart().get(),
   });
 
-  // Add to cart mutation
   const addToCartMutation = useMutation({
     mutationFn: ({ productId, quantity, options }: any) =>
-      addToCart(productId, quantity, options),
+      client.cart().addItem(productId, { quantity, ...options }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
       Alert.alert('Success', 'Item added to cart');
@@ -375,9 +241,9 @@ export function useCart() {
     },
   });
 
-  // Update cart item mutation
   const updateCartMutation = useMutation({
-    mutationFn: ({ itemKey, quantity }: any) => updateCartItem(itemKey, quantity),
+    mutationFn: ({ itemKey, quantity }: any) =>
+      client.cart().updateItem(itemKey, { quantity }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
     },
@@ -386,9 +252,8 @@ export function useCart() {
     },
   });
 
-  // Remove cart item mutation
   const removeCartMutation = useMutation({
-    mutationFn: (itemKey: string) => removeCartItem(itemKey),
+    mutationFn: (itemKey: string) => client.cart().removeItem(itemKey),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
     },
@@ -397,9 +262,8 @@ export function useCart() {
     },
   });
 
-  // Clear cart mutation
   const clearCartMutation = useMutation({
-    mutationFn: clearCart,
+    mutationFn: () => client.cart().clear(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
     },
@@ -425,19 +289,23 @@ Create a products hook at `src/hooks/useProducts.ts`:
 
 ```typescript
 import { useQuery } from '@tanstack/react-query';
-import { getProducts, getProduct } from '../api/cocart';
+import { getClient } from '../api/cocart';
 
 export function useProducts(params?: any) {
+  const client = getClient();
+
   return useQuery({
     queryKey: ['products', params],
-    queryFn: () => getProducts(params),
+    queryFn: () => client.products().list(params),
   });
 }
 
 export function useProduct(productId: string | number) {
+  const client = getClient();
+
   return useQuery({
     queryKey: ['product', productId],
-    queryFn: () => getProduct(productId),
+    queryFn: () => client.products().find(productId),
     enabled: !!productId,
   });
 }
@@ -866,7 +734,7 @@ cd ..
 
 ### CORS Errors
 
-If you encounter CORS errors, configure WordPress to allow cross-origin requests. See [CORS documentation](../../documentation/cors).
+If you encounter CORS errors, configure WordPress to allow cross-origin requests. See [CORS documentation](/cors).
 
 ### Network Issues
 
@@ -902,6 +770,7 @@ Now that your React Native app is set up with CoCart:
 ## Resources
 
 - [React Native Documentation](https://reactnative.dev/docs/getting-started)
+- [CoCart TypeScript SDK](/sdk/typescript) — Full SDK documentation
 - [CoCart API Reference](../../api-reference/introduction)
 - [React Navigation](https://reactnavigation.org/docs/getting-started)
 - [React Query](https://tanstack.com/query/latest/docs/react/overview)

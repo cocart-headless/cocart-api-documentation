@@ -1,0 +1,157 @@
+---
+title: "Go SDK: Utilities"
+sidebarTitle: "Utilities"
+description: "Utility types in the CoCart Go SDK — currency formatting, timezone helpers, and response transformers."
+'og:title': "Currency, Timezone & Response Utilities — CoCart Go SDK"
+'og:description': "Format WooCommerce prices with CurrencyFormatter using CurrencyInfo from API responses, convert timezones using Go's time.LoadLocation, and hook into every response with a transformer function."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+</Info>
+
+The SDK includes standalone utility types for common tasks in headless WooCommerce projects. These work with data already returned by the API — no extra HTTP requests needed.
+
+## CurrencyFormatter
+
+CoCart returns prices as **smallest-unit integers** — `4599` means $45.99 (4599 cents). `CurrencyFormatter` converts these into human-readable strings using the `CurrencyInfo` metadata from API responses.
+
+```go
+import cocart "github.com/cocart-headless/cocart-sdk-go"
+
+formatter := cocart.NewCurrencyFormatter()
+```
+
+### Formatting Prices
+
+```go
+response, _ := client.Cart().Get(ctx, nil)
+currency := response.GetCurrency()
+
+formatter.Format(4599, currency)  // "$45.99"
+formatter.Format(100, currency)   // "$1.00"
+formatter.Format(0, currency)     // "$0.00"
+```
+
+### Decimal String (No Symbol)
+
+```go
+formatter.FormatDecimal(4599, currency) // "45.99"
+```
+
+### Different Currencies
+
+The formatter respects the currency metadata from the API response:
+
+```go
+// Euro (2 decimal places, comma decimal, suffix symbol)
+eur := cocart.CurrencyInfo{
+	CurrencyCode:        "EUR",
+	CurrencySymbol:      "€",
+	CurrencyMinorUnit:   2,
+	CurrencyDecimalSep:  ",",
+	CurrencyThousandSep: ".",
+	CurrencyPrefix:      "",
+	CurrencySuffix:      " €",
+}
+formatter.Format(1299, eur)  // "12,99 €"
+
+// Japanese Yen (0 decimal places)
+jpy := cocart.CurrencyInfo{
+	CurrencyCode:        "JPY",
+	CurrencySymbol:      "¥",
+	CurrencyMinorUnit:   0,
+	CurrencyThousandSep: ",",
+	CurrencyPrefix:      "¥",
+}
+formatter.Format(1500, jpy)  // "¥1,500"
+
+// Large number with thousand separators
+formatter.Format(123456789, cocart.CurrencyInfo{
+	CurrencyCode:        "USD",
+	CurrencyMinorUnit:   2,
+	CurrencyDecimalSep:  ".",
+	CurrencyThousandSep: ",",
+	CurrencyPrefix:      "$",
+})
+// "$1,234,567.89"
+```
+
+---
+
+## TimezoneHelper
+
+WooCommerce stores dates in the store's configured timezone (often UTC). `TimezoneHelper` converts these to any other timezone using Go's `time.LoadLocation` from the standard library, which understands timezone rules including daylight saving time.
+
+```go
+tz := cocart.NewTimezoneHelper()
+```
+
+### Detect User Timezone
+
+```go
+timezone := tz.DetectTimezone()
+// "America/New_York", "Europe/London", "Asia/Tokyo", etc.
+```
+
+### Convert Between Timezones
+
+```go
+result, err := tz.Convert("2025-01-15T10:00:00", "UTC", "America/New_York")
+// "2025-01-15T05:00:00" (EST is UTC-5)
+
+result, err = tz.Convert("2025-06-15T10:00:00", "UTC", "America/New_York")
+// "2025-06-15T06:00:00" (EDT is UTC-4, daylight saving)
+```
+
+### Convert Store Time to Local Time
+
+Shorthand for converting a store date to the user's local timezone:
+
+```go
+// Store is in UTC, convert to user's local timezone
+result, err := tz.ToLocal("2025-01-15T10:00:00", "UTC")
+```
+
+---
+
+## Response Transformer
+
+A response transformer is a function the SDK calls on every API response before returning it to your code. Common uses include logging, metrics, and data enrichment.
+
+### Via Constructor
+
+```go
+client := cocart.NewClient("https://your-store.com",
+	cocart.WithResponseTransformer(func(r *cocart.Response) *cocart.Response {
+		fmt.Printf("[%d] Response received\n", r.StatusCode)
+		return r
+	}),
+)
+```
+
+### Via Fluent Setter
+
+```go
+client := cocart.NewClient("https://your-store.com").
+	SetResponseTransformer(func(r *cocart.Response) *cocart.Response {
+		// Add timing metadata, format currencies, etc.
+		return r
+	})
+```
+
+### Clearing the Transformer
+
+```go
+client.SetResponseTransformer(nil)
+```
+
+### Example: Logging All Responses
+
+```go
+client.SetResponseTransformer(func(r *cocart.Response) *cocart.Response {
+	fmt.Printf("Status: %d\n", r.StatusCode)
+	fmt.Printf("Items: %d\n", r.GetItemCount())
+	return r
+})
+```

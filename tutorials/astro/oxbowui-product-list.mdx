@@ -1,7 +1,7 @@
 ---
-title: "Building product pages with OxbowUI"
+title: "Building Product Pages with OxbowUI"
 sidebarTitle: "OxbowUI Product Pages"
-description: "Learn how to integrate OxbowUI ecommerce components in Astro to display products"
+description: "Build responsive product grids, detail pages, and variable product selectors in Astro using OxbowUI component patterns and CoCart product data."
 tag: "WIP"
 robots: "noindex, follow"
 ---
@@ -11,157 +11,96 @@ import { ProductDetail } from '/snippets/oxbowui/ProductDetail.tsx';
 import { VariableProduct } from '/snippets/oxbowui/VariableProduct.tsx';
 
 <Warning>
-    This tutorial was written by [Claude Code (an AI)](https://claude.com/product/claude-code) and has not yet been reviewed. Follow along with caution. If the tutorial was helpful or a specific part was not clear/correct, please provide feedback at the bottom of the page. Thank you.
+    This tutorial was written by [Claude Code (an AI)](https://claude.com/product/claude-code) and is still a work in progress. Follow along with caution. If the tutorial was helpful or a specific part was not clear/correct, please provide feedback at the bottom of the page. Thank you.
 </Warning>
 
-# Introduction
+[OxbowUI](https://oxbowui.com) is an open-source component library with 400+ blocks built with Tailwind CSS. This tutorial shows how to use OxbowUI's ecommerce patterns with CoCart data to build product pages in Astro.
 
-[OxbowUI](https://oxbowui.com) is an open-source component library featuring ready-to-use components built with Tailwind CSS and AlpineJS. In this tutorial, you'll learn how to use OxbowUI's ecommerce components with CoCart API to build dynamic product pages in Astro.
-
-## What You'll Build
+## What you'll build
 
 - A responsive product grid for listing products
-- A detailed product page with image and description
-- Dynamic product data from CoCart/WooCommerce
-- Add to cart functionality with AlpineJS
-- Proper image handling and pricing display
+- A detailed product page with image, price, and description
+- A variable product page with image gallery, color/size selectors, and accordion sections
+- Add-to-cart functionality using a React island
 
 ## Prerequisites
 
 - An Astro project [set up with CoCart](./setup)
 - CoCart installed and activated on your WordPress site
-- Basic knowledge of Astro, Tailwind CSS, and AlpineJS
-- Tailwind CSS and AlpineJS installed in your project
+- Basic knowledge of Astro and Tailwind CSS
 
 <Note>
-  If you haven't set up your Astro project yet, follow the [Astro Setup Guide](./setup) first.
+  If you haven't set up your Astro project yet, follow the [Astro Setup Guide](./setup) first. This tutorial assumes you have the CoCart API client (`src/lib/cocart.ts`) and base layout from that guide.
 </Note>
 
-## Understanding OxbowUI Components
+## OxbowUI component demos
 
-We'll be working with three OxbowUI ecommerce components. You can interact with the demos below to see how they work:
+Below are interactive demos of the three component patterns we'll adapt. These are the OxbowUI designs rendered with sample data — in the next sections, you'll connect them to live CoCart product data.
 
-### 1. Product Grid Component
+### Product Grid
 
-A responsive grid layout for displaying multiple products:
+A responsive grid that displays multiple products with images, names, and prices:
 
 <ProductGrid />
 
-The component structure:
+### Product Detail
 
-```html
-<div class="relative grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-  <div class="relative flex flex-col justify-between gap-2">
-    <div class="relative aspect-[4/3]">
-      <img
-        src="/store/shoes/airforceblack/3.jpg"
-        alt="#_"
-        class="absolute inset-0 object-cover size-full rounded-2xl bg-zinc-50"
-      />
-    </div>
-    <div>
-      <div class="flex items-center justify-between w-full">
-        <h3 class="text-sm font-medium text-zinc-900 dark:text-white">
-          Nike Air Force 1´07 Fresh
-          <a href="#_">
-            <span class="absolute inset-0"></span>
-          </a>
-        </h3>
-        <h3 class="text-sm text-zinc-500 dark:text-zinc-300">$280.00</h3>
-      </div>
-    </div>
-  </div>
-</div>
-```
-
-### 2. Product Detail Component
-
-A detailed product view with image, price, and description:
+A single product view with a large image, price, title, and description:
 
 <ProductDetail />
 
-The component structure:
+### Variable Product
 
-```html
-<div class="items-center mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-  <!-- Product Image Gallery -->
-  <img
-    src="/store/shoes/airmax/1.png"
-    class="size-full aspect-[16/10] object-cover object-center rounded-2xl lg:col-span-2"
-    alt="Product image"
-  />
-  <!-- Product Details -->
-  <div class="flex flex-col gap-8">
-    <div>
-      <p class="text-4xl sm:text-4xl md:text-5xl lg:text-6xl dark:text-zinc-100">
-        $190
-      </p>
-      <h1 class="text-xl md:text-2xl lg:text-3xl mt-12 font-medium dark:text-zinc-100">
-        Nike Air Max
-      </h1>
-      <p class="text-base mt-1 text-zinc-500 dark:text-zinc-300">Black</p>
-      <p class="text-base mt-4 text-zinc-500 dark:text-zinc-300 lg:text-balance">
-        Hitting the field in the late '60s, adidas airmaxS quickly became
-        soccer's "it" shoe.
-      </p>
-    </div>
-    <!-- Action Buttons -->
-    <div class="flex mt-8">
-      <button class="relative flex items-center justify-center text-center font-medium transition-colors duration-200 ease-in-out select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:z-10 justify-center rounded-md text-white bg-zinc-900 outline outline-zinc-900 hover:bg-zinc-950 focus-visible:outline-zinc-950 dark:bg-zinc-100 dark:text-zinc-900 dark:outline-zinc-100 dark:hover:bg-zinc-200 dark:focus-visible:outline-zinc-200 h-9 px-4 text-sm">
-        Add to Cart
-      </button>
-    </div>
-  </div>
-</div>
-```
+A full product page with image gallery, color and size selectors, action buttons, and accordion sections:
 
-We'll adapt these structures to work with CoCart product data.
+<VariableProduct />
 
-## Creating the Product Grid Component
+## Product Grid component
 
 Create `src/components/ProductGrid.astro`:
 
 ```astro
 ---
+interface Props {
+  products: any[];
+}
+
 const { products } = Astro.props;
 
-/**
- * Format price with currency symbol
- */
-function formatPrice(price, currencySymbol = '$') {
-  return `${currencySymbol}${parseFloat(price).toFixed(2)}`;
+function formatPrice(price: string, symbol = '$') {
+  return `${symbol}${(parseInt(price) / 100).toFixed(2)}`;
 }
 ---
 
-<div class="relative grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
   {products.map((product) => (
-    <div class="relative flex flex-col justify-between gap-2">
-      <div class="relative aspect-[4/3]">
+    <a href={`/product/${product.slug}`} class="group flex flex-col gap-2">
+      <div class="relative aspect-[4/3] overflow-hidden rounded-2xl bg-zinc-100">
         <img
           src={product.images?.[0]?.src || '/placeholder.jpg'}
           alt={product.images?.[0]?.alt || product.name}
-          class="absolute inset-0 object-cover size-full rounded-2xl bg-zinc-50"
+          class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          loading="lazy"
         />
       </div>
-      <div>
-        <div class="flex items-center justify-between w-full">
-          <h3 class="text-sm font-medium text-zinc-900 dark:text-white">
-            {product.name}
-            <a href={`/product/${product.slug}`}>
-              <span class="absolute inset-0"></span>
-            </a>
-          </h3>
-          <h3 class="text-sm text-zinc-500 dark:text-zinc-300">
-            {formatPrice(product.prices.price, product.prices.currency_symbol)}
-          </h3>
-        </div>
+      <div class="flex items-center justify-between w-full">
+        <h3 class="text-sm font-medium text-zinc-900 dark:text-white">
+          {product.name}
+        </h3>
+        <span class="text-sm text-zinc-500 dark:text-zinc-300">
+          {formatPrice(product.prices.price, product.prices.currency_symbol)}
+        </span>
       </div>
-    </div>
+    </a>
   ))}
 </div>
 ```
 
-## Creating the Products Page
+<Note>
+  CoCart returns prices in the smallest currency unit (cents). The `formatPrice` function divides by 100 to display correctly. Adjust this if your store uses a different format.
+</Note>
+
+## Products listing page
 
 Create `src/pages/products.astro`:
 
@@ -171,7 +110,6 @@ import Layout from '../layouts/Layout.astro';
 import ProductGrid from '../components/ProductGrid.astro';
 import { getProducts } from '../lib/cocart';
 
-// Fetch products at build time
 const products = await getProducts({ per_page: 12 });
 ---
 
@@ -180,55 +118,56 @@ const products = await getProducts({ per_page: 12 });
     <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-8">
       Our Products
     </h1>
-
     <ProductGrid products={products} />
   </main>
 </Layout>
 ```
 
-## Creating the Product Detail Component
+## Product Detail component
 
-Create `src/components/ProductDetail.astro`:
+Create `src/components/ProductDetail.astro` for simple products:
 
 ```astro
 ---
+interface Props {
+  product: any;
+}
+
 const { product } = Astro.props;
 
-function formatPrice(price, currencySymbol = '$') {
-  return `${currencySymbol}${parseFloat(price).toFixed(2)}`;
+function formatPrice(price: string, symbol = '$') {
+  return `${symbol}${(parseInt(price) / 100).toFixed(2)}`;
 }
+
+const image = product.images?.[0];
+const description = product.short_description || product.description;
 ---
 
-<div class="items-center mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-  <!-- Product Image Gallery -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8 items-start">
   <img
-    src={product.images?.[0]?.src || '/placeholder.jpg'}
-    class="size-full aspect-[16/10] object-cover object-center rounded-2xl lg:col-span-2"
-    alt={product.images?.[0]?.alt || product.name}
+    src={image?.src || '/placeholder.jpg'}
+    alt={image?.alt || product.name}
+    class="w-full aspect-[16/10] object-cover object-center rounded-2xl lg:col-span-2"
   />
 
-  <!-- Product Details -->
   <div class="flex flex-col gap-8">
     <div>
-      <p class="text-4xl sm:text-4xl md:text-5xl lg:text-6xl dark:text-zinc-100">
+      <p class="text-4xl md:text-5xl lg:text-6xl text-zinc-900 dark:text-zinc-100">
         {formatPrice(product.prices.price, product.prices.currency_symbol)}
       </p>
-      <h1 class="text-xl md:text-2xl lg:text-3xl mt-12 font-medium dark:text-zinc-100">
+      <h1 class="text-xl md:text-2xl lg:text-3xl mt-8 font-medium text-zinc-900 dark:text-zinc-100">
         {product.name}
       </h1>
-      {product.attributes?.find(attr => attr.name === 'Color') && (
-        <p class="text-base mt-1 text-zinc-500 dark:text-zinc-300">
-          {product.attributes.find(attr => attr.name === 'Color').options[0]}
-        </p>
+      {description && (
+        <p class="text-base mt-4 text-zinc-500 dark:text-zinc-300" set:html={description} />
       )}
-      <p class="text-base mt-4 text-zinc-500 dark:text-zinc-300 lg:text-balance" set:html={product.short_description || product.description}>
-      </p>
     </div>
 
-    <!-- Action Buttons -->
-    <div class="flex mt-8">
+    <div class="flex mt-4">
       <button
-        class="relative flex items-center justify-center text-center font-medium transition-colors duration-200 ease-in-out select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:z-10 justify-center rounded-md text-white bg-zinc-900 outline outline-zinc-900 hover:bg-zinc-950 focus-visible:outline-zinc-950 dark:bg-zinc-100 dark:text-zinc-900 dark:outline-zinc-100 dark:hover:bg-zinc-200 dark:focus-visible:outline-zinc-200 h-9 px-4 text-sm"
+        class="inline-flex items-center justify-center font-medium rounded-md text-white bg-zinc-900 hover:bg-zinc-950 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 h-9 px-4 text-sm transition-colors"
+        data-product-id={product.id}
+        data-action="add-to-cart"
       >
         Add to Cart
       </button>
@@ -237,241 +176,285 @@ function formatPrice(price, currencySymbol = '$') {
 </div>
 ```
 
-## Creating a Variable Product Component
+## Variable Product component
 
-For products with variations (colors, sizes), we'll use an advanced component with interactive features:
+For products with variations (colors, sizes), create `src/components/VariableProduct.tsx` as a React island:
 
-### 3. Variable Product Component (Interactive Demo)
+```tsx
+import { useState } from 'react';
 
-Try selecting a color and size, then click "Add to Cart":
-
-<VariableProduct />
-
-Now let's create `src/components/VariableProduct.astro`:
-
-```astro
----
-const { product } = Astro.props;
-
-function formatPrice(price, currencySymbol = '$') {
-  return `${currencySymbol}${parseFloat(price).toFixed(2)}`;
+interface VariableProductProps {
+  product: any;
 }
 
-// Extract attributes for variations
-const colorAttribute = product.attributes?.find(attr => attr.name === 'Color' || attr.slug === 'pa_color');
-const sizeAttribute = product.attributes?.find(attr => attr.name === 'Size' || attr.slug === 'pa_size');
----
+function formatPrice(price: string, symbol = '$') {
+  return `${symbol}${(parseInt(price) / 100).toFixed(2)}`;
+}
 
-<div
-  x-data="{
-    activeImage: 0,
-    images: [
-      ...(product.images || []).map(img => img.src)
-    ],
-    activeColor: null,
-    activeSize: null,
-    sizeSystem: 'US',
-    sizes: {
-      US: sizeAttribute?.options || [],
-      EU: [] // You can map US to EU sizes if needed
-    },
-    colors: colorAttribute?.options?.map(color => ({
-      name: color,
-      ring: 'ring-zinc-300',
-      bg: 'bg-zinc-200'
-    })) || []
-  }"
-  class="grid grid-cols-1 lg:grid-cols-2 gap-8"
->
-  <!-- Product Image Gallery -->
-  <div class="flex flex-col lg:sticky lg:top-24 lg:self-start gap-2">
-    <!-- Main Image -->
-    <div class="overflow-hidden aspect-square bg-zinc-200 dark:bg-zinc-900 rounded-2xl">
-      <img
-        x-show="images.length > 0"
-        :src="images[activeImage]"
-        class="object-cover size-full aspect-square"
-        alt={product.name}
-      />
-    </div>
+export default function VariableProduct({ product }: VariableProductProps) {
+  const [activeImage, setActiveImage] = useState(0);
+  const [activeColor, setActiveColor] = useState<string | null>(null);
+  const [activeSize, setActiveSize] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [message, setMessage] = useState('');
 
-    <!-- Thumbnails -->
-    <div class="w-full grid grid-cols-6 gap-2" x-show="images.length > 1">
-      <template x-for="(image, index) in images" :key="index">
-        <button
-          @click="activeImage = index"
-          :class="{'ring-2 ring-zinc-900': activeImage === index}"
-          class="overflow-hidden size-full bg-zinc-200 rounded-xl aspect-square"
-        >
-          <img
-            :src="image"
-            class="object-cover size-full aspect-square"
-            alt="Product thumbnail"
-          />
-        </button>
-      </template>
-    </div>
-  </div>
+  const images = product.images || [];
+  const colorAttr = product.attributes?.find(
+    (a: any) => a.name === 'Color' || a.slug === 'pa_color'
+  );
+  const sizeAttr = product.attributes?.find(
+    (a: any) => a.name === 'Size' || a.slug === 'pa_size'
+  );
 
-  <!-- Product Details -->
-  <div class="flex flex-col">
-    <div class="flex items-center justify-between text-zinc-900 dark:text-white">
-      <h1 class="text-xl sm:text-xl md:text-2xl font-medium">
-        {product.name}
-      </h1>
-      <p>{formatPrice(product.prices.price, product.prices.currency_symbol)}</p>
-    </div>
+  async function handleAddToCart() {
+    if (colorAttr && !activeColor) {
+      setMessage('Please select a color');
+      return;
+    }
+    if (sizeAttr && !activeSize) {
+      setMessage('Please select a size');
+      return;
+    }
 
-    <p class="text-base mt-4 text-zinc-500 dark:text-zinc-300" set:html={product.short_description || product.description}></p>
+    setAdding(true);
+    setMessage('');
 
-    <div class="flex flex-col mt-4 gap-4">
-      <!-- Color Selector -->
-      {colorAttribute && (
-        <div>
-          <p class="text-xs uppercase text-zinc-500 dark:text-zinc-300">Color</p>
-          <fieldset aria-label="Choose a color" class="mt-2">
-            <div class="flex flex-wrap items-center gap-3">
-              <template x-for="color in colors" :key="color.name">
-                <label
-                  :aria-label="color.name"
-                  class="relative -m-0.5 duration-300 flex cursor-pointer items-center justify-center rounded-full p-0.5 focus:outline-none"
-                  :class="{ 'ring-2 ring-offset-2 ring-zinc-900': activeColor === color.name }"
-                >
-                  <input
-                    type="radio"
-                    name="color-choice"
-                    :value="color.name"
-                    class="sr-only"
-                    @click="activeColor = color.name"
-                  />
-                  <span
-                    aria-hidden="true"
-                    class="rounded-full size-6 ring-1"
-                    :class="`${color.ring} ${color.bg}`"
-                  ></span>
-                </label>
-              </template>
-            </div>
-          </fieldset>
+    try {
+      const response = await fetch('/api/cart/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: String(product.id),
+          quantity: 1,
+          variation: {
+            ...(activeColor && { attribute_pa_color: activeColor }),
+            ...(activeSize && { attribute_pa_size: activeSize }),
+          },
+        }),
+      });
+
+      if (response.ok) {
+        setMessage('Added to cart!');
+      } else {
+        const error = await response.json();
+        setMessage(error.error || 'Failed to add to cart');
+      }
+    } catch {
+      setMessage('Network error');
+    } finally {
+      setAdding(false);
+      setTimeout(() => setMessage(''), 3000);
+    }
+  }
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Image gallery */}
+      <div className="flex flex-col lg:sticky lg:top-24 lg:self-start gap-2">
+        <div className="overflow-hidden aspect-square bg-zinc-100 dark:bg-zinc-800 rounded-2xl">
+          {images[activeImage] && (
+            <img
+              src={images[activeImage].src}
+              alt={images[activeImage].alt || product.name}
+              className="w-full h-full object-cover"
+            />
+          )}
         </div>
-      )}
 
-      <!-- Size Selector -->
-      {sizeAttribute && (
-        <div>
-          <div class="flex items-center justify-between">
-            <p class="text-xs uppercase text-zinc-500 dark:text-zinc-300">Size</p>
-          </div>
-          <div class="mt-2 grid grid-cols-4 gap-2">
-            <template x-for="size in sizes[sizeSystem]" :key="size">
-              <div>
-                <input
-                  type="radio"
-                  :id="'size-' + size"
-                  :value="size"
-                  name="size-choice"
-                  x-model="activeSize"
-                  class="sr-only peer"
+        {images.length > 1 && (
+          <div className="grid grid-cols-6 gap-2">
+            {images.map((img: any, i: number) => (
+              <button
+                key={i}
+                onClick={() => setActiveImage(i)}
+                className={`overflow-hidden aspect-square bg-zinc-100 rounded-xl ${
+                  activeImage === i ? 'ring-2 ring-zinc-900 dark:ring-zinc-100' : ''
+                }`}
+              >
+                <img
+                  src={img.src}
+                  alt={img.alt || 'Thumbnail'}
+                  className="w-full h-full object-cover"
                 />
-                <label
-                  :for="'size-' + size"
-                  x-text="size"
-                  class="flex items-center justify-center px-3 py-2 text-sm font-medium bg-white cursor-pointer dark:bg-zinc-900 ring-1 ring-zinc-200 dark:ring-zinc-700 rounded-md duration-300 peer-checked:ring-2 peer-checked:ring-zinc-900 peer-checked:text-zinc-500 text-zinc-500 dark:text-zinc-200 peer-checked:ring-offset-2"
-                ></label>
-              </div>
-            </template>
+              </button>
+            ))}
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
 
-    <!-- Action Buttons -->
-    <div class="flex flex-row mt-8 gap-2">
-      <button class="relative flex items-center justify-center text-center font-medium transition-colors duration-200 ease-in-out select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:z-10 justify-center rounded-md text-white bg-zinc-900 outline outline-zinc-900 hover:bg-zinc-950 focus-visible:outline-zinc-950 dark:bg-zinc-100 dark:text-zinc-900 dark:outline-zinc-100 dark:hover:bg-zinc-200 dark:focus-visible:outline-zinc-200 h-9 px-4 text-sm w-full">
-        Add to Cart
-      </button>
-      <button class="relative flex items-center justify-center text-center font-medium transition-colors duration-200 ease-in-out select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:z-10 justify-center rounded-md text-zinc-600 bg-zinc-50 outline outline-zinc-100 hover:bg-zinc-200 focus-visible:outline-zinc-600 dark:text-zinc-100 dark:bg-zinc-800 dark:outline-zinc-800 dark:hover:bg-zinc-700 dark:focus-visible:outline-zinc-700 h-9 px-4 text-sm w-full">
-        Buy Now
-      </button>
-    </div>
-
-    <!-- Free shipping notice -->
-    <p class="text-sm mt-1 text-zinc-500 dark:text-zinc-300">
-      Free shipping over $50
-    </p>
-
-    <!-- Accordion sections -->
-    <div class="mt-8 divide-y divide-zinc-200 dark:divide-zinc-700 border-y border-zinc-200 dark:border-zinc-700">
-      <details class="cursor-pointer group">
-        <summary class="text-sm flex items-center justify-between w-full py-4 font-medium text-left select-none text-zinc-900 dark:text-white hover:text-zinc-500 dark:hover:text-zinc-400 focus:text-zinc-500 dark:focus:text-zinc-400">
-          Details
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4 duration-300 ease-out transform group-open:-rotate-45">
-            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-            <path d="M12 5l0 14"></path>
-            <path d="M5 12l14 0"></path>
-          </svg>
-        </summary>
-        <div class="pb-4">
-          <p class="text-sm text-zinc-500 dark:text-zinc-300" set:html={product.description}></p>
-        </div>
-      </details>
-
-      <details class="cursor-pointer group">
-        <summary class="text-sm flex items-center justify-between w-full py-4 font-medium text-left select-none text-zinc-900 dark:text-white hover:text-zinc-500 dark:hover:text-zinc-400 focus:text-zinc-500 dark:focus:text-zinc-400">
-          Shipping
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4 duration-300 ease-out transform group-open:-rotate-45">
-            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-            <path d="M12 5l0 14"></path>
-            <path d="M5 12l14 0"></path>
-          </svg>
-        </summary>
-        <div class="pb-4">
-          <p class="text-sm text-zinc-500 dark:text-zinc-300">
-            We offer free standard shipping on all orders above $50. Express shipping options are available at checkout.
+      {/* Product details */}
+      <div className="flex flex-col">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl md:text-2xl font-medium text-zinc-900 dark:text-white">
+            {product.name}
+          </h1>
+          <p className="text-lg text-zinc-900 dark:text-white">
+            {formatPrice(product.prices.price, product.prices.currency_symbol)}
           </p>
         </div>
-      </details>
 
-      <details class="cursor-pointer group">
-        <summary class="text-sm flex items-center justify-between w-full py-4 font-medium text-left select-none text-zinc-900 dark:text-white hover:text-zinc-500 dark:hover:text-zinc-400 focus:text-zinc-500 dark:focus:text-zinc-400">
-          Returns
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4 duration-300 ease-out transform group-open:-rotate-45">
-            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-            <path d="M12 5l0 14"></path>
-            <path d="M5 12l14 0"></path>
-          </svg>
-        </summary>
-        <div class="pb-4">
-          <p class="text-sm text-zinc-500 dark:text-zinc-300">
-            We accept returns within 30 days of purchase. Items must be in their original condition and packaging.
+        {(product.short_description || product.description) && (
+          <p
+            className="text-sm mt-4 text-zinc-500 dark:text-zinc-300"
+            dangerouslySetInnerHTML={{
+              __html: product.short_description || product.description,
+            }}
+          />
+        )}
+
+        {/* Color selector */}
+        {colorAttr && (
+          <div className="mt-6">
+            <p className="text-xs uppercase text-zinc-500 dark:text-zinc-300 mb-2">
+              Color{activeColor ? `: ${activeColor}` : ''}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {colorAttr.options.map((color: string) => (
+                <button
+                  key={color}
+                  onClick={() => setActiveColor(color)}
+                  aria-label={color}
+                  className={`w-7 h-7 rounded-full border-2 transition-all ${
+                    activeColor === color
+                      ? 'border-zinc-900 dark:border-zinc-100 ring-2 ring-offset-2 ring-zinc-900 dark:ring-zinc-100'
+                      : 'border-zinc-300'
+                  }`}
+                  style={{ backgroundColor: color.toLowerCase() }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Size selector */}
+        {sizeAttr && (
+          <div className="mt-6">
+            <p className="text-xs uppercase text-zinc-500 dark:text-zinc-300 mb-2">Size</p>
+            <div className="grid grid-cols-4 gap-2">
+              {sizeAttr.options.map((size: string) => (
+                <button
+                  key={size}
+                  onClick={() => setActiveSize(size)}
+                  className={`flex items-center justify-center px-3 py-2 text-sm font-medium rounded-md transition-all ${
+                    activeSize === size
+                      ? 'ring-2 ring-zinc-900 dark:ring-zinc-100 text-zinc-900 dark:text-white'
+                      : 'ring-1 ring-zinc-200 dark:ring-zinc-700 text-zinc-500 dark:text-zinc-300'
+                  }`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Status message */}
+        {message && (
+          <p className={`text-sm mt-4 ${
+            message.includes('Added') ? 'text-green-600' : 'text-red-500'
+          }`}>
+            {message}
           </p>
-        </div>
-      </details>
-    </div>
-  </div>
-</div>
+        )}
 
-<script>
-  import Alpine from 'alpinejs';
-  window.Alpine = Alpine;
-  Alpine.start();
-</script>
+        {/* Action buttons */}
+        <div className="flex gap-2 mt-8">
+          <button
+            onClick={handleAddToCart}
+            disabled={adding}
+            className="flex-1 inline-flex items-center justify-center font-medium rounded-md text-white bg-zinc-900 hover:bg-zinc-950 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 h-9 px-4 text-sm transition-colors disabled:opacity-50"
+          >
+            {adding ? 'Adding...' : 'Add to Cart'}
+          </button>
+          <button className="flex-1 inline-flex items-center justify-center font-medium rounded-md text-zinc-600 bg-zinc-50 hover:bg-zinc-100 dark:text-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 ring-1 ring-zinc-200 dark:ring-zinc-700 h-9 px-4 text-sm transition-colors">
+            Buy Now
+          </button>
+        </div>
+
+        <p className="text-sm mt-2 text-zinc-500 dark:text-zinc-300">
+          Free shipping over $50
+        </p>
+
+        {/* Accordion sections */}
+        <div className="mt-8 border-y border-zinc-200 dark:border-zinc-700 divide-y divide-zinc-200 dark:divide-zinc-700">
+          <details>
+            <summary className="flex items-center justify-between py-4 text-sm font-medium text-zinc-900 dark:text-white cursor-pointer select-none">
+              Details
+              <PlusIcon />
+            </summary>
+            <div className="pb-4">
+              <p
+                className="text-sm text-zinc-500 dark:text-zinc-300"
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
+            </div>
+          </details>
+
+          <details>
+            <summary className="flex items-center justify-between py-4 text-sm font-medium text-zinc-900 dark:text-white cursor-pointer select-none">
+              Shipping
+              <PlusIcon />
+            </summary>
+            <div className="pb-4">
+              <p className="text-sm text-zinc-500 dark:text-zinc-300">
+                Free standard shipping on orders above $50. Express options available at checkout.
+              </p>
+            </div>
+          </details>
+
+          <details>
+            <summary className="flex items-center justify-between py-4 text-sm font-medium text-zinc-900 dark:text-white cursor-pointer select-none">
+              Returns
+              <PlusIcon />
+            </summary>
+            <div className="pb-4">
+              <p className="text-sm text-zinc-500 dark:text-zinc-300">
+                Returns accepted within 30 days of purchase. Items must be in original condition.
+              </p>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="w-4 h-4"
+    >
+      <path d="M12 5v14" />
+      <path d="M5 12h14" />
+    </svg>
+  );
+}
 ```
 
-## Creating the Product Detail Page
+<Tip>
+  Install the React integration if you haven't already: `npx astro add react`. This lets Astro hydrate React components as interactive islands.
+</Tip>
 
-Create `src/pages/product/[slug].astro`:
+## Product detail page
+
+Create `src/pages/product/[slug].astro` to handle both simple and variable products:
 
 ```astro
 ---
 import Layout from '../../layouts/Layout.astro';
-import ProductDetail from '../../components/ProductDetail.astro';
-import VariableProduct from '../../components/VariableProduct.astro';
-import { getProducts, getProduct } from '../../lib/cocart';
+import ProductDetailComponent from '../../components/ProductDetail.astro';
+import VariableProductComponent from '../../components/VariableProduct';
+import { getProducts } from '../../lib/cocart';
 
 const { slug } = Astro.params;
 
-// Fetch the specific product
 const products = await getProducts({ slug });
 const product = products[0];
 
@@ -479,309 +462,106 @@ if (!product) {
   return Astro.redirect('/404');
 }
 
-// Check if product has variations
 const isVariable = product.type === 'variable';
 ---
 
-<Layout title={product.name}>
+<Layout title={product.name} description={product.short_description}>
   <main class="container mx-auto px-4 py-12">
     {isVariable ? (
-      <VariableProduct product={product} />
+      <VariableProductComponent product={product} client:load />
     ) : (
-      <ProductDetail product={product} />
+      <ProductDetailComponent product={product} />
     )}
   </main>
 </Layout>
 ```
 
-## Adding Interactive Cart Functionality
+The `client:load` directive tells Astro to hydrate the React component on the client, making the color/size selectors and add-to-cart button interactive.
 
-To add items to cart with interactivity, create enhanced versions with AlpineJS.
+## Cart API endpoint
 
-### Interactive Product Grid
+Create `src/pages/api/cart/add.ts` to proxy add-to-cart requests through your server:
 
-Create `src/components/ProductGridInteractive.astro`:
-
-```astro
----
-const { products } = Astro.props;
-
-function formatPrice(price, currencySymbol = '$') {
-  return `${currencySymbol}${parseFloat(price).toFixed(2)}`;
-}
----
-
-<div
-  x-data="{
-    addingToCart: false,
-    notification: '',
-    async addToCart(productId, productName) {
-      this.addingToCart = true;
-      try {
-        const response = await fetch('/api/cart/add', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: productId, quantity: 1 })
-        });
-
-        if (response.ok) {
-          this.notification = `${productName} added to cart!`;
-          setTimeout(() => this.notification = '', 3000);
-        }
-      } catch (error) {
-        this.notification = 'Error adding to cart';
-        setTimeout(() => this.notification = '', 3000);
-      } finally {
-        this.addingToCart = false;
-      }
-    }
-  }"
-  class="relative"
->
-  <!-- Notification -->
-  <div
-    x-show="notification"
-    x-transition
-    class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50"
-    x-text="notification"
-  ></div>
-
-  <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-    {products.map((product) => (
-      <div class="relative flex flex-col justify-between gap-2 group">
-        <div class="relative aspect-[4/3]">
-          <img
-            src={product.images?.[0]?.src || '/placeholder.jpg'}
-            alt={product.images?.[0]?.alt || product.name}
-            class="absolute inset-0 object-cover size-full rounded-2xl bg-zinc-50"
-          />
-
-          <!-- Add to Cart Button (appears on hover) -->
-          <button
-            x-on:click.prevent={`addToCart(${product.id}, '${product.name}')`}
-            class="absolute bottom-4 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-900 text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-zinc-800"
-            x-bind:disabled="addingToCart"
-          >
-            <span x-show="!addingToCart">Add to Cart</span>
-            <span x-show="addingToCart">Adding...</span>
-          </button>
-        </div>
-
-        <div>
-          <div class="flex items-center justify-between w-full">
-            <h3 class="text-sm font-medium text-zinc-900 dark:text-white">
-              {product.name}
-              <a href={`/product/${product.slug}`}>
-                <span class="absolute inset-0"></span>
-              </a>
-            </h3>
-            <h3 class="text-sm text-zinc-500 dark:text-zinc-300">
-              {formatPrice(product.prices.price, product.prices.currency_symbol)}
-            </h3>
-          </div>
-        </div>
-      </div>
-    ))}
-  </div>
-</div>
-
-<script>
-  import Alpine from 'alpinejs';
-  window.Alpine = Alpine;
-  Alpine.start();
-</script>
-```
-
-### Interactive Product Detail
-
-Create `src/components/ProductDetailInteractive.astro`:
-
-```astro
----
-const { product } = Astro.props;
-
-function formatPrice(price, currencySymbol = '$') {
-  return `${currencySymbol}${parseFloat(price).toFixed(2)}`;
-}
----
-
-<div
-  x-data="{
-    addingToCart: false,
-    notification: '',
-    async addToCart(productId, productName) {
-      this.addingToCart = true;
-      try {
-        const response = await fetch('/api/cart/add', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: productId, quantity: 1 })
-        });
-
-        if (response.ok) {
-          this.notification = `${productName} added to cart!`;
-          setTimeout(() => this.notification = '', 3000);
-        }
-      } catch (error) {
-        this.notification = 'Error adding to cart';
-        setTimeout(() => this.notification = '', 3000);
-      } finally {
-        this.addingToCart = false;
-      }
-    }
-  }"
->
-  <!-- Notification -->
-  <div
-    x-show="notification"
-    x-transition
-    class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50"
-    x-text="notification"
-  ></div>
-
-  <div class="items-center mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-    <!-- Product Image Gallery -->
-    <img
-      src={product.images?.[0]?.src || '/placeholder.jpg'}
-      class="size-full aspect-[16/10] object-cover object-center rounded-2xl lg:col-span-2"
-      alt={product.images?.[0]?.alt || product.name}
-    />
-
-    <!-- Product Details -->
-    <div class="flex flex-col gap-8">
-      <div>
-        <p class="text-4xl sm:text-4xl md:text-5xl lg:text-6xl dark:text-zinc-100">
-          {formatPrice(product.prices.price, product.prices.currency_symbol)}
-        </p>
-        <h1 class="text-xl md:text-2xl lg:text-3xl mt-12 font-medium dark:text-zinc-100">
-          {product.name}
-        </h1>
-        {product.attributes?.find(attr => attr.name === 'Color') && (
-          <p class="text-base mt-1 text-zinc-500 dark:text-zinc-300">
-            {product.attributes.find(attr => attr.name === 'Color').options[0]}
-          </p>
-        )}
-        <p class="text-base mt-4 text-zinc-500 dark:text-zinc-300 lg:text-balance" set:html={product.short_description || product.description}>
-        </p>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="flex mt-8">
-        <button
-          x-on:click.prevent={`addToCart(${product.id}, '${product.name}')`}
-          x-bind:disabled="addingToCart"
-          class="relative flex items-center justify-center text-center font-medium transition-colors duration-200 ease-in-out select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:z-10 justify-center rounded-md text-white bg-zinc-900 outline outline-zinc-900 hover:bg-zinc-950 focus-visible:outline-zinc-950 dark:bg-zinc-100 dark:text-zinc-900 dark:outline-zinc-100 dark:hover:bg-zinc-200 dark:focus-visible:outline-zinc-200 h-9 px-4 text-sm disabled:opacity-50"
-        >
-          <span x-show="!addingToCart">Add to Cart</span>
-          <span x-show="addingToCart">Adding...</span>
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-  import Alpine from 'alpinejs';
-  window.Alpine = Alpine;
-  Alpine.start();
-</script>
-```
-
-## Creating the Cart API Endpoint
-
-Create `src/pages/api/cart/add.js`:
-
-```javascript
+```typescript
+import type { APIRoute } from 'astro';
 import { addToCart } from '../../../lib/cocart';
 
-export async function POST({ request }) {
+export const POST: APIRoute = async ({ request }) => {
   try {
-    const body = await request.json();
-    const { id, quantity = 1 } = body;
-
-    const result = await addToCart(id, quantity);
+    const { id, quantity = 1, ...options } = await request.json();
+    const result = await addToCart(id, quantity, options);
 
     return new Response(JSON.stringify(result), {
       status: 200,
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json'
+    return new Response(
+      JSON.stringify({ error: (error as Error).message }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
       }
-    });
+    );
   }
-}
+};
 ```
 
-<Note>
-  Make sure AlpineJS is installed and configured in your project. See the [Astro Setup Guide](./setup#adding-alpinejs-for-interactivity) for instructions.
-</Note>
+## Add-to-cart for simple products
 
-## Working with Variable Products
+The ProductDetail component uses a `data-action="add-to-cart"` attribute on the button. Add a small script to your layout or page to handle clicks:
 
-To add variable products to cart, you need to find the correct variation ID based on selected attributes. Update your CoCart API client in `src/lib/cocart.js`:
+```astro
+<script>
+  document.addEventListener('click', async (e) => {
+    const button = (e.target as HTMLElement).closest('[data-action="add-to-cart"]');
+    if (!button) return;
 
-```javascript
-/**
- * Get product variations
- * @param {string|number} productId - Product ID
- * @returns {Promise<Array>} Variations array
- */
-export async function getProductVariations(productId) {
-  try {
-    const response = await fetch(`${API_BASE}/products/${productId}/variations`);
+    const productId = button.getAttribute('data-product-id');
+    if (!productId) return;
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    button.textContent = 'Adding...';
+    button.setAttribute('disabled', 'true');
+
+    try {
+      const res = await fetch('/api/cart/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: productId, quantity: 1 }),
+      });
+
+      button.textContent = res.ok ? 'Added!' : 'Error';
+    } catch {
+      button.textContent = 'Error';
     }
 
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching variations:', error);
-    return [];
-  }
-}
-
-/**
- * Find variation ID based on selected attributes
- * @param {Array} variations - Product variations
- * @param {Object} selectedAttributes - Selected attributes {color: 'Red', size: 'L'}
- * @returns {number|null} Variation ID
- */
-export function findVariationId(variations, selectedAttributes) {
-  return variations.find(variation => {
-    return Object.entries(selectedAttributes).every(([key, value]) => {
-      const attr = variation.attributes.find(a =>
-        a.name.toLowerCase() === key.toLowerCase()
-      );
-      return attr && attr.option.toLowerCase() === value.toLowerCase();
-    });
-  })?.id || null;
-}
+    setTimeout(() => {
+      button.textContent = 'Add to Cart';
+      button.removeAttribute('disabled');
+    }, 2000);
+  });
+</script>
 ```
 
-Then create an interactive variable product component that uses these functions to add the correct variation to cart.
+This uses vanilla JavaScript so it works without a framework. For simple products, there's no need for a full React island.
 
-## Understanding the CoCart Response
+## Understanding the CoCart response
 
 The CoCart Products API returns data in this structure:
 
 ```json
 {
   "id": 123,
-  "name": "Nike Air Force 1´07 Fresh",
-  "slug": "nike-air-force-1-07-fresh",
+  "name": "Nike Air Force 1",
+  "slug": "nike-air-force-1",
+  "type": "simple",
   "prices": {
     "price": "28000",
     "regular_price": "28000",
     "sale_price": "",
     "currency_code": "USD",
-    "currency_symbol": "$"
+    "currency_symbol": "$",
+    "currency_minor_unit": 2
   },
   "images": [
     {
@@ -789,29 +569,57 @@ The CoCart Products API returns data in this structure:
       "src": "https://yourstore.com/wp-content/uploads/product.jpg",
       "alt": "Nike Air Force 1"
     }
+  ],
+  "attributes": [
+    {
+      "name": "Color",
+      "slug": "pa_color",
+      "options": ["Black", "White", "Red"]
+    }
   ]
 }
 ```
 
-## Customization Options
+<Note>
+  Prices are returned in the smallest currency unit (e.g. `28000` = $280.00 for USD). Use `currency_minor_unit` to determine how many decimal places to shift.
+</Note>
 
-### Filtering Products
+## Handling sale prices
 
-Add category or search filtering:
+Show original and discounted prices when a product is on sale:
 
-```javascript
-// In cocart.js
-export async function getProductsByCategory(categoryId, params = {}) {
-  return getProducts({
-    ...params,
-    category: categoryId
-  });
+```astro
+---
+const { product } = Astro.props;
+const { prices } = product;
+const isOnSale = prices.sale_price && prices.sale_price !== prices.regular_price;
+
+function formatPrice(price: string, symbol = '$') {
+  return `${symbol}${(parseInt(price) / 100).toFixed(2)}`;
 }
+---
+
+{isOnSale ? (
+  <div class="flex items-center gap-2">
+    <span class="text-sm text-zinc-400 line-through">
+      {formatPrice(prices.regular_price, prices.currency_symbol)}
+    </span>
+    <span class="text-sm text-red-600 font-semibold">
+      {formatPrice(prices.sale_price, prices.currency_symbol)}
+    </span>
+  </div>
+) : (
+  <span class="text-sm text-zinc-500 dark:text-zinc-300">
+    {formatPrice(prices.price, prices.currency_symbol)}
+  </span>
+)}
 ```
 
-### Different Grid Layouts
+## Customization
 
-Modify the grid classes in ProductGrid.astro:
+### Grid layouts
+
+Change the number of columns by adjusting the grid classes:
 
 ```html
 <!-- 4 columns on large screens -->
@@ -821,62 +629,59 @@ Modify the grid classes in ProductGrid.astro:
 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
 ```
 
-### Price Variations
+### Filtering by category
 
-Handle sale prices:
-
-```astro
-{product.prices.sale_price && (
-  <div class="flex items-center gap-2">
-    <span class="text-sm text-zinc-500 line-through">
-      {formatPrice(product.prices.regular_price, product.prices.currency_symbol)}
-    </span>
-    <span class="text-sm text-red-600 font-semibold">
-      {formatPrice(product.prices.sale_price, product.prices.currency_symbol)}
-    </span>
-  </div>
-)}
+```typescript
+// In src/lib/cocart.ts
+export async function getProductsByCategory(
+  categoryId: number,
+  params: Record<string, string | number> = {}
+) {
+  return getProducts({ ...params, category: categoryId });
+}
 ```
 
-## Component Usage Summary
+Then use it in your page:
 
-You now have six components to use in your Astro project:
+```astro
+---
+const products = await getProductsByCategory(15, { per_page: 8 });
+---
+```
 
-### Product Listing Components
-1. **ProductGrid.astro** - Static product grid (SEO-friendly, server-rendered)
-2. **ProductGridInteractive.astro** - Interactive product grid with add to cart
+## Component summary
 
-### Simple Product Detail Components
-3. **ProductDetail.astro** - Static product detail view
-4. **ProductDetailInteractive.astro** - Interactive product detail with add to cart
+| Component | Type | Use case |
+|-----------|------|----------|
+| `ProductGrid.astro` | Astro (static) | Product listing pages |
+| `ProductDetail.astro` | Astro (static) | Simple product pages |
+| `VariableProduct.tsx` | React (interactive) | Products with color, size, or other variations |
 
-### Variable Product Components
-5. **VariableProduct.astro** - Advanced component with:
-   - Image gallery with thumbnails
-   - Color selector
-   - Size selector
-   - Accordion sections (Details, Shipping, Returns)
-   - Multiple action buttons (Add to Cart, Buy Now)
+The product detail page (`[slug].astro`) automatically picks the right component based on the product type.
 
-The page automatically detects if a product is variable and uses the appropriate component.
+## Next steps
 
-Use the static versions for better SEO and performance, or the interactive versions when you need client-side cart functionality.
-
-## Next Steps
-
-- Explore more [OxbowUI ecommerce components](https://oxbowui.com/playground/ecommerce)
-- Add product image gallery (multiple images)
-- Implement product variations (size, color selection)
-- Add product filtering and search
-- Build cart page using OxbowUI cart components
-- Create checkout flow with CoCart Checkout API
-- Add product quick view functionality
+- Explore more [OxbowUI ecommerce components](https://oxbowui.com)
+- Add pagination to the product grid
+- Build a cart page using the [Cart API](/api-reference/v2/cart/get-cart)
+- [Generate TypeScript types](/tutorials/typescript-types-generation) for full type safety
 
 ## Resources
 
-- [OxbowUI Documentation](https://oxbowui.com)
-- [CoCart Products API](../../api-reference/v2/products/get-products)
-- [CoCart Add to Cart](../../api-reference/v2/cart/post-add-item)
-- [Astro Documentation](https://docs.astro.build)
-- [Tailwind CSS](https://tailwindcss.com)
-- [AlpineJS](https://alpinejs.dev)
+<CardGroup cols={2}>
+  <Card title="OxbowUI Components" icon="grid-2" href="https://oxbowui.com">
+    Browse the full component library
+  </Card>
+
+  <Card title="CoCart Products API" icon="code" href="/api-reference/v2/products/get-products">
+    Complete products endpoint reference
+  </Card>
+
+  <Card title="Astro React Integration" icon="react" href="https://docs.astro.build/en/guides/integrations-guide/react/">
+    Using React components in Astro
+  </Card>
+
+  <Card title="Tailwind CSS" icon="paintbrush" href="https://tailwindcss.com/docs">
+    Tailwind CSS documentation
+  </Card>
+</CardGroup>

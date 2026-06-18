@@ -1,0 +1,94 @@
+---
+title: "Shipping & Packages Filters"
+sidebarTitle: "Shipping & Packages"
+description: "PHP filters for shipping packages, methods, costs, and shipping-related calculations."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Filters Reference overview](/developers/filters) for the full plugin key index and all filter categories.
+</Tip>
+
+### `cocart_available_shipping_packages`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to alter the shipping packages returned.
+
+<Note>Made available since v4.1.0</Note>
+
+**Parameters**
+
+<ParamField query="packages" type="array">
+  Available shipping packages.
+</ParamField>
+
+<ParamField query="chosen_method" type="array">
+  Chosen shipping method.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_available_shipping_packages', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_available_shipping_packages` in repository](https://github.com/co-cart/co-cart/search?q=cocart_available_shipping_packages&type=code)
+
+---
+
+### `cocart_shipping_package_details_array`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to change the package details.
+
+<Note>Made available since v3.0.0</Note>
+
+**Parameters**
+
+<ParamField query="product_names" type="array">
+  Product names.
+</ParamField>
+
+<ParamField query="package" type="array">
+  Package details.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_shipping_package_details_array', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_shipping_package_details_array` in repository](https://github.com/co-cart/co-cart/search?q=cocart_shipping_package_details_array&type=code)
+
+---
+
+### `cocart_shipping_package_name`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters the package name for the shipping method.
+
+<Note>Made available since v3.0.0</Note>
+
+**Parameters**
+
+<ParamField query="shipping_name" type="string">
+  Shipping name.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_shipping_package_name', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_shipping_package_name` in repository](https://github.com/co-cart/co-cart/search?q=cocart_shipping_package_name&type=code)

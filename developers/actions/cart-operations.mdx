@@ -1,0 +1,117 @@
+---
+title: "Cart Operations Hooks"
+sidebarTitle: "Cart Operations"
+description: "Action hooks for cart lifecycle events in CoCart — fires when a cart is created, emptied, cleared, or retrieved."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Action Hooks overview](/developers/actions) for all hook categories and the [Developer Reference](/developers) for the plugin key index.
+</Tip>
+
+### `cocart_cart_created`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Fires once a new cart is created. Use this to trigger welcome flows, initialize tracking, or set up cart-level defaults for new sessions.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField path="cart_key" type="string">
+  The cart key of the newly created cart.
+</ParamField>
+
+**Usage**
+```php
+add_action( 'cocart_cart_created', function( $cart_key ) {
+    // Log new cart creation
+    error_log( sprintf( 'New cart created: %s', $cart_key ) );
+}, 10 );
+```
+
+---
+
+### `cocart_before_cart_emptied`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Triggers before the cart is emptied.
+
+<Note>Made available since v1.0.0</Note>
+
+**Usage**
+```php
+add_action( 'cocart_before_cart_emptied', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_before_cart_emptied` in repository](https://github.com/co-cart/co-cart/search?q=cocart_before_cart_emptied&type=code)
+
+---
+
+### `cocart_cart_emptied`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Triggers once the cart is emptied.
+
+<Note>Made available since v1.0.0</Note>
+
+**Usage**
+```php
+add_action( 'cocart_cart_emptied', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_cart_emptied` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cart_emptied&type=code)
+
+---
+
+### `cocart_cart_cleared`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Triggers once the cart is cleared.
+
+<Note>Made available since v1.0.0</Note>
+
+**Usage**
+```php
+add_action( 'cocart_cart_cleared', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_cart_cleared` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cart_cleared&type=code)
+
+---
+
+### `cocart_get_cart`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Fires when the cart is retrieved.
+
+<Note>Made available since v2.0.0</Note>
+
+**Parameters**
+
+<ParamField path="cart_contents" type="array">
+  Cart contents.
+</ParamField>
+
+**Usage**
+```php
+add_action( 'cocart_get_cart', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_get_cart` in repository](https://github.com/co-cart/co-cart/search?q=cocart_get_cart&type=code)

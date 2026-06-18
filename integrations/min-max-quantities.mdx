@@ -1,0 +1,67 @@
+---
+title: "WooCommerce Min/Max Quantities"
+sidebarTitle: "Min/Max Quantities"
+description: "Expose per-product quantity rules (minimum, maximum, group-of) in the CoCart products API so headless storefronts can enforce them."
+tag: "In Testing"
+robots: "noindex, follow"
+---
+
+<Info>
+  This feature documentation was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 28th, 2026.
+</Info>
+
+[WooCommerce Min/Max Quantities](https://woocommerce.com/products/minmax-quantities/) lets store owners set minimum purchase quantities, maximum purchase quantities, and "group-of" multipliers on individual products and product categories. The CoCart Plus integration exposes these rules on product responses so your headless storefront can enforce and render them without a separate request.
+
+<Info>
+  This integration is available in CoCart Plus since <Tooltip tip="This is the version of CoCart Plus">v2.0.0</Tooltip> and requires WooCommerce Min/Max Quantities to be installed and active.
+</Info>
+
+## Product response
+
+All products receive a `quantity_rules` object in their `extensions` key. Products with no rules configured return zeros.
+
+```json Example (product extensions excerpt)
+{
+  "extensions": {
+    "quantity_rules": {
+      "minimum": 2,
+      "maximum": 24,
+      "group_of": 2,
+      "combine_variations": false
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `minimum` | `integer` | Minimum quantity required to purchase. `0` means no minimum. |
+| `maximum` | `integer` \| `null` | Maximum quantity allowed to purchase. `null` means no maximum. |
+| `group_of` | `integer` | Quantity must be purchased in multiples of this value. `0` means no restriction. |
+| `combine_variations` | `boolean` | For variable products: when `true`, quantities across all variations are combined when checking min/max rules. |
+
+## Enforcing rules in your storefront
+
+Read `quantity_rules` from the product response and apply them to your quantity input:
+
+```javascript JavaScript
+const rules = product.extensions?.quantity_rules ?? {};
+
+const min     = rules.minimum    || 1;
+const max     = rules.maximum    ?? Infinity;
+const groupOf = rules.group_of   || 1;
+
+function isValidQuantity(qty) {
+  if (qty < min || qty > max) return false;
+  if (groupOf > 1 && qty % groupOf !== 0) return false;
+  return true;
+}
+```
+
+<Tip>
+  Always display the quantity rules to the customer alongside the quantity input — for example, "Minimum order: 2 | Must be ordered in multiples of 2."
+</Tip>
+
+## Category-level rules
+
+Rules configured at the category level are automatically inherited and resolved by the Min/Max Quantities plugin's own engine. The values returned in `quantity_rules` already reflect the effective rules for the product, including any category-level group-of inheritance.

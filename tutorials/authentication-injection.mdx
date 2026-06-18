@@ -3,12 +3,10 @@ title: "Authentication Injection with CoCart"
 sidebarTitle: "Authentication Injection"
 description: "Learn how to intervene CoCart's authentication"
 icon: "syringe"
-tag: "WIP"
-robots: "noindex, follow"
 ---
 
 <Note>
-    This guide only works if you have CoCart v4.8 and up installed.
+    If you have CoCart Community installed, this guide only works if you v4.8 and up installed.
 </Note>
 
 ## What is authentication injection?
@@ -177,7 +175,7 @@ Allows customizing which authentication methods skip additional checks (like cus
   The current authentication method being used
 </ParamField>
 
-### `cocart_login_collection_params`
+### `cocart_login_query_parameters`
 
 <Info>
     Made available since v4.8.0
@@ -188,7 +186,7 @@ Allows you to add additional parameters to the login endpoint for custom authent
 <CodeGroup>
 
 ```php Add Custom Auth Parameters
-add_filter( 'cocart_login_collection_params', function( $additional_params ) {
+add_filter( 'cocart_login_query_parameters', function( $additional_params ) {
     $additional_params['department_code'] = array(
         'description' => 'Employee department code',
         'type' => 'string',
@@ -207,7 +205,7 @@ add_filter( 'cocart_login_collection_params', function( $additional_params ) {
 ```
 
 ```php Add Custom Auth Fields
-add_filter( 'cocart_login_collection_params', function( $additional_params ) {
+add_filter( 'cocart_login_query_parameters', function( $additional_params ) {
     $additional_params['device_id'] = array(
         'description' => 'Unique device identifier',
         'type' => 'string',

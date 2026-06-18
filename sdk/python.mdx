@@ -1,0 +1,276 @@
+---
+title: "Python SDK"
+sidebarTitle: "Overview"
+description: "Official Python SDK for the CoCart REST API. Supports requests and httpx, JWT, Basic Auth, multiple storage adapters, and iterator-based pagination."
+'og:title': "CoCart Python SDK — Install, Configure & Connect to WooCommerce"
+'og:description': "Install and configure the CoCart Python SDK. pip install, requests and httpx HTTP adapters, all config options, fluent API, and legacy plugin support."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+</Info>
+
+The official Python SDK for the CoCart REST API. Works with Python 3.9+.
+
+## Requirements
+
+- Python 3.9 or higher
+- `requests` library _(installed automatically)_
+- CoCart plugin installed on your WooCommerce store
+- [CoCart JWT Authentication](https://wordpress.org/plugins/cocart-jwt-authentication/) plugin _(optional, for JWT features)_
+
+## Installation
+
+```bash
+pip install cocart
+```
+
+### Development Install
+
+```bash
+git clone https://github.com/cocart-headless/cocart-python.git
+cd cocart-python
+pip install -e ".[dev]"
+```
+
+## HTTP Adapters
+
+The SDK uses `requests` by default. You can switch to `httpx` if installed.
+
+| Priority | Adapter | Package | Notes |
+|----------|---------|---------|-------|
+| 1 | **requests** | `requests` | Default, most widely used |
+| 2 | **httpx** | `httpx` | Optional, modern alternative |
+
+### Specifying an Adapter
+
+```python
+from cocart import CoCart
+from cocart.http.httpx_adapter import HttpxAdapter
+
+# Auto-detect (uses requests by default)
+client = CoCart("https://your-store.com")
+
+# Inject a custom adapter instance
+client = CoCart("https://your-store.com")
+client._http_adapter = HttpxAdapter()
+```
+
+## Configuration Options
+
+```python
+client = CoCart("https://your-store.com",
+    # Guest session
+    cart_key="existing_cart_key",
+
+    # Basic Auth
+    username="customer@email.com",
+    password="password",
+
+    # JWT Auth
+    jwt_token="your-jwt-token",
+    jwt_refresh_token="your-refresh-token",
+
+    # Admin (Sessions API)
+    consumer_key="ck_xxxxx",
+    consumer_secret="cs_xxxxx",
+
+    # HTTP settings
+    timeout=30,
+    verify_ssl=True,
+
+    # Custom auth header (for reverse proxies that strip Authorization)
+    auth_header_name="Authorization",
+
+    # REST API prefix (default: "wp-json")
+    rest_prefix="wp-json",
+
+    # API namespace (default: "cocart")
+    namespace="cocart",
+
+    # CoCart main plugin: "basic" (default) or "legacy"
+    main_plugin="basic",
+
+    # Retry transient failures (429, 503, timeouts)
+    max_retries=2,
+
+    # ETag conditional requests (default: True)
+    etag=True,
+
+    # Storage adapter for cart key persistence
+    storage=None,           # defaults to MemoryStorage
+    storage_key="cocart_cart_key",
+)
+```
+
+### Fluent Configuration
+
+```python
+client = (
+    CoCart.create("https://your-store.com")
+    .set_timeout(60)
+    .set_verify_ssl(False)
+    .set_max_retries(2)
+    .set_rest_prefix("api")
+    .set_namespace("mystore")
+    .set_auth_header_name("X-Authorization")
+    .set_etag(True)
+    .set_main_plugin("legacy")
+    .add_header("X-Custom-Header", "value")
+)
+```
+
+## Storage Adapters
+
+Storage adapters implement `StorageInterface` and are used by both `SessionManager` (for cart keys) and `JwtManager` (for JWT tokens).
+
+### Memory Storage
+
+Stores data in a Python dict (default, lost when process ends):
+
+```python
+from cocart.storage.memory_storage import MemoryStorage
+
+storage = MemoryStorage()
+```
+
+### File Storage
+
+Stores data in the filesystem:
+
+```python
+from cocart.storage.file_storage import FileStorage
+
+storage = FileStorage("/tmp/cocart-sessions")
+```
+
+### Custom Storage
+
+Implement `StorageInterface` for any storage backend:
+
+```python
+from cocart.storage.storage import StorageInterface
+
+
+class RedisStorage:
+    """Redis-backed storage adapter."""
+
+    def __init__(self, redis_client):
+        self._redis = redis_client
+
+    def get(self, key: str) -> str | None:
+        value = self._redis.get(key)
+        return value.decode() if value else None
+
+    def set(self, key: str, value: str) -> None:
+        self._redis.set(key, value)
+
+    def delete(self, key: str) -> None:
+        self._redis.delete(key)
+```
+
+Pass your custom storage to `SessionManager` or `JwtManager`:
+
+```python
+import redis
+
+r = redis.Redis(host="127.0.0.1", port=6379)
+
+storage = RedisStorage(r)
+session = SessionManager(client, storage)
+jwt = JwtManager(client, storage)
+```
+
+## Legacy Plugin Support
+
+The SDK supports both **CoCart Starter** and **CoCart Community** plugin (`cart-rest-api-for-woocommerce` v4.x). By default, the SDK targets CoCart Starter.
+
+To use the SDK with the community plugin, set `main_plugin` to `"legacy"`:
+
+```python
+client = CoCart("https://your-store.com", main_plugin="legacy")
+
+# Or use the fluent setter
+client.set_main_plugin("legacy")
+```
+
+### What changes in legacy mode
+
+**Basic-only methods raise immediately.** Methods that require CoCart Starter raise a `VersionException` before making any HTTP request:
+
+```python
+from cocart.exceptions import VersionException
+
+client = CoCart("https://your-store.com", main_plugin="legacy")
+
+try:
+    client.products().find_by_slug("blue-hoodie")
+except VersionException as e:
+    # "products().find_by_slug() requires CoCart Starter. Please upgrade..."
+    print(e)
+```
+
+Basic-only methods include:
+
+- `cart().create()`
+- `products().find_by_slug()`, `variation()`, `category()`, `tag()`
+- `products().attribute_by_slug()`, `attribute_terms_by_slug()`, `attribute_term_by_slug()`
+- `products().brands()`, `brand()`, `by_brand()`
+- `products().my_reviews()`
+
+**Field filtering uses `fields` instead of `_fields`.** The SDK handles this automatically based on the configured main plugin.
+
+## Quick Start
+
+```python
+from cocart import CoCart
+
+client = CoCart("https://your-store.com")
+
+# Add an item to the cart
+response = client.cart().add_item(123, quantity=2)
+
+# Get the cart
+cart = client.cart().get()
+print(cart.get_item_count())
+```
+
+## Key Features
+
+- **requests + httpx support** — switch HTTP adapters with one line
+- **Full cart management** — add, update, remove items, coupons, shipping, fees
+- **JWT authentication** with auto-refresh
+- **Guest customer support** with automatic cart key tracking
+- **Iterator-based pagination** — use standard `for` loops
+- **Fluent interface** — chainable configuration setters
+- **Multiple storage adapters** — Memory, File
+- **ETag conditional requests** for reduced bandwidth
+- **Full type hints** (mypy strict mode)
+- **Legacy plugin support** for older CoCart versions
+
+## Documentation
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="lock" href="/sdk/python/authentication">
+    Guest sessions, Basic Auth, JWT, consumer keys, and custom auth headers
+  </Card>
+  <Card title="Cart API" icon="cart-shopping" href="/sdk/python/cart">
+    Add, update, remove items, coupons, shipping, fees, and ETag caching
+  </Card>
+  <Card title="Products API" icon="shirt" href="/sdk/python/products">
+    Browse, filter, paginate products, variations, categories, and reviews
+  </Card>
+  <Card title="Sessions API" icon="database" href="/sdk/python/sessions">
+    Admin sessions endpoint, SessionManager, and cart transfer on login
+  </Card>
+  <Card title="Error Handling" icon="circle-exclamation" href="/sdk/python/error-handling">
+    Exception hierarchy, catching errors, and HTTP status code mapping
+  </Card>
+  <Card title="Utilities" icon="wrench" href="/sdk/python/utilities">
+    Currency formatting, timezone helpers, and response transformers
+  </Card>
+</CardGroup>
+
+## Source
+
+The SDK is open source. View the source and report issues on [GitHub](https://github.com/cocart-headless/cocart-python).

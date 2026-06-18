@@ -1,0 +1,206 @@
+---
+title: "Batch Requests for the Cart"
+sidebarTitle: "Batch Requests"
+description: "Send multiple cart operations in a single request and get back one unified cart response."
+icon: "layer-group"
+tag: "Updated"
+---
+
+<Note>
+    To use the premium batch request, you need [CoCart Plus or higher](https://cocartapi.com/pricing/). Otherwise feel free to [use the standard WordPress batch process](https://make.wordpress.org/core/2020/11/20/rest-api-batch-framework-in-wordpress-5-6/). Supports API v2 or higher.
+</Note>
+
+<Info>
+    It supports both authenticated users and guest customers.
+</Info>
+
+## How does it help cart batch requests?
+
+The [standard batch processing](https://make.wordpress.org/core/2020/11/20/rest-api-batch-framework-in-wordpress-5-6/) that WordPress supports is too problematic for developers when it comes to making cart requests.
+
+The reason is that once a batch request has completed, you're getting the full response of the cart from each request. Which makes tracking and handling the data harder for your application because there is too much information to filter through. Seriously, if you try it yourself you would not want to use it.
+
+For cart batch requests, we took away the pain of having to track and merge data together for you so you get one complete up to date cart response (if all requests are successful).
+
+You should see multiple notices return for each of the requests. Will leave you to decide how you use them.
+
+## How do I use it?
+
+It’s very simple. Post your requests as you would do a standard WordPress batch request only you are using our special batch endpoint `wp-json/cocart/batch` instead.
+
+```json
+{
+    "requests": [
+        {
+            "method": "POST",
+            "path": "/cocart/v2/cart/add-item",
+            "body": {
+                "id": "35",
+                "quantity": "2"
+            }
+        },
+        {
+            "method": "POST",
+            "path": "/cocart/v2/cart/add-item",
+            "body": {
+                "id": "36",
+                "quantity": "5"
+            }
+        }
+    ]
+}
+```
+
+## What about guest customers?
+
+Simply provide the cart key to identify the cart for the guest customer the same way you would for a singular cart endpoint.
+
+<Note>
+    If you used the standard batch process, you would have to apply the cart key to each request, which we don’t recommend.
+</Note>
+
+In the following request examples, you would replace `<cart_key>` that identifies the guest customers cart before sending the request:
+
+<CodeGroup>
+    ```bash cURL
+    curl -L 'https://example-store.com/wp-json/cocart/batch?cart_key=<cart_key>' \
+    -H 'Content-Type: application/json' \
+    -d '{
+        "requests": [
+            {
+                "method": "POST",
+                "path": "/cocart/v2/cart/add-item",
+                "body": {
+                    "id": "35",
+                    "quantity": "2"
+                }
+            },
+            {
+                "method": "POST",
+                "path": "/cocart/v2/cart/add-item",
+                "body": {
+                    "id": "36",
+                    "quantity": "5"
+                }
+            }
+        ]
+    }'
+    ```
+
+    ```php PHP
+    <?php
+    $cart_key = '<cart_key>';
+    $body = json_encode([
+        'requests' => [
+            ['method' => 'POST', 'path' => '/cocart/v2/cart/add-item', 'body' => ['id' => '35', 'quantity' => '2']],
+            ['method' => 'POST', 'path' => '/cocart/v2/cart/add-item', 'body' => ['id' => '36', 'quantity' => '5']],
+        ],
+    ]);
+
+    $ch = curl_init();
+
+    curl_setopt_array($ch, [
+        CURLOPT_URL            => 'https://example-store.com/wp-json/cocart/batch?cart_key=' . $cart_key,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => $body,
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+    ]);
+
+    $response  = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    curl_close($ch);
+    ```
+
+    ```javascript JavaScript
+    const cartKey = '<cart_key>';
+
+    const response = await fetch(
+      `https://example-store.com/wp-json/cocart/batch?cart_key=${cartKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requests: [
+            { method: 'POST', path: '/cocart/v2/cart/add-item', body: { id: '35', quantity: '2' } },
+            { method: 'POST', path: '/cocart/v2/cart/add-item', body: { id: '36', quantity: '5' } },
+          ],
+        }),
+      }
+    );
+
+    const cart = await response.json();
+    ```
+</CodeGroup>
+
+<Info>
+  The PHP SDK has native batch support. See the [PHP SDK documentation](/sdk/php) for details. Other SDKs do not currently expose a batch method — use parallel requests or the raw HTTP approach above.
+</Info>
+
+<Tabs>
+  <Tab title="PHP (SDK)">
+    ```php
+    use CoCart\CoCart;
+
+    $client = new CoCart('https://example-store.com', [
+        'cart_key' => '<cart_key>',
+    ]);
+
+    $cart = $client->batch()
+        ->add($client->cart()->addItem(35, 2))
+        ->add($client->cart()->addItem(36, 5))
+        ->execute();
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import { CoCart } from '@cocartheadless/sdk';
+
+    // No native batch method — use Promise.all for concurrent requests
+    const client = new CoCart('https://example-store.com', { cartKey: '<cart_key>' });
+
+    await Promise.all([
+      client.cart().addItem(35, 2),
+      client.cart().addItem(36, 5),
+    ]);
+
+    const cart = await client.cart().get();
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    from cocart import CoCart
+
+    # No native batch method — use sequential requests
+    client = CoCart('https://example-store.com', cart_key='<cart_key>')
+
+    client.cart().add_item(35, 2)
+    client.cart().add_item(36, 5)
+
+    cart = client.cart().get()
+    ```
+  </Tab>
+  <Tab title="Go">
+    ```go
+    import cocart "github.com/cocart-headless/cocart-sdk-go"
+
+    // No native batch method — use sequential requests
+    client := cocart.NewClient("https://example-store.com",
+        cocart.WithCartKey("<cart_key>"),
+    )
+    ctx := context.Background()
+
+    if _, err := client.Cart().AddItem(ctx, 35, 2); err != nil {
+        log.Fatal(err)
+    }
+    if _, err := client.Cart().AddItem(ctx, 36, 5); err != nil {
+        log.Fatal(err)
+    }
+
+    cart, err := client.Cart().Get(ctx, nil)
+    ```
+  </Tab>
+</Tabs>
+
+

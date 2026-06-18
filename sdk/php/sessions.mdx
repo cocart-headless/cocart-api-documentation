@@ -1,0 +1,188 @@
+---
+title: "PHP SDK: Sessions API"
+sidebarTitle: "Sessions API"
+description: "Manage cart sessions with the CoCart PHP SDK — admin sessions endpoint, SessionManager, and cart transfer on login."
+'og:title': "Cart Session Management — CoCart PHP SDK"
+'og:description': "Manage WooCommerce cart sessions from PHP. Admin sessions endpoint, SessionManager for guest-to-customer cart transfer on login, and PHP session, cookie, file, and custom storage."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+</Info>
+
+This page covers two things:
+
+1. **Admin Sessions Endpoint** — For store administrators to view and manage all active cart sessions.
+2. **SessionManager** — A helper class for your application to handle the guest-to-customer login flow.
+
+## Admin Sessions Endpoint
+
+The Sessions endpoint requires WooCommerce REST API credentials (see [Consumer Keys](/sdk/php/authentication#consumer-keys-admin)).
+
+```php
+$client = new CoCart('https://your-store.com', [
+    'consumer_key' => 'ck_xxxxx',
+    'consumer_secret' => 'cs_xxxxx',
+]);
+```
+
+### List All Sessions
+
+```php
+$response = $client->sessions()->all();
+
+// With parameters
+$response = $client->sessions()->all(['per_page' => '50']);
+```
+
+### Find a Session
+
+```php
+// By cart key
+$response = $client->sessions()->find('guest_abc123');
+
+// By customer ID
+$response = $client->sessions()->byCustomer(123);
+```
+
+### Get Session Items
+
+```php
+$response = $client->sessions()->getItems('guest_abc123');
+```
+
+### Delete a Session
+
+```php
+// By cart key
+$response = $client->sessions()->destroy('guest_abc123');
+
+// By customer ID
+$response = $client->sessions()->destroyByCustomer(123);
+```
+
+---
+
+## SessionManager
+
+The `SessionManager` handles the guest-to-customer transition — tracking guest carts, persisting cart keys, and merging carts on login.
+
+### Basic Setup
+
+```php
+use CoCart\SessionManager;
+use CoCart\Storage\PhpSessionStorage;
+
+$client = new CoCart('https://your-store.com');
+$storage = new PhpSessionStorage();
+$session = new SessionManager($client, $storage);
+```
+
+### Initialize a Cart
+
+Creates a guest cart and persists the cart key:
+
+```php
+$cartKey = $session->initializeCart();
+echo $cartKey; // 'guest_abc123...'
+
+// The cart key is stored in PHP session
+// On the next page load, SessionManager restores it automatically
+```
+
+### Login with Basic Auth
+
+```php
+// Guest adds items first
+$client->cart()->addItem(123, 2);
+
+// Login and merge guest cart into customer cart
+$response = $session->login('customer@email.com', 'password', mergeCart: true);
+
+// Or login without merging (starts fresh customer cart)
+$response = $session->login('customer@email.com', 'password', mergeCart: false);
+```
+
+### Login with JWT
+
+```php
+// Guest adds items
+$client->cart()->addItem(123, 2);
+
+// Login via JWT and merge cart
+$response = $session->loginWithJwt('customer@email.com', 'password', mergeCart: true);
+
+// Access JWT manager for token operations
+$session->jwt()->validate();
+$session->jwt()->refresh();
+```
+
+### Login with Existing JWT Token
+
+```php
+$response = $session->loginWithToken('eyJ...');
+```
+
+### Logout
+
+```php
+$session->logout();
+
+// Start a new guest session
+$session->initializeCart();
+```
+
+### Session Status
+
+```php
+$session->isAuthenticated(); // true if Basic Auth or JWT is set
+$session->isGuest();         // true if no auth credentials
+$session->getCartKey();      // current cart key or null
+```
+
+### Custom Storage Key
+
+```php
+$session->setStorageKey('my_app_cart_key');
+```
+
+---
+
+## Storage Adapters
+
+See [Storage Adapters](/sdk/php#storage-adapters) in the PHP SDK overview for available adapters (`PhpSessionStorage`, `CookieStorage`, `FileStorage`) and how to implement a custom one.
+
+---
+
+## Cart Transfer on Login
+
+A complete guest-to-customer cart transfer flow:
+
+```php
+use CoCart\SessionManager;
+use CoCart\Storage\PhpSessionStorage;
+
+$client = new CoCart('https://your-store.com');
+$storage = new PhpSessionStorage();
+$session = new SessionManager($client, $storage);
+
+// 1. Initialize guest session
+$session->initializeCart();
+
+// 2. Guest browses and adds items
+$client->cart()->addItem(123, 2);
+$client->cart()->addItem(456, 1);
+
+// 3. Guest decides to log in
+$session->loginWithJwt('customer@email.com', 'password', mergeCart: true);
+
+// 4. Guest cart items are now in the customer's cart
+$cart = $client->cart()->get();
+$items = $cart->getItems(); // Contains items 123 and 456
+
+// 5. Later, customer logs out
+$session->logout();
+$session->initializeCart(); // Fresh guest session
+```
+
+See [Authentication](/sdk/php/authentication) for more on JWT and Basic Auth setup.

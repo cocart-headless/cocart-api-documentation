@@ -1,0 +1,172 @@
+---
+title: "Go SDK: Sessions API"
+sidebarTitle: "Sessions API"
+description: "Manage cart sessions with the CoCart Go SDK — admin sessions endpoint, SessionManager, and cart transfer on login."
+'og:title': "Cart Session Management — CoCart Go SDK"
+'og:description': "Manage WooCommerce cart sessions from Go. Admin sessions endpoint, SessionManager for guest-to-customer cart transfer on login, built-in MemoryStorage, and custom Storage interface."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+</Info>
+
+This page covers two things:
+
+1. **Admin Sessions Endpoint** — For store administrators to view and manage all active cart sessions.
+2. **SessionManager** — A helper for your application to handle the guest-to-customer login flow.
+
+## Admin Sessions Endpoint
+
+The Sessions endpoint requires WooCommerce REST API credentials (see [Consumer Keys](/sdk/go/authentication#consumer-keys-admin)).
+
+```go
+client := cocart.NewClient("https://your-store.com",
+	cocart.WithWooCommerceKeys("ck_xxxxx", "cs_xxxxx"),
+)
+```
+
+### List All Sessions
+
+```go
+response, err := client.Sessions().All(ctx, nil)
+
+// With parameters
+response, err := client.Sessions().All(ctx, &cocart.PaginationParams{PerPage: 50})
+```
+
+### Find a Session
+
+```go
+// By cart key
+response, err := client.Sessions().Find(ctx, "guest_abc123")
+
+// By customer ID
+response, err := client.Sessions().BySession(ctx, 123)
+```
+
+### Get Session Items
+
+```go
+response, err := client.Sessions().GetItems(ctx, "guest_abc123")
+```
+
+### Delete a Session
+
+```go
+// By cart key
+response, err := client.Sessions().Destroy(ctx, "guest_abc123")
+
+// By customer ID
+response, err := client.Sessions().DestroySession(ctx, 123)
+```
+
+---
+
+## SessionManager
+
+The `SessionManager` is a helper for applications that need to handle the guest-to-customer login flow. A visitor browses as a guest, adds items to a cart, then logs in — and their guest cart transfers to their customer account.
+
+### Basic Setup
+
+```go
+client := cocart.NewClient("https://your-store.com",
+	cocart.WithStorage(cocart.NewMemoryStorage()),
+)
+session := client.Session()
+```
+
+### Initialize a Cart
+
+Creates a guest cart and persists the cart key:
+
+```go
+cartKey, err := session.InitializeCart(ctx)
+fmt.Println(cartKey) // "guest_abc123..."
+```
+
+### Login with Basic Auth
+
+```go
+// Guest adds items first
+client.Cart().AddItem(ctx, 123, 2)
+
+// Login and merge guest cart into customer cart
+response, err := session.Login(ctx, "customer@email.com", "password", true)
+
+// Or login without merging (starts fresh customer cart)
+response, err := session.Login(ctx, "customer@email.com", "password", false)
+```
+
+### Login with JWT
+
+```go
+// Guest adds items
+client.Cart().AddItem(ctx, 123, 2)
+
+// Login via JWT and merge cart
+response, err := session.LoginWithJWT(ctx, "customer@email.com", "password", true)
+```
+
+### Login with Existing JWT Token
+
+```go
+response, err := session.LoginWithToken(ctx, "eyJ...")
+```
+
+### Logout
+
+```go
+err := session.Logout(ctx)
+
+// Start a new guest session
+session.InitializeCart(ctx)
+```
+
+### Session Status
+
+```go
+session.IsAuthenticated() // true if Basic Auth or JWT is set
+session.IsGuest()         // true if no auth credentials
+session.GetCartKey()      // current cart key or ""
+```
+
+---
+
+## Storage Adapters
+
+See [Storage Adapters](/sdk/go#storage-adapters) in the Go SDK overview for `MemoryStorage` and how to implement a custom adapter.
+
+---
+
+## Cart Transfer on Login
+
+A complete guest-to-customer cart transfer flow:
+
+```go
+client := cocart.NewClient("https://your-store.com",
+	cocart.WithStorage(cocart.NewMemoryStorage()),
+)
+session := client.Session()
+
+ctx := context.Background()
+
+// 1. Initialize guest session
+session.InitializeCart(ctx)
+
+// 2. Guest browses and adds items
+client.Cart().AddItem(ctx, 123, 2)
+client.Cart().AddItem(ctx, 456, 1)
+
+// 3. Guest decides to log in (merge cart = true)
+session.LoginWithJWT(ctx, "customer@email.com", "password", true)
+
+// 4. Guest cart items are now in the customer's cart
+cart, _ := client.Cart().Get(ctx, nil)
+items := cart.GetItems() // Contains items 123 and 456
+
+// 5. Later, customer logs out
+session.Logout(ctx)
+session.InitializeCart(ctx) // Fresh guest session
+```
+
+See [Authentication](/sdk/go/authentication) for more on JWT and Basic Auth setup.

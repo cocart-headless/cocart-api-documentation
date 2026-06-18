@@ -1,252 +1,190 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 export const VariableProduct = () => {
-  const [activeImage, setActiveImage] = useState(0);
-  const [activeColor, setActiveColor] = useState<string | null>(null);
-  const [activeSize, setActiveSize] = useState<string | null>(null);
-  const [notification, setNotification] = useState('');
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [shippingOpen, setShippingOpen] = useState(false);
-  const [returnsOpen, setReturnsOpen] = useState(false);
-
   const product = {
-    name: 'Nike Air Force 1´07 Fresh',
-    price: '$190',
+    name: 'Nike Air Force 1\u00b407 Fresh',
+    price: '190',
     description: 'Hitting the field in the late \'60s, adidas Air Force quickly became soccer\'s "it" shoe.',
     images: [
       'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&h=600&fit=crop',
       'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=600&h=600&fit=crop',
       'https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?w=600&h=600&fit=crop',
-      'https://images.unsplash.com/photo-1551107696-a4b0c5a0d9a2?w=600&h=600&fit=crop'
+      'https://images.unsplash.com/photo-1551107696-a4b0c5a0d9a2?w=600&h=600&fit=crop',
     ],
     colors: [
-      { name: 'Black', ring: 'ring-zinc-700', bg: 'bg-zinc-400' },
-      { name: 'Gray', ring: 'ring-zinc-300', bg: 'bg-zinc-200' },
-      { name: 'Red', ring: 'ring-red-300', bg: 'bg-red-200' },
-      { name: 'Blue', ring: 'ring-blue-300', bg: 'bg-blue-200' }
+      { name: 'Black', color: '#52525b' },
+      { name: 'Gray', color: '#d4d4d8' },
+      { name: 'Red', color: '#fca5a5' },
+      { name: 'Blue', color: '#93c5fd' },
     ],
-    sizes: ['6', '7', '8', '9', '10', '11', '12', '13']
+    sizes: ['6', '7', '8', '9', '10', '11', '12', '13'],
   };
 
-  const handleAddToCart = () => {
-    if (!activeColor || !activeSize) {
-      setNotification('Please select color and size');
-      setTimeout(() => setNotification(''), 3000);
-      return;
-    }
-    setNotification(`${product.name} (${activeColor}, Size ${activeSize}) added to cart!`);
-    setTimeout(() => setNotification(''), 3000);
+  const [activeImage, setActiveImage] = useState(0);
+  const [activeColor, setActiveColor] = useState<string | null>(null);
+  const [activeSize, setActiveSize] = useState<string | null>(null);
+
+  const buttonBase: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: 500,
+    fontSize: '0.875rem',
+    borderRadius: '0.375rem',
+    height: '2.25rem',
+    padding: '0 1rem',
+    cursor: 'pointer',
+    flex: 1,
+    transition: 'background-color 0.2s',
   };
 
   return (
-    <div className="relative">
-      {/* Notification */}
-      {notification && (
-        <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in">
-          {notification}
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+      {/* Image gallery */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <div style={{ overflow: 'hidden', aspectRatio: '1', backgroundColor: '#e4e4e7', borderRadius: '1rem' }}>
+          <img
+            src={product.images[activeImage]}
+            alt={product.name}
+            style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+          />
         </div>
-      )}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+          {product.images.map((image, index) => (
+            <button
+              key={index}
+              onClick={() => setActiveImage(index)}
+              style={{
+                overflow: 'hidden',
+                aspectRatio: '1',
+                backgroundColor: '#e4e4e7',
+                borderRadius: '0.75rem',
+                border: activeImage === index ? '2px solid #18181b' : '2px solid transparent',
+                padding: 0,
+                cursor: 'pointer',
+              }}
+            >
+              <img
+                src={image}
+                alt="Thumbnail"
+                style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+              />
+            </button>
+          ))}
+        </div>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Product Image Gallery */}
-        <div className="flex flex-col lg:sticky lg:top-24 lg:self-start gap-2">
-          {/* Main Image */}
-          <div className="overflow-hidden aspect-square bg-zinc-200 dark:bg-zinc-900 rounded-2xl">
-            <img
-              src={product.images[activeImage]}
-              className="object-cover w-full h-full aspect-square"
-              alt="Product image"
-            />
-          </div>
+      {/* Product details */}
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 500, margin: 0 }}>{product.name}</h3>
+          <span>${product.price}</span>
+        </div>
 
-          {/* Thumbnails */}
-          <div className="w-full grid grid-cols-6 gap-2">
-            {product.images.map((image, index) => (
+        <p style={{ fontSize: '0.875rem', color: '#71717a', marginTop: '1rem' }}>
+          {product.description}
+        </p>
+
+        {/* Color selector */}
+        <div style={{ marginTop: '1.5rem' }}>
+          <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#71717a', margin: '0 0 0.5rem' }}>
+            Color{activeColor ? `: ${activeColor}` : ''}
+          </p>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            {product.colors.map((c) => (
               <button
-                key={index}
-                onClick={() => setActiveImage(index)}
-                className={`overflow-hidden w-full bg-zinc-200 rounded-xl aspect-square ${
-                  activeImage === index ? 'ring-2 ring-zinc-900' : ''
-                }`}
+                key={c.name}
+                onClick={() => setActiveColor(c.name)}
+                aria-label={c.name}
+                style={{
+                  width: '1.75rem',
+                  height: '1.75rem',
+                  borderRadius: '9999px',
+                  backgroundColor: c.color,
+                  border: 'none',
+                  cursor: 'pointer',
+                  outline: activeColor === c.name ? '2px solid #18181b' : '1px solid #d4d4d8',
+                  outlineOffset: '2px',
+                  padding: 0,
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Size selector */}
+        <div style={{ marginTop: '1.5rem' }}>
+          <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#71717a', margin: '0 0 0.5rem' }}>
+            Size
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+            {product.sizes.map((size) => (
+              <button
+                key={size}
+                onClick={() => setActiveSize(size)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0.5rem 0.75rem',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                  backgroundColor: '#fff',
+                  cursor: 'pointer',
+                  borderRadius: '0.375rem',
+                  border: activeSize === size ? '2px solid #18181b' : '1px solid #e4e4e7',
+                  color: '#71717a',
+                  transition: 'border-color 0.15s',
+                }}
               >
-                <img
-                  src={image}
-                  className="object-cover w-full h-full aspect-square"
-                  alt="Product thumbnail"
-                />
+                {size}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Product Details */}
-        <div className="flex flex-col">
-          <div className="flex items-center justify-between text-zinc-900 dark:text-white">
-            <h1 className="text-xl sm:text-xl md:text-2xl font-medium">
-              {product.name}
-            </h1>
-            <p>{product.price}</p>
-          </div>
+        {/* Action buttons */}
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '2rem' }}>
+          <button style={{ ...buttonBase, color: '#fff', backgroundColor: '#18181b', border: '1px solid #18181b' }}>
+            Add to Cart
+          </button>
+          <button style={{ ...buttonBase, color: '#52525b', backgroundColor: '#fafafa', border: '1px solid #e4e4e7' }}>
+            Buy Now
+          </button>
+        </div>
 
-          <p className="text-base mt-4 text-zinc-500 dark:text-zinc-300">
-            {product.description}
-          </p>
+        <p style={{ fontSize: '0.875rem', color: '#71717a', marginTop: '0.5rem' }}>
+          Free shipping over $50
+        </p>
 
-          <div className="flex flex-col mt-4 gap-4">
-            {/* Color Selector */}
-            <div>
-              <p className="text-xs uppercase text-zinc-500 dark:text-zinc-300">Color</p>
-              <fieldset aria-label="Choose a color" className="mt-2">
-                <div className="flex flex-wrap items-center gap-3">
-                  {product.colors.map((color) => (
-                    <label
-                      key={color.name}
-                      aria-label={color.name}
-                      className={`relative -m-0.5 duration-300 flex cursor-pointer items-center justify-center rounded-full p-0.5 focus:outline-none ${
-                        activeColor === color.name ? 'ring-2 ring-offset-2 ring-zinc-900' : ''
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="color-choice"
-                        value={color.name}
-                        className="sr-only"
-                        onChange={() => setActiveColor(color.name)}
-                      />
-                      <span
-                        aria-hidden="true"
-                        className={`rounded-full w-6 h-6 ring-1 ${color.ring} ${color.bg}`}
-                      ></span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-            </div>
-
-            {/* Size Selector */}
-            <div>
-              <div className="flex items-center justify-between">
-                <p className="text-xs uppercase text-zinc-500 dark:text-zinc-300">Shoe size</p>
-              </div>
-              <div className="mt-2 grid grid-cols-4 gap-2">
-                {product.sizes.map((size) => (
-                  <div key={size}>
-                    <input
-                      type="radio"
-                      id={`size-${size}`}
-                      value={size}
-                      name="size-choice"
-                      checked={activeSize === size}
-                      onChange={() => setActiveSize(size)}
-                      className="sr-only peer"
-                    />
-                    <label
-                      htmlFor={`size-${size}`}
-                      className="flex items-center justify-center px-3 py-2 text-sm font-medium bg-white cursor-pointer dark:bg-zinc-900 ring-1 ring-zinc-200 dark:ring-zinc-700 rounded-md duration-300 peer-checked:ring-2 peer-checked:ring-zinc-900 peer-checked:text-zinc-500 text-zinc-500 dark:text-zinc-200 peer-checked:ring-offset-2"
-                    >
-                      {size}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-row mt-8 gap-2">
-            <button
-              onClick={handleAddToCart}
-              className="relative flex items-center justify-center text-center font-medium transition-colors duration-200 ease-in-out select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:z-10 justify-center rounded-md text-white bg-zinc-900 outline outline-zinc-900 hover:bg-zinc-950 focus-visible:outline-zinc-950 dark:bg-zinc-100 dark:text-zinc-900 dark:outline-zinc-100 dark:hover:bg-zinc-200 dark:focus-visible:outline-zinc-200 h-9 px-4 text-sm w-full"
-            >
-              Add to Cart
-            </button>
-            <button className="relative flex items-center justify-center text-center font-medium transition-colors duration-200 ease-in-out select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:z-10 justify-center rounded-md text-zinc-600 bg-zinc-50 outline outline-zinc-100 hover:bg-zinc-200 focus-visible:outline-zinc-600 dark:text-zinc-100 dark:bg-zinc-800 dark:outline-zinc-800 dark:hover:bg-zinc-700 dark:focus-visible:outline-zinc-700 h-9 px-4 text-sm w-full">
-              Buy Now
-            </button>
-          </div>
-
-          {/* Free shipping notice */}
-          <p className="text-sm mt-1 text-zinc-500 dark:text-zinc-300">
-            Free shipping over $50
-          </p>
-
-          {/* Accordion sections */}
-          <div className="mt-8 divide-y divide-zinc-200 dark:divide-zinc-700 border-y border-zinc-200 dark:border-zinc-700">
-            <details open={detailsOpen} onToggle={(e: any) => setDetailsOpen(e.target.open)} className="cursor-pointer group">
-              <summary className="text-sm flex items-center justify-between w-full py-4 font-medium text-left select-none text-zinc-900 dark:text-white hover:text-zinc-500 dark:hover:text-zinc-400 focus:text-zinc-500 dark:focus:text-zinc-400">
-                Details
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className={`w-4 h-4 duration-300 ease-out transform ${detailsOpen ? '-rotate-45' : ''}`}
-                >
-                  <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                  <path d="M12 5l0 14"></path>
-                  <path d="M5 12l14 0"></path>
+        {/* Accordion sections */}
+        <div style={{ marginTop: '2rem', borderTop: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7' }}>
+          {[
+            { title: 'Details', content: 'This product is crafted from high-quality materials designed for durability and comfort.' },
+            { title: 'Shipping', content: 'We offer free standard shipping on all orders above $50. Express shipping available at checkout.' },
+            { title: 'Returns', content: 'We accept returns within 30 days of purchase. Items must be in their original condition.' },
+          ].map((section, i) => (
+            <details key={i} style={{ borderTop: i > 0 ? '1px solid #e4e4e7' : 'none', cursor: 'pointer' }}>
+              <summary style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '1rem 0',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                listStyle: 'none',
+              }}>
+                {section.title}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '1rem', height: '1rem' }}>
+                  <path d="M12 5l0 14" />
+                  <path d="M5 12l14 0" />
                 </svg>
               </summary>
-              <div className="pb-4">
-                <p className="text-sm text-zinc-500 dark:text-zinc-300">
-                  This product is crafted from high-quality materials designed for durability and comfort.
-                </p>
-              </div>
+              <p style={{ fontSize: '0.875rem', color: '#71717a', paddingBottom: '1rem', margin: 0 }}>
+                {section.content}
+              </p>
             </details>
-
-            <details open={shippingOpen} onToggle={(e: any) => setShippingOpen(e.target.open)} className="cursor-pointer group">
-              <summary className="text-sm flex items-center justify-between w-full py-4 font-medium text-left select-none text-zinc-900 dark:text-white hover:text-zinc-500 dark:hover:text-zinc-400 focus:text-zinc-500 dark:focus:text-zinc-400">
-                Shipping
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className={`w-4 h-4 duration-300 ease-out transform ${shippingOpen ? '-rotate-45' : ''}`}
-                >
-                  <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                  <path d="M12 5l0 14"></path>
-                  <path d="M5 12l14 0"></path>
-                </svg>
-              </summary>
-              <div className="pb-4">
-                <p className="text-sm text-zinc-500 dark:text-zinc-300">
-                  We offer free standard shipping on all orders above $50. Express shipping available at checkout.
-                </p>
-              </div>
-            </details>
-
-            <details open={returnsOpen} onToggle={(e: any) => setReturnsOpen(e.target.open)} className="cursor-pointer group">
-              <summary className="text-sm flex items-center justify-between w-full py-4 font-medium text-left select-none text-zinc-900 dark:text-white hover:text-zinc-500 dark:hover:text-zinc-400 focus:text-zinc-500 dark:focus:text-zinc-400">
-                Returns
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className={`w-4 h-4 duration-300 ease-out transform ${returnsOpen ? '-rotate-45' : ''}`}
-                >
-                  <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                  <path d="M12 5l0 14"></path>
-                  <path d="M5 12l14 0"></path>
-                </svg>
-              </summary>
-              <div className="pb-4">
-                <p className="text-sm text-zinc-500 dark:text-zinc-300">
-                  We accept returns within 30 days of purchase. Items must be in their original condition.
-                </p>
-              </div>
-            </details>
-          </div>
+          ))}
         </div>
       </div>
     </div>

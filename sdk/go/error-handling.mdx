@@ -1,0 +1,283 @@
+---
+title: "Go SDK: Error Handling"
+sidebarTitle: "Error Handling"
+description: "Handle errors from the CoCart Go SDK — error hierarchy, errors.As() pattern, JWT token expiry, version guards, and HTTP status code mapping."
+'og:title': "Error Handling in the CoCart Go SDK"
+'og:description': "Handle CoCart REST API errors in Go. errors.As() pattern, typed error hierarchy, JWT expiry detection, VersionError for legacy plugin mode, and context deadline/timeout handling."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+</Info>
+
+## Error Hierarchy
+
+The SDK uses four error types organized in a hierarchy. `AuthenticationError`, `ValidationError`, and `VersionError` all embed `CoCartError` and implement `Unwrap()`, so you can use `errors.As()` to match any of them.
+
+```text
+CoCartError (base)           — any API error
+├── AuthenticationError      — login/permission problems (401, 403)
+├── ValidationError          — bad input (400)
+└── VersionError             — method requires CoCart Starter (legacy mode)
+```
+
+## Catching Errors
+
+Use `errors.As()` to check what kind of error was returned:
+
+```go
+import (
+	"errors"
+	cocart "github.com/cocart-headless/cocart-sdk-go"
+)
+
+response, err := client.Cart().AddItem(ctx, 999, 1)
+if err != nil {
+	var versionErr *cocart.VersionError
+	var valErr *cocart.ValidationError
+	var authErr *cocart.AuthenticationError
+	var cocartErr *cocart.CoCartError
+
+	switch {
+	case errors.As(err, &versionErr):
+		// Method requires CoCart Starter but SDK is configured for legacy plugin
+		fmt.Println("Upgrade Required:", versionErr.Message)
+		fmt.Println("Error Code:", versionErr.ErrorCode) // "cocart_version_required"
+
+	case errors.As(err, &valErr):
+		// 400 — product not found, out of stock, invalid quantity, etc.
+		fmt.Println("Validation Error:", valErr.Message)
+		fmt.Println("Error Code:", valErr.ErrorCode)
+		fmt.Println("HTTP Code:", valErr.HTTPCode)
+
+	case errors.As(err, &authErr):
+		// 401 or 403 — invalid credentials, expired token, forbidden
+		fmt.Println("Auth Error:", authErr.Message)
+		fmt.Println("Error Code:", authErr.ErrorCode)
+		fmt.Println("HTTP Code:", authErr.HTTPCode)
+
+	case errors.As(err, &cocartErr):
+		// Any other API error (404, 500, etc.)
+		fmt.Println("API Error:", cocartErr.Message)
+		fmt.Println("HTTP Code:", cocartErr.HTTPCode)
+
+	default:
+		// Network error, timeout, etc.
+		fmt.Println("Error:", err)
+	}
+}
+```
+
+## Error Properties
+
+All error types provide these fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `Message` | `string` | Human-readable error message from the API |
+| `ErrorCode` | `string` | API error code (e.g. `cocart_product_not_found`) |
+| `HTTPCode` | `int` | HTTP status code (400, 401, 403, 500, etc.) |
+| `ResponseData` | `map[string]any` | Full API response body for debugging |
+
+`VersionError` also has a `Method` field containing the method name that requires CoCart Starter.
+
+## Inspecting the Full API Response
+
+Every error carries the full API response data for debugging:
+
+```go
+response, err := client.Cart().AddItem(ctx, 999, 1)
+if err != nil {
+	var cocartErr *cocart.CoCartError
+	if errors.As(err, &cocartErr) {
+		fmt.Println(cocartErr.ResponseData)
+		// map[code:cocart_product_not_found message:... data:map[...]]
+	}
+}
+```
+
+## JWT Token Expiry
+
+Check if a token is expired before making requests, or handle the error after:
+
+```go
+jwt := client.JWT()
+
+// Proactive check
+if jwt.IsTokenExpired(0) {
+	jwt.Refresh(ctx)
+}
+
+// Or handle the error
+response, err := client.Cart().Get(ctx, nil)
+if err != nil {
+	var authErr *cocart.AuthenticationError
+	if errors.As(err, &authErr) && jwt.HasTokens() {
+		jwt.Refresh(ctx)
+		response, err = client.Cart().Get(ctx, nil) // Retry
+	}
+}
+```
+
+The SDK also handles this automatically — if a refresh token is available and a 401 is received, it will refresh and retry the request.
+
+## HTTP Status Code Mapping
+
+| HTTP Status | Error Type | Typical Causes |
+|-------------|-----------|----------------|
+| 400 | `*ValidationError` | Invalid product ID, out of stock, invalid quantity, missing required fields |
+| 401 | `*AuthenticationError` | Missing or invalid credentials |
+| 403 | `*AuthenticationError` | Expired JWT token, insufficient permissions |
+| 404 | `*CoCartError` | Endpoint not found, item key not found |
+| 500 | `*CoCartError` | Server error |
+
+## Response Error Helpers
+
+When you have a `*Response`, you can check for errors directly:
+
+```go
+response, err := client.Cart().Get(ctx, nil)
+
+if response.IsError() {
+	fmt.Println(response.GetErrorCode())    // API error code
+	fmt.Println(response.GetErrorMessage()) // Human-readable message
+	fmt.Println(response.StatusCode)        // HTTP status code
+}
+
+if response.IsSuccessful() {
+	fmt.Println(string(response.Body))
+}
+```
+
+## Response Data Access
+
+The `*Response` supports dot-notation access and cart state helpers:
+
+```go
+response, err := client.Cart().Get(ctx, nil)
+
+// Dot-notation access
+response.Get("items", nil)
+response.Get("totals", nil)
+response.Get("currency", nil)
+response.Has("items")
+
+// Cart state helpers
+response.HasItems()    // true if cart has items
+response.IsEmpty()     // true if cart is empty
+response.HasCoupons()  // true if coupons are applied
+
+// Pagination helpers (for product listings)
+response.GetTotalResults() // total items across all pages
+response.GetTotalPages()   // total number of pages
+```
+
+## Client-Side Validation Errors
+
+The SDK validates certain inputs before making a network request. These return `*ValidationError` immediately with no HTTP call:
+
+```go
+_, err := client.Cart().AddItem(ctx, -1, 0)
+
+var valErr *cocart.ValidationError
+if errors.As(err, &valErr) {
+	// valErr.Message  => "Product ID must be a positive integer"
+	// valErr.HTTPCode => 0 (no HTTP request was made)
+}
+```
+
+Client-side validation checks:
+
+| Method | Validation | Error Message |
+|--------|-----------|---------------|
+| `AddItem(id, qty)` | `id` must be a positive integer | "Product ID must be a positive integer" |
+| `AddItem(id, qty)` | `qty` must be a positive number | "Quantity must be a positive number" |
+| `UpdateItem(key, qty)` | `qty` must be a positive number | "Quantity must be a positive number" |
+
+Standalone validation functions are also exported:
+
+```go
+err := cocart.ValidateProductID(123)            // nil
+err := cocart.ValidateProductID(-1)             // *ValidationError
+err := cocart.ValidateQuantity(2)               // nil
+err := cocart.ValidateQuantity(0)               // *ValidationError
+err := cocart.ValidateEmail("user@example.com") // nil
+err := cocart.ValidateEmail("not-an-email")     // *ValidationError
+```
+
+## Common Error Scenarios
+
+### Product Not Found
+
+```go
+_, err := client.Cart().AddItem(ctx, 999999, 1)
+
+var valErr *cocart.ValidationError
+if errors.As(err, &valErr) {
+	// valErr.Message   => "Product not found"
+	// valErr.ErrorCode => "cocart_product_not_found"
+}
+```
+
+### Out of Stock
+
+```go
+_, err := client.Cart().AddItem(ctx, 123, 100)
+
+var valErr *cocart.ValidationError
+if errors.As(err, &valErr) {
+	// valErr.ErrorCode => "cocart_not_enough_in_stock"
+}
+```
+
+### CoCart Plugin Required
+
+```go
+_, err := client.Cart().ApplyCoupon(ctx, "SAVE10")
+
+var cocartErr *cocart.CoCartError
+if errors.As(err, &cocartErr) {
+	// cocartErr.ErrorCode => "cocart_plugin_required"
+}
+```
+
+### Legacy Plugin Version Guard
+
+```go
+client := cocart.NewClient("https://your-store.com",
+	cocart.WithMainPlugin(cocart.MainPluginLegacy),
+)
+
+_, err := client.Products().FindBySlug(ctx, "blue-hoodie")
+
+var vErr *cocart.VersionError
+if errors.As(err, &vErr) {
+	// vErr.Message   => "FindBySlug() requires CoCart Starter. Please upgrade..."
+	// vErr.ErrorCode => "cocart_version_required"
+	// vErr.HTTPCode  => 0 (no HTTP request was made)
+}
+```
+
+### Network / Timeout Errors
+
+```go
+client := cocart.NewClient("https://your-store.com",
+	cocart.WithTimeout(10 * time.Second),
+)
+
+_, err := client.Cart().Get(ctx, nil)
+if err != nil {
+	if errors.Is(err, context.DeadlineExceeded) {
+		fmt.Println("Request timed out")
+	}
+}
+```
+
+Use context-based timeouts for per-request control:
+
+```go
+ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+defer cancel()
+
+_, err := client.Cart().Get(ctx, nil)
+```

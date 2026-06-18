@@ -1,0 +1,128 @@
+---
+title: "WooCommerce Subscriptions"
+sidebarTitle: "Subscriptions"
+description: "Expose subscription billing details, recurring totals, and order subscription data in the CoCart cart, products, and orders APIs."
+---
+
+<Info>
+  This feature documentation was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 28th, 2026.
+</Info>
+
+[WooCommerce Subscriptions](https://woocommerce.com/products/woocommerce-subscriptions/) adds recurring billing to WooCommerce. The CoCart Plus integration exposes subscription billing details on product and cart item responses, recurring totals on the cart, and subscription data on order responses.
+
+<Info>
+  This integration is available in CoCart Plus since <Tooltip tip="This is the version of CoCart Plus">v1.0.0</Tooltip> and requires WooCommerce Subscriptions to be installed and active.
+</Info>
+
+## Product response
+
+Subscription products (`subscription`, `variable-subscription`) receive a `subscription_data` object in their `extensions` key.
+
+```json Example (product extensions excerpt)
+{
+  "extensions": {
+    "subscription_data": {
+      "billing_period": {
+        "interval": "1",
+        "period": "month",
+        "length": "0",
+        "trial_period": "",
+        "trial_length": "0",
+        "trial_expiration_date": "0",
+        "expiration_date": "0"
+      },
+      "sign_up_fee": "0",
+      "pay_now": "1000",
+      "needs_one_time_shipping": false,
+      "price_string": "$10.00 / month",
+      "first_renewal": {
+        "date": "2026-06-28 00:00:00",
+        "timestamp": 1751068800,
+        "html": "First renewal: June 28, 2026"
+      }
+    }
+  }
+}
+```
+
+### `subscription_data` fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `billing_period.interval` | `string` | Billing interval (e.g. `1`, `3`). |
+| `billing_period.period` | `string` | Billing period unit: `day`, `week`, `month`, `year`. |
+| `billing_period.length` | `string` | Number of billing cycles. `"0"` for indefinite. |
+| `billing_period.trial_period` | `string` | Trial period unit. |
+| `billing_period.trial_length` | `string` | Trial period length. `"0"` if no trial. |
+| `billing_period.trial_expiration_date` | `string` | Trial expiration date/time. `"0"` if no trial. |
+| `billing_period.expiration_date` | `string` | Subscription expiration date/time. `"0"` if indefinite. |
+| `sign_up_fee` | `string` | Sign-up fee (smallest currency unit). |
+| `pay_now` | `string` | Amount due today (smallest currency unit). Equals sign-up fee only during a trial. |
+| `needs_one_time_shipping` | `boolean` | Whether the subscription only requires shipping on the first order. |
+| `price_string` | `string` | Human-readable subscription price string (e.g. `"$10.00 / month"`). |
+| `first_renewal.date` | `string` | First renewal date in `Y-m-d H:i:s` format. |
+| `first_renewal.timestamp` | `integer` | First renewal Unix timestamp. |
+| `first_renewal.html` | `string` | Formatted first renewal string (e.g. `"First renewal: June 28, 2026"`). |
+
+## Cart item response
+
+Subscription cart items receive the same `subscription_data` structure in their `extensions` key (with `first_renewal.html` omitted).
+
+## Cart-level recurring totals
+
+When the cart contains a subscription, the `extensions` key includes a `recurring_totals` object keyed by cart item key. Each entry contains the recurring coupons, shipping, fees, taxes, and totals.
+
+```json Example (cart extensions excerpt)
+{
+  "extensions": {
+    "recurring_totals": {
+      "abc123": {
+        "totals": {
+          "period": "/ month",
+          "subtotal": "1000",
+          "total": "1000",
+          "label": "$10.00 / month",
+          "first_renewal": {
+            "date": "2026-06-28 00:00:00",
+            "formatted_date": "June 28, 2026",
+            "labelled": "First renewal: June 28, 2026"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## Order response
+
+After checkout, the order response includes a `subscription_data` object describing the relationship between the order and any linked subscriptions.
+
+```json Example (order response excerpt)
+{
+  "subscription_data": {
+    "order_type": "parent",
+    "subscriptions": [
+      {
+        "subscription_id": 201,
+        "status": "active",
+        "next_payment": "2026-06-28 00:00:00",
+        "end_date": ""
+      }
+    ]
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `order_type` | `string` | How this order relates to a subscription: `parent`, `renewal`, `switch`, `resubscribe`, or empty string. |
+| `subscriptions[].subscription_id` | `integer` | ID of the linked subscription. |
+| `subscriptions[].status` | `string` | Subscription status (e.g. `active`, `on-hold`, `cancelled`). |
+| `subscriptions[].next_payment` | `string` | Date of the next scheduled payment. |
+| `subscriptions[].end_date` | `string` | Subscription end date. Empty string if indefinite. |
+
+## Known limitations
+
+- Recurring shipping method selection follows the same flow as standard WooCommerce Subscriptions. The cart response includes recurring shipping options within the `recurring_totals` shipping data.
+- Subscription variable products require the standard variable product add-to-cart flow with a valid `variation_id`.

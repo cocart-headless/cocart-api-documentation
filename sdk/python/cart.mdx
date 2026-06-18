@@ -1,0 +1,416 @@
+---
+title: "Python SDK: Cart API"
+sidebarTitle: "Cart API"
+description: "Manage shopping carts with the CoCart Python SDK — add, update, remove items, coupons, customer details, shipping, fees, and ETag caching."
+'og:title': "Headless WooCommerce Cart API — CoCart Python SDK"
+'og:description': "Manage WooCommerce carts from Python. Add and update items, apply coupons, set shipping, add fees, update customer details, handle guest and customer sessions, and use ETags."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+</Info>
+
+The Cart API handles all shopping cart operations.
+
+- **Guest customers** — The first request creates a new guest session. The server returns a `Cart-Key` header which the SDK extracts and stores automatically.
+- **Authenticated customers** — The server identifies the cart by the WordPress user account. No cart key is needed.
+
+```python
+cart = client.cart()
+```
+
+## Create Cart
+
+Create a new guest cart session and get a `cart_key` without adding any items:
+
+```python
+response = client.cart().create()
+cart_key = response.get("cart_key")  # "guest_abc123..."
+```
+
+<Note>Only available for non-authenticated (guest) users. Requires CoCart Starter.</Note>
+
+## Get Cart
+
+```python
+response = client.cart().get()
+
+# With parameters
+response = client.cart().get(params={
+    "_fields": "items,totals",  # Limit returned fields
+    "thumb": "true",            # Include product thumbnails
+    "default": "true",          # Return default cart data
+})
+```
+
+## Get Items
+
+Get only the items in the cart (lighter than fetching the full cart):
+
+```python
+response = client.cart().get_items()
+```
+
+### Get a Single Item
+
+```python
+response = client.cart().get_item("abc123def456...")
+```
+
+## Adding Items
+
+### Add a Simple Product
+
+```python
+# Product ID 123, quantity 2
+response = client.cart().add_item(123, quantity=2)
+
+# Shorthand
+response = client.cart().add(123, 2)
+```
+
+### Add with Options
+
+```python
+response = client.cart().add_item(123, quantity=1,
+    item_data={
+        "gift_message": "Happy Birthday!",
+        "engraving": "John",
+    },
+    email="customer@email.com",
+    return_item=True,  # Return only the added item details
+)
+```
+
+### Add a Variable Product
+
+```python
+response = client.cart().add_variation(456, quantity=1, attributes={
+    "attribute_pa_color": "blue",
+    "attribute_pa_size": "large",
+})
+
+# Or using add_item with variation option
+response = client.cart().add_item(456, quantity=1, variation={
+    "attribute_pa_color": "blue",
+    "attribute_pa_size": "large",
+})
+```
+
+### Add Multiple Items at Once
+
+```python
+response = client.cart().add_items([
+    {"id": "123", "quantity": "2"},
+    {"id": "456", "quantity": "1", "variation": {
+        "attribute_pa_color": "red",
+    }},
+    {"id": "789", "quantity": "3"},
+])
+```
+
+## Updating Items
+
+Update the quantity of a cart item using its item key:
+
+```python
+# Item keys are returned in cart responses
+response = client.cart().update_item("abc123def456...", 5)
+
+# With additional options
+response = client.cart().update_item("abc123def456...", 3,
+    item_data={"gift_wrap": True},
+)
+```
+
+### Update Multiple Items at Once
+
+```python
+# Shorthand: item_key => quantity
+response = client.cart().update_items({
+    "abc123def456...": 3,
+    "def789ghi012...": 1,
+})
+
+# Full format with additional options
+response = client.cart().update_items([
+    {"item_key": "abc123def456...", "quantity": 3},
+    {"item_key": "def789ghi012...", "quantity": 1},
+])
+```
+
+## Removing & Restoring Items
+
+### Remove an Item
+
+```python
+response = client.cart().remove_item("abc123def456...")
+```
+
+### Remove Multiple Items at Once
+
+```python
+response = client.cart().remove_items([
+    "abc123def456...",
+    "def789ghi012...",
+])
+```
+
+### Restore a Removed Item
+
+```python
+response = client.cart().restore_item("abc123def456...")
+```
+
+### Get Removed Items
+
+```python
+response = client.cart().get_removed_items()
+```
+
+## Cart Management
+
+### Clear Cart
+
+```python
+response = client.cart().clear()
+
+# Alias
+response = client.cart().empty()
+```
+
+### Calculate Totals
+
+```python
+response = client.cart().calculate()
+```
+
+### Update Cart
+
+```python
+response = client.cart().update({
+    "customer_note": "Please gift wrap.",
+})
+```
+
+## Totals & Counts
+
+### Get Totals
+
+```python
+# Raw values
+response = client.cart().get_totals()
+
+# Formatted with currency (HTML)
+response = client.cart().get_totals(html=True)
+```
+
+### Get Item Count
+
+```python
+response = client.cart().get_item_count()
+```
+
+## Coupons
+
+### Apply a Coupon
+
+```python
+response = client.cart().apply_coupon("SUMMER20")
+```
+
+### Remove a Coupon
+
+```python
+response = client.cart().remove_coupon("SUMMER20")
+```
+
+### Get Applied Coupons
+
+```python
+response = client.cart().get_coupons()
+```
+
+### Validate Applied Coupons
+
+```python
+response = client.cart().check_coupons()
+```
+
+## Customer Details
+
+### Update Customer
+
+```python
+# Update billing address
+response = client.cart().update_customer(
+    billing={
+        "first_name": "John",
+        "last_name": "Doe",
+        "email": "john@example.com",
+        "phone": "+1234567890",
+        "address_1": "123 Main St",
+        "city": "New York",
+        "state": "NY",
+        "postcode": "10001",
+        "country": "US",
+    }
+)
+
+# Update shipping address
+response = client.cart().update_customer(
+    shipping={
+        "first_name": "John",
+        "last_name": "Doe",
+        "address_1": "456 Oak Ave",
+        "city": "Los Angeles",
+        "state": "CA",
+        "postcode": "90001",
+        "country": "US",
+    }
+)
+
+# Update both at once
+response = client.cart().update_customer(
+    billing={"email": "john@example.com"},
+    shipping={"address_1": "456 Oak Ave"},
+)
+```
+
+### Get Customer Details
+
+```python
+response = client.cart().get_customer()
+```
+
+## Shipping
+
+### Get Available Shipping Methods
+
+```python
+response = client.cart().get_shipping_methods()
+```
+
+### Set Shipping Method
+
+```python
+response = client.cart().set_shipping_method("flat_rate:1")
+```
+
+### Calculate Shipping
+
+```python
+response = client.cart().calculate_shipping({
+    "country": "US",
+    "state": "CA",
+    "postcode": "90001",
+    "city": "Los Angeles",
+})
+```
+
+## Fees
+
+### Get Cart Fees
+
+```python
+response = client.cart().get_fees()
+```
+
+### Add a Fee
+
+```python
+# Non-taxable fee
+response = client.cart().add_fee("Rush Processing", 9.99)
+
+# Taxable fee
+response = client.cart().add_fee("Gift Wrapping", 4.99, taxable=True)
+```
+
+### Remove All Fees
+
+```python
+response = client.cart().remove_fees()
+```
+
+## Cross-Sells
+
+Get cross-sell product recommendations based on cart contents:
+
+```python
+response = client.cart().get_cross_sells()
+```
+
+## Working with Responses
+
+All cart methods return a `Response` object with cart-specific helpers:
+
+```python
+response = client.cart().get()
+
+# Cart items
+items = response.get_items()
+
+# Cart totals
+totals = response.get_totals()
+
+# Item count
+count = response.get_item_count()
+
+# Cart key (from headers)
+cart_key = response.get_cart_key()
+
+# Cart hash
+hash = response.get_cart_hash()
+
+# Notices
+notices = response.get_notices()
+
+# Dot-notation access
+subtotal = response.get("totals.subtotal")
+first_item_name = response.get("items.0.name")
+
+# Check if key exists
+if response.has("totals.discount_total"):
+    print("Discount applied!")
+
+# Full data
+data = response.to_dict()
+json_str = response.to_json()
+```
+
+## ETag / Conditional Requests
+
+The SDK automatically handles ETags for reduced bandwidth and faster responses. This is enabled by default.
+
+When a response includes an `ETag` header, the SDK stores it in memory. On subsequent GET requests to the same URL, the SDK sends the stored ETag via the `If-None-Match` header. If the data hasn't changed, the server returns a `304 Not Modified` response with an empty body instead of the full payload.
+
+```python
+client = CoCart("https://your-store.com")
+
+# First request — full response with ETag
+response = client.cart().get()
+etag = response.get_etag()            # e.g. 'W/"abc123"'
+cache = response.get_cache_status()   # "MISS"
+
+# Second request — SDK sends If-None-Match automatically
+response = client.cart().get()
+
+if response.is_not_modified():
+    # 304 — cart hasn't changed, use your cached data
+    cache = response.get_cache_status()  # "HIT"
+```
+
+### Disabling ETags
+
+```python
+# Via constructor
+client = CoCart("https://your-store.com", etag=False)
+
+# Or at runtime
+client.set_etag(False)
+
+# Clear stored ETags without disabling
+client.clear_etag_cache()
+```
+
+See [Error Handling](/sdk/python/error-handling) for handling API errors.

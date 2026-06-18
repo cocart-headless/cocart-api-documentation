@@ -1,0 +1,180 @@
+---
+title: "Cart Items Management Hooks"
+sidebarTitle: "Cart Items Management"
+description: "Action hooks for cart item events in CoCart — fires when items are added, updated, removed, restored, or have their quantity changed."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Action Hooks overview](/developers/actions) for all hook categories and the [Developer Reference](/developers) for the plugin key index.
+</Tip>
+
+### `cocart_item_added_updated_in_cart`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Fires if item was added again to the cart but updated the quantity.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField path="cart_item_key" type="string">
+  Item key of the item added again.
+</ParamField>
+
+<ParamField path="item_added" type="array">
+  Item added to cart again.
+</ParamField>
+
+<ParamField path="new_quantity" type="int">
+  New quantity of the item.
+</ParamField>
+
+**Usage**
+```php
+add_action( 'cocart_item_added_updated_in_cart', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_item_added_updated_in_cart` in repository](https://github.com/co-cart/co-cart/search?q=cocart_item_added_updated_in_cart&type=code)
+
+---
+
+### `cocart_item_added_to_cart`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Fires once an item has been added to cart.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField path="item_key" type="string">
+  Item key of the item added.
+</ParamField>
+
+<ParamField path="item_added" type="array">
+  Item added to cart.
+</ParamField>
+
+**Usage**
+```php
+add_action( 'cocart_item_added_to_cart', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_item_added_to_cart` in repository](https://github.com/co-cart/co-cart/search?q=cocart_item_added_to_cart&type=code)
+
+---
+
+### `cocart_item_updated`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Fires once an item has been updated in the cart. Use this to trigger side effects like analytics events, inventory checks, or webhook notifications when cart items change.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField path="item_key" type="string">
+  The item key of the updated item.
+</ParamField>
+
+<ParamField path="request" type="WP_REST_Request">
+  The current REST API request.
+</ParamField>
+
+**Usage**
+```php
+add_action( 'cocart_item_updated', function( $item_key, $request ) {
+    // Trigger analytics event when cart item is updated
+    do_action( 'my_analytics_cart_item_updated', $item_key );
+}, 10, 2 );
+```
+
+---
+
+### `cocart_item_removed`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Fires when an item is removed from the cart.
+
+<Note>Made available since v2.0.0</Note>
+
+**Parameters**
+
+<ParamField path="current_data" type="array">
+  The cart item data.
+</ParamField>
+
+**Usage**
+```php
+add_action( 'cocart_item_removed', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_item_removed` in repository](https://github.com/co-cart/co-cart/search?q=cocart_item_removed&type=code)
+
+---
+
+### `cocart_item_restored`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Fires when an item is restored to the cart.
+
+<Note>Made available since v2.0.0</Note>
+
+**Parameters**
+
+<ParamField path="current_data" type="array">
+  The cart item data.
+</ParamField>
+
+**Usage**
+```php
+add_action( 'cocart_item_restored', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_item_restored` in repository](https://github.com/co-cart/co-cart/search?q=cocart_item_restored&type=code)
+
+---
+
+### `cocart_item_quantity_changed`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Fires when the quantity of an item in the cart is changed.
+
+<Note>Made available since v2.0.0</Note>
+
+**Parameters**
+
+<ParamField path="item_key" type="string">
+  Item key.
+</ParamField>
+
+<ParamField path="new_data" type="array">
+  Item data.
+</ParamField>
+
+**Usage**
+```php
+add_action( 'cocart_item_quantity_changed', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_item_quantity_changed` in repository](https://github.com/co-cart/co-cart/search?q=cocart_item_quantity_changed&type=code)

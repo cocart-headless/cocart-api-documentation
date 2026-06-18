@@ -1,0 +1,42 @@
+---
+title: "Deprecated Action Hooks"
+sidebarTitle: "Deprecated"
+description: "Action hooks that have been deprecated in CoCart and their recommended replacements."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Action Hooks overview](/developers/actions) for all hook categories and the [Developer Reference](/developers) for the plugin key index.
+</Tip>
+
+### `cocart_cart_updated`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+<Warning>**Deprecated:** v4.1.0 — Replaced with `cocart_update_cart_before_totals` and `cocart_update_cart_after_totals` hooks for more precise control over when your code runs relative to cart total calculations.</Warning>
+
+Fires after the cart has updated via a callback.
+
+<Note>Made available since v3.1.0</Note>
+
+**Usage**
+```php
+add_action( 'cocart_cart_updated', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_cart_updated` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cart_updated&type=code)
+
+---
+
+### `cocart_load_cart_override`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+<Warning>**Deprecated:** v4.6.4 — This action hook is no longer used.</Warning>
+
+See the [Session Management](/developers/actions/session-management) section for active session hooks.

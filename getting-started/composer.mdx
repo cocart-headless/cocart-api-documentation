@@ -1,0 +1,214 @@
+---
+title: "Install via Composer"
+description: "Install CoCart plugins using Composer with license key authentication"
+icon: "box-open"
+tag: "NEW"
+---
+
+Composer is a dependency manager for PHP that simplifies installing and updating plugins. CoCart provides two Composer repositories:
+
+- **Public** — Free plugins from [wp-packages.org](https://wp-packages.org)
+- **Private** — Premium plugins from [packages.cocartapi.com](https://packages.cocartapi.com/packages.json) authenticated with your Polar license key
+
+## Install free plugins
+
+Add the public repository to your `composer.json` and require the packages you need:
+
+```json composer.json
+{
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://repo.wp-packages.org"
+    }
+  ],
+  "require": {
+    "wp-plugin/cart-rest-api-for-woocommerce": "^4.9",
+    "wp-plugin/cocart-jwt-authentication": "^3.0",
+    "wp-plugin/cocart-cors": "^1.0",
+    "wp-plugin/cocart-rate-limiting": "^1.0"
+  },
+  "config": {
+    "allow-plugins": {
+      "composer/installers": true
+    }
+  }
+}
+```
+
+Then run:
+
+```bash
+composer install
+```
+
+## Install premium plugins
+
+Premium CoCart plugins are served from a private Composer repository that validates your Polar license key before allowing downloads.
+
+### Prerequisites
+
+- [Composer](https://getcomposer.org/) installed on your system
+- An active [CoCart subscription](https://cocartapi.com/pricing/)
+- Your Polar license key (find it at [polar.sh/cocartheadless/portal/request](https://polar.sh/cocartheadless/portal/request))
+
+### Step 1: Add the private repository
+
+Add the CoCart private repository alongside the public one in your `composer.json`:
+
+```json composer.json
+{
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://repo.wp-packages.org"
+    },
+    {
+      "type": "composer",
+      "url": "https://packages.cocartapi.com"
+    }
+  ],
+  "require": {
+    "wp-plugin/cart-rest-api-for-woocommerce": "^4.9",
+    "cocartheadless/cocart-plus": "^1.5"
+  },
+  "config": {
+    "allow-plugins": {
+      "composer/installers": true
+    }
+  }
+}
+```
+
+### Step 2: Configure authentication
+
+Create an `auth.json` file in the same directory as your `composer.json`:
+
+```json auth.json
+{
+  "http-basic": {
+    "packages.cocartapi.com": {
+      "username": "YOUR_POLAR_LICENSE_KEY",
+      "password": "https://yoursite.com"
+    }
+  }
+}
+```
+
+| Field | Value |
+|-------|-------|
+| `username` | Your Polar license key |
+| `password` | The URL of the site where the plugin will be used |
+
+<Warning>
+  Never commit `auth.json` to version control. Add it to your `.gitignore` file.
+</Warning>
+
+Alternatively, you can set credentials globally so they apply to all projects:
+
+```bash
+composer config --global http-basic.packages.cocartapi.com YOUR_POLAR_LICENSE_KEY https://yoursite.com
+```
+
+### Step 3: Install
+
+```bash
+composer install
+```
+
+Composer will authenticate with your license key, resolve the package versions, and download the plugin zips into your WordPress plugins directory.
+
+<Warning>
+  Installing via Composer does **not** [activate your license key](/getting-started/license-activation). After installation, activate the plugin and then enter your license key manually in **WP Admin → CoCart → Updates**.
+</Warning>
+
+## Updating plugins
+
+To update all CoCart plugins to their latest compatible versions:
+
+```bash
+composer update cocartheadless/*
+```
+
+Or update a specific plugin:
+
+```bash
+composer update cocartheadless/cocart-plus
+```
+
+## Version constraints
+
+Composer version constraints control how aggressively updates are applied:
+
+| Constraint | Example | Behavior |
+|------------|---------|----------|
+| Caret `^` | `"^1.5"` | Allow minor and patch updates (recommended) |
+| Tilde `~` | `"~1.5.0"` | Patch-only updates |
+| Exact | `"1.5.2"` | Lock to a specific version |
+
+Use `^` for most plugins so you receive bug fixes and new features automatically. Pin an exact version only when you need to freeze a known-good release.
+
+## CI/CD integration
+
+In automated environments (GitHub Actions, GitLab CI, etc.) you cannot commit `auth.json`. Use the `COMPOSER_AUTH` environment variable instead — Composer reads it automatically.
+
+<CodeGroup>
+
+```yaml GitHub Actions
+- name: Install dependencies
+  env:
+    COMPOSER_AUTH: '{"http-basic":{"packages.cocartapi.com":{"username":"${{ secrets.COCART_LICENSE_KEY }}","password":"${{ secrets.SITE_URL }}"}}}'
+  run: composer install --no-interaction --prefer-dist
+```
+
+```yaml GitLab CI
+variables:
+  COMPOSER_AUTH: '{"http-basic":{"packages.cocartapi.com":{"username":"$COCART_LICENSE_KEY","password":"$SITE_URL"}}}'
+
+install:
+  script:
+    - composer install --no-interaction --prefer-dist
+```
+
+</CodeGroup>
+
+Store `COCART_LICENSE_KEY` and `SITE_URL` as encrypted secrets/variables in your CI provider — never hard-code them in your pipeline config.
+
+## Plugins available via Composer:
+
+| Plugin | Package Name | Auth Required |
+|--------|--------------|----------------|
+| CoCart Community | `wp-plugin/cart-rest-api-for-woocommerce` | No |
+| JWT Authentication | `wp-plugin/cocart-jwt-authentication` | No |
+| CORS | `wp-plugin/cocart-cors` | No |
+| Rate Limiting | `wp-plugin/cocart-rate-limiting` | No |
+| CoCart Starter | `cocartheadless/cocart-basic` | Yes |
+| CoCart Plus | `cocartheadless/cocart-plus` | Yes |
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="401 Authentication required">
+    Your license key is missing or not configured. Make sure `auth.json` exists in your project root with the correct credentials, or set them globally with `composer config --global`.
+  </Accordion>
+
+  <Accordion title="403 Invalid or expired license key">
+    Your license key is no longer valid. Check your subscription status at [polar.sh/cocartheadless/portal/request](https://polar.sh/cocartheadless/portal/request) and ensure your subscription is active.
+  </Accordion>
+
+  <Accordion title="Package not found">
+    Make sure the private repository URL is correct in your `composer.json` and that the package name matches exactly (e.g., `cocartheadless/cocart-plus`).
+  </Accordion>
+
+  <Accordion title="402 Payment required">
+    Your subscription has lapsed. Renew it at [polar.sh/cocartheadless/portal/request](https://polar.sh/cocartheadless/portal/request), then retry `composer install`.
+  </Accordion>
+
+  <Accordion title="Plugin installed but not loading">
+    Composer installs the plugin files to `wp-content/plugins/` but does not activate them. Activate via **WP Admin → Plugins**, or with WP-CLI:
+
+    ```bash
+    wp plugin activate cocart-plus
+    ```
+  </Accordion>
+</AccordionGroup>

@@ -1,0 +1,144 @@
+---
+title: "Python SDK: Utilities"
+sidebarTitle: "Utilities"
+description: "Utility classes in the CoCart Python SDK — currency formatting and timezone helpers."
+'og:title': "Currency & Timezone Utilities — CoCart Python SDK"
+'og:description': "Format WooCommerce prices correctly for any locale using CurrencyFormatter, and convert store timezone dates with TimezoneHelper. Uses Python's built-in zoneinfo (3.9+)."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+</Info>
+
+The SDK includes standalone utility classes for currency formatting and timezone conversion. These work with data already returned by the API — no extra HTTP requests needed.
+
+## CurrencyFormatter
+
+CoCart's API returns prices as smallest-unit integers (e.g., `4599` for $45.99) along with currency metadata. `CurrencyFormatter` converts these into human-readable strings.
+
+```python
+from cocart.currency_formatter import CurrencyFormatter
+
+formatter = CurrencyFormatter()
+```
+
+### Format a Price
+
+```python
+response = client.cart().get()
+currency = response.get_currency()
+
+# Full formatted price with currency symbol
+print(formatter.format(4599, currency))  # "$45.99"
+
+# Plain decimal (no symbol)
+print(formatter.format_decimal(4599, currency))  # "45.99"
+```
+
+### Zero-Decimal Currencies
+
+Currencies like JPY have no minor units. The formatter handles this automatically:
+
+```python
+# JPY currency info from the API
+currency = response.get_currency()
+# currency_minor_unit = 0
+
+print(formatter.format(1500, currency))          # "¥1,500"
+print(formatter.format_decimal(1500, currency))  # "1500"
+```
+
+### How Formatting Works
+
+The formatter uses the `currency_prefix`, `currency_suffix`, `currency_decimal_separator`, and `currency_thousand_separator` values from the API response to format amounts correctly for any locale.
+
+### Currency Metadata
+
+The API response includes this currency structure:
+
+```python
+currency = response.get_currency()
+# {
+#     "currency_code": "USD",
+#     "currency_symbol": "$",
+#     "currency_minor_unit": 2,
+#     "currency_decimal_separator": ".",
+#     "currency_thousand_separator": ",",
+#     "currency_prefix": "$",
+#     "currency_suffix": "",
+# }
+```
+
+### Formatting Cart Items
+
+```python
+response = client.cart().get()
+currency = response.get_currency()
+formatter = CurrencyFormatter()
+
+for item in response.get_items():
+    name = item["name"]
+    price = formatter.format(item["totals"]["total"], currency)
+    print(f"{name}: {price}")
+
+totals = response.get_totals()
+print(f"Subtotal: {formatter.format(totals['subtotal'], currency)}")
+print(f"Total: {formatter.format(totals['total'], currency)}")
+```
+
+---
+
+## TimezoneHelper
+
+WooCommerce stores dates in the store's configured timezone (often UTC). `TimezoneHelper` converts these to any other timezone.
+
+<Note>Timezone conversion requires the `zoneinfo` module (Python 3.9+). On Windows, install the `tzdata` package: `pip install tzdata`</Note>
+
+```python
+from cocart.timezone import TimezoneHelper
+
+tz = TimezoneHelper()
+```
+
+### Detect System Timezone
+
+```python
+print(tz.detect_timezone())  # "America/New_York"
+```
+
+### Convert Between Timezones
+
+```python
+# Convert a UTC date to New York time
+local = tz.convert("2025-01-15T15:00:00", "UTC", "America/New_York")
+print(local)  # "2025-01-15T10:00:00"
+
+# Convert between any two timezones
+tokyo = tz.convert("2025-07-15T12:00:00", "Europe/London", "Asia/Tokyo")
+print(tokyo)  # "2025-07-15T20:00:00"
+```
+
+### Convert to Local Time
+
+Shorthand to convert from the store's timezone to the system's timezone:
+
+```python
+# Store is in UTC (default)
+local = tz.to_local("2025-01-15T15:00:00")
+
+# Store is in a specific timezone
+local = tz.to_local("2025-01-15T10:00:00", "America/Chicago")
+```
+
+### Working with Cart/Order Dates
+
+```python
+tz = TimezoneHelper()
+
+response = client.cart().get()
+expiry_date = response.get("expiry.date")
+
+if expiry_date:
+    local_expiry = tz.to_local(expiry_date, "UTC")
+    print(f"Cart expires: {local_expiry}")
+```

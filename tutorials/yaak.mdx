@@ -1,0 +1,107 @@
+---
+title: "Getting Started with Yaak"
+description: "Import the official CoCart OpenAPI specs into Yaak to test and explore the CoCart REST API with a fast, privacy-focused API client."
+icon: "bolt"
+---
+
+<Info>
+  This tutorial was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 27th, 2026.
+</Info>
+
+[Yaak](https://yaak.app/) is a fast, privacy-focused API client that runs on Mac, Windows, and Linux. It supports OpenAPI imports, environment variables, and request chaining — everything you need to test and debug the CoCart API without the overhead of heavier tools.
+
+## Prerequisites
+
+- [Yaak](https://yaak.app/) installed
+- A WordPress site with CoCart installed
+- Your site URL (e.g. `https://yourstore.com`)
+
+## Import the OpenAPI spec
+
+CoCart publishes official OpenAPI 3.0.3 specs in the [`cocart-headless/cocart-openapi`](https://github.com/cocart-headless/cocart-openapi) repository.
+
+1. Download the spec you need from the repository:
+
+| Edition | File |
+|---------|------|
+| **CoCart Starter v2** (recommended) | [`openapi-cocart-v2-collection.yaml`](https://raw.githubusercontent.com/cocart-headless/cocart-openapi/main/basic/v2/openapi-cocart-v2-collection.yaml) |
+| **Community v2** | [`openapi-cocart-v2-stable.yaml`](https://raw.githubusercontent.com/cocart-headless/cocart-openapi/main/community/v2/openapi-cocart-v2-stable.yaml) |
+| **JWT Authentication** | [`openapi-cocart-jwt-auth.yaml`](https://raw.githubusercontent.com/cocart-headless/cocart-openapi/main/jwt-authentication/openapi-cocart-jwt-auth.yaml) |
+| **CoCart Plus v1** | [`openapi-cocart-plus-v1-collection.yaml`](https://raw.githubusercontent.com/cocart-headless/cocart-openapi/main/plus/v1/openapi-cocart-plus-v1-collection.yaml) |
+
+2. Open Yaak and go to your workspace
+3. Click **Import/Export** in the top menu (or press `Ctrl/Cmd + I`)
+4. Select **Import** → choose the downloaded YAML file
+5. Yaak will create requests for every endpoint in the spec
+
+<Tip>
+  Import the core v2 spec and the JWT spec separately to keep your workspace organized.
+</Tip>
+
+## Set up your environment
+
+Environments let you switch between stores without editing individual requests.
+
+1. Click the **Environment** dropdown in the top bar
+2. Click **Manage Environments** → **+** to create a new one (e.g. "CoCart Local")
+3. Add these variables:
+
+| Variable | Value |
+|----------|-------|
+| `protocol` | `https` |
+| `host` | `yourstore.com` |
+
+4. Select the environment from the dropdown
+
+The imported requests use `{{protocol}}` and `{{host}}` from the OpenAPI server definition, so they'll automatically target your store.
+
+## Make your first request
+
+1. Find **Get Products** in the sidebar under the imported collection
+2. Make sure your environment is selected
+3. Click **Send**
+
+You should see a JSON response with your store's products.
+
+## Authentication
+
+### Basic Authentication
+
+For customer-specific carts or protected endpoints:
+
+1. Select the request you want to authenticate
+2. Click the **Auth** tab below the URL bar
+3. Choose **Basic**
+4. Enter the customer's username or email and password
+
+### JWT Authentication
+
+1. Send a request to the **Login User** endpoint with credentials
+2. Copy the `jwt_token` from the response
+3. On subsequent requests, set **Auth** to **Bearer**
+4. Paste the token value
+
+See [Authentication](/authentication/index) for more details.
+
+## Request chaining
+
+Yaak supports environment variables and template tags, which you can use to chain requests together. For example, you can:
+
+1. Log in and save the JWT token to an environment variable
+2. Add items to the cart and capture the cart key
+3. Use those values automatically in subsequent requests
+
+This is useful for testing full flows like add-to-cart → update quantity → calculate totals.
+
+## Tips
+
+- **Keyboard shortcuts** — press `Ctrl/Cmd + N` to quickly create new requests
+- **Response filtering** — use the search in the response panel to find specific fields in large JSON responses
+- **Folders** — organize your requests by workflow (e.g. "Cart Flow", "Product Browsing", "Checkout")
+- **Git sync** — Yaak stores workspace data as files, so you can commit your API collections to version control and share them with your team
+
+## Next steps
+
+- [Explore the API Reference](/api-reference/introduction) for full endpoint documentation
+- [Set up JWT Authentication](/authentication/jwt/quick-start) for token-based auth
+- Try [Postman](/tutorials/postman) if you prefer a more full-featured API client

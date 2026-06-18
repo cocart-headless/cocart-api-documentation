@@ -1,0 +1,63 @@
+---
+title: "Payment & Shipping Hooks"
+sidebarTitle: "Payment & Shipping"
+description: "Action hooks for payment and shipping events in CoCart Plus — fires after a payment gateway or shipping method is set for the cart."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Action Hooks overview](/developers/actions) for all hook categories and the [Developer Reference](/developers) for the plugin key index.
+</Tip>
+
+### `cocart_set_payment_gateway`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Fires after a payment gateway has been successfully set for the cart.
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Parameters**
+
+<ParamField path="gateway_id" type="string">
+  The payment gateway ID that was set (e.g. `stripe`, `paypal`).
+</ParamField>
+
+**Usage**
+```php
+add_action( 'cocart_set_payment_gateway', function( $gateway_id ) {
+    // Log payment method selection
+    error_log( sprintf( 'Payment gateway set to: %s', $gateway_id ) );
+}, 10 );
+```
+
+---
+
+### `cocart_set_shipping_method`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Fires after a shipping method has been successfully set for the cart.
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Parameters**
+
+<ParamField path="shipping_key" type="string">
+  The shipping method key that was set.
+</ParamField>
+
+<ParamField path="recurring_cart_key" type="string">
+  The recurring cart key (for subscription support).
+</ParamField>
+
+**Usage**
+```php
+add_action( 'cocart_set_shipping_method', function( $shipping_key, $recurring_cart_key ) {
+    // Track shipping method selection
+    error_log( sprintf( 'Shipping method set to: %s', $shipping_key ) );
+}, 10, 2 );
+```

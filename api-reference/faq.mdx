@@ -1,18 +1,67 @@
 ---
-title: "Frequently Asked Questions"
-description: "We ask the most frequently asked questions for the API"
+title: "API Reference FAQ"
+sidebarTitle: "FAQ"
+description: "Common questions developers ask when building with the CoCart REST API."
 icon: "question"
 ---
 
+## Authentication
+
 <AccordionGroup>
-    <Accordion title="Does CoCart use cookies?">
-        CoCart does not use or rely on any WordPress or WooCommerce cookies.
+    <Accordion title="Do I need to authenticate to use the API?">
+        Not always. The [Products API](/api-reference/v2/products/get-products) and the Cart API for guest customers are publicly accessible — no authentication required.
+
+        You need to [authenticate](/authentication) when accessing a registered customer's personal cart, customer-specific pricing, or admin-only endpoints. All authenticated requests must use HTTPS.
     </Accordion>
 
-    <Accordion title="How do I create a batch request?">
-        Standard WordPress batch requests are handled via `https://your-store.com/wp-json/batch/v1` endpoint.
+    <Accordion title="What authentication methods are supported?">
+        CoCart supports:
+        - **[Basic Authentication](/authentication)** — Username, email, or phone + password (simplest option)
+        - **[JWT Authentication](/authentication/jwt)** — Token-based auth ideal for frontend apps and mobile
 
-        For example adding multiple products to the cart request looks like:
+        For production, we recommend JWT. Basic Auth is great for development and server-to-server calls.
+    </Accordion>
+
+    <Accordion title="Does CoCart use cookies?">
+        No. CoCart does not use or rely on any WordPress or WooCommerce cookies. Session tracking is handled entirely through [cart keys](/knowledge-base/cart-key).
+    </Accordion>
+</AccordionGroup>
+
+## Cart & Sessions
+
+<AccordionGroup>
+    <Accordion title="What is a cart key and when do I need one?">
+        A [cart key](/knowledge-base/cart-key) identifies a cart session. For **guest customers**, you must store and send the cart key with every Cart API request — without it, each request creates a new cart.
+
+        For **authenticated customers**, the cart key defaults to the user ID automatically. You can find the cart key in the response body (`cart_key`) and the `CoCart-API-Cart-Key` response header.
+    </Accordion>
+
+    <Accordion title="I added multiple products but only 1 item shows in the cart. Why?">
+        You are likely not passing the `cart_key` parameter on subsequent requests. Without it, each request creates a separate guest session. Store the cart key from your first response and include it as a parameter on all following Cart API requests.
+
+        See the [cart key documentation](/knowledge-base/cart-key) for details.
+    </Accordion>
+
+    <Accordion title="How long do cart sessions last?">
+        Cart session expiration follows WooCommerce defaults. For logged-in customers, carts persist for one week and are renewed daily. Guest cart sessions follow the same expiration rules.
+    </Accordion>
+
+    <Accordion title="Can I load a cart session into WooCommerce's native checkout?">
+        Yes. The [Load Cart from Session](/load-cart) feature lets you transfer a guest customer's cart to the web version of your store so they can complete checkout through WooCommerce's native flow. Note that this feature does not transfer customer details.
+    </Accordion>
+
+    <Accordion title="Can an admin create or update a customer's cart?">
+        No. When you authenticate as an admin, the cart session belongs to the admin — not the customer. Even if you specify a customer's user ID as the cart key, it will not take effect. Each user must manage their own cart.
+    </Accordion>
+</AccordionGroup>
+
+## Requests & Responses
+
+<AccordionGroup>
+    <Accordion title="How do I make a batch request?">
+        Standard WordPress batch requests are handled via the `https://your-store.com/wp-json/batch/v1` endpoint.
+
+        For example, adding multiple products to the cart:
         ```json
         {
             "requests": [
@@ -35,9 +84,81 @@ icon: "question"
             ]
         }
         ```
+
+        CoCart Plus also supports a dedicated [batch requests](/batch-requests) endpoint at `/cocart/batch` with additional features.
     </Accordion>
 
-    <Accordion title="My question is not listed here. Where can I find more?">
-        We have more available in our [support center](/knowledge-base/faq).
+    <Accordion title="What format are API errors returned in?">
+        All errors return a JSON object with `code`, `message`, and `data` (including the HTTP status). For example:
+        ```json
+        {
+            "code": "cocart_product_not_found",
+            "message": "Product does not exist or is not purchasable.",
+            "data": {
+                "status": 404
+            }
+        }
+        ```
+
+        See the full [error codes reference](/api-reference/v2/error-codes) for all possible error responses.
+    </Accordion>
+
+    <Accordion title="How do I reduce bandwidth on repeated cart requests?">
+        Use [ETag-based conditional requests](/etag-cache-support). After receiving a response with an `ETag` header, send it back as `If-None-Match` on your next request. If the cart hasn't changed, you'll receive a `304 Not Modified` with no body — saving bandwidth and improving performance.
+    </Accordion>
+
+    <Accordion title="What does the CoCart-Cache header mean?">
+        The `CoCart-Cache` response header indicates the [cache status](/etag-cache-support#cocart-cache-header):
+        - **`MISS`** — Full request processed, 200 response with body
+        - **`HIT`** — ETag matched, 304 response with no body
+        - **`SKIP`** — Caching was bypassed (via `_skip_cache` parameter)
     </Accordion>
 </AccordionGroup>
+
+## Cross-Origin & Security
+
+<AccordionGroup>
+    <Accordion title="I'm getting CORS errors. How do I fix them?">
+        By default, browsers block cross-origin requests. You need to enable [CORS support](/cors) in CoCart by using the `cocart_disable_all_cors` filter or installing the CoCart CORS Support plugin.
+
+        For production, always restrict allowed origins to your specific domain rather than allowing all origins.
+    </Accordion>
+
+    <Accordion title="Is HTTPS required?">
+        HTTPS is required for all authenticated requests. While unauthenticated requests (guest carts, browsing products) may work over HTTP, we strongly recommend HTTPS for all API traffic to protect customer data in transit.
+    </Accordion>
+</AccordionGroup>
+
+## SDKs & Tooling
+
+<AccordionGroup>
+    <Accordion title="Are there official SDKs?">
+        Yes. Official SDKs are available for [TypeScript](/sdk/typescript), [PHP](/sdk/php), [Python](/sdk/python), and [Go](/sdk/go). SDKs handle authentication, cart key management, and [ETag caching](/etag-cache-support) automatically.
+
+        See the [SDK documentation](/sdk) for setup and usage.
+    </Accordion>
+
+    <Accordion title="Can I generate TypeScript types from the API?">
+        Yes. You can generate TypeScript types directly from CoCart's OpenAPI specification. See the [TypeScript types generation](/tutorials/typescript-types-generation) tutorial for a step-by-step guide.
+    </Accordion>
+
+    <Accordion title="Can I test the API without writing code?">
+        Yes. You can use tools like [Postman](/tutorials/postman) or [Yaak](/tutorials/yaak) to explore the API interactively. You can also set up a [playground](/api-reference/playground) to test requests live.
+    </Accordion>
+</AccordionGroup>
+
+## Products API
+
+<AccordionGroup>
+    <Accordion title="Can I filter products by category, tag, or attribute?">
+        Yes. The [Products endpoint](/api-reference/v2/products/get-products) supports filtering by category, tag, attribute, price range, stock status, and more via query parameters. See the endpoint documentation for all available filters.
+    </Accordion>
+
+    <Accordion title="Are product endpoints read-only?">
+        Yes. CoCart's Products API is read-only — it exposes WooCommerce product data for your storefront but does not support creating or updating products. Use WooCommerce's own REST API for product management.
+    </Accordion>
+</AccordionGroup>
+
+<Info>
+    Looking for questions about pricing, licensing, or plugin setup? Visit the [support center FAQ](/knowledge-base/faq) or the [general FAQ](/faq).
+</Info>

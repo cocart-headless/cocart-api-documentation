@@ -1,0 +1,385 @@
+---
+title: "TypeScript SDK: Products API"
+sidebarTitle: "Products API"
+description: "Browse your WooCommerce catalog with the CoCart TypeScript SDK — list, filter, search, paginate products, variations, categories, attributes, brands, and reviews."
+'og:title': "WooCommerce Products API — CoCart TypeScript SDK"
+'og:description': "Query the WooCommerce product catalog from TypeScript. Filter by category, price, and stock; search; paginate with async iterators; fetch variations, attributes, brands, and reviews."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+</Info>
+
+The Products API lets you browse your store's catalog. It is publicly accessible and does not require authentication.
+
+```ts
+const products = client.products();
+```
+
+## List Products
+
+```ts
+const response = await client.products().all();
+const response = await client.products().all({ per_page: '20', page: '1' });
+```
+
+## Parameters Reference
+
+All list methods accept an optional `params` object:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `page` | int | Page number (default: 1) |
+| `per_page` | int | Items per page (default: 10, max: 100) |
+| `search` | string | Search term |
+| `category` | string | Filter by category slug |
+| `tag` | string | Filter by tag slug |
+| `status` | string | Product status |
+| `featured` | bool | Show only featured products |
+| `on_sale` | bool | Show only products on sale |
+| `min_price` | string | Minimum price |
+| `max_price` | string | Maximum price |
+| `stock_status` | string | Stock status (`instock`, `outofstock`, `onbackorder`) |
+| `orderby` | string | Sort field (`date`, `id`, `title`, `slug`, `price`, `popularity`, `rating`) |
+| `order` | string | Sort direction (`asc`, `desc`) |
+
+## Filtering
+
+### By Category
+
+```ts
+const response = await client.products().byCategory('electronics');
+
+// With additional params
+const response = await client.products().byCategory('electronics', {
+  per_page: '20',
+  orderby: 'price',
+  order: 'asc',
+});
+```
+
+### By Tag
+
+```ts
+const response = await client.products().byTag('new-arrival');
+```
+
+### Featured Products
+
+```ts
+const response = await client.products().featured();
+const response = await client.products().featured({ per_page: '4' });
+```
+
+### Products on Sale
+
+```ts
+const response = await client.products().onSale();
+```
+
+### By Price Range
+
+```ts
+// Products between $10 and $50
+const response = await client.products().byPriceRange(10, 50);
+
+// Products under $25
+const response = await client.products().byPriceRange(null, 25);
+
+// Products over $100
+const response = await client.products().byPriceRange(100);
+```
+
+### Search
+
+```ts
+const response = await client.products().search('wireless headphones');
+
+// Search within a category
+const response = await client.products().search('headphones', {
+  category: 'electronics',
+});
+```
+
+### Combining Filters
+
+```ts
+const response = await client.products().all({
+  category: 'clothing',
+  on_sale: 'true',
+  min_price: '20',
+  max_price: '100',
+  orderby: 'popularity',
+  order: 'desc',
+  per_page: '12',
+});
+```
+
+### By Stock Status
+
+```ts
+const response = await client.products().byStockStatus('instock');
+const response = await client.products().byStockStatus('outofstock');
+const response = await client.products().byStockStatus('onbackorder');
+```
+
+## Pagination & Sorting
+
+### Paginate Helper
+
+```ts
+// Page 1, 12 products per page
+const response = await client.products().paginate(1, 12);
+
+// Page 2
+const response = await client.products().paginate(2, 12);
+```
+
+### Sort Helper
+
+```ts
+const response = await client.products().sortBy('price');        // Cheapest first
+const response = await client.products().sortBy('price', 'desc'); // Most expensive first
+const response = await client.products().sortBy('date', 'desc');  // Newest first
+const response = await client.products().sortBy('popularity', 'desc');
+const response = await client.products().sortBy('rating', 'desc');
+
+// Combine with other filters
+const response = await client.products().sortBy('price', 'asc', {
+  category: 'electronics',
+  on_sale: 'true',
+});
+```
+
+### Async Paginated Iterator
+
+`allPaginated()` returns an async iterator that automatically fetches the next page when the current one is done:
+
+```ts
+for await (const page of client.products().allPaginated({ per_page: 20 })) {
+  const products = page.toObject() as any[];
+  for (const product of products) {
+    console.log(product.name);
+  }
+}
+
+// Or collect all pages into an array
+const allPages = await client.products().allPaginated({ per_page: 20 }).toArray();
+```
+
+### Manual Pagination
+
+```ts
+let page = 1;
+const perPage = 20;
+let totalPages = 1;
+
+do {
+  const response = await client.products().paginate(page, perPage);
+  const products = response.toObject() as any[];
+  totalPages = response.getTotalPages() ?? 1;
+
+  for (const product of products) {
+    console.log(`${product.name} - $${product.price}`);
+  }
+
+  page++;
+} while (page <= totalPages);
+```
+
+## Single Product
+
+### By ID
+
+```ts
+const response = await client.products().find(123);
+
+const data = response.toObject() as any;
+console.log(data.name);
+console.log(data.price);
+console.log(data.description);
+```
+
+### By Slug
+
+```ts
+const response = await client.products().findBySlug('blue-hoodie');
+```
+
+## Variations
+
+### List All Variations
+
+```ts
+const response = await client.products().variations(123);
+
+for (const variation of response.toObject() as any[]) {
+  console.log(`${variation.id}: ${variation.price}`);
+}
+```
+
+### Get a Specific Variation
+
+```ts
+const response = await client.products().variation(123, 456);
+```
+
+## Categories
+
+### List All Categories
+
+```ts
+const response = await client.products().categories();
+const response = await client.products().categories({ per_page: '50' });
+```
+
+### Get a Single Category
+
+```ts
+const response = await client.products().category(15);
+```
+
+## Tags
+
+### List All Tags
+
+```ts
+const response = await client.products().tags();
+```
+
+### Get a Single Tag
+
+```ts
+const response = await client.products().tag(8);
+```
+
+## Attributes
+
+Attributes define product variations — things like "Color" or "Size". Each attribute has terms (e.g., "Red", "Blue").
+
+### List All Attributes
+
+```ts
+const response = await client.products().attributes();
+```
+
+### Get a Single Attribute
+
+```ts
+const response = await client.products().attribute(1);
+```
+
+### Get Attribute Terms
+
+```ts
+const response = await client.products().attributeTerms(1);
+```
+
+### Get a Single Attribute Term
+
+```ts
+const response = await client.products().attributeTerm(1, 5);
+```
+
+### Slug-Based Attribute Lookups
+
+```ts
+const response = await client.products().attributeBySlug('color');
+const response = await client.products().attributeTermsBySlug('color');
+const response = await client.products().attributeTermBySlug('color', 'red');
+```
+
+## Brands
+
+### List All Brands
+
+```ts
+const response = await client.products().brands();
+const response = await client.products().brands({ per_page: '50' });
+```
+
+### Get a Single Brand
+
+```ts
+const response = await client.products().brand(5);
+```
+
+### Filter Products by Brand
+
+```ts
+const response = await client.products().byBrand('nike');
+
+// With additional params
+const response = await client.products().byBrand('nike', {
+  per_page: '20',
+  orderby: 'price',
+  order: 'asc',
+});
+```
+
+## Reviews
+
+### List All Reviews
+
+```ts
+const response = await client.products().reviews();
+```
+
+### Reviews for a Specific Product
+
+```ts
+const response = await client.products().productReviews(123);
+```
+
+### My Reviews
+
+Get reviews written by the authenticated user:
+
+```ts
+const response = await client.products().myReviews();
+```
+
+## SEO Data
+
+<Note>Requires the CoCart SEO Pack plugin.</Note>
+
+### By Product ID
+
+```ts
+const response = await client.products().seo(123);
+
+console.log(response.get('provider'));           // 'yoast', 'rankmath', etc.
+console.log(response.get('meta_data.title'));
+console.log(response.get('open_graph.og:title'));
+console.log(response.get('schema'));             // JSON-LD structured data
+```
+
+### By Product Slug
+
+```ts
+const response = await client.products().seoBySlug('blue-hoodie');
+```
+
+## Working with Responses
+
+```ts
+const response = await client.products().all({ per_page: '5' });
+
+// As object
+const products = response.toObject();
+
+// Check success
+if (response.isSuccessful()) {
+  for (const product of response.toObject() as any[]) {
+    console.log(product.name);
+  }
+}
+
+// Dot-notation access
+const response2 = await client.products().find(123);
+console.log(response2.get('name'));
+console.log(response2.get('price'));
+console.log(response2.get('categories.0.name'));
+```
+
+See [Error Handling](/sdk/typescript/error-handling) for handling API errors.

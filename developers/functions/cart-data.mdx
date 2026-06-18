@@ -1,0 +1,195 @@
+---
+title: "Cart Data Functions"
+sidebarTitle: "Cart Data"
+description: "Functions for retrieving cart timestamps, source tracking, session counts, and cart hash values."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Functions Reference overview](/developers/functions) for all function categories and the [Developer Reference](/developers) for the plugin key index.
+</Tip>
+
+### `cocart_get_timestamp()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Returns the timestamp the cart was created or expired.
+
+<Note>Made available since v4.2.0</Note>
+
+**Parameters**
+
+<ParamField query="cart_key" type="string">
+  The cart key.
+</ParamField>
+
+<ParamField query="timestamp_type" type="string">
+  The type of timestamp. Accepts `created` or `expired`. Default: `created`.
+</ParamField>
+
+**Returns**: `string|null` — The timestamp or null if invalid type.
+
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php)
+
+---
+
+### `cocart_get_source()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Returns the source of the cart (e.g. `web`, `headless`).
+
+<Note>Made available since v4.2.0</Note>
+
+**Parameters**
+
+<ParamField query="cart_key" type="string">
+  The cart key.
+</ParamField>
+
+**Returns**: `string` — The cart source.
+
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php)
+
+---
+
+### `cocart_get_cart_hash()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Returns the cart hash of the cart.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="cart_key" type="string">
+  The cart key.
+</ParamField>
+
+**Returns**: `string` — The cart hash.
+
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php)
+
+---
+
+### `cocart_maybe_show_results()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Checks if the session table exists before returning results. Helps prevent any fatal errors or crashes should debug mode be enabled.
+
+<Note>Made available since v4.2.0</Note>
+
+**Returns**: `bool` — True if the session table exists.
+
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php)
+
+---
+
+### `cocart_carts_in_session()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Counts how many carts are currently in session.
+
+<Note>Made available since v4.2.0</Note>
+
+**Parameters**
+
+<ParamField query="session" type="string">
+  Session table to count. Optional.
+</ParamField>
+
+**Returns**: `int|string` — Number of carts in session or error message.
+
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php)
+
+---
+
+### `cocart_count_carts_expiring()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Counts how many carts are going to expire within the next 6 hours.
+
+<Note>Made available since v4.2.0</Note>
+
+**Returns**: `int` — Number of carts expiring.
+
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php)
+
+---
+
+### `cocart_count_carts_active()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Counts how many carts are active.
+
+<Note>Made available since v4.2.0</Note>
+
+**Returns**: `int` — Number of carts active.
+
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php)
+
+---
+
+### `cocart_count_carts_expired()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Counts how many carts have expired.
+
+<Note>Made available since v4.2.0</Note>
+
+**Returns**: `int` — Number of carts expired.
+
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php)
+
+---
+
+### `cocart_carts_source_web()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Counts how many carts were created via the web.
+
+<Note>Made available since v4.2.0</Note>
+
+**Returns**: `int` — Number of carts created via the web.
+
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php)
+
+---
+
+### `cocart_carts_source_headless()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Counts how many carts were created via CoCart API.
+
+<Note>Made available since v4.2.0</Note>
+
+**Returns**: `int` — Number of carts created via CoCart API.
+
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php)
+
+---
+
+### `cocart_carts_source_other()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Counts how many carts where the source is other or unknown.
+
+<Note>Made available since v4.2.0</Note>
+
+**Returns**: `int` — Number of carts created via other or unknown.
+
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php)
+
+---

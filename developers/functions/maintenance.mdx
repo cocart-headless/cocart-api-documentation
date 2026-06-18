@@ -1,0 +1,45 @@
+---
+title: "Maintenance Functions"
+sidebarTitle: "Maintenance"
+description: "Functions for cleaning up expired carts from the database and clearing all carts in bulk."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Functions Reference overview](/developers/functions) for all function categories and the [Developer Reference](/developers) for the plugin key index.
+</Tip>
+
+### `cocart_task_cleanup_carts()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Cleans up carts from the database that have expired.
+
+<Note>Made available since v3.1.2</Note>
+
+- **Defined in**: [`includes/cocart-task-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-task-functions.php)
+
+---
+
+### `cocart_task_clear_carts()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Clears all carts from the database and persistent carts from usermeta.
+
+<Note>Made available since v3.1.2</Note>
+
+**Parameters**
+
+<ParamField query="return_results" type="bool">
+  Return total of persistent carts cleared. Default: `false`.
+</ParamField>
+
+**Returns**: `int|void` — Number of saved carts or void.
+
+- **Defined in**: [`includes/cocart-task-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-task-functions.php)
+
+---

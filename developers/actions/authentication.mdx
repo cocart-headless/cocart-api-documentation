@@ -1,0 +1,77 @@
+---
+title: "Authentication Hooks"
+sidebarTitle: "Authentication"
+description: "Action hooks for CoCart authentication events — fires when login permission is granted and when API rate limits are exceeded."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Action Hooks overview](/developers/actions) for all hook categories and the [Developer Reference](/developers) for the plugin key index.
+</Tip>
+
+### `cocart_login_permission_granted`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Fires when login permission is successfully granted after authentication. Use this for audit logging, analytics, or post-authentication tasks like recording login history.
+
+<Note>Made available since v4.8.0</Note>
+
+**Parameters**
+
+<ParamField path="current_user" type="WP_User">
+  The authenticated user object.
+</ParamField>
+
+<ParamField path="request" type="WP_REST_Request">
+  The current REST API request.
+</ParamField>
+
+<ParamField path="endpoint" type="string">
+  The endpoint being accessed (e.g. `'login'`).
+</ParamField>
+
+**Usage**
+```php
+add_action( 'cocart_login_permission_granted', function( $current_user, $request, $endpoint ) {
+    // Log successful authentication
+    error_log( sprintf(
+        'CoCart login granted for user %d (%s) on endpoint: %s',
+        $current_user->ID,
+        $current_user->user_login,
+        $endpoint
+    ) );
+}, 10, 3 );
+```
+
+<Tip>
+See the [Authentication Injection tutorial](/tutorials/authentication-injection) for advanced examples including audit logging and security monitoring.
+</Tip>
+
+[Search `cocart_login_permission_granted` in repository](https://github.com/co-cart/co-cart/search?q=cocart_login_permission_granted&type=code)
+
+---
+
+### `cocart_api_rate_limit_exceeded`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Fires when an API rate limit is exceeded. Use this for logging, alerting, or custom handling of rate-limited requests.
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Parameters**
+
+<ParamField path="ip_address" type="string">
+  The IP address that exceeded the rate limit.
+</ParamField>
+
+**Usage**
+```php
+add_action( 'cocart_api_rate_limit_exceeded', function( $ip_address ) {
+    error_log( sprintf( 'CoCart rate limit exceeded by IP: %s', $ip_address ) );
+}, 10 );
+```

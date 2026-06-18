@@ -1,0 +1,87 @@
+---
+title: "Performance Filters"
+sidebarTitle: "Performance"
+description: "PHP filters for plugin loading, blocked plugins, WP-Cron, and performance mode during CoCart REST API requests."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Filters Reference overview](/developers/filters) for the full plugin key index and all filter categories.
+</Tip>
+
+<Warning>
+  To provide the best optimial performance, the following filters will not be controlled via the CoCart Settings.
+</Warning>
+
+### `cocart_disable_wp_cron_on_request`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Controls whether WP-Cron spawning is disabled during CoCart REST API requests. Defaults to `true` — cron is disabled on every API request to avoid spawning unnecessary background processes.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="disable" type="bool">
+  Whether to disable WP-Cron on API requests. Default `true`.
+</ParamField>
+
+**Usage**
+```php
+// Re-enable WP-Cron on CoCart API requests.
+add_filter( 'cocart_disable_wp_cron_on_request', '__return_false' );
+```
+
+---
+
+### `cocart_request_allowed_plugins`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filters the list of plugin files that are always allowed to load during a CoCart REST request when Performance mode is active. By default the safelist contains WooCommerce, CoCart Starter, and any plugin whose integration is enabled. All plugins in a `woocommerce-*` or `cocart-*` folder are also allowed automatically without needing to be added here.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="allowed" type="array">
+  Plugin files to keep active, in `folder/file.php` format.
+</ParamField>
+
+**Usage**
+```php
+// Allow an additional plugin to load on every CoCart REST request.
+add_filter( 'cocart_request_allowed_plugins', function( array $allowed ): array {
+    $allowed[] = 'my-custom-plugin/my-custom-plugin.php';
+    return $allowed;
+}, 10, 1 );
+```
+
+---
+
+### `cocart_request_blocked_plugins`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filters the list of plugin files that are always blocked from loading during a CoCart REST request when Performance mode is active. A blocked plugin takes precedence over the safelist — if a plugin appears in both lists it will not load. The blocklist is empty by default.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="blocked" type="array">
+  Plugin files to block, in `folder/file.php` format.
+</ParamField>
+
+**Usage**
+```php
+// Prevent a specific plugin from loading on CoCart REST requests.
+add_filter( 'cocart_request_blocked_plugins', function( array $blocked ): array {
+    $blocked[] = 'heavy-analytics-plugin/heavy-analytics-plugin.php';
+    return $blocked;
+}, 10, 1 );
+```

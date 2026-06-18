@@ -1,0 +1,316 @@
+---
+title: "Advanced Custom Fields (ACF)"
+sidebarTitle: "Advanced Custom Fields"
+description: "Expose ACF field data on products, variations, and taxonomy terms through the CoCart products API."
+---
+
+<Info>
+  This feature documentation was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 28th, 2026.
+</Info>
+
+[Advanced Custom Fields (ACF)](https://www.advancedcustomfields.com/) lets you add custom field data to any WordPress post type or taxonomy. When ACF is active alongside CoCart Plus, an `acf` property is automatically appended to the following REST API responses:
+
+- **Products** (`product`)
+- **Product variations** (`product_variation`)
+- **Product categories** (`product_cat`)
+- **Product tags** (`product_tag`)
+- **Product brands** (`product_brand`)
+
+No additional configuration is required. CoCart Plus detects ACF automatically and registers the field on each supported type.
+
+<Warning>
+  **This integration is optional.** If you are already using ACF's built-in REST API option (the **"Show in REST API"** toggle on each field group) to expose field data, be aware that the two approaches return field values in a different format. ACF's native output returns raw field values as-is; CoCart Plus normalises complex field types (images, repeaters, relationships, etc.) into a consistent, predictable structure as documented below. Switch to this integration only if the normalised format better suits your use case.
+</Warning>
+
+<Info>
+  This integration is available in CoCart Plus since <Tooltip tip="This is the version of CoCart Plus">v1.6.0</Tooltip> and requires Advanced Custom Fields (free or Pro) to be installed and active.
+</Info>
+
+## Prerequisites
+
+- [Advanced Custom Fields](https://wordpress.org/plugins/advanced-custom-fields/) (free) or [ACF Pro](https://www.advancedcustomfields.com/pro/) installed and active.
+- CoCart Plus v1.6.0 or higher.
+
+<Info>
+  ACF fields are removed from the raw `meta_data` array to avoid duplicate values. They appear exclusively in the top-level `acf` object.
+</Info>
+
+## Response schema
+
+Each key inside the `acf` object corresponds to the **field name** you defined in ACF. Every entry contains:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `label` | `string` | The human-readable field label from ACF. |
+| `value` | mixed | The formatted field value (see [field types](#field-types) below). |
+| `type` | `string` | The ACF field type identifier (e.g. `text`, `image`, `repeater`). |
+
+### Example — product response
+
+```json
+{
+  "id": 42,
+  "name": "Aged Cheddar",
+  "acf": {
+    "origin_country": {
+      "label": "Country of Origin",
+      "value": "United Kingdom",
+      "type": "text"
+    },
+    "weight_grams": {
+      "label": "Weight (g)",
+      "value": 250,
+      "type": "number"
+    },
+    "featured_image": {
+      "label": "Featured Image",
+      "value": {
+        "id": 198,
+        "url": "https://your-store.com/wp-content/uploads/cheddar.jpg",
+        "title": "Aged Cheddar",
+        "alt": "Block of aged cheddar cheese",
+        "description": "",
+        "mime_type": "image/jpeg",
+        "sizes": {
+          "thumbnail": "https://your-store.com/wp-content/uploads/cheddar-150x150.jpg",
+          "medium": "https://your-store.com/wp-content/uploads/cheddar-300x200.jpg"
+        }
+      },
+      "type": "image"
+    }
+  }
+}
+```
+
+### Example — taxonomy term response (product category)
+
+```json
+{
+  "id": 9,
+  "name": "Cheese",
+  "slug": "cheese",
+  "acf": {
+    "banner_text": {
+      "label": "Banner Text",
+      "value": "Artisan cheeses from around the world",
+      "type": "textarea"
+    }
+  }
+}
+```
+
+## Field types
+
+CoCart Plus normalises complex ACF field types into a consistent, predictable structure before returning them in the API response.
+
+### image / file
+
+```json
+{
+  "label": "Product Sheet",
+  "value": {
+    "id": 301,
+    "url": "https://your-store.com/wp-content/uploads/sheet.pdf",
+    "title": "Cheddar Product Sheet",
+    "alt": "",
+    "description": "",
+    "mime_type": "application/pdf",
+    "sizes": {}
+  },
+  "type": "file"
+}
+```
+
+### gallery
+
+Returns an array of attachment objects, each with the same shape as image/file above.
+
+```json
+{
+  "label": "Gallery",
+  "value": [
+    {
+      "id": 310,
+      "url": "https://your-store.com/wp-content/uploads/angle-1.jpg",
+      "title": "Angle 1",
+      "alt": "",
+      "description": "",
+      "mime_type": "image/jpeg",
+      "sizes": {}
+    },
+    {
+      "id": 311,
+      "url": "https://your-store.com/wp-content/uploads/angle-2.jpg",
+      "title": "Angle 2",
+      "alt": "",
+      "description": "",
+      "mime_type": "image/jpeg",
+      "sizes": {}
+    }
+  ],
+  "type": "gallery"
+}
+```
+
+### link
+
+```json
+{
+  "label": "Learn More",
+  "value": {
+    "url": "https://example.com/cheddar-guide",
+    "title": "Cheddar Guide",
+    "target": "_blank"
+  },
+  "type": "link"
+}
+```
+
+### google_map
+
+```json
+{
+  "label": "Farm Location",
+  "value": {
+    "address": "Somerset, England",
+    "lat": 51.0999,
+    "lng": -2.9086
+  },
+  "type": "google_map"
+}
+```
+
+### relationship / post_object
+
+A single related post is returned as an object; multiple posts as an array of objects.
+
+```json
+{
+  "label": "Related Products",
+  "value": [
+    {
+      "id": 55,
+      "title": "Mature Cheddar",
+      "slug": "mature-cheddar",
+      "type": "product",
+      "url": "https://your-store.com/product/mature-cheddar/"
+    }
+  ],
+  "type": "relationship"
+}
+```
+
+### taxonomy
+
+```json
+{
+  "label": "Allergens",
+  "value": [
+    { "id": 12, "name": "Milk", "slug": "milk" },
+    { "id": 13, "name": "Lactose", "slug": "lactose" }
+  ],
+  "type": "taxonomy"
+}
+```
+
+### user
+
+```json
+{
+  "label": "Account Manager",
+  "value": {
+    "id": 3,
+    "display_name": "Jane Smith"
+  },
+  "type": "user"
+}
+```
+
+### repeater
+
+Each row in the repeater is an object keyed by sub-field name. Sub-field values are recursively formatted using the same rules as top-level fields.
+
+```json
+{
+  "label": "Nutritional Info",
+  "value": [
+    {
+      "nutrient": "Energy",
+      "per_100g": "1717 kJ / 412 kcal"
+    },
+    {
+      "nutrient": "Fat",
+      "per_100g": "34.4 g"
+    }
+  ],
+  "type": "repeater"
+}
+```
+
+### flexible_content
+
+Each row includes an `acf_fc_layout` key identifying the layout, followed by the sub-field values for that layout.
+
+```json
+{
+  "label": "Content Blocks",
+  "value": [
+    {
+      "acf_fc_layout": "text_block",
+      "heading": "About this cheese",
+      "body": "Hand-crafted in Somerset since 1890."
+    },
+    {
+      "acf_fc_layout": "image_block",
+      "image": {
+        "id": 400,
+        "url": "https://your-store.com/wp-content/uploads/farm.jpg",
+        "title": "The Farm",
+        "alt": "Green fields",
+        "description": "",
+        "mime_type": "image/jpeg",
+        "sizes": {}
+      }
+    }
+  ],
+  "type": "flexible_content"
+}
+```
+
+### group
+
+Sub-fields are returned as a flat object keyed by sub-field name.
+
+```json
+{
+  "label": "Dimensions",
+  "value": {
+    "width_mm": 120,
+    "height_mm": 80,
+    "depth_mm": 60
+  },
+  "type": "group"
+}
+```
+
+### Scalar types
+
+Standard scalar types (`text`, `textarea`, `number`, `range`, `email`, `url`, `password`, `select`, `checkbox`, `radio`, `button_group`, `true_false`, `color_picker`, `date_picker`, `date_time_picker`, `time_picker`, `oembed`) return their raw ACF value unchanged.
+
+## Empty fields
+
+When a field has no value set, `value` is returned as `null`.
+
+```json
+{
+  "label": "Tasting Notes",
+  "value": null,
+  "type": "textarea"
+}
+```
+
+## Known limitations
+
+- **Read-only** — The integration surfaces ACF data in `GET` responses only. Writing ACF values via CoCart endpoints is not supported.
+- **Conditional logic** — ACF conditional logic is evaluated server-side at field group level. Fields hidden by conditional logic in the WordPress admin are still returned by the API if they exist on the post.
+- **Pro field types** — Field types exclusive to ACF Pro (e.g. `clone`, `accordion`) that are not listed above are returned as their raw value from `get_field()`.

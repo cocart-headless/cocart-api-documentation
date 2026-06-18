@@ -1,0 +1,165 @@
+---
+title: "WooCommerce Product Add-Ons"
+sidebarTitle: "Product Add-Ons"
+description: "Expose add-on field definitions on products and customer selections on cart items, including file upload support, in the CoCart API."
+tag: "In Testing"
+robots: "noindex, follow"
+---
+
+<Info>
+  This feature documentation was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 28th, 2026.
+</Info>
+
+[WooCommerce Product Add-Ons](https://woocommerce.com/products/product-add-ons/) lets customers personalise products with custom text, selections, file uploads, and more. The CoCart Plus integration exposes add-on field definitions on product responses for form rendering, and customer selections on cart item responses for display.
+
+<Info>
+  This integration is available in CoCart Plus since <Tooltip tip="This is the version of CoCart Plus">v2.0.0</Tooltip> and requires WooCommerce Product Add-Ons to be installed and active.
+</Info>
+
+## Product response
+
+Products with add-ons receive an `addons` array in their `extensions` key. Heading fields (section dividers) and hidden options are excluded.
+
+```json Example (product extensions excerpt)
+{
+  "extensions": {
+    "addons": [
+      {
+        "id": 1,
+        "name": "Engraving Text",
+        "type": "custom_text",
+        "description": "Enter up to 20 characters.",
+        "required": false,
+        "position": 0,
+        "display": "",
+        "adjust_price": true,
+        "price": "500",
+        "price_type": "flat_fee",
+        "restrictions": true,
+        "min": 0,
+        "max": 20,
+        "limit_file_types": false,
+        "allowed_file_types": [],
+        "options": []
+      },
+      {
+        "id": 2,
+        "name": "Gift Wrap",
+        "type": "multiple_choice",
+        "description": "",
+        "required": false,
+        "position": 1,
+        "display": "radiobutton",
+        "adjust_price": false,
+        "price": "0",
+        "price_type": "flat_fee",
+        "restrictions": false,
+        "min": 0,
+        "max": 0,
+        "limit_file_types": false,
+        "allowed_file_types": [],
+        "options": [
+          { "label": "No thanks", "price": "0", "price_type": "flat_fee", "image": "" },
+          { "label": "Yes please", "price": "200", "price_type": "flat_fee", "image": "" }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Add-on field properties
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `integer` | Unique add-on field identifier. |
+| `name` | `string` | Field label shown to the customer. |
+| `type` | `string` | Field type. See supported types below. |
+| `description` | `string` | Optional description shown below the label. |
+| `required` | `boolean` | Whether the field must be completed before adding to cart. |
+| `position` | `integer` | Display order (zero-based). |
+| `display` | `string` | Sub-display style for `multiple_choice` fields: `select`, `radiobutton`, `images`. |
+| `adjust_price` | `boolean` | Whether this field adds a price adjustment. |
+| `price` | `string` | Base price adjustment (smallest currency unit) when `adjust_price` is `true`. |
+| `price_type` | `string` | `flat_fee`, `quantity_based`, or `percentage_based`. |
+| `restrictions` | `boolean` | Whether min/max restrictions are enabled. |
+| `min` | `number` | Minimum value (character count, quantity, or price depending on type). |
+| `max` | `number` | Maximum value (same units as `min`). |
+| `limit_file_types` | `boolean` | Whether file type restrictions are enabled (file upload fields only). |
+| `allowed_file_types` | `array` | Allowed file extensions when `limit_file_types` is `true`. |
+| `options` | `array` | Selectable options for choice-based field types. |
+
+### Supported field types
+
+`custom_text`, `custom_textarea`, `multiple_choice`, `checkbox`, `select`, `datepicker`, `file_upload`, `input_multiplier`, `custom_price`
+
+## Adding to cart with add-on values
+
+Pass add-on selections in the `item_data` object when calling the add-item endpoint. Use the field name (slugified from the label) as the key.
+
+<CodeGroup>
+  ```bash cURL
+  curl -X POST https://your-store.com/wp-json/cocart/v2/cart/add-item \
+    -H "Content-Type: application/json" \
+    -d '{
+      "id": 42,
+      "quantity": 1,
+      "item_data": {
+        "addon-engraving-text": "Happy Birthday",
+        "addon-gift-wrap": "Yes please"
+      }
+    }'
+  ```
+
+  ```javascript JavaScript
+  await fetch('https://your-store.com/wp-json/cocart/v2/cart/add-item', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: 42,
+      quantity: 1,
+      item_data: {
+        'addon-engraving-text': 'Happy Birthday',
+        'addon-gift-wrap': 'Yes please'
+      }
+    })
+  });
+  ```
+</CodeGroup>
+
+## File upload add-ons
+
+For `file_upload` fields, you can either:
+
+- Send the file as a `multipart/form-data` field keyed by the addon field name (e.g. `addon-upload-your-design`).
+- Pass an image URL in `item_data` under the same key — CoCart will sideload it into the cart upload directory automatically.
+
+Uploaded files are cleaned up from the media library when the cart item is removed or the cart session expires.
+
+## Cart item response
+
+Cart items with add-on selections receive an `addons` array in their `extensions` key.
+
+```json Example (cart item extensions excerpt)
+{
+  "extensions": {
+    "addons": [
+      {
+        "field_label": "Engraving Text",
+        "field_type": "custom_text",
+        "value": "Happy Birthday",
+        "price": "500",
+        "price_type": "flat_fee"
+      }
+    ]
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `field_label` | `string` | The add-on field label. |
+| `field_type` | `string` | The add-on field type. |
+| `value` | `string` | The selected or entered value, pre-formatted for display. |
+| `price` | `string` | Price contribution of this selection (smallest currency unit). |
+| `price_type` | `string` | `flat_fee`, `quantity_based`, or `percentage_based`. |

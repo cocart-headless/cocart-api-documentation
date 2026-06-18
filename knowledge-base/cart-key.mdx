@@ -1,39 +1,161 @@
 ---
 title: "Cart Key"
-description: ''
+description: "Understand what the cart key is and how to use it."
 icon: "key"
+tag: "Updated"
 ---
 
 ## What is a Cart Key?
 
-A cart key is what identifies the cart stored in session along with it's cart data and expiration. The cart key by default, will be a random set of letters and numbers or if the Cart API request is authenticated, it will relate to the user ID of the authenticator instead.
+The cart key is a unique identifier for the cart session. CoCart uses it to store and retrieve cart data from the database on every request to the Cart API.
+
+<Note>
+  The cart key is not the same as the user ID — but for authenticated customers, the user ID *is* the cart key.
+</Note>
+
+When a guest adds items to their cart, CoCart generates a key automatically. That key is used for every subsequent operation on that session — removing items, applying coupons, updating quantities, and so on.
 
 <Warning>
-    If you try to identify a registered user via the cart key then you will be asked to authenticate as that user instead.
+  If you pass a registered user's ID as the `cart_key`, CoCart requires you to be authenticated as that user before it loads the cart.
 </Warning>
+
+## Key Format
+
+Guest cart keys are always prefixed with `t_` followed by a 30-character hash — for example, `t_a1b2c3d4e5f6...`. This makes it straightforward to tell a guest key from an authenticated customer's key (which is their WordPress user ID).
+
+Cart keys cannot exceed **42 characters** — that is the column width in the database.
 
 ## Finding the Cart Key
 
-You can find the cart key returned in the cart response called `cart_key` and via the returned headers called `CoCart-API-Cart-Key` once the first API request has been made.
+The cart key is returned in two places on every Cart API response:
 
-Once you have the cart key, you can then use it to set the `cart_key` as a global parameter with any of the Cart API routes to load that cart.
+- **Response body** — as the `cart_key` field in the JSON response
+- **Response header** — see the table below for the header name by version
 
-Without the cart key set for other Cart API routes, any requests made will not be applied to the appropriate cart session. This is partially important when adding, updating or removing items to and from the cart as such. The same for coupons, fees and other cart related requests made.
+<Tabs>
+  <Tab title="CoCart Community">
+    The cart key is returned in the `CoCart-API-Cart-Key` response header.
+
+    ```http
+    CoCart-API-Cart-Key: t_a1b2c3d4e5f6...
+    ```
+
+    <Note>
+      If your JavaScript cannot read this header, CORS may not be exposing it. See [CORS troubleshooting](/knowledge-base/troubleshoot/cors) for help.
+    </Note>
+  </Tab>
+  <Tab title="CoCart Starter">
+    The cart key is returned in the `Cart-Key` response header (renamed in Basic for simplicity).
+
+    ```http
+    Cart-Key: t_a1b2c3d4e5f6...
+    ```
+
+    The legacy `CoCart-API-Cart-Key` header is still accepted on **requests** for backwards compatibility, but `Cart-Key` is preferred.
+
+    <Note>
+      If your JavaScript cannot read this header, CORS may not be exposing it. See [CORS troubleshooting](/knowledge-base/troubleshoot/cors) for help.
+    </Note>
+  </Tab>
+</Tabs>
+
+## Using the Cart Key
+
+Once you have the cart key, pass it on all subsequent requests to keep operations tied to the same session. You can do this two ways:
+
+**As a query parameter** (both versions):
+
+```
+GET /wp-json/cocart/v2/cart?cart_key=t_a1b2c3d4e5f6...
+```
+
+**As a request header**:
+
+<Tabs>
+  <Tab title="CoCart Community">
+    ```http
+    CoCart-API-Cart-Key: t_a1b2c3d4e5f6...
+    ```
+  </Tab>
+  <Tab title="CoCart Starter">
+    ```http
+    Cart-Key: t_a1b2c3d4e5f6...
+    ```
+
+    The old `CoCart-API-Cart-Key` request header is still accepted for backwards compatibility.
+  </Tab>
+</Tabs>
 
 <Warning>
-    The <code>cart_key</code> parameter is a global parameter so it must be queried rather than being added as part of the body data you send with the API request you make. Otherwise it will not update the appropriate cart. Should you fail to do so correctly will lead to adding items stored in their own individual cart session which you will not be able to recover from previous requests.
+  `cart_key` is a **global** query parameter — it must be passed in the query string, not the request body. If sent as a body parameter, CoCart will not recognize it and will create a new session instead.
 </Warning>
+
+<Tip>
+  The cart key is only needed for guest sessions. Authenticated requests automatically load the customer's cart — no `cart_key` required.
+</Tip>
+
+## Authenticated Customers
+
+When a logged-in customer makes a request, their WordPress user ID becomes the cart key. This means their cart persists across devices and sessions.
+
+The behavior when an authenticated request includes a **guest** cart key differs between versions:
+
+<Tabs>
+  <Tab title="CoCart Community">
+    The guest cart is **transferred** to the customer's account. The guest session is deleted and the cart data moves to the customer's user ID. If the customer already had a cart, the guest cart replaces it.
+  </Tab>
+  <Tab title="CoCart Starter">
+    The guest cart is **merged** into the customer's existing cart on the first authenticated `GET` request that includes the guest key. Items not already in the customer's cart are added; where the same item exists in both, the higher quantity is kept. The customer's existing items are never removed. The guest session is then deleted.
+
+    Merge only triggers on `GET` requests — passing a guest key on `POST`, `PUT`, or `DELETE` requests has no effect; CoCart uses the authenticated customer's own cart instead.
+
+    <Note>
+      Administrators and shop managers are excluded from cart merging by design.
+    </Note>
+
+    See [Guest to Customer Cart](/knowledge-base/guest-to-customer-cart) for a full walkthrough of this flow.
+  </Tab>
+</Tabs>
 
 ## Creating a Cart Key Manually
 
-You can create your own cart key but, it cannot be longer than **42 characters** as that is the limit for storing the key in the database.
+You can supply your own cart key instead of letting CoCart generate one. The key cannot be longer than **42 characters**.
 
-### HTTP request ###
-
-<Info>
-    /wp-json/cocart/v2/cart?cart_key=mycartkey123
-</Info>
+```
+GET /wp-json/cocart/v2/cart?cart_key=mycartkey123
+```
 
 <Note>
-    If you do create your own cart key, it is best that you do so when adding the first item to the cart in order to update the correct cart from the start.
+  If you create your own cart key, do so on the **first** request (such as adding the first item) so that all subsequent operations target the correct session from the start.
 </Note>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Why am I not seeing the cart key header?">
+    If the response header is missing or unreadable by JavaScript, CORS is likely not configured to expose it. See [CORS troubleshooting](/knowledge-base/troubleshoot/cors) — specifically the "Cannot read response headers" section — for the fix.
+  </Accordion>
+  <Accordion title="My requests are creating a new session instead of updating the existing cart">
+    The most common cause is passing `cart_key` in the request **body** instead of the **query string**. It must be a query parameter: `?cart_key=your_key`. Check also that you are using the correct header name for your version (see [Using the Cart Key](#using-the-cart-key) above).
+  </Accordion>
+  <Accordion title="I passed a user ID as the cart key and got an authentication error">
+    By design, CoCart requires you to be authenticated as that user before loading their cart. If you intended to target a guest session, make sure you're using a `t_`-prefixed guest key, not a user ID.
+  </Accordion>
+</AccordionGroup>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Guest to Customer Cart" icon="right-to-bracket" href="/knowledge-base/guest-to-customer-cart">
+    How CoCart transfers or merges a guest cart when a customer logs in.
+  </Card>
+  <Card title="CORS Troubleshooting" icon="door-open" href="/knowledge-base/troubleshoot/cors">
+    Fix issues with cart key headers not being readable by your frontend.
+  </Card>
+  <Card title="Load Cart" icon="arrow-right-arrow-left" href="/load-cart">
+    Transfer a headless cart to WooCommerce's native web checkout.
+  </Card>
+  <Card title="Standards" icon="clipboard" href="/standards">
+    Response headers returned by the Cart API.
+  </Card>
+</CardGroup>

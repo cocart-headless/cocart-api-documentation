@@ -1,0 +1,144 @@
+---
+title: "PHP SDK: Utilities"
+sidebarTitle: "Utilities"
+description: "Utility classes in the CoCart PHP SDK — currency formatting and timezone helpers."
+'og:title': "Currency & Timezone Utilities — CoCart PHP SDK"
+'og:description': "Format WooCommerce prices correctly for any locale using CurrencyFormatter, and convert store timezone dates with TimezoneHelper. Supports all WooCommerce currencies including zero-decimal."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+</Info>
+
+The SDK includes standalone utility classes for common tasks. These work with data already returned by the API — no extra HTTP requests needed.
+
+## CurrencyFormatter
+
+CoCart returns prices as **smallest-unit integers** — `4599` means $45.99 (4599 cents). `CurrencyFormatter` converts these into human-readable strings.
+
+```php
+use CoCart\CurrencyFormatter;
+
+$formatter = new CurrencyFormatter();
+
+// With a specific locale (requires ext-intl)
+$formatter = new CurrencyFormatter('de_DE');
+```
+
+### Format a Price
+
+```php
+$response = $client->cart()->get();
+$currency = $response->getCurrency();
+
+// Full formatted price with currency symbol
+echo $formatter->format(4599, $currency);        // "$45.99"
+
+// Plain decimal (no symbol)
+echo $formatter->formatDecimal(4599, $currency); // "45.99"
+```
+
+### Zero-Decimal Currencies
+
+Currencies like JPY have no minor units. The formatter handles this automatically:
+
+```php
+$currency = $response->getCurrency(); // currency_minor_unit = 0
+
+echo $formatter->format(1500, $currency);        // "¥1,500"
+echo $formatter->formatDecimal(1500, $currency); // "1500"
+```
+
+### How Formatting Works
+
+1. If the `intl` PHP extension is installed, the formatter uses `NumberFormatter::formatCurrency()` for proper locale-aware output (e.g., `1.234,56 €` in German locale).
+2. If `intl` is not available, it falls back to using `currency_prefix`, `currency_suffix`, `currency_decimal_separator`, and `currency_thousand_separator` from the API response.
+
+### Currency Metadata
+
+```php
+$currency = $response->getCurrency();
+// [
+//     'currency_code' => 'USD',
+//     'currency_symbol' => '$',
+//     'currency_minor_unit' => 2,
+//     'currency_decimal_separator' => '.',
+//     'currency_thousand_separator' => ',',
+//     'currency_prefix' => '$',
+//     'currency_suffix' => '',
+// ]
+```
+
+### Formatting Cart Items
+
+```php
+$response = $client->cart()->get();
+$currency = $response->getCurrency();
+$formatter = new CurrencyFormatter();
+
+foreach ($response->getItems() as $item) {
+    $name = $item['name'];
+    $price = $formatter->format($item['totals']['total'], $currency);
+    echo "{$name}: {$price}\n";
+}
+
+$totals = $response->getTotals();
+echo "Subtotal: " . $formatter->format($totals['subtotal'], $currency) . "\n";
+echo "Total: " . $formatter->format($totals['total'], $currency) . "\n";
+```
+
+---
+
+## TimezoneHelper
+
+WooCommerce stores dates in the store's configured timezone (often UTC). `TimezoneHelper` converts these to any other timezone.
+
+```php
+use CoCart\TimezoneHelper;
+
+$tz = new TimezoneHelper();
+```
+
+### Detect System Timezone
+
+```php
+echo $tz->detectTimezone(); // "America/New_York"
+```
+
+### Convert Between Timezones
+
+```php
+// Convert a UTC date to New York time
+$local = $tz->convert('2025-01-15T15:00:00', 'UTC', 'America/New_York');
+echo $local; // "2025-01-15T10:00:00"
+
+// Convert between any two timezones
+$tokyo = $tz->convert('2025-07-15T12:00:00', 'Europe/London', 'Asia/Tokyo');
+echo $tokyo; // "2025-07-15T20:00:00"
+```
+
+### Convert to Local Time
+
+Shorthand to convert from the store's timezone to the system's timezone:
+
+```php
+// Store is in UTC (default)
+$local = $tz->toLocal('2025-01-15T15:00:00');
+
+// Store is in a specific timezone
+$local = $tz->toLocal('2025-01-15T10:00:00', 'America/Chicago');
+```
+
+### Working with Cart/Order Dates
+
+```php
+$tz = new TimezoneHelper();
+
+$response = $client->cart()->get();
+$expiryDate = $response->get('expiry.date');
+
+if ($expiryDate) {
+    $localExpiry = $tz->toLocal($expiryDate, 'UTC');
+    echo "Cart expires: {$localExpiry}";
+}
+```

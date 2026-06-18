@@ -272,6 +272,14 @@ At CoCart, we're here to help. You'll find instant answers to nearly every quest
         Unfortunately, no. This is because when you authenticate as the admin, you are logged in not the customer. Even if you specified the customers user ID as the cart key. It will not take affect.
     </Accordion>
 
+    <Accordion title="Why doesn't my guest cart merge into my cart when I log in as an administrator or shop manager?">
+        Cart merging on login is intentionally restricted to users with the **customer** or **subscriber** role (or any custom role permitted via the `cocart_user_customer_roles` filter).
+
+        Administrators and shop managers are excluded by design. Because these roles can access any session in the store, automatically merging an arbitrary guest cart into their account could silently overwrite or corrupt session data for other customers they may be managing.
+
+        If you are testing the login merge flow, make sure you are authenticating with a customer-role account rather than the site administrator (user ID 1) or a shop manager. The merge will not trigger for those roles regardless of whether a `cart_key` is supplied alongside the authentication token.
+    </Accordion>
+
     <Accordion title="How can I view debug logs recorded?">
         If you have **WP_DEBUG** set to `true` in your [wp-config.php](#wp-config-php) file then you should be able to view all the logs recorded by CoCart under **WooCommerce -> System Status -> Logs** in your WordPress dashboard.
 

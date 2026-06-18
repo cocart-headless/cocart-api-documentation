@@ -1,7 +1,7 @@
 ---
 title: "Setting Up Astro"
 sidebarTitle: "Astro Setup"
-description: "Learn how to set up an Astro project for your headless WooCommerce store"
+description: "Set up an Astro project as a headless WooCommerce storefront with CoCart, Tailwind CSS v4, and server islands for dynamic cart components."
 tag: "WIP"
 robots: "noindex, follow"
 ---
@@ -12,324 +12,192 @@ robots: "noindex, follow"
 
 # Introduction
 
-[Astro](https://astro.build) is a modern web framework that delivers fast, content-focused websites. It's perfect for building headless storefronts with CoCart because of its excellent performance, flexibility, and support for multiple frameworks.
+[Astro](https://astro.build) is a modern web framework that ships zero JavaScript by default, loading it only where you need interactivity. Its island architecture makes it a strong fit for headless storefronts — static product pages with dynamic cart and account components exactly where needed.
 
-This guide will walk you through setting up an Astro project configured to work with CoCart API.
+This guide walks you through setting up an Astro project configured to work with the CoCart API.
 
-## Why Astro for Headless Commerce?
+## Why Astro for headless commerce?
 
-- **Fast by default** - Ships zero JavaScript by default, loading JS only when needed
-- **Framework agnostic** - Use React, Vue, Svelte, or vanilla JavaScript
-- **SEO friendly** - Server-side rendering and static site generation
-- **Island architecture** - Interactive components only where needed
-- **Great DX** - Hot module replacement and TypeScript support
+- **Island architecture** — static product pages with interactive cart and checkout components only where needed
+- **Server Islands** — render dynamic components (cart count, user pricing) server-side on otherwise cached pages
+- **Framework agnostic** — use React, Vue, Svelte, or Solid for interactive islands
+- **Fast by default** — ships zero JS unless a component needs it
+- **SEO friendly** — static generation with per-route server rendering when needed
 
 ## Prerequisites
 
-- Node.js 18.17.1 or higher
-- A WordPress site with WooCommerce installed
-- CoCart plugin installed and activated
-- Basic knowledge of JavaScript and command line
+- **Node.js 18.17.1** or higher (Astro 6 requires **Node.js 22.12.0+**)
+- A WordPress site with WooCommerce and CoCart installed
+- Basic knowledge of JavaScript/TypeScript
 
-## Creating a New Astro Project
-
-Create a new Astro project using the official CLI:
+## Create a new Astro project
 
 ```bash
 npm create astro@latest my-headless-store
 ```
 
-When prompted, choose the following options:
+When prompted:
 
 - **How would you like to start?** → Empty
 - **Install dependencies?** → Yes
-- **Initialize git repository?** → Yes (recommended)
-- **TypeScript?** → Yes (recommended) or No
-
-Navigate to your project:
+- **Initialize git repository?** → Yes
+- **TypeScript?** → Yes (recommended)
 
 ```bash
 cd my-headless-store
 ```
 
-## Installing Tailwind CSS
+## Install Tailwind CSS v4
 
-Most UI component libraries (including OxbowUI) use Tailwind CSS. Install it using Astro's integration:
+Tailwind v4 integrates directly with Astro's Vite pipeline — no separate Astro integration needed.
 
 ```bash
 npx astro add tailwind
 ```
 
-This will:
-- Install Tailwind CSS and its dependencies
-- Create a `tailwind.config.mjs` file
-- Update your Astro configuration
-- Add necessary imports
+This installs `tailwindcss` and `@tailwindcss/vite`, and updates your Astro config automatically.
 
-## Project Structure
+Create a global CSS file at `src/styles/global.css`:
 
-Your Astro project should have this structure:
-
-```
-my-headless-store/
-├── src/
-│   ├── components/     # Reusable components
-│   ├── layouts/        # Page layouts
-│   ├── pages/          # Routes (file-based routing)
-│   ├── lib/            # Utility functions and API clients
-│   └── styles/         # Global styles
-├── public/             # Static assets
-├── astro.config.mjs    # Astro configuration
-├── tailwind.config.mjs # Tailwind configuration
-├── package.json
-└── tsconfig.json       # TypeScript config (if using TS)
+```css
+@import "tailwindcss";
 ```
 
-Create the necessary folders:
-
-```bash
-mkdir -p src/components src/lib src/layouts
-```
-
-## Creating the CoCart API Client
-
-Create a centralized API client to interact with CoCart. Create `src/lib/cocart.js`:
-
-<Info>
-  We are currently building out this client, so for now just make standard fetch requests to the CoCart API endpoints as needed.
-</Info>
-
-```javascript
-const STORE_URL = import.meta.env.PUBLIC_STORE_URL || 'https://yourstore.com';
-const API_BASE = `${STORE_URL}/wp-json/cocart/v2`;
-
-/**
- * Fetch products from CoCart API
- * @param {Object} params - Query parameters
- * @returns {Promise<Array>} Products array
- */
-export async function getProducts(params = {}) {
-  const queryParams = new URLSearchParams({
-    per_page: params.per_page || 12,
-    page: params.page || 1,
-    ...params
-  });
-
-  try {
-    const response = await fetch(`${API_BASE}/products?${queryParams}`);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching products:', error);
-    return [];
-  }
-}
-
-/**
- * Get a single product by ID
- * @param {string|number} productId - Product ID
- * @returns {Promise<Object>} Product object
- */
-export async function getProduct(productId) {
-  try {
-    const response = await fetch(`${API_BASE}/products/${productId}`);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching product:', error);
-    return null;
-  }
-}
-
-/**
- * Add item to cart
- * @param {string} productId - Product ID
- * @param {number} quantity - Quantity to add
- * @param {Object} options - Additional options (variation_id, cart_item_data, etc.)
- * @returns {Promise<Object>} Cart response
- */
-export async function addToCart(productId, quantity = 1, options = {}) {
-  try {
-    const response = await fetch(`${API_BASE}/cart/add-item`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        id: productId,
-        quantity: quantity,
-        ...options
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error adding to cart:', error);
-    throw error;
-  }
-}
-
-/**
- * Get current cart
- * @param {string} cartKey - Optional cart key
- * @returns {Promise<Object>} Cart object
- */
-export async function getCart(cartKey = null) {
-  const url = cartKey
-    ? `${API_BASE}/cart?cart_key=${cartKey}`
-    : `${API_BASE}/cart`;
-
-  try {
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching cart:', error);
-    return null;
-  }
-}
-
-/**
- * Update cart item quantity
- * @param {string} itemKey - Cart item key
- * @param {number} quantity - New quantity
- * @returns {Promise<Object>} Updated cart
- */
-export async function updateCartItem(itemKey, quantity) {
-  try {
-    const response = await fetch(`${API_BASE}/cart/item/${itemKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ quantity })
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error updating cart item:', error);
-    throw error;
-  }
-}
-
-/**
- * Remove item from cart
- * @param {string} itemKey - Cart item key
- * @returns {Promise<Object>} Updated cart
- */
-export async function removeCartItem(itemKey) {
-  try {
-    const response = await fetch(`${API_BASE}/cart/item/${itemKey}`, {
-      method: 'DELETE'
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error removing cart item:', error);
-    throw error;
-  }
-}
-```
-
-## Environment Configuration
-
-Create a `.env` file in your project root:
-
-```bash
-PUBLIC_STORE_URL=https://yourstore.com
-```
-
-<Note>
-  Variables prefixed with `PUBLIC_` are exposed to the client-side code. Be careful not to expose sensitive data.
-</Note>
-
-Add `.env` to your `.gitignore`:
-
-```bash
-echo ".env" >> .gitignore
-```
-
-Create a `.env.example` for your team:
-
-```bash
-# .env.example
-PUBLIC_STORE_URL=https://yourstore.com
-```
-
-## Creating a Base Layout
-
-Create a base layout at `src/layouts/Layout.astro`:
-
-```astro
----
-interface Props {
-  title: string;
-  description?: string;
-}
-
-const { title, description = "Your headless WooCommerce store" } = Astro.props;
----
-
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="description" content={description} />
-    <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="generator" content={Astro.generator} />
-    <title>{title}</title>
-  </head>
-  <body class="bg-white dark:bg-zinc-900">
-    <slot />
-  </body>
-</html>
-```
-
-## Adding AlpineJS for Interactivity
-
-If you plan to use interactive components (like OxbowUI), install AlpineJS:
-
-```bash
-npm install alpinejs
-```
-
-You can initialize it globally in your layout or per-component. For global initialization, update your layout:
+Import it in your layout (we'll create this in a moment):
 
 ```astro
 ---
 // src/layouts/Layout.astro
+---
+<html>
+  <head>
+    <link rel="stylesheet" href="/src/styles/global.css" />
+  </head>
+  <!-- ... -->
+</html>
+```
+
+<Note>
+  Tailwind v4 uses CSS-based configuration instead of a `tailwind.config.mjs` file. Customize your theme directly in `global.css` using `@theme`.
+</Note>
+
+## Project structure
+
+```
+my-headless-store/
+├── src/
+│   ├── components/     # UI components (Astro, React, etc.)
+│   ├── layouts/        # Page layouts
+│   ├── pages/          # Routes (file-based routing)
+│   │   └── api/        # Server-side API endpoints
+│   ├── lib/            # API client and utilities
+│   └── styles/         # Global CSS (Tailwind)
+├── public/             # Static assets
+├── astro.config.mjs    # Astro configuration
+├── package.json
+└── tsconfig.json
+```
+
+Create the directories:
+
+```bash
+mkdir -p src/components src/lib src/layouts src/styles src/pages/api
+```
+
+## Environment variables
+
+Astro supports type-safe environment variables through the `astro:env` module. Define your schema in `astro.config.mjs`:
+
+```javascript
+import { defineConfig, envField } from 'astro/config';
+import tailwindcss from '@tailwindcss/vite';
+
+export default defineConfig({
+  vite: {
+    plugins: [tailwindcss()],
+  },
+  env: {
+    schema: {
+      PUBLIC_STORE_URL: envField.string({
+        context: 'client',
+        access: 'public',
+        default: 'https://yourstore.com',
+      }),
+    },
+  },
+});
+```
+
+Create a `.env` file:
+
+```bash
+PUBLIC_STORE_URL=https://yourstore.com
+PUBLIC_COCART_ENCRYPTION_KEY=your-secret-encryption-key
+```
+
+<Note>
+  Variables prefixed with `PUBLIC_` are exposed to client-side code. Never put secrets in public variables.
+</Note>
+
+Then import with full type safety:
+
+```typescript
+import { PUBLIC_STORE_URL } from 'astro:env/client';
+```
+
+Or use the standard `import.meta.env.PUBLIC_STORE_URL` if you prefer the simpler approach.
+
+## Install the CoCart SDK
+
+```bash
+npm install @cocartheadless/sdk
+```
+
+The SDK includes a dedicated [Astro adapter](/sdk/typescript/frameworks/astro) that handles cart session persistence between server-side rendering and client-side code — no cookies needed.
+
+## Create the CoCart API client
+
+Create `src/lib/cocart.ts` using the SDK's Astro adapter:
+
+```typescript
+// src/lib/cocart.ts — browser client (used in <script> tags and client-side components)
+import { createBrowserClient, attachCartKeyHeader } from '@cocartheadless/sdk/astro';
+
+const client = createBrowserClient(import.meta.env.PUBLIC_STORE_URL, {
+  encryptionKey: import.meta.env.PUBLIC_COCART_ENCRYPTION_KEY,
+});
+
+await client.restoreSession();
+attachCartKeyHeader(client);
+
+export { client };
+```
+
+For server-side usage (Astro pages and API routes), import the server client directly where needed:
+
+```typescript
+// In any .astro page or API route
+import { createServerClient } from '@cocartheadless/sdk/astro';
+
+const client = createServerClient(import.meta.env.PUBLIC_STORE_URL, Astro.request);
+```
+
+<Tip>
+  The Astro adapter uses encrypted `localStorage` and an `X-Cart-Key` header to share cart state between browser and server — no cookies required. See the [Astro adapter guide](/sdk/typescript/frameworks/astro) for full details.
+</Tip>
+
+## Create a base layout
+
+Create `src/layouts/Layout.astro`:
+
+```astro
+---
 interface Props {
   title: string;
   description?: string;
 }
 
-const { title, description = "Your headless WooCommerce store" } = Astro.props;
+const { title, description = 'Your headless WooCommerce store' } = Astro.props;
 ---
 
 <!doctype html>
@@ -339,85 +207,145 @@ const { title, description = "Your headless WooCommerce store" } = Astro.props;
     <meta name="description" content={description} />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="/src/styles/global.css" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
   </head>
-  <body class="bg-white dark:bg-zinc-900">
+  <body class="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
     <slot />
-
-    <script>
-      import Alpine from 'alpinejs';
-      window.Alpine = Alpine;
-      Alpine.start();
-    </script>
   </body>
 </html>
 ```
 
-<Note>
-  Alternatively, you can use AlpineJS via CDN by adding this to your `<head>`:
-</Note>
+## Server Islands for dynamic components
 
-```html
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-```
+Server Islands let you embed server-rendered components inside otherwise static pages. This is ideal for e-commerce — your product pages stay cached and fast while the cart counter, user greeting, or personalized pricing renders fresh on every request.
 
-## Creating API Endpoints
-
-Astro supports API routes for server-side operations. Create API endpoints for cart operations.
-
-Create `src/pages/api/cart/add.js`:
+First, enable server-side rendering for on-demand components. In `astro.config.mjs`:
 
 ```javascript
-import { addToCart } from '../../../lib/cocart';
+import { defineConfig, envField } from 'astro/config';
+import tailwindcss from '@tailwindcss/vite';
+import node from '@astrojs/node';
 
-export async function POST({ request }) {
-  try {
-    const body = await request.json();
-    const { id, quantity = 1, ...options } = body;
-
-    const result = await addToCart(id, quantity, options);
-
-    return new Response(JSON.stringify(result), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-  }
-}
+export default defineConfig({
+  output: 'static',
+  adapter: node({ mode: 'standalone' }),
+  vite: {
+    plugins: [tailwindcss()],
+  },
+  env: {
+    schema: {
+      PUBLIC_STORE_URL: envField.string({
+        context: 'client',
+        access: 'public',
+        default: 'https://yourstore.com',
+      }),
+    },
+  },
+});
 ```
 
-## Testing Your Setup
+Install the Node adapter:
+
+```bash
+npx astro add node
+```
+
+Create a server island component at `src/components/CartCount.astro`:
+
+```astro
+---
+import { createServerClient } from '@cocartheadless/sdk/astro';
+
+const client = createServerClient(import.meta.env.PUBLIC_STORE_URL, Astro.request);
+const cart = await client.cart().get();
+const count = cart.getItemCount();
+---
+
+<a href="/cart" class="relative inline-flex items-center">
+  Cart
+  {count > 0 && (
+    <span class="ml-1 inline-flex items-center justify-center rounded-full bg-indigo-600 px-2 py-0.5 text-xs text-white">
+      {count}
+    </span>
+  )}
+</a>
+```
+
+Use it on any static page with `server:defer`:
+
+```astro
+---
+import Layout from '../layouts/Layout.astro';
+import CartCount from '../components/CartCount.astro';
+---
+
+<Layout title="My Store">
+  <nav class="flex items-center justify-between p-4">
+    <a href="/" class="text-xl font-bold">My Store</a>
+    <CartCount server:defer>
+      <span slot="fallback">Cart</span>
+    </CartCount>
+  </nav>
+  <!-- rest of the static page -->
+</Layout>
+```
+
+The page is statically cached, but the cart count renders server-side on every request. The `fallback` slot shows while the island loads.
+
+## Create API endpoints
+
+Astro supports server-side API routes for proxying cart operations. Create `src/pages/api/cart/add.ts`:
+
+```typescript
+import type { APIRoute } from 'astro';
+import { createServerClient } from '@cocartheadless/sdk/astro';
+
+export const POST: APIRoute = async ({ request }) => {
+  const client = createServerClient(import.meta.env.PUBLIC_STORE_URL, request);
+
+  try {
+    const { productId, quantity = 1 } = await request.json();
+    const response = await client.cart().addItem(productId, { quantity });
+
+    return new Response(response.toJson(), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+};
+```
+
+## Test your setup
 
 Create a test page at `src/pages/index.astro`:
 
 ```astro
 ---
 import Layout from '../layouts/Layout.astro';
-import { getProducts } from '../lib/cocart';
+import { createServerClient } from '@cocartheadless/sdk/astro';
 
-const products = await getProducts({ per_page: 3 });
+const client = createServerClient(import.meta.env.PUBLIC_STORE_URL, Astro.request);
+const products = await client.products().list({ per_page: 6 });
 ---
 
 <Layout title="My Headless Store">
   <main class="container mx-auto px-4 py-12">
-    <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-8">
-      Welcome to Your Headless Store
-    </h1>
+    <h1 class="text-3xl font-bold mb-8">Products</h1>
 
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {products.map((product) => (
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {products.map((product: any) => (
         <div class="border rounded-lg p-4">
-          <h2 class="font-semibold">{product.name}</h2>
-          <p class="text-zinc-600">{product.prices.currency_symbol}{product.prices.price}</p>
+          <h2 class="font-semibold text-lg">{product.name}</h2>
+          <p class="text-zinc-600 dark:text-zinc-400 mt-1">
+            {product.prices.currency_symbol}{product.prices.price}
+          </p>
         </div>
       ))}
     </div>
@@ -425,9 +353,7 @@ const products = await getProducts({ per_page: 3 });
 </Layout>
 ```
 
-## Running Your Project
-
-Start the development server:
+Start the dev server:
 
 ```bash
 npm run dev
@@ -435,56 +361,64 @@ npm run dev
 
 Visit `http://localhost:4321` to see your store.
 
-## Building for Production
-
-Build your site for production:
+## Build and deploy
 
 ```bash
 npm run build
+npm run preview   # preview the production build locally
 ```
 
-Preview the production build:
+Astro supports many deployment targets:
 
-```bash
-npm run preview
-```
-
-## Deployment Options
-
-Astro sites can be deployed to various platforms:
-
-- **Vercel** - Zero configuration deployment
-- **Netlify** - Easy deployment with built-in features
-- **Cloudflare Pages** - Global edge network
-- **GitHub Pages** - Free hosting for static sites
-- **Your own server** - Deploy the `dist` folder
-
-## Next Steps
-
-Now that your Astro project is set up with CoCart:
-
-1. [Build product listings with OxbowUI components](./oxbowui-product-list)
-2. Add shopping cart functionality
-3. Implement checkout flow
-4. Add user authentication
-5. Optimize for performance and SEO
+- **Vercel** — `npx astro add vercel`
+- **Netlify** — `npx astro add netlify`
+- **Cloudflare Pages** — `npx astro add cloudflare`
+- **Node.js server** — `npx astro add node` (already added above)
 
 ## Troubleshooting
 
-### CORS Errors
+### CORS errors
 
-If you encounter CORS errors, you may need to configure WordPress to allow cross-origin requests. See [CORS documentation](../../documentation/cors).
+If you see CORS errors when calling CoCart from the browser, see the [CORS documentation](/cors) for configuration options.
 
-### API Connection Issues
+### API connection issues
 
-1. Verify your `PUBLIC_STORE_URL` is correct
+1. Verify `PUBLIC_STORE_URL` in your `.env` is correct
 2. Ensure CoCart is installed and activated
-3. Check that WooCommerce is configured properly
-4. Test API endpoints directly in your browser or Postman
+3. Test the endpoint directly: `https://yourstore.com/wp-json/cocart/v2/products`
+4. Check the [Error Codes reference](/api-reference/v2/error-codes) for specific error responses
+
+## Next steps
+
+1. Explore the [TypeScript SDK](/sdk/typescript) and the [Astro adapter guide](/sdk/typescript/frameworks/astro) for full cart management, authentication, and session handling
+2. [Build product listings with OxbowUI components](./oxbowui-product-list)
+3. [Generate TypeScript types](/tutorials/typescript-types-generation) from the official OpenAPI specs
+4. [Explore the API Reference](/api-reference/introduction) for all available endpoints
 
 ## Resources
 
-- [Astro Documentation](https://docs.astro.build)
-- [CoCart API Reference](../../api-reference/introduction)
-- [Tailwind CSS Documentation](https://tailwindcss.com)
-- [AlpineJS Documentation](https://alpinejs.dev)
+<CardGroup cols={2}>
+  <Card title="Astro Documentation" icon="rocket" href="https://docs.astro.build">
+    Official Astro docs
+  </Card>
+
+  <Card title="Server Islands Guide" icon="server" href="https://docs.astro.build/en/guides/server-islands/">
+    Learn more about server islands
+  </Card>
+
+  <Card title="CoCart TypeScript SDK" icon="code" href="/sdk/typescript">
+    SDK documentation
+  </Card>
+
+  <Card title="Astro Adapter Guide" icon="puzzle-piece" href="/sdk/typescript/frameworks/astro">
+    SDK Astro adapter reference
+  </Card>
+
+  <Card title="CoCart API Reference" icon="book" href="/api-reference/introduction">
+    Complete API documentation
+  </Card>
+
+  <Card title="Tailwind CSS v4" icon="paintbrush" href="https://tailwindcss.com/docs">
+    Tailwind CSS documentation
+  </Card>
+</CardGroup>

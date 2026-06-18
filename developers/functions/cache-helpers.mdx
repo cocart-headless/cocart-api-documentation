@@ -1,0 +1,117 @@
+---
+title: "Cache Helpers Functions"
+sidebarTitle: "Cache Helpers"
+description: "Static methods on CoCart_Utilities_Cache_Helpers for cache group prefixes, invalidation, and transient management."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Functions Reference overview](/developers/functions) for all function categories and the [Developer Reference](/developers) for the plugin key index.
+</Tip>
+
+### `CoCart_Utilities_Cache_Helpers::get_cache_prefix()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Returns the cache prefix for a group. The prefix changes whenever the group is invalidated, effectively busting all cached values in that group.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="group" type="string">
+  Cache group name.
+</ParamField>
+
+**Returns**: `string` — Cache prefix string.
+
+---
+
+### `CoCart_Utilities_Cache_Helpers::invalidate_cache_group()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Invalidates all cached values in a group by updating the group's cache prefix.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="group" type="string">
+  Cache group name.
+</ParamField>
+
+---
+
+### `CoCart_Utilities_Cache_Helpers::get_prefixed_key()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Returns a cache key prefixed for the given group. Use with `wp_cache_get()` / `wp_cache_set()` to participate in group-level cache invalidation.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="key" type="string">
+  The cache key.
+</ParamField>
+
+<ParamField query="group" type="string">
+  Cache group name.
+</ParamField>
+
+**Returns**: `string` — Prefixed cache key.
+
+---
+
+### `CoCart_Utilities_Cache_Helpers::queue_delete_transient()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Queues one or more transient keys for deletion on WordPress shutdown, avoiding redundant `delete_transient()` calls during a single request.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="keys" type="string|array">
+  Transient key or array of keys to delete.
+</ParamField>
+
+---
+
+### `CoCart_Utilities_Cache_Helpers::delete_transients_on_shutdown()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Deletes all queued transients. Runs automatically on the `shutdown` action — call `queue_delete_transient()` to schedule keys; this method fires automatically.
+
+<Note>Made available since v5.0.0</Note>
+
+---
+
+### `CoCart_Utilities_Cache_Helpers::get_transient_version()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Returns a version string for a named transient group, creating it if it doesn't exist. Incrementing the version (via `$refresh = true`) invalidates all transients in that group, including in external object caches where direct DB deletion is not possible.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="group" type="string">
+  Name for the group of transients to version.
+</ParamField>
+
+<ParamField query="refresh" type="bool">
+  Pass `true` to force a new version, invalidating all transients in the group. Default: `false`.
+</ParamField>
+
+**Returns**: `string` — Transient version string (10-digit timestamp).
+
+---

@@ -73,30 +73,6 @@ CoCart implements several caching strategies internally:
             WP Engine requires cache exclusions to be configured through their User Portal or by contacting support. Programmatic filter hooks for cache exclusions are not publicly documented.
         </Note>
 
-        **Via REST API Headers**:
-
-        Use WordPress core filters to set proper cache headers:
-
-        ```php
-        <?php
-        /**
-         * Set no-cache headers for CoCart on WP Engine
-         *
-         * @see https://developer.wordpress.org/reference/hooks/rest_post_dispatch/
-         */
-        add_filter( 'rest_post_dispatch', function( $response, $server, $request ) {
-            $route = $request->get_route();
-
-            if ( strpos( $route, '/cocart/' ) !== false ) {
-                $response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
-                $response->header( 'Pragma', 'no-cache' );
-                $response->header( 'Expires', '0' );
-            }
-
-            return $response;
-        }, 10, 3 );
-        ```
-
         ### Object Cache Configuration
 
         Use WordPress core functions to exclude cache groups:
@@ -165,63 +141,9 @@ CoCart implements several caching strategies internally:
         });
         ```
 
-        ### REST API Cache Headers
-
-        Ensure proper cache headers for REST API:
-
-        ```php
-        <?php
-        /**
-         * Set proper cache headers for CoCart REST API
-         *
-         * @see https://developer.wordpress.org/reference/hooks/rest_post_dispatch/
-         */
-        add_filter( 'rest_post_dispatch', function( $response, $server, $request ) {
-            $route = $request->get_route();
-
-            // Check if this is a CoCart route
-            if ( strpos( $route, '/cocart/' ) !== false ) {
-                $response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
-                $response->header( 'Pragma', 'no-cache' );
-                $response->header( 'Expires', '0' );
-            }
-
-            return $response;
-        }, 10, 3 );
-        ```
     </Accordion>
 
     <Accordion title="Other Managed Hosts (Kinsta, Flywheel, etc.)">
-        ### General Configuration
-
-        Most managed WordPress hosts have similar caching mechanisms. Use this general configuration:
-
-        ```php
-        <?php
-        /**
-         * Universal REST API cache exclusion for CoCart
-         *
-         * @see https://developer.wordpress.org/reference/hooks/rest_post_dispatch/
-         */
-        add_filter( 'rest_post_dispatch', function( $response, $server, $request ) {
-            $route = $request->get_route();
-
-            // Exclude CoCart routes from cache
-            if ( strpos( $route, '/cocart/' ) !== false ) {
-
-                // Set no-cache headers
-                $response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
-                $response->header( 'Pragma', 'no-cache' );
-                $response->header( 'Expires', '0' );
-
-                // Prevent proxy caching
-                $response->header( 'Surrogate-Control', 'no-store' );
-            }
-
-            return $response;
-        }, 10, 3 );
-        ```
-
         ### Object Cache Exclusions
 
         For Redis or Memcached-based object caching:
@@ -362,31 +284,9 @@ Look for:
     <Accordion title="Performance issues after disabling cache">
         **Cause**: Too much cache disabled, impacting performance
 
-        **Solution**: Use selective caching - only disable for CoCart routes
+        **Solution**: CoCart already handles selective caching automatically — cart, logout, and store routes receive `no-cache` headers while product routes receive `Cache-Control: public, max-age=3600, stale-while-revalidate=86400`. You should not need to set cache headers manually.
 
-        ```php
-        <?php
-        /**
-         * Selective caching: Cache products but not cart
-         */
-        add_filter( 'rest_post_dispatch', function( $response, $server, $request ) {
-            $route = $request->get_route();
-
-            // Don't cache cart/checkout/session routes
-            if ( strpos( $route, '/cocart/v' ) !== false
-                && ( strpos( $route, '/cart' ) !== false
-                    || strpos( $route, '/checkout' ) !== false
-                    || strpos( $route, '/session' ) !== false ) ) {
-                $response->header( 'Cache-Control', 'no-cache, must-revalidate' );
-            }
-            // Allow caching for product routes
-            elseif ( strpos( $route, '/products' ) !== false ) {
-                $response->header( 'Cache-Control', 'public, max-age=3600' );
-            }
-
-            return $response;
-        }, 10, 3 );
-        ```
+        If you need to adjust the cache duration for product routes, use the built-in filters instead of adding custom header logic. See the [Cache Control](/cache#customization-with-filters) page for details.
     </Accordion>
 </AccordionGroup>
 

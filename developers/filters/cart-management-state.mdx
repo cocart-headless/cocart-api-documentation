@@ -1,0 +1,853 @@
+---
+title: "Cart Management & State Filters"
+sidebarTitle: "Cart Management & State"
+description: "PHP filters for cart expiration, merging, cross-sells, and overall cart state behavior."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Filters Reference overview](/developers/filters) for the full plugin key index and all filter categories.
+</Tip>
+
+### `cocart_cart_cleared_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about the cart being cleared.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_cart_cleared_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_cart_cleared_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cart_cleared_message&type=code)
+
+---
+
+### `cocart_cart_contents`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows additional data to be returned for a specific item in cart.
+
+<Note>Made available since v2.0.0</Note>
+
+**Parameters**
+
+<ParamField query="cart_contents" type="array">
+  Cart contents.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  Item key.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  Cart item.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_cart_contents', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_cart_contents` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cart_contents&type=code)
+
+---
+
+### `cocart_cart_expiration`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to change the amount of time before the cart has expired. Default is ```(DAY_IN_SECONDS * 2)``` = 2 Days - Previously 7 days.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="$expiration" type="int">
+  Expiration.
+</ParamField>
+
+<ParamField query="$is_user_logged_in" type="boolean">
+  If user is logged in. **@since v4.4.0**
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_cart_expiration', function( $expiration, $is_user_logged_in ) {
+    // Extend cart expiration for logged-in users to 14 days.
+    if ( $is_user_logged_in ) {
+        return WEEK_IN_SECONDS * 2;
+    }
+
+    // Fallback to 2 days for guest users.
+    return $expiration;
+}, 10, 2 );
+```
+
+[Search `cocart_cart_expiration` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cart_expiration&type=code)
+
+---
+
+### `cocart_cart_expiring`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to change the amount of time before the cart starts to expire. Default is ```(DAY_IN_SECONDS * 6)`` = 6 Days
+
+<Note>Made available since v2.1.0</Note>
+
+**Usage**
+```php
+add_filter( 'cocart_cart_expiring', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_cart_expiring` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cart_expiring&type=code)
+
+---
+
+### `cocart_cart_items`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows additional data to be returned for a specific item in cart.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="items" type="array">
+  Array of items in the cart.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  The item key currently looped.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  The cart item data.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_cart_items', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_cart_items` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cart_items&type=code)
+
+---
+
+### `cocart_cart_source`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter source of cart.
+
+<Note>Made available since v3.0.0</Note>
+
+**Usage**
+```php
+add_filter( 'cocart_cart_source', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_cart_source` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cart_source&type=code)
+
+---
+
+### `cocart_clear_cart_failed_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about the cart failing to clear.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_clear_cart_failed_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_clear_cart_failed_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_clear_cart_failed_message&type=code)
+
+---
+
+### `cocart_cross_sells`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters the cross sell items.
+
+<Note>Made available since v3.0.0</Note>
+
+**Parameters**
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_cross_sells', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_cross_sells` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cross_sells&type=code)
+
+---
+
+### `cocart_cross_sell_item_thumbnail_src`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filter allows you to change the thumbnail source URL for a cross-sell item.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="thumbnail_src" type="string">
+  URL of the cross-sell product thumbnail.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  The cart item data.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  The item key.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_cross_sell_item_thumbnail_src', function( $thumbnail_src, $cart_item, $item_key ) {
+    // Use a CDN URL for cross-sell images
+    return str_replace( 'your-store.com', 'cdn.your-store.com', $thumbnail_src );
+}, 10, 3 );
+```
+
+---
+
+### `cocart_cross_sell_item_thumbnail`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Filters the thumbnail image ID used for a cross-sell item. Change which image represents a cross-sell product.
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Parameters**
+
+<ParamField query="thumbnail_id" type="int">
+  The product image ID.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_cross_sell_item_thumbnail', function( $thumbnail_id ) {
+    // Use a custom image for cross-sell items
+    return $thumbnail_id;
+} );
+```
+
+---
+
+### `cocart_cross_sell_item_thumbnail_size`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Filters the image size used for cross-sell item thumbnails.
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Parameters**
+
+<ParamField query="size" type="string">
+  The image size name. Default: `woocommerce_thumbnail`.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_cross_sell_item_thumbnail_size', function( $size ) {
+    return 'medium';
+} );
+```
+
+---
+
+### `cocart_cross_sells_data`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Filters the data for an individual cross-sell item before it is included in the response.
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Parameters**
+
+<ParamField query="items" type="array">
+  The cross-sell item data.
+</ParamField>
+
+<ParamField query="item" type="int">
+  The product ID.
+</ParamField>
+
+<ParamField query="product_data" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_cross_sells_data', function( $items, $item, $product_data ) {
+    // Add stock status to cross-sell data
+    $items['in_stock'] = $product_data->is_in_stock();
+    return $items;
+}, 10, 3 );
+```
+
+---
+
+### `cocart_empty_cart`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter response for empty cart.
+
+<Note>Made available since v3.0.0</Note>
+
+**Usage**
+```php
+add_filter( 'cocart_empty_cart', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_empty_cart` in repository](https://github.com/co-cart/co-cart/search?q=cocart_empty_cart&type=code)
+
+---
+
+### `cocart_filter_request_data`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters additional requested data.
+
+<Note>Made available since v3.0.0</Note>
+
+**Usage**
+```php
+add_filter( 'cocart_filter_request_data', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_filter_request_data` in repository](https://github.com/co-cart/co-cart/search?q=cocart_filter_request_data&type=code)
+
+---
+
+### `cocart_get_cart_item`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters the cart item before it is returned.
+
+<Note>Made available since v3.0.0</Note>
+
+**Parameters**
+
+<ParamField query="item" type="array">
+  Details of the item in the cart if it exists.
+</ParamField>
+
+<ParamField query="condition" type="string">
+  Condition of item. Default: `add`, Option: `add`, `remove`, `restore`, `update`.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_get_cart_item', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_get_cart_item` in repository](https://github.com/co-cart/co-cart/search?q=cocart_get_cart_item&type=code)
+
+---
+
+### `cocart_merge_cart_content`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to adjust the merged cart contents.
+
+<Note>Made available since v2.1.0</Note>
+
+**Usage**
+```php
+add_filter( 'cocart_merge_cart_content', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_merge_cart_content` in repository](https://github.com/co-cart/co-cart/search?q=cocart_merge_cart_content&type=code)
+
+---
+
+### `cocart_return_cart_contents`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Return cart content from session if set.
+
+<Note>Made available since v2.1.0</Note>
+
+**Usage**
+```php
+add_filter( 'cocart_return_cart_contents', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_return_cart_contents` in repository](https://github.com/co-cart/co-cart/search?q=cocart_return_cart_contents&type=code)
+
+---
+
+### `cocart_return_cart_session_contents`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Return cart content from session if set.
+
+<Note>Made available since v2.1.0</Note>
+
+**Usage**
+```php
+add_filter( 'cocart_return_cart_session_contents', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_return_cart_session_contents` in repository](https://github.com/co-cart/co-cart/search?q=cocart_return_cart_session_contents&type=code)
+
+---
+
+### `cocart_return_empty_cart`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter response for empty cart.
+
+<Note>Made available since v2.0.8</Note>
+
+**Usage**
+```php
+add_filter( 'cocart_return_empty_cart', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_return_empty_cart` in repository](https://github.com/co-cart/co-cart/search?q=cocart_return_empty_cart&type=code)
+
+---
+
+### `cocart_rest_response`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filter allows you to modify any API response as a final step before it is returned. Use this as a last resort for adjusting the response based on the request made.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="response" type="WP_REST_Response">
+  The response object.
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_rest_response', function( $response, $request ) {
+    // Add a custom header to all responses
+    $response->header( 'X-Custom-Header', 'my-value' );
+    return $response;
+}, 10, 2 );
+```
+
+---
+
+### `cocart_quantities`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Filters the cart item quantities returned by the quantities endpoint.
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Parameters**
+
+<ParamField query="cart_quantities" type="array">
+  Array of cart item quantities from `WC()->cart->get_cart_item_quantities()`.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_quantities', function( $cart_quantities ) {
+    // Modify or enrich quantity data
+    return $cart_quantities;
+} );
+```
+
+---
+
+### `cocart_totals`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Filters the cart totals data returned by the totals endpoint.
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Parameters**
+
+<ParamField query="totals" type="array">
+  Array of cart totals including subtotal, taxes, fees, discounts, and total.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_totals', function( $totals ) {
+    // Add a custom total field
+    $totals['estimated_delivery_fee'] = '5.00';
+    return $totals;
+} );
+```
+
+---
+
+### `cocart_weight`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Filters the formatted cart weight returned by the weight endpoint.
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Parameters**
+
+<ParamField query="cart_weight" type="string">
+  The formatted cart weight.
+</ParamField>
+
+<ParamField query="weight" type="float">
+  The raw weight value.
+</ParamField>
+
+<ParamField query="weight_unit" type="string">
+  The weight unit (e.g. `kg`, `lbs`).
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_weight', function( $cart_weight, $weight, $weight_unit ) {
+    // Round to nearest whole number
+    return round( $weight ) . ' ' . $weight_unit;
+}, 10, 3 );
+```
+
+---
+
+### `cocart_return_removed_cart_contents`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Filters the list of removed cart items returned by the removed items endpoint.
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Parameters**
+
+<ParamField query="removed_items" type="array">
+  Array of removed cart items.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_return_removed_cart_contents', function( $removed_items ) {
+    // Filter out items removed more than 24 hours ago
+    return $removed_items;
+} );
+```
+
+---
+
+### `cocart_no_payment_required`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Filters the message returned when the cart does not require payment (e.g. free orders).
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  The message. Default: `The cart does not require payment!`
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_no_payment_required', function( $message ) {
+    return __( 'No payment is needed for this order.', 'your-textdomain' );
+} );
+```
+
+---
+
+### `cocart_available_payment_methods`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Filters the list of available payment gateways returned by the payment methods endpoint.
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Parameters**
+
+<ParamField query="gateways" type="array">
+  Array of available payment gateways.
+</ParamField>
+
+<ParamField query="chosen_payment_method" type="string">
+  The currently selected payment method.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_available_payment_methods', function( $gateways, $chosen_payment_method ) {
+    // Remove COD for carts over $100
+    if ( WC()->cart->get_total( 'edit' ) > 100 ) {
+        unset( $gateways['cod'] );
+    }
+    return $gateways;
+}, 10, 2 );
+```
+
+---
+
+### `cocart_customer_details`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Filters the customer details returned by the customer endpoint, including user info, billing, and shipping addresses.
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Parameters**
+
+<ParamField query="response" type="array">
+  Array of customer details including user info, billing address, shipping address, `calculated_shipping`, and `vat_exempt` status.
+</ParamField>
+
+<ParamField query="cart_customer" type="WC_Customer">
+  The WooCommerce customer object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_customer_details', function( $response, $cart_customer ) {
+    // Add loyalty points to customer response
+    $response['loyalty_points'] = get_user_meta( $cart_customer->get_id(), 'loyalty_points', true );
+    return $response;
+}, 10, 2 );
+```
+
+---
+
+### `cocart_cart_extensions`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filters the extensions data appended to the cart response under the `extensions` key. Only applied when at least one callback is hooked. Use this to add custom data from your add-on or integration without modifying the core cart response structure.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="extension_data" type="array">
+  The extensions data array. Empty by default.
+</ParamField>
+
+<ParamField query="cart" type="array">
+  The full cart data array.
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
+
+<ParamField query="cart_instance" type="object">
+  The cart instance.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_cart_extensions', function( $extension_data, $cart, $request, $cart_instance ) {
+    // Only return loyalty points for authenticated customers.
+    if ( is_user_logged_in() ) {
+        $extension_data['my_plugin'] = array(
+            'loyalty_points' => (int) get_user_meta( get_current_user_id(), 'loyalty_points', true ),
+        );
+    }
+    return $extension_data;
+}, 10, 4 );
+```
+
+---
+
+### `cocart_cart_extensions_schema`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filters the cart-level schema properties for the `extensions` key. Use this alongside `cocart_cart_extensions` to ensure the REST API schema accurately reflects any data your integration adds.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="properties" type="array">
+  The schema properties to extend. Empty by default.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_cart_extensions_schema', function( $properties ) {
+    $properties['my_plugin'] = array(
+        'description' => __( 'My plugin extension data.', 'my-plugin' ),
+        'type'        => 'object',
+        'context'     => array( 'view', 'edit' ),
+        'readonly'    => true,
+        'properties'  => array(
+            'loyalty_points' => array(
+                'description' => __( 'Loyalty points for the authenticated customer. Not present for guest carts.', 'my-plugin' ),
+                'type'        => 'integer',
+                'context'     => array( 'view', 'edit' ),
+                'readonly'    => true,
+            ),
+        ),
+    );
+    return $properties;
+} );
+```
+
+---
+
+### `cocart_cart_coupon`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filters the data entry for each applied coupon in the cart response. Use this to append custom metadata to coupon entries — for example, BOGO details, auto-apply flags, expiry dates, or role restrictions stored on the coupon post.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="coupon_entry" type="array">
+  The coupon data entry. Contains `label`, `code`, `discount_type`, `saving`, and `saving_html`.
+</ParamField>
+
+<ParamField query="coupon" type="WC_Coupon">
+  The coupon object.
+</ParamField>
+
+<ParamField query="code" type="string">
+  The coupon code.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_cart_coupon', function( $coupon_entry, $coupon, $code ) {
+    $coupon_entry['expiry_date'] = $coupon->get_date_expires()
+        ? $coupon->get_date_expires()->date( 'Y-m-d' )
+        : null;
+    return $coupon_entry;
+}, 10, 3 );
+```
+
+---
+
+### `cocart_available_shipping_methods`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Filters the available shipping methods returned by the shipping methods endpoint.
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Parameters**
+
+<ParamField query="available_methods" type="array">
+  Array of available shipping methods.
+</ParamField>
+
+<ParamField query="chosen_shipping_methods" type="array">
+  The currently chosen shipping methods.
+</ParamField>
+
+<ParamField query="rates" type="array">
+  The shipping rates.
+</ParamField>
+
+<ParamField query="recurring_cart_key" type="string">
+  The recurring cart key (for subscription support).
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_available_shipping_methods', function( $available_methods, $chosen_shipping_methods, $rates, $recurring_cart_key ) {
+    // Add estimated delivery dates to methods
+    return $available_methods;
+}, 10, 4 );
+```

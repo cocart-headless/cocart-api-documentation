@@ -1,0 +1,2261 @@
+openapi: 3.0.3
+
+info:
+  title: CoCart - Products API v1
+  version: 4.9.0
+  description: |
+    CoCart REST API v1 for browsing and retrieving product information, categories, tags, attributes, and reviews.
+  termsOfService: https://cocartapi.com/terms-of-conditions-polar/
+  contact:
+    email: support@cocartapi.com
+  license:
+    name: GNU General Public License v3.0
+    url: http://www.gnu.org/licenses/gpl-3.0.html
+
+externalDocs:
+  description: Find out more about CoCart API
+  url: https://docs.cocartapi.com
+
+servers:
+  - url: "{protocol}://{host}/wp-json/cocart/v1"
+    description: API v1
+    variables:
+      protocol:
+        enum: [http, https]
+        default: https
+      host:
+        default: example-store.com
+        description: Your store domain
+
+tags:
+  - name: products
+    description: Operations for browsing and retrieving product information
+  - name: product-categories
+    description: Operations for browsing and filtering product categories
+  - name: product-tags
+    description: Operations for browsing and filtering product tags
+  - name: product-attributes
+    description: Operations for retrieving product attributes and attribute terms
+  - name: product-reviews
+    description: Operations for retrieving and creating product reviews
+  - name: product-variations
+    description: Operations for retrieving variable product variations
+
+paths:
+  /products:
+    get:
+      tags:
+        - products
+      operationId: listProducts
+      summary: List all products
+      description: |
+        Gets a list of products with optional filtering and pagination.
+      parameters:
+        - name: page
+          in: query
+          description: Current page of the collection.
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Maximum number of items to return per page.
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          description: Limit results to those matching a string.
+          schema:
+            type: string
+        - name: slug
+          in: query
+          description: Limit result set to products with a specific slug.
+          schema:
+            type: string
+        - name: after
+          in: query
+          description: Limit response to products created after a given ISO8601 compliant date.
+          schema:
+            type: string
+            format: date-time
+        - name: before
+          in: query
+          description: Limit response to products created before a given ISO8601 compliant date.
+          schema:
+            type: string
+            format: date-time
+        - name: type
+          in: query
+          description: Limit result set to products assigned a specific type.
+          schema:
+            type: string
+            enum: [simple, grouped, external, variable, variation]
+        - name: sku
+          in: query
+          description: Limit result set to products with specific SKU(s). Use commas to separate.
+          schema:
+            type: string
+        - name: hide_free
+          in: query
+          description: Limit result set to hide free products.
+          schema:
+            type: boolean
+        - name: featured
+          in: query
+          description: Limit result set to featured products.
+          schema:
+            type: boolean
+        - name: category
+          in: query
+          description: Limit result set to products assigned a specific category ID or slug.
+          schema:
+            type: string
+        - name: category_operator
+          in: query
+          description: Operator to compare product category terms.
+          schema:
+            type: string
+            enum: [in, not in, and]
+            default: in
+        - name: tag
+          in: query
+          description: Limit result set to products assigned a specific tag ID or slug.
+          schema:
+            type: string
+        - name: tag_operator
+          in: query
+          description: Operator to compare product tags.
+          schema:
+            type: string
+            enum: [in, not in, and]
+            default: in
+        - name: brand
+          in: query
+          description: Limit result set to products assigned a set of brand IDs or slugs, separated by commas.
+          schema:
+            type: string
+        - name: brand_operator
+          in: query
+          description: Operator to compare product brand terms.
+          schema:
+            type: string
+            enum: [in, not_in, and]
+            default: in
+        - name: stock_status
+          in: query
+          description: Limit result set to products with specified stock status.
+          schema:
+            type: string
+            enum: [instock, outofstock, onbackorder]
+        - name: on_sale
+          in: query
+          description: Limit result set to products on sale.
+          schema:
+            type: boolean
+        - name: min_price
+          in: query
+          description: Limit result set to products based on a minimum price.
+          schema:
+            type: string
+        - name: max_price
+          in: query
+          description: Limit result set to products based on a maximum price.
+          schema:
+            type: string
+        - name: show_reviews
+          in: query
+          description: Returns product reviews for all products or an individual product.
+          schema:
+            type: boolean
+        - name: return_variations
+          in: query
+          description: Returns all variations for variable products.
+          schema:
+            type: boolean
+        - name: attributes
+          in: query
+          description: Limit result set to products with selected global attributes.
+          style: deepObject
+          explode: true
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                attribute:
+                  type: string
+                  description: Attribute taxonomy name.
+                term_id:
+                  type: array
+                  items:
+                    type: integer
+                  description: List of attribute term IDs.
+                slug:
+                  type: array
+                  items:
+                    type: string
+                  description: List of attribute slug(s). If a term ID is provided, this will be ignored.
+                operator:
+                  type: string
+                  enum: [in, not in, and]
+                  description: Operator to compare product attribute terms.
+        - name: attribute_relation
+          in: query
+          description: The logical relationship between attributes when filtering across multiple at once.
+          schema:
+            type: string
+            enum: [in, and]
+            default: and
+        - name: catalog_visibility
+          in: query
+          description: Determines if hidden or visible catalog products are shown.
+          schema:
+            type: string
+            enum: [any, visible, catalog, search, hidden]
+            default: visible
+        - name: rating
+          in: query
+          description: Limit result set to products with a certain average rating.
+          schema:
+            type: array
+            items:
+              type: integer
+              enum: [1, 2, 3, 4, 5]
+        - name: offset
+          in: query
+          description: Offset the result set by a specific number of items.
+          schema:
+            type: integer
+        - name: order
+          in: query
+          description: Order sort attribute ascending or descending.
+          schema:
+            type: string
+            enum: [ASC, DESC]
+            default: DESC
+        - name: orderby
+          in: query
+          description: Sort collection by product attribute.
+          schema:
+            type: string
+            enum:
+              - date
+              - id
+              - menu_order
+              - include
+              - title
+              - slug
+              - name
+              - popularity
+              - alphabetical
+              - reverse_alpha
+              - by_stock
+              - review_count
+              - on_sale_first
+              - featured_first
+              - price_asc
+              - price_desc
+              - sales
+              - rating
+              - relevance
+              - rand
+            default: date
+        - name: exclude
+          in: query
+          description: Ensure result set excludes specific IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: include
+          in: query
+          description: Limit result set to specific IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: parent
+          in: query
+          description: Limit result set to products with particular parent IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: parent_exclude
+          in: query
+          description: Limit result set to all products except those of a particular parent ID.
+          schema:
+            type: array
+            items:
+              type: integer
+      responses:
+        "200":
+          description: Successful response with a list of products.
+          headers:
+            X-WP-Total:
+              description: Total number of products.
+              schema:
+                type: integer
+            X-WP-TotalPages:
+              description: Total number of pages.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+        "400":
+          description: Bad request (e.g., invalid page number).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: cocart_products_invalid_page_number
+                message: The page number requested is larger than the number of products available.
+                data:
+                  status: 400
+      security:
+        - {}
+
+  /products/{id}:
+    get:
+      tags:
+        - products
+      operationId: getProduct
+      summary: Get a product
+      description: |
+        Retrieves a single product by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier for the product.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Successful response with the product data.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Product not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: cocart_product_invalid_id
+                message: Invalid ID.
+                data:
+                  status: 404
+      security:
+        - {}
+
+  /products/{product_id}/variations:
+    get:
+      tags:
+        - product-variations
+      operationId: listProductVariations
+      summary: List product variations
+      description: |
+        Gets a list of variations for a specific variable product.
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          description: Unique identifier for the variable product.
+          schema:
+            type: integer
+        - name: page
+          in: query
+          description: Current page of the collection.
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Maximum number of items to return per page.
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          description: Limit results to those matching a string.
+          schema:
+            type: string
+        - name: slug
+          in: query
+          description: Limit result set to products with a specific slug.
+          schema:
+            type: string
+        - name: after
+          in: query
+          description: Limit response to products created after a given ISO8601 compliant date.
+          schema:
+            type: string
+            format: date-time
+        - name: before
+          in: query
+          description: Limit response to products created before a given ISO8601 compliant date.
+          schema:
+            type: string
+            format: date-time
+        - name: sku
+          in: query
+          description: Limit result set to products with specific SKU(s). Use commas to separate.
+          schema:
+            type: string
+        - name: stock_status
+          in: query
+          description: Limit result set to products with specified stock status.
+          schema:
+            type: string
+            enum: [instock, outofstock, onbackorder]
+        - name: on_sale
+          in: query
+          description: Limit result set to products on sale.
+          schema:
+            type: boolean
+        - name: min_price
+          in: query
+          description: Limit result set to products based on a minimum price.
+          schema:
+            type: string
+        - name: max_price
+          in: query
+          description: Limit result set to products based on a maximum price.
+          schema:
+            type: string
+        - name: offset
+          in: query
+          description: Offset the result set by a specific number of items.
+          schema:
+            type: integer
+        - name: order
+          in: query
+          description: Order sort attribute ascending or descending.
+          schema:
+            type: string
+            enum: [ASC, DESC]
+            default: DESC
+        - name: orderby
+          in: query
+          description: Sort collection by product attribute.
+          schema:
+            type: string
+            enum:
+              - date
+              - id
+              - menu_order
+              - include
+              - title
+              - slug
+              - name
+              - popularity
+              - alphabetical
+              - reverse_alpha
+              - by_stock
+              - review_count
+              - on_sale_first
+              - featured_first
+              - price_asc
+              - price_desc
+              - sales
+              - rating
+              - relevance
+              - rand
+            default: date
+        - name: exclude
+          in: query
+          description: Ensure result set excludes specific IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: include
+          in: query
+          description: Limit result set to specific IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: parent
+          in: query
+          description: Limit result set to products with particular parent IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: parent_exclude
+          in: query
+          description: Limit result set to all products except those of a particular parent ID.
+          schema:
+            type: array
+            items:
+              type: integer
+      responses:
+        "200":
+          description: Successful response with a list of variations.
+          headers:
+            X-WP-Total:
+              description: Total number of variations.
+              schema:
+                type: integer
+            X-WP-TotalPages:
+              description: Total number of pages.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductVariation"
+        "400":
+          description: Bad request (e.g., invalid page number).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: cocart_products_invalid_page_number
+                message: The page number requested is larger than the number of products available.
+                data:
+                  status: 400
+      security:
+        - {}
+
+  /products/{product_id}/variations/{id}:
+    get:
+      tags:
+        - product-variations
+      operationId: getProductVariation
+      summary: Get a product variation
+      description: |
+        Retrieves a single variation for a specific variable product.
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          description: Unique identifier for the variable product.
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier for the variation.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Successful response with the variation data.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductVariation"
+        "404":
+          description: Variation not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: cocart_product_invalid_id
+                message: Invalid ID.
+                data:
+                  status: 404
+      security:
+        - {}
+
+  /products/reviews:
+    get:
+      tags:
+        - product-reviews
+      operationId: listProductReviews
+      summary: List product reviews
+      description: |
+        Gets a list of product reviews with optional filtering and pagination.
+      parameters:
+        - name: page
+          in: query
+          description: Current page of the collection.
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Maximum number of items to return per page.
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          description: Limit results to those matching a string.
+          schema:
+            type: string
+        - name: after
+          in: query
+          description: Limit response to reviews published after a given ISO8601 compliant date.
+          schema:
+            type: string
+            format: date-time
+        - name: before
+          in: query
+          description: Limit response to reviews published before a given ISO8601 compliant date.
+          schema:
+            type: string
+            format: date-time
+        - name: exclude
+          in: query
+          description: Ensure result set excludes specific IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: include
+          in: query
+          description: Limit result set to specific IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: offset
+          in: query
+          description: Offset the result set by a specific number of items.
+          schema:
+            type: integer
+        - name: order
+          in: query
+          description: Order sort attribute ascending or descending.
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - name: orderby
+          in: query
+          description: Sort collection by object attribute.
+          schema:
+            type: string
+            enum: [date, date_gmt, id, include, product]
+            default: date_gmt
+        - name: reviewer
+          in: query
+          description: Limit result set to reviews assigned to specific user IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: reviewer_exclude
+          in: query
+          description: Ensure result set excludes reviews assigned to specific user IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: product
+          in: query
+          description: Limit result set to reviews assigned to specific product IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+      responses:
+        "200":
+          description: Successful response with a list of reviews.
+          headers:
+            X-WP-Total:
+              description: Total number of reviews.
+              schema:
+                type: integer
+            X-WP-TotalPages:
+              description: Total number of pages.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductReview"
+      security:
+        - {}
+
+    post:
+      tags:
+        - product-reviews
+      operationId: createProductReview
+      summary: Create a product review
+      description: |
+        Creates a new review for a product. The reviewer must have purchased the product.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - product_id
+                - review
+                - reviewer
+                - reviewer_email
+              properties:
+                product_id:
+                  type: integer
+                  description: Unique identifier for the product.
+                review:
+                  type: string
+                  description: Review content.
+                reviewer:
+                  type: string
+                  description: Name of the reviewer.
+                reviewer_email:
+                  type: string
+                  format: email
+                  description: Email of the reviewer.
+                rating:
+                  type: integer
+                  description: Review rating (0 to 5).
+                  minimum: 0
+                  maximum: 5
+            example:
+              product_id: 32
+              review: "This product is excellent! I highly recommend it."
+              reviewer: "John Doe"
+              reviewer_email: "john.doe@example.com"
+              rating: 5
+      responses:
+        "201":
+          description: Review successfully created.
+          headers:
+            Location:
+              description: URL of the newly created review.
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductReview"
+        "400":
+          description: Bad request (e.g., invalid or empty review content, duplicate review, comment flood).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: cocart_review_content_invalid
+                message: Invalid review content.
+                data:
+                  status: 400
+        "403":
+          description: Forbidden. The reviewer has not purchased this product.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: cocart_cannot_create
+                message: Sorry, you are not allowed to create a review for this product.
+                data:
+                  status: 403
+        "404":
+          description: Product not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: cocart_product_invalid_id
+                message: Invalid product ID.
+                data:
+                  status: 404
+        "409":
+          description: Duplicate review.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: cocart_comment_duplicate
+                message: Duplicate comment detected; it looks as though you have already said that!
+                data:
+                  status: 409
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: cocart_review_failed_create
+                message: Creating product review failed.
+                data:
+                  status: 500
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+
+  /products/reviews/{id}:
+    get:
+      tags:
+        - product-reviews
+      operationId: getProductReview
+      summary: Get a product review
+      description: |
+        Retrieves a single product review by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier for the review.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Successful response with the review data.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductReview"
+        "404":
+          description: Review not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: cocart_cannot_view_review
+                message: Sorry, this product review does not exist.
+                data:
+                  status: 404
+      security:
+        - {}
+
+  /products/categories:
+    get:
+      tags:
+        - product-categories
+      operationId: listProductCategories
+      summary: List product categories
+      description: |
+        Gets a list of product categories with optional filtering and pagination.
+      parameters:
+        - name: page
+          in: query
+          description: Current page of the collection.
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Maximum number of items to return per page.
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          description: Limit results to those matching a string.
+          schema:
+            type: string
+        - name: exclude
+          in: query
+          description: Ensure result set excludes specific IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: include
+          in: query
+          description: Limit result set to specific IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: order
+          in: query
+          description: Order sort attribute ascending or descending.
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+        - name: orderby
+          in: query
+          description: Sort collection by resource attribute.
+          schema:
+            type: string
+            enum: [id, include, name, slug, term_group, description, count]
+            default: name
+        - name: hide_empty
+          in: query
+          description: Whether to hide resources not assigned to any products.
+          schema:
+            type: boolean
+            default: false
+        - name: parent
+          in: query
+          description: Limit result set to resources assigned to a specific parent.
+          schema:
+            type: integer
+        - name: product
+          in: query
+          description: Limit result set to resources assigned to a specific product.
+          schema:
+            type: integer
+        - name: slug
+          in: query
+          description: Limit result set to resources with a specific slug.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response with a list of categories.
+          headers:
+            X-WP-Total:
+              description: Total number of categories.
+              schema:
+                type: integer
+            X-WP-TotalPages:
+              description: Total number of pages.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductCategory"
+        "404":
+          description: Taxonomy or term not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: cocart_taxonomy_invalid
+                message: Taxonomy does not exist.
+                data:
+                  status: 404
+      security:
+        - {}
+
+  /products/categories/{id}:
+    get:
+      tags:
+        - product-categories
+      operationId: getProductCategory
+      summary: Get a product category
+      description: |
+        Retrieves a single product category by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier for the resource.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Successful response with the category data.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductCategory"
+        "404":
+          description: Category not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: cocart_term_invalid
+                message: Term does not exist.
+                data:
+                  status: 404
+      security:
+        - {}
+
+  /products/tags:
+    get:
+      tags:
+        - product-tags
+      operationId: listProductTags
+      summary: List product tags
+      description: |
+        Gets a list of product tags with optional filtering and pagination.
+      parameters:
+        - name: page
+          in: query
+          description: Current page of the collection.
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Maximum number of items to return per page.
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          description: Limit results to those matching a string.
+          schema:
+            type: string
+        - name: exclude
+          in: query
+          description: Ensure result set excludes specific IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: include
+          in: query
+          description: Limit result set to specific IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: offset
+          in: query
+          description: Offset the result set by a specific number of items.
+          schema:
+            type: integer
+        - name: order
+          in: query
+          description: Order sort attribute ascending or descending.
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+        - name: orderby
+          in: query
+          description: Sort collection by resource attribute.
+          schema:
+            type: string
+            enum: [id, include, name, slug, term_group, description, count]
+            default: name
+        - name: hide_empty
+          in: query
+          description: Whether to hide resources not assigned to any products.
+          schema:
+            type: boolean
+            default: false
+        - name: product
+          in: query
+          description: Limit result set to resources assigned to a specific product.
+          schema:
+            type: integer
+        - name: slug
+          in: query
+          description: Limit result set to resources with a specific slug.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response with a list of tags.
+          headers:
+            X-WP-Total:
+              description: Total number of tags.
+              schema:
+                type: integer
+            X-WP-TotalPages:
+              description: Total number of pages.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductTag"
+        "404":
+          description: Taxonomy or term not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: cocart_taxonomy_invalid
+                message: Taxonomy does not exist.
+                data:
+                  status: 404
+      security:
+        - {}
+
+  /products/tags/{id}:
+    get:
+      tags:
+        - product-tags
+      operationId: getProductTag
+      summary: Get a product tag
+      description: |
+        Retrieves a single product tag by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier for the resource.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Successful response with the tag data.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductTag"
+        "404":
+          description: Tag not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: cocart_term_invalid
+                message: Term does not exist.
+                data:
+                  status: 404
+      security:
+        - {}
+
+  /products/attributes:
+    get:
+      tags:
+        - product-attributes
+      operationId: listProductAttributes
+      summary: List product attributes
+      description: |
+        Gets a list of all product attributes. This endpoint always returns all attributes from the object cache.
+      parameters:
+        - name: context
+          in: query
+          description: Scope under which the request is made; determines fields present in response.
+          schema:
+            type: string
+            default: view
+      responses:
+        "200":
+          description: Successful response with a list of attributes.
+          headers:
+            X-WP-Total:
+              description: Total number of attributes.
+              schema:
+                type: integer
+            X-WP-TotalPages:
+              description: Total number of pages (always 1).
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductAttribute"
+      security:
+        - {}
+
+  /products/attributes/{id}:
+    get:
+      tags:
+        - product-attributes
+      operationId: getProductAttribute
+      summary: Get a product attribute
+      description: |
+        Retrieves a single product attribute by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier for the resource.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Successful response with the attribute data.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductAttribute"
+        "404":
+          description: Attribute not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: cocart_attribute_invalid
+                message: Attribute does not exist.
+                data:
+                  status: 404
+      security:
+        - {}
+
+  /products/attributes/{attribute_id}/terms:
+    get:
+      tags:
+        - product-attributes
+      operationId: listProductAttributeTerms
+      summary: List product attribute terms
+      description: |
+        Gets a list of terms for a specific product attribute.
+      parameters:
+        - name: attribute_id
+          in: path
+          required: true
+          description: Unique identifier for the attribute of the terms.
+          schema:
+            type: integer
+        - name: page
+          in: query
+          description: Current page of the collection.
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Maximum number of items to return per page.
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          description: Limit results to those matching a string.
+          schema:
+            type: string
+        - name: exclude
+          in: query
+          description: Ensure result set excludes specific IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: include
+          in: query
+          description: Limit result set to specific IDs.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: order
+          in: query
+          description: Order sort attribute ascending or descending.
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+        - name: orderby
+          in: query
+          description: Sort collection by resource attribute.
+          schema:
+            type: string
+            enum: [id, include, name, slug, term_group, description, count]
+            default: name
+        - name: hide_empty
+          in: query
+          description: Whether to hide resources not assigned to any products.
+          schema:
+            type: boolean
+            default: false
+        - name: parent
+          in: query
+          description: Limit result set to resources assigned to a specific parent.
+          schema:
+            type: integer
+        - name: product
+          in: query
+          description: Limit result set to resources assigned to a specific product.
+          schema:
+            type: integer
+        - name: slug
+          in: query
+          description: Limit result set to resources with a specific slug.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response with a list of attribute terms.
+          headers:
+            X-WP-Total:
+              description: Total number of terms.
+              schema:
+                type: integer
+            X-WP-TotalPages:
+              description: Total number of pages.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductAttributeTerm"
+        "404":
+          description: Taxonomy or term not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: cocart_taxonomy_invalid
+                message: Taxonomy does not exist.
+                data:
+                  status: 404
+      security:
+        - {}
+
+  /products/attributes/{attribute_id}/terms/{id}:
+    get:
+      tags:
+        - product-attributes
+      operationId: getProductAttributeTerm
+      summary: Get a product attribute term
+      description: |
+        Retrieves a single term for a specific product attribute.
+      parameters:
+        - name: attribute_id
+          in: path
+          required: true
+          description: Unique identifier for the attribute of the terms.
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier for the attribute term.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Successful response with the attribute term data.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductAttributeTerm"
+        "404":
+          description: Term not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: cocart_term_invalid
+                message: Term does not exist.
+                data:
+                  status: 404
+      security:
+        - {}
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: |
+        Basic authentication with username and password.
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Error code identifier.
+        message:
+          type: string
+          description: Human-readable error message.
+        data:
+          type: object
+          properties:
+            status:
+              type: integer
+              description: HTTP status code.
+
+    ProductImage:
+      type: object
+      description: Product image data.
+      properties:
+        id:
+          type: integer
+          description: Image ID.
+          readOnly: true
+        date_created:
+          type: string
+          format: date-time
+          description: "The date the image was created, in the site's timezone."
+          readOnly: true
+        date_created_gmt:
+          type: string
+          format: date-time
+          description: The date the image was created, as GMT.
+          readOnly: true
+        date_modified:
+          type: string
+          format: date-time
+          description: "The date the image was last modified, in the site's timezone."
+          readOnly: true
+        date_modified_gmt:
+          type: string
+          format: date-time
+          description: The date the image was last modified, as GMT.
+          readOnly: true
+        src:
+          type: object
+          description: Image URLs keyed by registered image size name.
+          additionalProperties:
+            type: string
+            format: uri
+        name:
+          type: string
+          description: Image name.
+          readOnly: true
+        alt:
+          type: string
+          description: Image alternative text.
+        position:
+          type: integer
+          description: "Image position. 0 means that the image is featured."
+          readOnly: true
+
+    Product:
+      type: object
+      description: A WooCommerce product.
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the product.
+          readOnly: true
+        name:
+          type: string
+          description: Product name.
+          readOnly: true
+        slug:
+          type: string
+          description: Product slug.
+          readOnly: true
+        permalink:
+          type: string
+          format: uri
+          description: Product permalink.
+          readOnly: true
+        date_created:
+          type: string
+          format: date-time
+          description: "The date the product was created, in the site's timezone."
+          readOnly: true
+        date_created_gmt:
+          type: string
+          format: date-time
+          description: The date the product was created, as GMT.
+          readOnly: true
+        date_modified:
+          type: string
+          format: date-time
+          description: "The date the product was last modified, in the site's timezone."
+          readOnly: true
+        date_modified_gmt:
+          type: string
+          format: date-time
+          description: The date the product was last modified, as GMT.
+          readOnly: true
+        type:
+          type: string
+          description: "Product type. Default values are simple, variable, grouped, external but other types may be available via extensions."
+          enum: [simple, grouped, external, variable, variation]
+          readOnly: true
+        featured:
+          type: boolean
+          description: Featured product.
+          default: false
+          readOnly: true
+        catalog_visibility:
+          type: string
+          description: "Catalog visibility. Default is visible."
+          enum: [any, visible, catalog, search, hidden]
+          default: visible
+          readOnly: true
+        description:
+          type: string
+          description: Product description.
+          readOnly: true
+        short_description:
+          type: string
+          description: Product short description.
+          readOnly: true
+        sku:
+          type: string
+          description: Unique identifier (SKU).
+          readOnly: true
+        price:
+          type: string
+          description: The current price of the product. Returns formatted.
+          readOnly: true
+        regular_price:
+          type: string
+          description: The regular price of the product. Returns formatted.
+          readOnly: true
+        sale_price:
+          type: string
+          description: The sale price of the product. Returns formatted.
+          readOnly: true
+        date_on_sale_from:
+          type: string
+          format: date-time
+          description: "Start date of sale price, in the site's timezone."
+          readOnly: true
+        date_on_sale_from_gmt:
+          type: string
+          format: date-time
+          description: Start date of sale price, as GMT.
+          readOnly: true
+        date_on_sale_to:
+          type: string
+          format: date-time
+          description: "End date of sale price, in the site's timezone."
+          readOnly: true
+        date_on_sale_to_gmt:
+          type: string
+          format: date-time
+          description: End date of sale price, as GMT.
+          readOnly: true
+        on_sale:
+          type: boolean
+          description: Shows if the product is on sale.
+          readOnly: true
+        purchasable:
+          type: boolean
+          description: Shows if the product can be bought.
+          readOnly: true
+        total_sales:
+          type: integer
+          description: Amount of sales.
+          readOnly: true
+        virtual:
+          type: boolean
+          description: Shows if the product is virtual.
+          default: false
+          readOnly: true
+        downloadable:
+          type: boolean
+          description: Shows if the product is downloadable.
+          default: false
+          readOnly: true
+        external_url:
+          type: string
+          format: uri
+          description: Product external URL. Only for external products.
+          readOnly: true
+        button_text:
+          type: string
+          description: Product external button text. Only for external products.
+          readOnly: true
+        manage_stock:
+          type: boolean
+          description: Stock management at product level.
+          default: false
+          readOnly: true
+        stock_quantity:
+          type: integer
+          description: Stock quantity.
+          readOnly: true
+        has_options:
+          type: boolean
+          description: Determines whether or not the product has additional options that need selecting before adding to cart.
+          default: false
+          readOnly: true
+        in_stock:
+          type: boolean
+          description: 'Determines if product is listed as "in stock" or "out of stock".'
+          default: true
+          readOnly: true
+        stock_status:
+          type: string
+          description: Controls the stock status of the product.
+          enum: [instock, outofstock, onbackorder]
+          readOnly: true
+        backorders:
+          type: string
+          description: If managing stock, this controls if backorders are allowed.
+          enum: [no, notify, yes]
+          default: "no"
+          readOnly: true
+        backorders_allowed:
+          type: boolean
+          description: Are backorders allowed?
+          readOnly: true
+        backordered:
+          type: boolean
+          description: Shows if the product is on backordered.
+          readOnly: true
+        low_stock_amount:
+          type: integer
+          description: Low stock amount threshold.
+          readOnly: true
+        sold_individually:
+          type: boolean
+          description: Allow one of the item to be bought in a single order.
+          default: false
+          readOnly: true
+        weight:
+          type: object
+          description: Product weight.
+          readOnly: true
+          properties:
+            value:
+              type: string
+              description: Product weight value.
+              readOnly: true
+            unit:
+              type: string
+              description: Product weight unit.
+              readOnly: true
+        dimensions:
+          type: object
+          description: Product dimensions.
+          readOnly: true
+          properties:
+            length:
+              type: string
+              description: Product length.
+              readOnly: true
+            width:
+              type: string
+              description: Product width.
+              readOnly: true
+            height:
+              type: string
+              description: Product height.
+              readOnly: true
+            unit:
+              type: string
+              description: Product dimension unit.
+              readOnly: true
+        shipping_required:
+          type: boolean
+          description: Shows if the product needs to be shipped.
+          readOnly: true
+        reviews_allowed:
+          type: boolean
+          description: Shows if reviews are allowed.
+          default: true
+          readOnly: true
+        average_rating:
+          type: string
+          description: Reviews average rating.
+          readOnly: true
+        rating_count:
+          type: integer
+          description: Amount of reviews that the product has.
+          readOnly: true
+        review_count:
+          type: integer
+          description: Amount of reviews that the product has.
+          readOnly: true
+        rating_html:
+          type: string
+          description: Returns the rating of the product in HTML.
+          readOnly: true
+        reviews:
+          type: array
+          description: "Lists product reviews, when requested via the show_reviews parameter."
+          readOnly: true
+          items:
+            type: object
+            properties:
+              review_id:
+                type: integer
+                description: Review ID.
+                readOnly: true
+              author_name:
+                type: string
+                description: Author name.
+                readOnly: true
+              author_url:
+                type: string
+                description: Author URL.
+                readOnly: true
+              review_comment:
+                type: string
+                description: Review comment.
+                readOnly: true
+              review_date:
+                type: string
+                format: date-time
+                description: "Review date, in the site's timezone."
+                readOnly: true
+              review_date_gmt:
+                type: string
+                format: date-time
+                description: Review date, as GMT.
+                readOnly: true
+              rating:
+                type: integer
+                description: Rating number.
+                readOnly: true
+              verified:
+                type: integer
+                description: Shows if the product review is verified.
+                readOnly: true
+        related_ids:
+          type: array
+          description: List of related product IDs.
+          readOnly: true
+          items:
+            type: integer
+        upsell_ids:
+          type: array
+          description: List of up-sell product IDs.
+          readOnly: true
+          items:
+            type: integer
+        cross_sell_ids:
+          type: array
+          description: List of cross-sell product IDs.
+          readOnly: true
+          items:
+            type: integer
+        parent_id:
+          type: integer
+          description: Product parent ID.
+          readOnly: true
+        categories:
+          type: array
+          description: List of product categories.
+          readOnly: true
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: Category ID.
+                readOnly: true
+              name:
+                type: string
+                description: Category name.
+                readOnly: true
+              slug:
+                type: string
+                description: Category slug.
+                readOnly: true
+        tags:
+          type: array
+          description: List of product tags.
+          readOnly: true
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: Tag ID.
+                readOnly: true
+              name:
+                type: string
+                description: Tag name.
+                readOnly: true
+              slug:
+                type: string
+                description: Tag slug.
+                readOnly: true
+        images:
+          type: array
+          description: List of product images.
+          readOnly: true
+          items:
+            $ref: "#/components/schemas/ProductImage"
+        attributes:
+          type: array
+          description: List of product attributes.
+          readOnly: true
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: Attribute ID.
+                readOnly: true
+              name:
+                type: string
+                description: Attribute name.
+                readOnly: true
+              position:
+                type: integer
+                description: Attribute position.
+                readOnly: true
+              is_attribute_visible:
+                type: boolean
+                description: "Is the attribute visible on the \"Additional information\" tab in the product's page."
+                default: false
+                readOnly: true
+              used_for_variation:
+                type: boolean
+                description: Can the attribute be used as a variation?
+                default: false
+                readOnly: true
+              options:
+                type: array
+                description: List of available term names of the attribute.
+                readOnly: true
+                items:
+                  type: string
+        default_attributes:
+          type: array
+          description: Defaults variation attributes.
+          readOnly: true
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: Attribute ID.
+                readOnly: true
+              name:
+                type: string
+                description: Attribute name.
+                readOnly: true
+              option:
+                type: string
+                description: Selected attribute term name.
+                readOnly: true
+        variations:
+          type: array
+          description: "List of all variation IDs and data if requested true with the return_variations parameter."
+          readOnly: true
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: Variation ID.
+                readOnly: true
+        grouped_products:
+          type: array
+          description: List of grouped product IDs.
+          readOnly: true
+          items:
+            type: integer
+        menu_order:
+          type: integer
+          description: Menu order, used to custom sort products.
+          readOnly: true
+        meta_data:
+          type: array
+          description: Meta data.
+          readOnly: true
+          items:
+            $ref: "#/components/schemas/MetaData"
+        add_to_cart:
+          type: object
+          description: Add to cart button information.
+          readOnly: true
+          properties:
+            text:
+              type: string
+              description: Add to cart button text.
+              readOnly: true
+            description:
+              type: string
+              description: Add to cart button description.
+              readOnly: true
+
+    ProductVariation:
+      type: object
+      description: A WooCommerce product variation.
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the resource.
+          readOnly: true
+        date_created:
+          type: string
+          format: date-time
+          description: "The date the variation was created, in the site's timezone."
+          readOnly: true
+        date_created_gmt:
+          type: string
+          format: date-time
+          description: The date the variation was created, as GMT.
+          readOnly: true
+        date_modified:
+          type: string
+          format: date-time
+          description: "The date the variation was last modified, in the site's timezone."
+          readOnly: true
+        date_modified_gmt:
+          type: string
+          format: date-time
+          description: The date the variation was last modified, as GMT.
+          readOnly: true
+        description:
+          type: string
+          description: Variation description.
+        permalink:
+          type: string
+          format: uri
+          description: Variation URL.
+          readOnly: true
+        sku:
+          type: string
+          description: Unique identifier (SKU).
+        price:
+          type: string
+          description: Current variation price.
+          readOnly: true
+        regular_price:
+          type: string
+          description: Variation regular price.
+        sale_price:
+          type: string
+          description: Variation sale price.
+        date_on_sale_from:
+          type: string
+          format: date-time
+          description: "Start date of sale price, in the site's timezone."
+        date_on_sale_from_gmt:
+          type: string
+          format: date-time
+          description: Start date of sale price, as GMT.
+        date_on_sale_to:
+          type: string
+          format: date-time
+          description: "End date of sale price, in the site's timezone."
+        date_on_sale_to_gmt:
+          type: string
+          format: date-time
+          description: End date of sale price, as GMT.
+        on_sale:
+          type: boolean
+          description: Shows if the variation is on sale.
+          readOnly: true
+        purchasable:
+          type: boolean
+          description: Shows if the variation can be bought.
+          readOnly: true
+        virtual:
+          type: boolean
+          description: If the variation is virtual.
+          default: false
+        downloadable:
+          type: boolean
+          description: If the variation is downloadable.
+          default: false
+        manage_stock:
+          type: boolean
+          description: Stock management at variation level.
+          default: false
+        stock_quantity:
+          type: integer
+          description: Stock quantity.
+        stock_status:
+          type: string
+          description: Controls the stock status of the product.
+          enum: [instock, outofstock, onbackorder]
+          default: instock
+        backorders:
+          type: string
+          description: If managing stock, this controls if backorders are allowed.
+          enum: [no, notify, yes]
+          default: "no"
+        backorders_allowed:
+          type: boolean
+          description: Shows if backorders are allowed.
+          readOnly: true
+        backordered:
+          type: boolean
+          description: Shows if the variation is on backordered.
+          readOnly: true
+        weight:
+          type: string
+          description: Variation weight.
+        dimensions:
+          type: object
+          description: Variation dimensions.
+          properties:
+            length:
+              type: string
+              description: Variation length.
+            width:
+              type: string
+              description: Variation width.
+            height:
+              type: string
+              description: Variation height.
+        image:
+          type: object
+          description: Variation image data.
+          properties:
+            id:
+              type: integer
+              description: Image ID.
+            date_created:
+              type: string
+              format: date-time
+              description: "The date the image was created, in the site's timezone."
+              readOnly: true
+            date_created_gmt:
+              type: string
+              format: date-time
+              description: The date the image was created, as GMT.
+              readOnly: true
+            date_modified:
+              type: string
+              format: date-time
+              description: "The date the image was last modified, in the site's timezone."
+              readOnly: true
+            date_modified_gmt:
+              type: string
+              format: date-time
+              description: The date the image was last modified, as GMT.
+              readOnly: true
+            src:
+              type: object
+              description: Image URLs keyed by registered image size name.
+              additionalProperties:
+                type: string
+                format: uri
+            name:
+              type: string
+              description: Image name.
+            alt:
+              type: string
+              description: Image alternative text.
+        attributes:
+          type: array
+          description: List of attributes.
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: Attribute ID.
+              name:
+                type: string
+                description: Attribute name.
+              option:
+                type: string
+                description: Selected attribute term name.
+        menu_order:
+          type: integer
+          description: Menu order, used to custom sort products.
+        meta_data:
+          type: array
+          description: Meta data.
+          items:
+            $ref: "#/components/schemas/MetaData"
+
+    ProductReview:
+      type: object
+      description: A WooCommerce product review.
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the review.
+          readOnly: true
+        date_created:
+          type: string
+          format: date-time
+          description: "The date the review was created, in the site's timezone."
+          readOnly: true
+        date_created_gmt:
+          type: string
+          format: date-time
+          description: The date the review was created, as GMT.
+          readOnly: true
+        product_id:
+          type: integer
+          description: Unique identifier for the product that the review belongs to.
+        status:
+          type: string
+          description: Status of the review.
+          enum: [approved, hold, spam, unspam, trash, untrash]
+          default: approved
+        reviewer:
+          type: string
+          description: Reviewer name.
+        review:
+          type: string
+          description: The content of the review.
+        rating:
+          type: integer
+          description: Review rating (0 to 5).
+          minimum: 0
+          maximum: 5
+        verified:
+          type: boolean
+          description: Shows if the reviewer bought the product or not.
+          readOnly: true
+        reviewer_avatar_urls:
+          type: object
+          description: Avatar URLs for the object reviewer.
+          readOnly: true
+          additionalProperties:
+            type: string
+            format: uri
+
+    ProductCategory:
+      type: object
+      description: A WooCommerce product category.
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the resource.
+          readOnly: true
+        name:
+          type: string
+          description: Category name.
+        slug:
+          type: string
+          description: An alphanumeric identifier for the resource unique to its type.
+        parent:
+          type: integer
+          description: The ID for the parent of the resource.
+        description:
+          type: string
+          description: HTML description of the resource.
+        display:
+          type: string
+          description: Category archive display type.
+          enum: [default, products, subcategories, both]
+          default: default
+        image:
+          type: object
+          nullable: true
+          description: Image data.
+          properties:
+            id:
+              type: integer
+              description: Image ID.
+            date_created:
+              type: string
+              format: date-time
+              description: "The date the image was created, in the site's timezone."
+              readOnly: true
+            date_created_gmt:
+              type: string
+              format: date-time
+              description: The date the image was created, as GMT.
+              readOnly: true
+            date_modified:
+              type: string
+              format: date-time
+              description: "The date the image was last modified, in the site's timezone."
+              readOnly: true
+            date_modified_gmt:
+              type: string
+              format: date-time
+              description: The date the image was last modified, as GMT.
+              readOnly: true
+            src:
+              type: string
+              format: uri
+              description: Image URL.
+            name:
+              type: string
+              description: Image name.
+            alt:
+              type: string
+              description: Image alternative text.
+        menu_order:
+          type: integer
+          description: Menu order, used to custom sort the resource.
+        count:
+          type: integer
+          description: Number of published products for the resource.
+          readOnly: true
+
+    ProductTag:
+      type: object
+      description: A WooCommerce product tag.
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the resource.
+          readOnly: true
+        name:
+          type: string
+          description: Tag name.
+        slug:
+          type: string
+          description: An alphanumeric identifier for the resource unique to its type.
+        description:
+          type: string
+          description: HTML description of the resource.
+        count:
+          type: integer
+          description: Number of published products for the resource.
+          readOnly: true
+
+    ProductAttribute:
+      type: object
+      description: A WooCommerce product attribute.
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the resource.
+          readOnly: true
+        name:
+          type: string
+          description: Attribute name.
+        slug:
+          type: string
+          description: An alphanumeric identifier for the resource unique to its type.
+        type:
+          type: string
+          description: Type of attribute.
+          enum: [select, text]
+          default: select
+        order_by:
+          type: string
+          description: Sort order.
+          enum: [menu_order, name, name_num, id]
+          default: menu_order
+        has_archives:
+          type: boolean
+          description: Attribute has archives?
+          default: false
+
+    ProductAttributeTerm:
+      type: object
+      description: A WooCommerce product attribute term.
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the attribute term.
+          readOnly: true
+        name:
+          type: string
+          description: Term name.
+        slug:
+          type: string
+          description: An alphanumeric identifier for the attribute term unique to its type.
+        description:
+          type: string
+          description: HTML description of the attribute term.
+        menu_order:
+          type: integer
+          description: Menu order, used to custom sort the attribute term.
+        count:
+          type: integer
+          description: Number of published products for the attribute term.
+          readOnly: true
+
+    MetaData:
+      type: object
+      description: Meta data entry.
+      properties:
+        id:
+          type: integer
+          description: Meta ID.
+          readOnly: true
+        key:
+          type: string
+          description: Meta key.
+        value:
+          description: Meta value.

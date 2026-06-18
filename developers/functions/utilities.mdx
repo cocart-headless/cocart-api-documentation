@@ -1,0 +1,47 @@
+---
+title: "Utilities Functions"
+sidebarTitle: "Utilities"
+description: "Helper functions for defining constants safely and setting no-cache headers."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Functions Reference overview](/developers/functions) for all function categories and the [Developer Reference](/developers) for the plugin key index.
+</Tip>
+
+### `cocart_maybe_define_constant()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Define a constant if it is not already defined.
+
+<Note>Made available since v4.2.0</Note>
+
+**Parameters**
+
+<ParamField query="name" type="string">
+  Constant name.
+</ParamField>
+
+<ParamField query="value" type="mixed">
+  Value.
+</ParamField>
+
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php)
+
+---
+
+### `cocart_nocache_headers()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Wrapper for `nocache_headers()` which also disables page caching.
+
+<Note>Made available since v4.2.0</Note>
+
+- **Defined in**: [`includes/cocart-core-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-core-functions.php)
+
+---

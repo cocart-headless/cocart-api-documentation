@@ -1,0 +1,101 @@
+---
+title: "Install CoCart Plus"
+description: "How to install CoCart Plus on your WordPress site"
+icon: "cart-plus"
+---
+
+### Before you start
+
+It's important that your [server requirements](https://woocommerce.com/document/server-requirements/) meet the minimum that WooCommerce ask for in order to run CoCart Plus.
+
+CoCart Plus requires WooCommerce and either CoCart Community or CoCart Starter to be installed and active. If you haven't installed CoCart yet, start with [CoCart Community](/community/install) or [CoCart Starter](/getting-started/setup).
+
+### Pricing & Purchase
+
+CoCart Plus is available on the [pricing page](https://cocartapi.com/pricing/). Once you have completed your purchase, you will be able to download the plugin from your [Polar account](https://polar.sh/cocartheadless/portal/request).
+
+### After Purchase
+
+Once you have completed your purchase, take these steps before installing the plugin.
+
+<Steps>
+    <Step title="Download from Polar">
+        Go to your [Polar account library](https://polar.sh/cocartheadless/portal/request), find your CoCart Plus purchase, and download the `.zip` file.
+    </Step>
+    <Step title="Accept the GitHub repository invitation">
+        Check your email for an invitation to the CoCart Plus private GitHub repository and accept it. This gives you access to source releases and future updates.
+    </Step>
+    <Step title="Join Discord for support">
+        Check your email for a Discord invitation, accept it, and join the CoCart Discord server. All premium plugin support is provided there.
+    </Step>
+</Steps>
+
+### Upload Install
+
+Once you have the plugin downloaded, log in to your WordPress dashboard, navigate to the 'Plugins' menu and press 'Add New'. Then press 'Upload Plugin'.
+
+You will either be redirected to a new page or the upload field will simply appear at the top allowing you to upload the plugin. Once the file is selected, press 'Install Now'.
+
+<Card title="Upload Plugin" img="https://cocartapi.com/wp-content/uploads/2023/11/image.png"/>
+
+Once the plugin is installed. Press 'Activate Plugin'.
+
+<Card title="Activate CoCart Plus" img="https://cocartapi.com/wp-content/uploads/2023/11/image-1.png"></Card>
+
+### Install via FTP
+
+Open your FTP program of choice and login to your FTP server. Access where your WordPress plugins folder is stored and upload the folder of the plugin that is in the zip file and put it in the plugins directory.
+
+Now log in to your WordPress dashboard, navigate to the 'Plugins' menu and press 'Activate' where CoCart Plus is listed.
+
+<Card title="Upload Plugin" img="https://cocartapi.com/wp-content/uploads/2023/11/image-4.png"></Card>
+
+## Prerequisites
+
+Before using CoCart Plus, ensure your WordPress permalinks are configured to any setting except "Plain". This configuration is essential for accessing the REST API using standard endpoint URIs (e.g. `cocart/v2/products`).
+
+Configure this under **Settings > Permalinks**.
+
+<Card title="Permalink Settings" img="https://cocartapi.com/wp-content/uploads/2023/11/image-3.png"></Card>
+
+With these settings in place, you're ready to begin using CoCart Plus.
+
+## WooCommerce Dependency
+
+CoCart Plus requires an active WooCommerce installation to function. If WooCommerce is not installed or is deactivated, CoCart Plus will automatically disable itself during activation to prevent technical issues.
+
+You'll see a prompt to install or activate WooCommerce if needed.
+
+<Card title="Admin notice requesting WooCommerce" img="https://cocartapi.com/wp-content/uploads/2023/11/image-2.png"></Card>
+
+## Troubleshooting
+
+<AccordionGroup>
+    <Accordion title="The downloaded file is a folder, not a .zip file">
+        Your browser may be automatically unzipping the archive after download. Check your browser's download settings and disable automatic extraction, then download the plugin again from your [Polar account](https://polar.sh/cocartheadless/portal/request).
+    </Accordion>
+
+    <Accordion title="Uploaded file exceeds the maximum upload size">
+        Your host limits the maximum file upload size. You will see an error like: `The uploaded file exceeds the upload_max_filesize directive in php.ini`. Either increase the `upload_max_filesize` and `post_max_size` values in your `php.ini` (or ask your host to do so), or install the plugin [via FTP](#install-via-ftp) instead.
+    </Accordion>
+
+    <Accordion title="Destination folder already exists">
+        WordPress shows this error when a previous installation of the plugin was not fully removed. Delete the existing plugin folder from `wp-content/plugins/` via FTP or your host's file manager, then attempt the upload again.
+    </Accordion>
+
+    <Accordion title="Could not create directory">
+        This is a file permission issue on your server. The WordPress files directory needs write permissions. Contact your host and ask them to verify that the `wp-content/plugins/` directory has the correct permissions.
+    </Accordion>
+
+    <Accordion title="White screen or fatal error on activation">
+        A blank screen or fatal error after activating usually means a PHP memory limit has been reached or a conflict exists with another plugin or theme. Try increasing your PHP memory limit to at least 256MB, then deactivate other plugins one by one to identify any conflict.
+    </Accordion>
+
+    <Accordion title="CoCart Plus deactivated itself after activation">
+        CoCart Plus requires WooCommerce and either CoCart Community or CoCart Starter to be installed and active. If any of these are missing or deactivated, CoCart Plus will automatically disable itself. Ensure all required plugins are active, then activate CoCart Plus again.
+    </Accordion>
+
+    <Accordion title="REST API endpoints return a 404">
+        Your WordPress permalinks are likely set to **Plain**. CoCart's REST API requires any permalink structure other than Plain. Go to **Settings > Permalinks**, choose any other option, and save.
+    </Accordion>
+</AccordionGroup>

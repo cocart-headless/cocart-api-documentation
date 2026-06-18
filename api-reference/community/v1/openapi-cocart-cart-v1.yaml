@@ -1,0 +1,820 @@
+openapi: 3.0.3
+
+info:
+  title: CoCart - Cart API v1
+  version: 4.9.0
+  description: |
+    CoCart REST API v1 for managing shopping carts, including adding, updating, and removing items, calculating totals, and clearing the cart.
+  termsOfService: https://cocartapi.com/terms-of-conditions-polar/
+  contact:
+    email: support@cocartapi.com
+  license:
+    name: GNU General Public License v3.0
+    url: http://www.gnu.org/licenses/gpl-3.0.html
+
+externalDocs:
+  description: Find out more about CoCart API
+  url: https://docs.cocartapi.com
+
+servers:
+  - url: "{protocol}://{host}/wp-json/cocart/v1"
+    description: API v1
+    variables:
+      protocol:
+        enum: [http, https]
+        default: https
+      host:
+        default: example-store.com
+        description: Your store domain
+
+tags:
+  - name: cart
+    description: Operations for managing the shopping cart
+  - name: cart-items
+    description: Operations for managing cart items
+  - name: calculate
+    description: Operations for calculating cart totals
+
+paths:
+  /get-cart:
+    get:
+      tags:
+        - cart
+      operationId: getCart
+      summary: Get cart contents
+      description: |
+        Gets the cart items added by the customer.
+      parameters:
+        - name: cart_key
+          in: query
+          description: Unique identifier for the cart/customer.
+          schema:
+            type: string
+          required: false
+        - name: thumb
+          in: query
+          description: Returns the URL of the product image thumbnail for each item.
+          schema:
+            type: boolean
+            default: false
+          required: false
+      responses:
+        "200":
+          description: Cart retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+              example:
+                "1c383cd30b7c298ab50293adfecb7b18":
+                  key: "1c383cd30b7c298ab50293adfecb7b18"
+                  product_id: 35
+                  variation_id: 0
+                  variation: []
+                  quantity: 6
+                  data_hash: "b5c1d5ca8bae6d4896cf1807cdf763f0"
+                  line_tax_data:
+                    subtotal: []
+                    total: []
+                  line_subtotal: 108
+                  line_subtotal_tax: 0
+                  line_total: 108
+                  line_tax: 0
+                  data: {}
+                  product_name: "T-Shirt with Logo"
+                  product_title: "T-Shirt with Logo"
+                  product_price: "£18.00"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /get-cart/{id}:
+    get:
+      tags:
+        - cart
+      operationId: getCartInSession
+      summary: Get cart in session by cart key
+      description: |
+        Gets the cart in session for the provided cart key.
+      parameters:
+        - name: id
+          in: path
+          description: Unique cart key for the session.
+          required: true
+          schema:
+            type: string
+        - name: thumb
+          in: query
+          description: Returns the URL of the product image thumbnail for each item.
+          schema:
+            type: boolean
+            default: false
+          required: false
+      responses:
+        "200":
+          description: Cart in session retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+        "404":
+          description: Cart in session is not valid or not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_cart_in_session_not_valid"
+                message: "Cart in session is not valid!"
+                data:
+                  status: 404
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /get-cart/customer/{id}:
+    get:
+      tags:
+        - cart
+      operationId: getCartByCustomer
+      summary: Get persistent cart by customer ID
+      description: |
+        Gets the persistent cart for the provided customer ID. Requires administrator permissions.
+      parameters:
+        - name: id
+          in: path
+          description: Unique customer ID.
+          required: true
+          schema:
+            type: string
+        - name: thumb
+          in: query
+          description: Returns the URL of the product image thumbnail for each item.
+          schema:
+            type: boolean
+            default: false
+          required: false
+      responses:
+        "200":
+          description: Persistent cart retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+        "404":
+          description: Customer ID is required or cart not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_customer_missing"
+                message: "Customer ID is required!"
+                data:
+                  status: 404
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+
+  /add-item:
+    post:
+      tags:
+        - cart-items
+      operationId: addItem
+      summary: Add item to cart
+      description: |
+        Adds a product item to the customer's cart.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                product_id:
+                  description: Unique identifier for the product.
+                  type: string
+                quantity:
+                  description: The quantity amount of the item to add to cart.
+                  type: string
+                  default: "1"
+                variation_id:
+                  description: Unique identifier for the variation.
+                  type: integer
+                variation:
+                  description: The variation attributes that identify the variation of the item.
+                  type: object
+                  additionalProperties:
+                    type: string
+                cart_item_data:
+                  description: Additional item data passed to make item unique.
+                  type: object
+                  additionalProperties: true
+                return_cart:
+                  description: Returns the full cart once the item is added.
+                  type: boolean
+                  default: false
+              required:
+                - product_id
+                - quantity
+            example:
+              product_id: "35"
+              quantity: "1"
+      responses:
+        "200":
+          description: Item added to cart successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartItem"
+        "400":
+          description: Bad request - product cannot be added.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_not_purchasable"
+                message: "Sorry, this product cannot be purchased."
+                data:
+                  status: 400
+        "404":
+          description: Product not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_product_does_not_exist"
+                message: "Warning: This product does not exist!"
+                data:
+                  status: 404
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /item:
+    get:
+      tags:
+        - cart-items
+      operationId: restoreItem
+      summary: Restore cart item
+      description: |
+        Restores a previously removed item back to the customer's cart.
+      parameters:
+        - name: cart_item_key
+          in: query
+          description: Unique identifier for the item in the cart.
+          schema:
+            type: string
+          required: true
+        - name: return_cart
+          in: query
+          description: Returns the whole cart to reduce API requests.
+          schema:
+            type: boolean
+            default: false
+          required: false
+      responses:
+        "200":
+          description: Cart item restored successfully.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: string
+                    description: Success message when return_cart is false.
+                    example: "Item has been restored to the cart."
+                  - $ref: "#/components/schemas/Cart"
+        "403":
+          description: Unable to restore item to the cart.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_can_not_restore_item"
+                message: "Unable to restore item to the cart."
+                data:
+                  status: 403
+        "404":
+          description: Cart item key is required or item not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_item_not_in_cart"
+                message: "Item does not exist in cart."
+                data:
+                  status: 404
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+    post:
+      tags:
+        - cart-items
+      operationId: updateItem
+      summary: Update cart item
+      description: |
+        Updates the quantity of a specific item in the customer's cart.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cart_item_key:
+                  description: Unique identifier for the item in the cart.
+                  type: string
+                quantity:
+                  description: Quantity of this item to update to.
+                  type: string
+                return_cart:
+                  description: Returns the whole cart to reduce API requests.
+                  type: boolean
+                  default: false
+              required:
+                - cart_item_key
+                - quantity
+            example:
+              cart_item_key: "1c383cd30b7c298ab50293adfecb7b18"
+              quantity: "3"
+      responses:
+        "200":
+          description: Cart item updated successfully.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/CartItem"
+                  - $ref: "#/components/schemas/Cart"
+        "400":
+          description: Bad request - invalid parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Cart item not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_item_not_in_cart"
+                message: "Item does not exist in cart."
+                data:
+                  status: 404
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+    delete:
+      tags:
+        - cart-items
+      operationId: removeItem
+      summary: Remove cart item
+      description: |
+        Removes a specific item from the customer's cart.
+      parameters:
+        - name: cart_item_key
+          in: query
+          description: Unique identifier for the item in the cart.
+          schema:
+            type: string
+          required: true
+        - name: return_cart
+          in: query
+          description: Returns the whole cart to reduce API requests.
+          schema:
+            type: boolean
+            default: false
+          required: false
+      responses:
+        "200":
+          description: Cart item removed successfully.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      removed:
+                        type: boolean
+                        description: Whether the item was removed.
+                        example: true
+                  - $ref: "#/components/schemas/Cart"
+        "404":
+          description: Cart item not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_item_not_in_cart"
+                message: "Item does not exist in cart."
+                data:
+                  status: 404
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /count-items:
+    get:
+      tags:
+        - cart-items
+      operationId: countItems
+      summary: Count cart items
+      description: |
+        Returns the count of items in the customer's cart.
+      parameters:
+        - name: return
+          in: query
+          description: Set to "numeric" to return just the count number.
+          schema:
+            type: string
+            default: numeric
+          required: false
+      responses:
+        "200":
+          description: Cart item count retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: string
+                description: Number of items in the cart.
+                example: "5"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /clear:
+    post:
+      tags:
+        - cart
+      operationId: clearCart
+      summary: Clear cart
+      description: |
+        Removes all items from the customer's cart.
+      responses:
+        "200":
+          description: Cart cleared successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message.
+              example:
+                message: "Cart is cleared."
+        "406":
+          description: Cart clearing failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "cocart_clear_cart_failed"
+                message: "Clearing the cart failed!"
+                data:
+                  status: 406
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /logout:
+    post:
+      tags:
+        - cart
+      operationId: logout
+      summary: Logout customer
+      description: |
+        Logs out the customer and clears their session.
+      responses:
+        "200":
+          description: Customer logged out successfully.
+          content:
+            application/json:
+              schema:
+                type: boolean
+              example: true
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /calculate:
+    post:
+      tags:
+        - calculate
+      operationId: calculateTotals
+      summary: Calculate cart totals
+      description: |
+        Calculates the cart totals including taxes, shipping, and discounts.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                return:
+                  description: Returns the cart totals once calculated.
+                  type: boolean
+                  default: false
+      responses:
+        "200":
+          description: Cart totals calculated successfully.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: string
+                    description: Success message when return parameter is false.
+                    example: "Cart totals have been calculated."
+                  - $ref: "#/components/schemas/CartTotals"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+  /totals:
+    get:
+      tags:
+        - calculate
+      operationId: getTotals
+      summary: Get cart totals
+      description: |
+        Retrieves the cart totals including subtotal, taxes, shipping, and discounts.
+      parameters:
+        - name: html
+          in: query
+          description: Returns the totals as pre-formatted HTML strings.
+          schema:
+            type: boolean
+            default: false
+          required: false
+      responses:
+        "200":
+          description: Cart totals retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartTotals"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: |
+        Basic authentication with username and password.
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Bearer token authentication (JWT). Optional for most cart endpoints.
+        Required for admin operations like retrieving a customer's cart.
+
+  schemas:
+    Cart:
+      type: object
+      description: A map of cart item keys to cart item objects. Each property key is a unique cart item key.
+      additionalProperties:
+        $ref: "#/components/schemas/CartItem"
+
+    CartItem:
+      type: object
+      description: Individual item in the cart.
+      properties:
+        key:
+          type: string
+          description: Unique identifier for the item within the cart.
+        product_id:
+          type: integer
+          description: Unique identifier for the product.
+        variation_id:
+          type: integer
+          description: Unique identifier for the variation (0 if not a variation).
+        variation:
+          description: Chosen variation attributes (empty array if not a variation).
+          oneOf:
+            - type: object
+              additionalProperties:
+                type: string
+            - type: array
+              items:
+                type: string
+        quantity:
+          type: integer
+          description: Quantity of this item in the cart.
+        data_hash:
+          type: string
+          description: Hash of cart item data for validation.
+        line_tax_data:
+          type: object
+          description: Line tax data breakdown.
+          properties:
+            subtotal:
+              description: Line subtotal tax data.
+              type: array
+              items:
+                type: number
+            total:
+              description: Line total tax data.
+              type: array
+              items:
+                type: number
+        line_subtotal:
+          type: number
+          description: Line subtotal (before coupon discounts).
+        line_subtotal_tax:
+          type: number
+          description: Line subtotal tax.
+        line_total:
+          type: number
+          description: Line total (after coupon discounts).
+        line_tax:
+          type: number
+          description: Line total tax.
+        data:
+          type: object
+          description: Raw product data object.
+          additionalProperties: true
+        product_name:
+          type: string
+          description: Product name.
+        product_title:
+          type: string
+          description: Product title.
+        product_price:
+          type: string
+          description: Current formatted product price.
+        product_image:
+          type: string
+          description: Product image URL (returned if thumb is true).
+
+    CartTotals:
+      type: object
+      description: Cart totals breakdown. Values may be formatted HTML strings if html parameter is true.
+      properties:
+        subtotal:
+          type: string
+          description: Cart subtotal (before taxes and shipping).
+        subtotal_tax:
+          description: Cart subtotal tax amount.
+          oneOf:
+            - type: number
+            - type: string
+        shipping_total:
+          type: string
+          description: Total shipping cost.
+        shipping_tax:
+          description: Shipping tax amount.
+          oneOf:
+            - type: number
+            - type: string
+        shipping_taxes:
+          description: Array of shipping tax rates.
+          type: array
+          items:
+            type: number
+        discount_total:
+          description: Total discount amount applied.
+          oneOf:
+            - type: number
+            - type: string
+        discount_tax:
+          description: Discount tax amount.
+          oneOf:
+            - type: number
+            - type: string
+        cart_contents_total:
+          type: string
+          description: Total cart contents value.
+        cart_contents_tax:
+          description: Cart contents tax.
+          oneOf:
+            - type: number
+            - type: string
+        cart_contents_taxes:
+          description: Array of cart content tax rates.
+          type: array
+          items:
+            type: number
+        fee_total:
+          type: string
+          description: Total fees applied.
+        fee_tax:
+          description: Fee tax amount.
+          oneOf:
+            - type: number
+            - type: string
+        fee_taxes:
+          description: Array of fee tax rates.
+          type: array
+          items:
+            type: number
+        total:
+          type: string
+          description: Cart total amount including tax.
+        total_tax:
+          description: Total tax amount.
+          oneOf:
+            - type: number
+            - type: string
+
+    ErrorResponse:
+      type: object
+      description: Standard error response structure.
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code.
+          example: "cocart_rest_invalid_param"
+        message:
+          type: string
+          description: Human-readable error message.
+          example: "Invalid parameter."
+        data:
+          type: object
+          description: Additional error data.
+          properties:
+            status:
+              type: integer
+              description: HTTP status code.
+              example: 400
+            params:
+              type: object
+              description: Parameter-specific error details.
+              additionalProperties:
+                type: string
+          additionalProperties: true

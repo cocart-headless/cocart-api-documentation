@@ -1,0 +1,391 @@
+---
+title: "Product Data & Display Filters"
+sidebarTitle: "Product Data & Display"
+description: "PHP filters for product fields, images, pricing, metadata, and attributes."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Filters Reference overview](/developers/filters) for the full plugin key index and all filter categories.
+</Tip>
+
+### `cocart_prepare_money_disable_decimals`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+This filter allows you to disable the decimals. If set to "True" the decimals will be set to "Zero".
+
+<Note>Made available since v2.1.0</Note>
+
+**Usage**
+```php
+add_filter( 'cocart_prepare_money_disable_decimals', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_prepare_money_disable_decimals` in repository](https://github.com/co-cart/co-cart/search?q=cocart_prepare_money_disable_decimals&type=code)
+
+---
+
+### `cocart_prepare_product_attribute`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter a attribute item returned from the API. Allows modification of the product attribute data right before it is returned.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="response" type="WP_REST_Response">
+  The response object.
+</ParamField>
+
+<ParamField query="item" type="object">
+  The original attribute object.
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_prepare_product_attribute', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_prepare_product_attribute` in repository](https://github.com/co-cart/co-cart/search?q=cocart_prepare_product_attribute&type=code)
+
+---
+
+### `cocart_prepare_product_object`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter the data for a response.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="response" type="WP_REST_Response">
+  The response object.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_prepare_product_object', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_prepare_product_object` in repository](https://github.com/co-cart/co-cart/search?q=cocart_prepare_product_object&type=code)
+
+### `cocart_prepare_product_object_v2`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter the data for a v2 product response. Fires after every v2 product response is assembled, for both the collection (`GET /cocart/v2/products`) and the single-product endpoint (`GET /cocart/v2/products/{id}`). Use this to append custom fields to `$response->data`.
+
+<Info>
+  Made available since v2.1.0
+</Info>
+
+**Parameters**
+
+<ParamField query="response" type="WP_REST_Response">
+  The response object. Append custom fields to `$response->data`.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object. Use WC_Product methods to read product data.
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_prepare_product_object_v2', function( $response, $product, $request ) {
+    $response->data['my_field'] = 'my value';
+    return $response;
+}, 10, 3 );
+```
+
+[Search `cocart_prepare_product_object_v2` in repository](https://github.com/co-cart/co-cart/search?q=cocart_prepare_product_object_v2&type=code)
+
+### `cocart_price_no_html`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters the string of price markup.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="return" type="string">
+  Price HTML markup.
+</ParamField>
+
+<ParamField query="price" type="string">
+  Formatted price.
+</ParamField>
+
+<ParamField query="args" type="array">
+  Pass on the args.
+</ParamField>
+
+<ParamField query="unformatted_price" type="float">
+  Price as float to allow plugins custom formatting. Since 3.2.0.
+</ParamField>
+
+<ParamField query="original_price" type="float|string">
+  Original price as float, or empty string. Since 5.0.0.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_price_no_html', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_price_no_html` in repository](https://github.com/co-cart/co-cart/search?q=cocart_price_no_html&type=code)
+
+---
+
+### `cocart_product_title`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters the product title in cart.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="product_title" type="string">
+  Product title.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  Cart item.
+</ParamField>
+
+<ParamField query="item_key" type="string">
+  Item key.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_product_title', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_product_title` in repository](https://github.com/co-cart/co-cart/search?q=cocart_product_title&type=code)
+
+---
+
+### `cocart_products_add_to_cart_rest_url`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters the REST URL shortcut for adding the product to cart.
+
+<Note>Made available since v3.1.0</Note>
+
+**Parameters**
+
+<ParamField query="rest_url" type="string">
+  REST URL for adding product to the cart.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+<ParamField query="type" type="string">
+  Product type.
+</ParamField>
+
+<ParamField query="id" type="integer">
+  Product ID.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_products_add_to_cart_rest_url', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_products_add_to_cart_rest_url` in repository](https://github.com/co-cart/co-cart/search?q=cocart_products_add_to_cart_rest_url&type=code)
+
+---
+
+### `cocart_products_get_price_range`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters the products price range.
+
+<Note>Made available since v3.1.0</Note>
+
+**Parameters**
+
+<ParamField query="price" type="array">
+  The current product price range.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_products_get_price_range', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_products_get_price_range` in repository](https://github.com/co-cart/co-cart/search?q=cocart_products_get_price_range&type=code)
+
+---
+
+### `cocart_products_get_safe_meta_data`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to control what remaining product meta data is safe to return.
+
+<Note>Made available since v3.11.0</Note>
+
+**Parameters**
+
+<ParamField query="safe_meta" type="array">
+  Safe meta.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_products_get_safe_meta_data', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_products_get_safe_meta_data` in repository](https://github.com/co-cart/co-cart/search?q=cocart_products_get_safe_meta_data&type=code)
+
+---
+
+### `cocart_products_ignore_private_meta_keys`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to ignore private meta data for the product to return. When filtering, only list the meta key!
+
+<Note>Made available since v3.11.0</Note>
+
+**Parameters**
+
+<ParamField query="ignored_meta_keys" type="array">
+  Ignored meta keys.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_products_ignore_private_meta_keys', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_products_ignore_private_meta_keys` in repository](https://github.com/co-cart/co-cart/search?q=cocart_products_ignore_private_meta_keys&type=code)
+
+---
+
+### `cocart_products_allowed_meta_keys`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filter allows you to specify which product meta keys are allowed in API responses. In CoCart Starter, product meta is no longer returned by default to prevent PII exposure — you must whitelist specific keys using this filter.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="allowed_keys" type="array">
+  Array of allowed meta key names. Empty by default.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_products_allowed_meta_keys', function( $allowed_keys, $product ) {
+    // Allow specific meta keys in the response
+    return array( '_custom_field', '_brand', '_material' );
+}, 10, 2 );
+```
+
+<Warning>
+This replaces the `cocart_products_ignore_private_meta_keys` filter from the Community edition, which is [no longer used in Basic](/breaking-changes/basic-v5).
+</Warning>
+
+---
+
+### `cocart_products_variable_empty_price`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter the variable products empty prices.
+
+<Note>Made available since v3.1.0</Note>
+
+**Parameters**
+
+<ParamField query="empty_prices" type="array">
+  Empty array.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The project object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_products_variable_empty_price', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_products_variable_empty_price` in repository](https://github.com/co-cart/co-cart/search?q=cocart_products_variable_empty_price&type=code)

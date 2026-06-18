@@ -1,0 +1,88 @@
+---
+title: "Integrations"
+sidebarTitle: "Overview"
+description: "Built-in integrations that extend CoCart to work with other plugins and services."
+---
+
+CoCart includes built-in integrations for popular WordPress and WooCommerce plugins. Each integration ensures that CoCart's headless session layer works correctly alongside the third-party plugin — without requiring manual configuration of hooks or session handlers.
+
+## Enabling integrations
+
+![Integrations](/assets/integrations.jpg)
+
+Integrations are managed in your WordPress dashboard admin under **CoCart → Integrations**.
+
+Each integration displays its current status:
+
+- **Enabled** — the third-party plugin is installed and the integration is active.
+- **Plugin is not installed** — the integration is available but the required plugin is not detected.
+- **Coming soon** — the integration is not yet available but in the works.
+
+Integrations activate automatically when the required plugin is installed and active. You can toggle individual integrations on or off without deactivating the plugin.
+
+<Note>
+  Some integrations require **CoCart Plus**. If an integration is marked as requiring CoCart Plus, you will need an active CoCart Plus license for the integration to function — installing the third-party plugin alone is not enough.
+</Note>
+
+## Other compatible integrations
+
+Some integrations don't require anything other than to be enabled, no additional API information provided, no additional configuration. They are listed here for reference.
+
+| Integration | Product | Since |
+|---|---|---|
+| Advanced Shipping Packages | [Link](https://woocommerce.com/products/advanced-shipping-packages/) | CoCart Community v3.0.0 |
+| Free Gift Coupons | [Link](https://woocommerce.com/products/free-gift-coupons/) | CoCart Community v3.0.0 |
+| LiteSpeed Cache | [Link](https://wordpress.org/plugins/litespeed-cache/) | CoCart Community v4.4.0 |
+| TaxJar | [Link](https://wordpress.org/plugins/taxjar-simplified-taxes-for-woocommerce/) | CoCart Community v3.0.0 |
+
+## Incompatible plugins
+
+Most plugins that extend the frontend of WooCommerce should work out the box. However, those extensions that add or alter methods of applying data may not be 100% supported with CoCart.
+
+These plugins in particular are not compatible with CoCart. If installed, they will cause issues with getting a valid response when using the REST API.
+
+Next to each listed plugin is the reason for incompatibility.
+
+| Plugin Name | Product Page | Incompatible Reason        |
+| ----------- | ------------ | -------------------------- |
+| Smart Coupons For WooCommerce Coupons | [Link](https://wordpress.org/plugins/wt-smart-coupons-for-woocommerce/) | Prevents coupons from being applied to the cart. |
+
+## Performance mode
+
+<Note>Available in **CoCart Starter** since v5.0.0.</Note>
+
+Performance mode reduces the number of plugins that load on every CoCart REST API request. Instead of booting your entire WordPress plugin stack, only the plugins that are actually needed for the API to function are loaded — everything else is skipped.
+
+Enable it from **CoCart → Integrations** in your WordPress admin. Look for the **Performance** toggle.
+
+### How it works
+
+When a request arrives at a CoCart REST endpoint, Performance mode filters the active plugin list before `plugins_loaded` fires. Only the following are allowed through:
+
+- **WooCommerce** and any plugin in the `woocommerce-*` folder
+- **CoCart Starter** and any plugin in the `cocart-*` folder
+- Any **third-party plugin whose integration is enabled** in CoCart → Integrations
+
+All other plugins are skipped for the duration of that request. WP-Cron spawning is also disabled on API requests by default to avoid unnecessary background processing.
+
+## Developer filters
+
+Use the following filters to customize which plugins load during CoCart REST requests:
+
+| Filter | Purpose |
+|--------|---------|
+| [`cocart_request_allowed_plugins`](/developers/filters#cocart_request_allowed_plugins) | Add plugins to the safelist |
+| [`cocart_request_blocked_plugins`](/developers/filters#cocart_request_blocked_plugins) | Block specific plugins from loading |
+| [`cocart_disable_wp_cron_on_request`](/developers/filters#cocart_disable_wp_cron_on_request) | Control WP-Cron behavior on API requests |
+
+## Good Plugins
+
+These third-party plugins work well with CoCart or don't interfere with the REST API. They dont require any special integration to work with CoCart, but they are still worth mentioning.
+
+* [Yoast SEO](https://wordpress.org/plugins/wordpress-seo/) is a powerful SEO plugin that helps you optimize your website for search engines.
+* [Atlas Content Modeler](https://wordpress.org/plugins/atlas-content-modeler/) allows you to create and manage custom post types and fields in your store.
+* [WP Mail SMTP](https://wordpress.org/plugins/wp-mail-smtp/) allows you to send emails from your WordPress site.
+* [Imagify](https://imagify.io/) allows you to optimize your images and convert them to WebP format.
+* [Redirection](https://wordpress.org/plugins/redirection/) allows you to manage your redirects in your store.
+* [Safe SVG](https://wordpress.org/plugins/safe-svg/) allows you to safely use SVG images in your store.
+* [Contact Form 7](https://wordpress.org/plugins/contact-form-7/) allows you to create and manage contact forms in your store.

@@ -1,0 +1,290 @@
+---
+title: "TypeScript SDK: Hono Adapter"
+sidebarTitle: "Hono"
+description: "Use the CoCart TypeScript SDK with Hono — server-side route handlers and middleware for WooCommerce cart management."
+'og:title': "Using CoCart with Hono — Headless WooCommerce Guide"
+'og:description': "Add WooCommerce cart management to your Hono app with CoCart. Server-side route handlers, middleware, and TypeScript support."
+---
+
+<Info>
+  This guide was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 27th, 2026.
+</Info>
+
+The Hono adapter provides a CoCart client for building WooCommerce API backends with [Hono](https://hono.dev/). Hono is a lightweight web framework that runs on edge runtimes (Cloudflare Workers, Deno, Bun) and Node.js. The adapter reads cart keys from incoming request headers via the Hono context.
+
+## How It Works
+
+1. **Client Request**: The frontend sends an `X-Cart-Key` header with each request to identify the cart.
+2. **Hono Context**: The adapter reads the `X-Cart-Key` header from the Hono `Context` object (`c.req.header('X-Cart-Key')`).
+3. **Server Client**: Route handlers use the server client to interact with the WooCommerce store on behalf of the visitor.
+
+Hono is typically used as a backend or API server — it receives requests from a separate frontend (React, Vue, mobile app, etc.) and proxies them to WooCommerce through CoCart.
+
+## Server Client
+
+Create a CoCart client inside a route handler. The cart key is read from the incoming request's `X-Cart-Key` header:
+
+```ts
+import { Hono } from 'hono';
+import { createServerClient } from '@cocartheadless/sdk/hono';
+
+const app = new Hono();
+
+app.get('/cart', async (c) => {
+  const client = createServerClient('https://your-store.com', c);
+  const cart = await client.cart().get();
+  return c.json(cart.toObject());
+});
+```
+
+### With Authentication
+
+To access a logged-in customer's cart, pass their credentials via Basic Auth:
+
+```ts
+const client = createServerClient('https://your-store.com', c, {
+  username: 'customer@email.com',
+  password: 'customer_password',
+});
+```
+
+## Route Examples
+
+```ts
+// Get cart
+app.get('/api/cart', async (c) => {
+  const client = createServerClient('https://your-store.com', c);
+  const cart = await client.cart().get();
+  return c.json(cart.toObject());
+});
+
+// Add to cart
+app.post('/api/cart/add', async (c) => {
+  const client = createServerClient('https://your-store.com', c);
+  const { productId, quantity } = await c.req.json();
+
+  try {
+    const response = await client.cart().addItem(productId, { quantity });
+    return c.json(response.toObject());
+  } catch (e) {
+    return c.json({ error: (e as Error).message }, 400);
+  }
+});
+
+// Remove from cart
+app.delete('/api/cart/:itemKey', async (c) => {
+  const client = createServerClient('https://your-store.com', c);
+  const itemKey = c.req.param('itemKey');
+  const response = await client.cart().removeItem(itemKey);
+  return c.json(response.toObject());
+});
+
+// List products
+app.get('/api/products', async (c) => {
+  const client = createServerClient('https://your-store.com', c);
+  const products = await client.products().list({ per_page: 12 });
+  return c.json(products.toObject());
+});
+```
+
+## Middleware
+
+Create a reusable middleware to inject the CoCart client into every route:
+
+```ts
+import { createMiddleware } from 'hono/factory';
+import { createServerClient } from '@cocartheadless/sdk/hono';
+
+const cocartMiddleware = createMiddleware(async (c, next) => {
+  const client = createServerClient(c.env.COCART_STORE_URL, c);
+  c.set('cocart', client);
+  await next();
+});
+
+app.use('/api/*', cocartMiddleware);
+
+app.get('/api/cart', async (c) => {
+  const client = c.get('cocart');
+  const cart = await client.cart().get();
+  return c.json(cart.toObject());
+});
+```
+
+## Full Example
+
+A complete Hono app with cart CRUD routes, a products endpoint, and error handling:
+
+```ts
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
+import { createMiddleware } from 'hono/factory';
+import { createServerClient } from '@cocartheadless/sdk/hono';
+
+type Bindings = {
+  COCART_STORE_URL: string;
+};
+
+const app = new Hono<{ Bindings: Bindings }>();
+
+// Enable CORS for frontend requests
+app.use('/*', cors());
+
+// Inject CoCart client into all /api routes
+const cocartMiddleware = createMiddleware(async (c, next) => {
+  const client = createServerClient(c.env.COCART_STORE_URL, c);
+  c.set('cocart', client);
+  await next();
+});
+
+app.use('/api/*', cocartMiddleware);
+
+// Get cart
+app.get('/api/cart', async (c) => {
+  const client = c.get('cocart');
+  const cart = await client.cart().get();
+  return c.json(cart.toObject());
+});
+
+// Add item to cart
+app.post('/api/cart/add', async (c) => {
+  const client = c.get('cocart');
+  const { productId, quantity } = await c.req.json();
+
+  try {
+    const response = await client.cart().addItem(productId, { quantity });
+    return c.json(response.toObject());
+  } catch (e) {
+    return c.json({ error: (e as Error).message }, 400);
+  }
+});
+
+// Update item quantity
+app.patch('/api/cart/:itemKey', async (c) => {
+  const client = c.get('cocart');
+  const itemKey = c.req.param('itemKey');
+  const { quantity } = await c.req.json();
+
+  try {
+    const response = await client.cart().updateItem(itemKey, { quantity });
+    return c.json(response.toObject());
+  } catch (e) {
+    return c.json({ error: (e as Error).message }, 400);
+  }
+});
+
+// Remove item from cart
+app.delete('/api/cart/:itemKey', async (c) => {
+  const client = c.get('cocart');
+  const itemKey = c.req.param('itemKey');
+
+  try {
+    const response = await client.cart().removeItem(itemKey);
+    return c.json(response.toObject());
+  } catch (e) {
+    return c.json({ error: (e as Error).message }, 400);
+  }
+});
+
+// Clear cart
+app.delete('/api/cart', async (c) => {
+  const client = c.get('cocart');
+
+  try {
+    const response = await client.cart().clear();
+    return c.json(response.toObject());
+  } catch (e) {
+    return c.json({ error: (e as Error).message }, 400);
+  }
+});
+
+// List products
+app.get('/api/products', async (c) => {
+  const client = c.get('cocart');
+  const products = await client.products().list({ per_page: 12 });
+  return c.json(products.toObject());
+});
+
+export default app;
+```
+
+## Deployment
+
+Hono deploys to multiple runtimes. The way you access environment variables differs by platform:
+
+**Cloudflare Workers** — variables are bound to `c.env`:
+
+```ts
+const storeUrl = c.env.COCART_STORE_URL;
+```
+
+**Node.js** — variables come from `process.env`:
+
+```ts
+const storeUrl = process.env.COCART_STORE_URL!;
+```
+
+**Deno** — variables come from `Deno.env`:
+
+```ts
+const storeUrl = Deno.env.get('COCART_STORE_URL')!;
+```
+
+## Environment Variables
+
+### Cloudflare Workers
+
+Add secrets using `wrangler`:
+
+```bash
+npx wrangler secret put COCART_STORE_URL
+```
+
+Or define them in `wrangler.toml` for non-sensitive values:
+
+```toml
+[vars]
+COCART_STORE_URL = "https://your-store.com"
+```
+
+### Node.js
+
+```bash
+# .env
+COCART_STORE_URL=https://your-store.com
+```
+
+### Deno
+
+```bash
+# .env
+COCART_STORE_URL=https://your-store.com
+```
+
+Access with `Deno.env.get('COCART_STORE_URL')`.
+
+## Browser Client
+
+If you serve a frontend alongside your Hono API (for example, using [htmx](https://htmx.org/) or static HTML), `createBrowserClient` and `attachCartKeyHeader` are available for client-side cart key management:
+
+```ts
+import { createBrowserClient, attachCartKeyHeader } from '@cocartheadless/sdk/hono';
+
+const client = createBrowserClient('https://your-store.com', {
+  encryptionKey: 'your-secret-encryption-key',
+});
+
+await client.restoreSession();
+attachCartKeyHeader(client);
+```
+
+This patches `globalThis.fetch` so that every same-origin request includes the `X-Cart-Key` header automatically.
+
+## How `attachCartKeyHeader` Works
+
+`attachCartKeyHeader()` wraps `globalThis.fetch` so that every same-origin request automatically includes an `X-Cart-Key` header with the current cart key:
+
+- Hono route handlers receive the cart key without cookies
+- Cross-origin requests are never modified
+- If no cart key is set, no header is added
+
+Call it once after creating the browser client and restoring the session.

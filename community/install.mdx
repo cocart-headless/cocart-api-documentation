@@ -1,0 +1,85 @@
+---
+title: "Install CoCart Community"
+description: "Install CoCart Community edition from WordPress.org"
+robots: "noindex, follow"
+---
+
+### Before you start
+
+It's important that your [server requirements](https://woocommerce.com/document/server-requirements/) meet the minimum that WooCommerce ask for in order to run CoCart.
+
+If you already have WooCommerce installed and your store filled with products ready to sell. Congrats, you meet the requirements to install CoCart and can now start decoupling.
+
+### Install from WordPress.org
+
+The easiest way to install CoCart Community is directly from your WordPress dashboard.
+
+Log in to your WordPress dashboard, navigate to the **Plugins** menu and press **Add New Plugin**. Search for "CoCart" and press **Install Now** next to CoCart in the results.
+
+Once the plugin is installed, press **Activate Plugin**.
+
+<Card title="Activate CoCart" img="https://cocartapi.com/wp-content/uploads/2023/11/image-1.png">
+</Card>
+
+Alternatively, you can install CoCart Community using the WP-CLI command:
+
+```bash
+wp plugin install cart-rest-api-for-woocommerce --activate
+```
+
+You can also [download CoCart Community directly from WordPress.org](https://wordpress.org/plugins/cart-rest-api-for-woocommerce/) and follow the upload or FTP install instructions below.
+
+### Upload Install
+
+Once you have the plugin downloaded from [WordPress.org](https://wordpress.org/plugins/cart-rest-api-for-woocommerce/), log in to your WordPress dashboard, navigate to the **Plugins** menu and press **Add New**. Then press **Upload Plugin**.
+
+You will either be redirected to a new page or the upload field will simply appear at the top allowing you to upload the plugin. Once the file is selected, press **Install Now**.
+
+<Card title="Upload Plugin" img="https://cocartapi.com/wp-content/uploads/2023/11/image.png">
+</Card>
+
+Once the plugin is installed, press **Activate Plugin**.
+
+<Card title="Activate CoCart" img="https://cocartapi.com/wp-content/uploads/2023/11/image-1.png">
+</Card>
+
+### Install via FTP
+
+Download CoCart Community from [WordPress.org](https://wordpress.org/plugins/cart-rest-api-for-woocommerce/).
+
+Open your FTP program of choice and login to your FTP server. Access where your WordPress plugins folder is stored and upload the folder of the plugin that is in the zip file and put it in the plugins directory.
+
+Now log in to your WordPress dashboard, navigate to the **Plugins** menu and press **Activate** where CoCart is listed.
+
+<Card title="Upload Plugin" img="https://cocartapi.com/wp-content/uploads/2023/11/image-4.png">
+</Card>
+
+## Prerequisites
+
+Before using CoCart, ensure your WordPress permalinks are configured to any setting except "Plain". This configuration is essential for accessing the REST API using standard endpoint URIs (e.g. `cocart/v2/products`).
+
+Configure this under **Settings > Permalinks**.
+
+<Card title="Permalink Settings" img="https://cocartapi.com/wp-content/uploads/2023/11/image-3.png">
+</Card>
+
+With these settings in place, you're ready to begin using CoCart.
+
+## WooCommerce Dependency
+
+CoCart requires an active WooCommerce installation to function. If WooCommerce is not installed or is deactivated, CoCart will automatically disable itself during activation to prevent technical issues.
+
+You'll see a prompt to install or activate WooCommerce if needed.
+
+<Card title="Admin notice requesting WooCommerce" img="https://cocartapi.com/wp-content/uploads/2023/11/image-2.png">
+</Card>
+
+## Install via Composer
+
+You can also install CoCart Community and its companion plugins using [Composer](/getting-started/composer). This is ideal for managed WordPress setups or CI/CD workflows.
+
+```bash
+composer require wp-plugin/cart-rest-api-for-woocommerce
+```
+
+See the [Composer installation guide](/getting-started/composer) for full setup instructions.

@@ -1,0 +1,122 @@
+---
+title: "WooCommerce Product Bundles"
+sidebarTitle: "Product Bundles"
+description: "Nest bundled child items under their container in cart responses and expose bundle configuration on product responses."
+tag: "In Testing"
+robots: "noindex, follow"
+---
+
+<Info>
+  This feature documentation was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 28th, 2026.
+</Info>
+
+[WooCommerce Product Bundles](https://woocommerce.com/products/product-bundles/) lets you sell curated sets of products together, optionally with per-item pricing, discounts, and optional items. The CoCart Plus integration restructures the cart response so bundled child items are nested under their container, and exposes bundle configuration on product responses for form rendering.
+
+<Info>
+  This integration is available in CoCart Plus since <Tooltip tip="This is the version of CoCart Plus">v2.0.0</Tooltip> and requires WooCommerce Product Bundles to be installed and active.
+</Info>
+
+## Product response
+
+Bundle products receive a `bundle_data` object in their `extensions` key.
+
+```json Example (product extensions excerpt)
+{
+  "extensions": {
+    "bundle_data": {
+      "layout": "default",
+      "items": [
+        {
+          "id": 15,
+          "optional": false,
+          "quantity": { "value": 1, "minimum": 1, "maximum": 1 },
+          "priced_individually": true,
+          "discount": 10
+        },
+        {
+          "id": 22,
+          "optional": true,
+          "quantity": { "value": 0, "minimum": 0, "maximum": 2 },
+          "priced_individually": true,
+          "discount": null
+        }
+      ]
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `layout` | `string` | Bundle layout mode (e.g. `default`, `tabular`, `grid`). |
+| `items` | `array` | Bundled item definitions for form rendering. |
+
+### Bundled item fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `integer` | Bundled product ID. |
+| `optional` | `boolean` | Whether the customer can skip this item. |
+| `quantity.value` | `integer` | Default quantity. |
+| `quantity.minimum` | `integer` | Minimum quantity allowed. |
+| `quantity.maximum` | `integer` \| `null` | Maximum quantity allowed, or `null` if unlimited. |
+| `priced_individually` | `boolean` | Whether this item is priced individually. |
+| `discount` | `number` \| `null` | Percentage discount applied to this item, or `null` if none. |
+
+## Cart response
+
+Child items are removed from the top-level `items` list and placed under their container item's `extensions.bundle_data.child_items` array.
+
+```json Example (cart item extensions excerpt for container)
+{
+  "extensions": {
+    "bundle_data": {
+      "items": {
+        "1": {
+          "id": 15,
+          "quantity": { "value": 1, "minimum": 1, "maximum": 1 },
+          "variation": {},
+          "discount": 10,
+          "optional_selected": true
+        }
+      },
+      "child_items": [
+        {
+          "item_key": "def456ghi789",
+          "bundled_item_id": 1,
+          "id": 15,
+          "name": "Artisan Coffee Beans",
+          "quantity": { "value": 1, "minimum": 1, "maximum": 1 },
+          "price": "800",
+          "variation": {}
+        }
+      ],
+      "child_item_keys": ["def456ghi789"]
+    }
+  }
+}
+```
+
+### `bundle_data` cart fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `items` | `object` | Normalised bundle stamp keyed by bundled item ID. |
+| `child_items` | `array` | Summary of nested child items. |
+| `child_item_keys` | `array` | Cart item keys of all bundled child items. |
+
+### Child item summary fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `item_key` | `string` | Cart item key of the child item. |
+| `bundled_item_id` | `integer` | Internal bundle definition ID for this child. |
+| `id` | `integer` | Product or variation ID. |
+| `name` | `string` | Product name. |
+| `quantity` | `object` | Quantity value, minimum, and maximum. |
+| `price` | `string` | Unit price in the store's smallest currency unit. |
+| `variation` | `object` | Selected variation attributes. |
+
+<Tip>
+  Use `child_item_keys` to identify which cart items belong to the bundle container. Child items are still returned in the cart `items` object — they are only also referenced under the container for convenience.
+</Tip>

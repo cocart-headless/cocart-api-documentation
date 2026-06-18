@@ -1,0 +1,209 @@
+---
+title: "Load Cart"
+description: "Learn to load a cart session securely into your web store"
+icon: "arrow-right-arrow-left"
+tag: "Updated"
+---
+
+<Note>
+  This page covers both **CoCart Community** and **CoCart Starter**. Choose the tab that matches your CoCart installation.
+</Note>
+
+<Info>
+    This feature is not part of the REST API. Do not treat it as such!
+</Info>
+
+This feature is designed to load a customer's cart over to the web version of your store, so they can continue shopping or check out what they added via your headless application — without exposing login details.
+
+It's handy if you have not yet integrated a payment gateway like _Stripe_ to handle the headless checkout.
+
+## Version Differences Overview
+
+<Tabs>
+  <Tab title="CoCart Community">
+    - Supports **guest customers only** — carts belonging to registered users cannot be loaded
+    - Uses `cocart-load-cart`, `notify`, and `keep-cart` query parameters
+    - By default the loaded cart **replaces** any existing web cart; pass `keep-cart=true` to merge instead
+    - Only cart data is transferred — customer details are **not transferred**
+  </Tab>
+
+  <Tab title="CoCart Starter">
+    - Supports both **guest and registered customers**
+    - Uses only `cocart-load-cart` and `c_hash` — the `notify` and `keep-cart` parameters were removed
+    - The cart hash validates the session and prevents unauthorized access
+    - Registered customers are logged in automatically and redirected to checkout
+  </Tab>
+</Tabs>
+
+## Query properties
+
+<Tabs>
+  <Tab title="CoCart Community">
+    | Query              | Type   | Description                                                                                            |
+    | ------------------ | ------ | ------------------------------------------------------------------------------------------------------ |
+    | `cocart-load-cart` | string | The cart key of the cart you wish to load. **Required**                                                |
+    | `notify`           | bool   | Set to `true` to show the customer a success notice with links to the shop and checkout. Default: `false` |
+    | `keep-cart`        | bool   | Set to `true` to merge the loaded cart with any existing web cart. Default: `false` (replaces the cart) |
+
+    To load the cart, append the query parameters to any page URL you want the customer to land on. The cart loads in the background.
+
+    ```
+    https://example-store.com/checkout/?cocart-load-cart=bbfa8e97ac9cff4c861d62a109e83bb6
+    ```
+
+    <Note>
+        When merging carts (`keep-cart=true`): if the same item already exists in the web cart, it will **not** change quantity. Items are merged by cart item key, so duplicates are left as-is.
+    </Note>
+
+    <Warning>
+        Only guest carts can be loaded. If the cart key matches a registered user's ID, the load will be rejected. Enable `WP_DEBUG` to see the reason in the error log.
+    </Warning>
+  </Tab>
+
+  <Tab title="CoCart Starter">
+    <Warning>
+        This version requires **CoCart Starter v5 or above**. If you previously used this feature with CoCart Community, it will break — the `notify` and `keep-cart` parameters no longer exist and the URL format has changed.
+    </Warning>
+
+    | Query              | Type   | Description                                                                                    |
+    | ------------------ | ------ | ---------------------------------------------------------------------------------------------- |
+    | `cocart-load-cart` | string | The cart key of the cart you wish to load. **Required**                                        |
+    | `c_hash`           | string | The cart hash representing the last data change of the cart. **Required**                      |
+
+    To load the cart, append both parameters to any page URL you want the customer to land on.
+
+    ```
+    https://your.store/checkout/?cocart-load-cart={cart_key}&c_hash={cart_hash}
+    ```
+
+    If the hash does not match the stored cart, the customer is redirected to the home page. If the hash is valid, the cart loads and the customer lands on the page they were sent to — or, for registered users, they are redirected to checkout automatically.
+  </Tab>
+</Tabs>
+
+## Developer hooks
+
+Both versions fire the same action after a cart is successfully loaded:
+
+```php
+do_action( 'cocart_cart_loaded', $cart_key );
+```
+
+Use it to trigger a webhook, log an event, or run any post-load logic.
+
+<Tabs>
+  <Tab title="CoCart Community">
+    **Customize the notify message**
+
+    When `notify=true`, a success notice is shown to the customer. Customize it with:
+
+    ```php
+    add_filter( 'cocart_cart_loaded_successful_message', function( $message ) {
+        return 'Your cart is ready! <a href="' . wc_get_checkout_url() . '">Proceed to checkout</a>.';
+    });
+    ```
+
+    **Customize merged cart contents**
+
+    When merging carts (`keep-cart=true`), you can adjust the resulting items:
+
+    ```php
+    add_filter( 'cocart_merge_cart_content', function( $merged, $new_cart, $cart_in_session ) {
+        // $merged = array_merge( $new_cart, $cart_in_session )
+        // Modify and return $merged as needed.
+        return $merged;
+    }, 10, 3 );
+    ```
+
+    **Run logic after the merge, before session is saved**
+
+    ```php
+    add_action( 'cocart_load_cart', function( $new_cart, $requested_cart, $cart_in_session ) {
+        // Fires only when keep-cart=true (merging).
+    }, 10, 3 );
+    ```
+  </Tab>
+
+  <Tab title="CoCart Starter">
+    **Change the redirect destination when a cart fails to load**
+
+    If the cart hash is missing or does not match, the customer is redirected to the home page by default:
+
+    ```php
+    add_filter( 'cocart_load_cart_redirect_home', function() {
+        return 'https://your.store/shop'; // Send to shop page instead.
+    });
+    ```
+  </Tab>
+</Tabs>
+
+### FAQ
+
+<Tabs>
+  <Tab title="CoCart Community">
+    <AccordionGroup>
+        <Accordion title="What happens if the cart does not load?">
+        The two most common causes are:
+
+        1. The cart key is incorrect or belongs to a registered user (only guest carts can be loaded).
+        2. The cart session has expired and no longer exists in the database.
+
+        Enable `WP_DEBUG` in `wp-config.php` to see the specific reason in the error log:
+
+        ```php
+        define( 'WP_DEBUG', true );
+        define( 'WP_DEBUG_LOG', true );
+        ```
+        </Accordion>
+
+        <Accordion title="I want to change the query name">
+        ```php
+        add_filter( 'cocart_load_cart_query_name', function() {
+            return 'my-cart'; // Replace cocart-load-cart with your custom name.
+        });
+        ```
+        </Accordion>
+
+        <Accordion title="I want this feature disabled">
+        ```php
+        add_filter( 'cocart_disable_load_cart', function() {
+            return true;
+        });
+        ```
+        </Accordion>
+    </AccordionGroup>
+  </Tab>
+
+  <Tab title="CoCart Starter">
+    <AccordionGroup>
+        <Accordion title="How does a registered customer load their cart without logging in?">
+        The `c_hash` parameter acts as a secure token. CoCart validates it against the stored cart hash for that user ID. If they match, the customer is automatically logged in (via `wp_set_auth_cookie`) and redirected to checkout — no password entry required.
+
+        <Note>
+            If a **different** user is already logged in on the same device, they are logged out first before the new session is set.
+        </Note>
+        </Accordion>
+
+        <Accordion title="What happens if the cart fails to load?">
+        If `c_hash` is missing or does not match the stored cart hash, the customer is redirected to the home page. You can change that destination with the `cocart_load_cart_redirect_home` filter — see [Developer hooks](#developer-hooks) above.
+        </Accordion>
+
+        <Accordion title="I want to change the query name">
+        ```php
+        add_filter( 'cocart_load_cart_query_name', function() {
+            return 'my-cart'; // Replace cocart-load-cart with your custom name.
+        });
+        ```
+        </Accordion>
+
+        <Accordion title="I want this feature disabled">
+        You can disable this feature from the CoCart settings page in the WordPress admin. The filter below takes priority over the settings page if you need to enforce it programmatically:
+
+        ```php
+        add_filter( 'cocart_disable_load_cart', function() {
+            return true;
+        });
+        ```
+        </Accordion>
+    </AccordionGroup>
+  </Tab>
+</Tabs>

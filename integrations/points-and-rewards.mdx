@@ -1,0 +1,90 @@
+---
+title: "WooCommerce Points and Rewards"
+sidebarTitle: "Points and Rewards"
+description: "Expose points earning and redemption data on products, cart, and orders in the CoCart API."
+tag: "In Testing"
+robots: "noindex, follow"
+---
+
+<Info>
+  This feature documentation was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 28th, 2026.
+</Info>
+
+[WooCommerce Points and Rewards](https://woocommerce.com/products/woocommerce-points-and-rewards/) lets customers earn points for purchases and redeem them for discounts. The CoCart Plus integration surfaces points data across products, the cart, and order responses so headless storefronts can show earning messages, balances, and redemption options.
+
+<Info>
+  This integration is available in CoCart Plus since <Tooltip tip="This is the version of CoCart Plus">v2.0.0</Tooltip> and requires WooCommerce Points and Rewards to be installed and active.
+</Info>
+
+## Product response
+
+Every product response includes a `points_and_rewards` object in its `extensions` key.
+
+```json Example (product extensions excerpt)
+{
+  "extensions": {
+    "points_and_rewards": {
+      "points_earned": 10,
+      "max_discount": "500"
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `points_earned` | `integer` | Number of points earned when purchasing this product. |
+| `max_discount` | `string` | Maximum discount redeemable on this product (smallest currency unit). Empty string when no limit is set. |
+
+## Cart response
+
+The cart `extensions` key includes a `points_and_rewards` object with the customer's current balance, points they will earn on checkout, and any active redemption coupon.
+
+```json Example (cart extensions excerpt)
+{
+  "extensions": {
+    "points_and_rewards": {
+      "points_balance": 250,
+      "points_to_earn": 32,
+      "redemption_coupon": "wc_points_redemption_abc123"
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `points_balance` | `integer` | Customer's current available points balance. `0` for guests. |
+| `points_to_earn` | `integer` | Points the customer will earn if they complete the current order. |
+| `redemption_coupon` | `string` | Coupon code for the active points redemption discount. Empty string if none is applied. |
+
+## Applying a redemption coupon
+
+Points redemption is initiated by applying the redemption coupon code to the cart. Generate the code through the WooCommerce Points and Rewards plugin settings or your own redemption logic, then apply it via the CoCart apply-coupon endpoint.
+
+```bash cURL
+curl -X POST https://your-store.com/wp-json/cocart/v2/cart/apply-coupon \
+  -H "Content-Type: application/json" \
+  -H "Cart-Key: <cart-key>" \
+  -d '{"code": "wc_points_redemption_abc123"}'
+```
+
+Once applied, `redemption_coupon` in the cart response will reflect the active code.
+
+## Order response
+
+After checkout, the order response includes a `points_and_rewards` object showing the final points activity for that order.
+
+```json Example (order response excerpt)
+{
+  "points_and_rewards": {
+    "points_earned": 32,
+    "points_redeemed": 100
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `points_earned` | `integer` | Points awarded to the customer for this order. |
+| `points_redeemed` | `integer` | Points the customer redeemed as a discount on this order. |

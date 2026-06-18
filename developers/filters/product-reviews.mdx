@@ -1,0 +1,180 @@
+---
+title: "Product Reviews Filters"
+sidebarTitle: "Product Reviews"
+description: "PHP filters for product review fields, insertion, processing, and schema."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Filters Reference overview](/developers/filters) for the full plugin key index and all filter categories.
+</Tip>
+
+### `cocart_pre_insert_product_review`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters a review before it is inserted via the REST API. Allows modification of the review right before it is inserted via `wp_insert_comment()`. Returning a _WP_Error_ value from the filter will short circuit insertion and allow skipping further processing.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="prepared_review" type="array|WP_Error">
+  The prepared review data for `wp_insert_comment()`.
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  Full details about the request.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_pre_insert_product_review', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_pre_insert_product_review` in repository](https://github.com/co-cart/co-cart/search?q=cocart_pre_insert_product_review&type=code)
+
+---
+
+### `cocart_prepare_product_review`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter product reviews object returned from the REST API.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="response" type="WP_REST_Response">
+  The response object.
+</ParamField>
+
+<ParamField query="review" type="WP_Comment">
+  Product review object used to create response.
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_prepare_product_review', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_prepare_product_review` in repository](https://github.com/co-cart/co-cart/search?q=cocart_prepare_product_review&type=code)
+
+---
+
+### `cocart_preprocess_product_review`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters a review after it is prepared for the database. Allows modification of the review right after it is prepared for the database.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="prepared_review" type="array">
+  The prepared review data for `wp_insert_comment`.
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_preprocess_product_review', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_preprocess_product_review` in repository](https://github.com/co-cart/co-cart/search?q=cocart_preprocess_product_review&type=code)
+
+---
+
+### `cocart_product_insert_review_status`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filter allows you to change the default status for new product reviews submitted via the API. By default, reviews are set to `hold` for moderation.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="status" type="string">
+  Review status. Default: `hold`. Only `approved` is accepted as an alternative — any other value resets to `hold`.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_product_insert_review_status', function( $status ) {
+    // Auto-approve reviews (use with caution)
+    return 'approved';
+} );
+```
+
+---
+
+### `cocart_product_review_collection_params`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter collection parameters for the reviews controller. This filter registers the collection parameter, but does not map the collection parameter to an internal _WP_Comment_Query_ parameter. Use the `cocart_product_review_query` filter to set _WP_Comment_Query_ parameters.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="params" type="array">
+  JSON Schema-formatted collection parameters.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_product_review_collection_params', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_product_review_collection_params` in repository](https://github.com/co-cart/co-cart/search?q=cocart_product_review_collection_params&type=code)
+
+---
+
+### `cocart_product_review_query`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters arguments, before passing to WP_Comment_Query, when querying reviews via the REST API.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="prepared_args" type="array">
+  Array of arguments for _WP_Comment_Query_.
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  The request object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_product_review_query', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_product_review_query` in repository](https://github.com/co-cart/co-cart/search?q=cocart_product_review_query&type=code)

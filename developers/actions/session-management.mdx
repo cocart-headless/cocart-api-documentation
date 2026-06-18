@@ -1,0 +1,141 @@
+---
+title: "Session Management Hooks"
+sidebarTitle: "Session Management"
+description: "Action hooks for CoCart session events — fires when session data is saved, carts are loaded, and sessions are set for specific cart keys."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Action Hooks overview](/developers/actions) for all hook categories and the [Developer Reference](/developers) for the plugin key index.
+</Tip>
+
+### `cocart_after_session_saved_data`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Fires after session data is saved.
+
+<Note>Made available since v4.2.0</Note>
+
+**Parameters**
+
+<ParamField path="customer_id" type="int">
+  Customer ID.
+</ParamField>
+
+<ParamField path="data" type="array">
+  Cart data.
+</ParamField>
+
+<ParamField path="cart_expiration" type="int">
+  Cart expiration.
+</ParamField>
+
+<ParamField path="cart_source" type="string">
+  Cart source.
+</ParamField>
+
+**Usage**
+```php
+add_action( 'cocart_after_session_saved_data', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_after_session_saved_data` in repository](https://github.com/co-cart/co-cart/search?q=cocart_after_session_saved_data&type=code)
+
+---
+
+### `cocart_load_cart_override`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Manipulate the overriding cart before it is set in session.
+
+<Note>Made available since v2.1.0</Note>
+
+<Warning>**Deprecated:** v4.6.4 — This action hook is no longer used.</Warning>
+
+**Usage**
+```php
+add_action( 'cocart_load_cart_override', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_load_cart_override` in repository](https://github.com/co-cart/co-cart/search?q=cocart_load_cart_override&type=code)
+
+---
+
+### `cocart_load_cart`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Manipulate the merged cart before it is set in session.
+
+<Note>Made available since v2.1.0</Note>
+
+**Usage**
+```php
+add_action( 'cocart_load_cart', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_load_cart` in repository](https://github.com/co-cart/co-cart/search?q=cocart_load_cart&type=code)
+
+---
+
+### `cocart_cart_loaded`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Fires once a cart has loaded. Can be used to trigger a webhook.
+
+<Note>Made available since v3.8.0</Note>
+
+**Parameters**
+
+<ParamField path="cart_key" type="string">
+  The cart key.
+</ParamField>
+
+**Usage**
+```php
+add_action( 'cocart_cart_loaded', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_cart_loaded` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cart_loaded&type=code)
+
+---
+
+### `cocart_set_requested_cart`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Fires before the session is finally set for the requested cart. Use this to perform actions or validations just before a specific cart session is loaded.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField path="cart_key" type="string">
+  The cart key being requested.
+</ParamField>
+
+<ParamField path="request" type="WP_REST_Request">
+  The current REST API request.
+</ParamField>
+
+**Usage**
+```php
+add_action( 'cocart_set_requested_cart', function( $cart_key, $request ) {
+    // Log which cart is being loaded
+    error_log( sprintf( 'Loading cart session: %s', $cart_key ) );
+}, 10, 2 );
+```

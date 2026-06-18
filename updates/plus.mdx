@@ -14,6 +14,30 @@ Stay up to date with the latest releases and improvements to CoCart Plus. Each u
 
 ---
 
+<Update label="June 15, 2026" description="v1.6.0">
+
+## Coupons on Add, Rate Limiting in Config & Polar Licensing
+
+<Warning>
+  PHP 8.2 is now the minimum required version. PHP 7.4, 8.0, and 8.1 have all reached end-of-life and are no longer tested. Upgrading to PHP 8.2 not only keeps your store secure but also improves API performance.
+</Warning>
+
+You can now apply a coupon to the cart at the same time as adding an item — one less request for your frontend. The global rate limit can also now be configured directly in `wp-config.php` rather than through the dashboard. See the [Rate Limiting guide](/rate-limiting) for details.
+
+License key activation has been updated to support customers exclusively via [Polar](https://polar.sh). WordPress updates can now be temporarily paused for a set period — useful for locking your environment during critical sale periods — and translation updates are now delivered automatically.
+
+Advanced Custom Fields (ACF) field values are now returned for all products in the Products API.
+
+**Bug fix:** Updating a customer's shipping country, postcode, or phone would silently revert to the previous value when the new input wasn't valid. This now surfaces a proper error response.
+
+**Plugin:** CoCart branding and admin page styling have been refreshed for a more consistent look across WordPress and WooCommerce pages.
+
+**Two-Factor Authentication:** 2FA is now supported during login. Requires CoCart Community v4.8+. [See documentation →](/integrations/two-factor-authentication)
+
+**Compatibility:** WordPress v7.0, WooCommerce v10.8. CoCart v4.6 minimum is now required for future updates.
+
+</Update>
+
 <Update label="August 15, 2024" description="v1.5.4">
 
 ## Admin Notice & Totals Calculation Fix
@@ -62,7 +86,7 @@ Fixed an undefined index error for `ship_to_different_address` that could appear
 
 This release introduces powerful new capabilities for handling multiple cart operations efficiently.
 
-**Batch Endpoint** - Send multiple cart requests in a single API call and receive a unified cart response. This dramatically reduces API calls and improves performance for complex cart operations. (API v2 only)
+**Batch Endpoint** - Send multiple cart requests in a single API call and receive a unified cart response. This dramatically reduces API calls and improves performance for complex cart operations. (API v2 only) [See guide →](/batch-requests)
 
 **Shipping Details Callback** - The cart callback has been extended to allow setting customer shipping details, complementing the existing billing details functionality.
 
@@ -78,7 +102,7 @@ We've also improved session initialization to fail gracefully when sessions aren
 
 CoCart Plus now includes a comprehensive rate limiting system to protect your API from abuse and ensure fair usage across all clients.
 
-The rate limiter is fully configurable and includes detailed documentation to help you set appropriate limits for your store's needs. Check out our [Rate Limiting Guide](https://cocart.dev/guide/rate-limiting-guide/) for implementation details and testing strategies.
+The rate limiter is fully configurable and includes detailed documentation to help you set appropriate limits for your store's needs. Check out our [Rate Limiting Guide](/rate-limiting/) for implementation details and testing strategies.
 
 We've also fixed the coupon endpoint REST base to ensure compatibility with CoCart v4.0 and adjusted error status codes to better reflect response types.
 
@@ -171,20 +195,16 @@ We've also corrected default values for cart fees and fixed PHP deprecation warn
 
 ## Need Help?
 
-<CardGroup cols={2}>
-  <Card title="Report an Issue" icon="bug" href="/resources/opening-issues">
-    Found a bug? Let us know on GitHub
+<CardGroup cols={3}>
+  <Card title="Get Support" icon="life-ring" href="/support">
+    Need help? Check our support options
   </Card>
 
-  <Card title="Get Support" icon="life-ring" href="/resources/support-policy">
-    Need help? Check our support policy
-  </Card>
-
-  <Card title="Join Community" icon="users" href="/resources/community">
+  <Card title="Join Community" icon="users" href="https://discord.gg/cocart">
     Connect with other CoCart developers
   </Card>
 
-  <Card title="View Roadmap" icon="map" href="/overview/roadmap">
+  <Card title="View Roadmap" icon="map" href="/roadmap">
     See what's coming next
   </Card>
 </CardGroup>

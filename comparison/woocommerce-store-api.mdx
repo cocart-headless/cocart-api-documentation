@@ -1,0 +1,376 @@
+---
+title: "CoCart vs WooCommerce Store API"
+sidebarTitle: "VS WooCommerce Store API"
+description: "A detailed comparison of CoCart and the WooCommerce Store API for building headless storefronts — sessions, authentication, SDKs, caching, and developer experience."
+mode: "custom"
+---
+
+{/* ===== HERO ===== */}
+<div className="flex flex-col items-center text-center max-w-4xl mx-auto" id="about-hero">
+    <h1 className="text-gray-900 dark:text-zinc-50">
+        CoCart vs WooCommerce Store API
+    </h1>
+    <p className="text-lg text-gray-500 dark:text-zinc-400 max-w-2xl mx-auto mb-8">
+        Both are REST APIs for WooCommerce. One was built for blocks, the other was built for headless. Here's why that distinction matters.
+    </p>
+    <div className="flex flex-wrap gap-4 justify-center">
+        <a className="cta-primary" href="/getting-started/setup">Get Started with CoCart</a>
+        <a className="cta-secondary" href="/api-reference/index">See API Reference</a>
+    </div>
+</div>
+
+{/* ===== OVERVIEW ===== */}
+<div className="landing-section">
+    <div className="text-center mb-8">
+        <h2 className="section-heading">At a glance</h2>
+        <p className="section-subheading">
+            The Store API ships with WooCommerce. CoCart is purpose-built for decoupled frontends. Both have the same protocol but have very different goals.
+        </p>
+    </div>
+
+    <div className="grid sm:grid-cols-2 gap-6">
+        <div className="comparison-card comparison-card-highlight">
+            <div className="card-tag">CoCart</div>
+            <h3>Built for Headless</h3>
+            <p>
+                A dedicated REST API designed from the ground up for decoupled storefronts making headless development faster and easier.
+            </p>
+            <ul>
+                <li>Headless-first architecture</li>
+                <li>Cookie-free session management</li>
+                <li>4 official SDKs + 12 framework adapters</li>
+                <li>Built-in caching, configurable CORS, and rate limiting</li>
+            </ul>
+        </div>
+
+        <div className="comparison-card">
+            <div className="card-tag">WooCommerce Store API</div>
+            <h3>Built for Blocks</h3>
+            <p>
+                A public REST API that ships with WooCommerce core. Designed to power the Cart and Checkout blocks in the WordPress block editor, with cookie-based sessions.
+            </p>
+            <ul>
+                <li>Ships with WooCommerce (no extra plugin)</li>
+                <li>Cookie or Cart-Token sessions</li>
+                <li>CORS support (Cart-Token bypasses origin)</li>
+                <li>No SDK or framework adapters</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+{/* ===== FEATURE COMPARISON TABLE ===== */}
+<div className="section-alt">
+    <div className="landing-section">
+        <div className="text-center mb-8">
+            <h2 className="section-heading">Feature comparison</h2>
+            <p className="section-subheading">
+                A side-by-side look at what each API provides out of the box.
+            </p>
+        </div>
+
+        <div className="comparison-table-wrapper">
+            <table className="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>CoCart</th>
+                        <th>Store API</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td className="label-cell">Designed For</td>
+                        <td>Headless frontends</td>
+                        <td>WooCommerce Blocks</td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">Cart Management</td>
+                        <td className="check">&#10003;</td>
+                        <td className="check">&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">Product Queries</td>
+                        <td className="check">&#10003;</td>
+                        <td className="check">&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">Checkout API</td>
+                        <td className="check">&#10003; <span className="note">Plus tier</span></td>
+                        <td className="check">&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">Cookie-Free Sessions</td>
+                        <td className="check">&#10003; <span className="note">Database-backed</span></td>
+                        <td className="check">&#10003; <span className="note">Cart-Token header</span></td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">Customer Authentication</td>
+                        <td className="check">&#10003; <span className="note">Basic Auth + JWT</span></td>
+                        <td className="cross">&#10007; <span className="note">No customer login</span></td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">ETag Caching</td>
+                        <td className="check">&#10003; <span className="note">Built-in</span></td>
+                        <td>Experimental <span className="note">Opt-in, since WC 10.5</span></td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">CORS Handling</td>
+                        <td className="check">&#10003; <span className="note">Configurable origin</span></td>
+                        <td className="check">&#10003; <span className="note">Cart-Token bypasses origin</span></td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">Batch Requests</td>
+                        <td className="check">&#10003; <span className="note">Standard + Premium</span></td>
+                        <td className="check">&#10003; <span className="note">Standard WP batch</span></td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">Real-Time Validation</td>
+                        <td className="check">&#10003;</td>
+                        <td>Partial</td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">Name Your Price</td>
+                        <td className="check">&#10003; <span className="note">Built-in</span></td>
+                        <td className="cross">&#10007;</td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">Rate Limiting</td>
+                        <td className="check">&#10003; <span className="note">Plus tier</span></td>
+                        <td className="check">&#10003; <span className="note">Opt-in, checkout only</span></td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">Official SDKs</td>
+                        <td className="check">&#10003; <span className="note">4 languages</span></td>
+                        <td className="cross">&#10007;</td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">Framework Adapters</td>
+                        <td className="check">&#10003; <span className="note">12 frameworks</span></td>
+                        <td className="cross">&#10007;</td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">Extension Compatibility</td>
+                        <td className="check">&#10003; <span className="note">Hooks-based</span></td>
+                        <td className="check">&#10003; <span className="note">ExtendSchema</span></td>
+                    </tr>
+                    <tr>
+                        <td className="label-cell">Open Source</td>
+                        <td className="check">&#10003; <span className="note">GPL 3.0</span></td>
+                        <td className="check">&#10003; <span className="note">GPL 3.0</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{/* ===== SDK & FRAMEWORK SUPPORT ===== */}
+<div className="landing-section">
+    <div className="text-center mb-8">
+        <h2 className="section-heading">SDK and framework support</h2>
+        <p className="section-subheading">
+            How quickly can you go from install to working storefront?
+        </p>
+    </div>
+
+    <div className="grid sm:grid-cols-2 gap-6">
+        <div className="comparison-card comparison-card-highlight">
+            <div className="card-tag">CoCart</div>
+            <h3>Official SDKs + Framework Adapters</h3>
+            <ul>
+                <li>TypeScript SDK — zero deps, fully typed</li>
+                <li>PHP, Python, Go SDKs</li>
+                <li>Next.js, Astro, Nuxt, SvelteKit adapters</li>
+                <li>Remix, Vite, Hono, Deno adapters</li>
+                <li>OpenAPI specs for code generation</li>
+                <li>Works with any HTTP client (fetch, curl, Axios)</li>
+            </ul>
+        </div>
+
+        <div className="comparison-card">
+            <div className="card-tag">WooCommerce Store API</div>
+            <h3>Standard HTTP Access</h3>
+            <ul>
+                <li>Works with any HTTP client (fetch, curl, Axios)</li>
+                <li>Cart-Token header for headless sessions</li>
+                <li>No official SDK — integrate however suits your stack</li>
+                <li>No OpenAPI spec published</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+{/* ===== DEVELOPER EXPERIENCE ===== */}
+<div className="section-alt">
+    <div className="landing-section">
+        <div className="text-center mb-8">
+            <h2 className="section-heading">Developer experience</h2>
+            <p className="section-subheading">
+                The details that matter when you're building a decoupled storefront.
+            </p>
+        </div>
+
+        <div className="grid sm:grid-cols-3 gap-8">
+            <div>
+                <div className="pillar-label">Authentication</div>
+
+                <h3 className="pillar-title">CoCart</h3>
+                <p className="pillar-body">
+                    Basic Auth with email, username, or phone number — plus JWT for token-based flows. No admin API keys required for customer actions.
+                </p>
+
+                <h3 className="pillar-title">Store API</h3>
+                <p className="pillar-body">
+                    Deliberately unauthenticated — no customer login. The Cart-Token header provides session continuity for headless setups, but there's no way to identify or authenticate a returning customer.
+                </p>
+            </div>
+
+            <div>
+                <div className="pillar-label">Session Management</div>
+
+                <h3 className="pillar-title">CoCart</h3>
+                <p className="pillar-body">
+                    Database-backed cart keys passed via <code>X-Cart-Key</code> header. No cookies, no GDPR consent banners, works across any client — SPAs, mobile apps, SSR.
+                </p>
+
+                <h3 className="pillar-title">Store API</h3>
+                <p className="pillar-body">
+                    Cart-Token header for headless setups — no cookies required. The token works, but there's no SDK to manage it. You store, persist, and attach it yourself across every request, and handle expiry or restoration manually.
+                </p>
+            </div>
+
+            <div>
+                <div className="pillar-label">Caching</div>
+
+                <h3 className="pillar-title">CoCart</h3>
+                <p className="pillar-body">
+                    Built-in ETag support with HTTP 304 responses. Cart and product endpoints return ETags automatically. SDKs handle <code>If-None-Match</code> headers for you.
+                </p>
+
+                <h3 className="pillar-title">Store API</h3>
+                <p className="pillar-body">
+                    Experimental ETag caching was introduced in WooCommerce 10.5 for product endpoints. It's opt-in, requires manual activation, and may have breaking changes in future releases. Cart endpoints are not cached.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{/* ===== INTEGRATION STEPS ===== */}
+<div className="landing-section">
+    <div className="text-center mb-8">
+        <h2 className="section-heading">What it takes to display a cart</h2>
+        <p className="section-subheading">
+            Every step a developer must complete before their storefront can show cart contents.
+        </p>
+    </div>
+
+    <div className="grid sm:grid-cols-2 gap-6">
+        <div className="comparison-card comparison-card-highlight">
+            <div className="card-tag">CoCart</div>
+            <h3>5 steps without SDK</h3>
+            <ol>
+                <li>Install CoCart</li>
+                <li>Set your allowed origin with the <code>cocart_allow_origin</code> filter — one line of PHP</li>
+                <li>Make a request with any HTTP client (fetch, curl, Axios)</li>
+                <li>Store the <code>X-Cart-Key</code> from the response and pass it back on subsequent requests</li>
+                <li>Render the response</li>
+            </ol>
+            <p className="text-sm text-gray-400 dark:text-zinc-500 mt-3">With the SDK, steps 3-4 are handled automatically.</p>
+        </div>
+
+        <div className="comparison-card">
+            <div className="card-tag">WooCommerce Store API</div>
+            <h3>6 steps — no SDK to help</h3>
+            <ol>
+                <li>Make an initial cart request to receive the <code>Cart-Token</code> response header</li>
+                <li>Store the <code>Cart-Token</code> yourself — there's no SDK, so persistence (localStorage, a cookie, your own state) is on you</li>
+                <li>Attach <code>Cart-Token</code> to every subsequent request manually</li>
+                <li>Handle session expiry yourself — when a token expires or the cart is gone, there's no restore mechanism</li>
+                <li>Configure CORS server-side to allow your frontend origin — origin handling is your responsibility with no built-in filter</li>
+                <li>Render the response</li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+{/* ===== WHY CHOOSE COCART ===== */}
+<div className="section-alt">
+    <div className="landing-section">
+        <div className="text-center mb-8">
+            <h2 className="section-heading">Why choose CoCart</h2>
+            <p className="section-subheading">
+                The Store API works for blocks. CoCart works for everything else.
+            </p>
+        </div>
+
+        <div style={{maxWidth: '48rem', marginLeft: 'auto', marginRight: 'auto'}}>
+            <div className="problem-solution">
+                <div className="problem">Store API has no customer authentication</div>
+                <div className="solution">CoCart lets customers log in with email, username, or phone number. Pair with JWT for token-based flows and persistent carts across devices.</div>
+            </div>
+
+            <div className="problem-solution">
+                <div className="problem">Store API was designed for Blocks, not headless storefronts</div>
+                <div className="solution">CoCart is purpose-built for decoupled storefronts — cookie-free sessions, configurable CORS, and official SDKs with framework adapters when you need them.</div>
+            </div>
+
+            <div className="problem-solution">
+                <div className="problem">No OpenAPI spec means no code generation or Postman collections</div>
+                <div className="solution">CoCart publishes OpenAPI specs so you can generate typed clients, test with Postman or Insomnia, and keep your integration in sync automatically.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{/* ===== FAQ ===== */}
+<div className="landing-section">
+    <div className="text-center mb-8">
+        <h2 className="section-heading">Frequently asked questions</h2>
+    </div>
+
+    <div style={{maxWidth: '48rem', marginLeft: 'auto', marginRight: 'auto'}}>
+        <AccordionGroup>
+            <Accordion title="Can I use CoCart alongside the Store API?">
+                Yes. CoCart is a separate plugin that registers its own REST endpoints. The Store API continues to work for WooCommerce Blocks while CoCart powers your headless frontend. There are no conflicts.
+            </Accordion>
+
+            <Accordion title="If the Store API is free, why pay for CoCart?">
+                The Store API was designed to power WooCommerce Blocks, not headless frontends. CoCart gives you customer authentication, stable ETag caching across all endpoints, configurable CORS origin control, official SDKs with framework adapters, and dedicated support — things you'd otherwise have to build and maintain yourself.
+            </Accordion>
+
+            <Accordion title="Does the Store API support customer login?">
+                No. The Store API is deliberately unauthenticated. It provides a Cart-Token for session continuity, but there's no way to log in a customer, access their order history, or maintain a persistent account. CoCart supports Basic Auth and JWT with email, username, or phone number login.
+            </Accordion>
+
+            <Accordion title="What's the difference between Cart-Token and CoCart's cart key?">
+                Both are header-based session identifiers. The Store API's Cart-Token is returned when you first request the cart and you manage it yourself. CoCart's cart key is database-backed, and the SDKs handle storage (with encryption), session restoration, and automatic header injection through framework adapters.
+            </Accordion>
+
+            <Accordion title="Does the Store API have caching?">
+                As of WooCommerce 10.5, there's an experimental ETag caching feature for product endpoints. It's opt-in, may have breaking changes, and requires a persistent object cache (Redis/Memcached) for full performance. CoCart's ETag caching is stable, built-in across all endpoints, and works without additional infrastructure.
+            </Accordion>
+
+            <Accordion title="How does CORS differ between the two?">
+                Both handle CORS headers and preflight requests. The Store API's Cart-Token header allows cross-origin requests to proceed without cookie credentials, but origin control is left to your server or WordPress configuration. CoCart gives you explicit control through the `cocart_allow_origin` filter, letting you whitelist specific domains — no manual server configuration required.
+            </Accordion>
+
+            <Accordion title="Can I migrate from the Store API to CoCart?">
+                Yes. Both are REST APIs with similar endpoint patterns. The main changes are the session mechanism (Cart-Token to X-Cart-Key), authentication headers, and the base URL namespace. If you use CoCart's SDK, much of this is handled for you automatically.
+            </Accordion>
+        </AccordionGroup>
+    </div>
+</div>
+
+{/* ===== FINAL CTA ===== */}
+<div className="landing-section" style={{paddingBottom: '5rem'}}>
+    <div className="final-cta">
+        <h2>Ready to build your headless store?</h2>
+        <p>Install CoCart in minutes and connect your WooCommerce store to any frontend.</p>
+        <div className="flex flex-wrap gap-4 justify-center">
+            <a className="cta-primary" href="/getting-started/setup">Get Started</a>
+            <a className="cta-secondary" href="/api-reference">API Reference</a>
+        </div>
+    </div>
+</div>

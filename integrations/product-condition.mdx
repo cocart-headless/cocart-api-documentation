@@ -1,0 +1,65 @@
+---
+title: "Product Condition for WooCommerce"
+sidebarTitle: "Product Condition"
+description: "Expose the product condition (new, used, refurbished, etc.) and Schema.org OfferItemCondition on product responses."
+tag: "In Testing"
+robots: "noindex, follow"
+---
+
+<Info>
+  This feature documentation was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 28th, 2026.
+</Info>
+
+[Product Condition for WooCommerce](https://wordpress.org/plugins/product-condition-for-woocommerce/) lets store owners label products with a condition (new, used, refurbished, etc.). The CoCart Plus integration exposes the condition slug, its human-readable label, the corresponding Schema.org `OfferItemCondition` type, and any custom label text on product responses.
+
+<Info>
+  This integration is available in CoCart Plus since <Tooltip tip="This is the version of CoCart Plus">v2.0.0</Tooltip> and requires Product Condition for WooCommerce to be installed and active.
+</Info>
+
+## Product response
+
+Products with a condition set receive a `condition` object in their `extensions` key. Products with no condition or the default condition do not receive the `condition` key.
+
+```json Example (product extensions excerpt)
+{
+  "extensions": {
+    "condition": {
+      "slug": "used",
+      "label": "Used",
+      "schema_condition": "https://schema.org/UsedCondition",
+      "custom_label": ""
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `slug` | `string` | Condition slug identifier (e.g. `new`, `used`, `refurbished`, `new-other`, `other`). |
+| `label` | `string` | Human-readable condition label. |
+| `schema_condition` | `string` | Schema.org `OfferItemCondition` URL for structured data. Empty string if the slug has no mapping. |
+| `custom_label` | `string` | Custom label text when the condition is `other` or `new-other`. Empty string otherwise. |
+
+## Schema.org condition values
+
+| Slug | `schema_condition` |
+|------|-------------------|
+| `new` | `https://schema.org/NewCondition` |
+| `used` | `https://schema.org/UsedCondition` |
+| `refurbished` | `https://schema.org/RefurbishedCondition` |
+| `new-other` | `https://schema.org/NewCondition` |
+| `other` | *(empty)* |
+
+## Usage
+
+```javascript JavaScript
+const condition = product.extensions?.condition;
+
+if (condition) {
+  // Render a badge: "Used"
+  const badge = condition.custom_label || condition.label;
+
+  // Add structured data
+  const schemaCondition = condition.schema_condition;
+}
+```

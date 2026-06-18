@@ -1,0 +1,76 @@
+---
+title: "WooCommerce MSRP Pricing"
+sidebarTitle: "MSRP Pricing"
+description: "Expose the manufacturer's suggested retail price (MSRP) for simple and variable products in the CoCart products API."
+tag: "In Testing"
+robots: "noindex, follow"
+---
+
+<Info>
+  This feature documentation was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 28th, 2026.
+</Info>
+
+[WooCommerce MSRP Pricing](https://woocommerce.com/products/msrp-pricing/) lets store owners store a manufacturer's suggested retail price (MSRP) separately from the selling price. The CoCart Plus integration exposes the MSRP on product responses so headless storefronts can show "compare at" prices and savings percentages.
+
+<Info>
+  This integration is available in CoCart Plus since <Tooltip tip="This is the version of CoCart Plus">v2.0.0</Tooltip> and requires WooCommerce MSRP Pricing to be installed and active.
+</Info>
+
+## Product response
+
+All products receive an `msrp_data` object in their `extensions` key.
+
+### Simple products
+
+```json Example — simple product (product extensions excerpt)
+{
+  "price": "800",
+  "extensions": {
+    "msrp_data": {
+      "msrp_price": "1000",
+      "msrp_price_min": "",
+      "msrp_price_max": ""
+    }
+  }
+}
+```
+
+### Variable products
+
+For variable products, `msrp_price` is empty and the min/max range across published variations is returned instead.
+
+```json Example — variable product (product extensions excerpt)
+{
+  "extensions": {
+    "msrp_data": {
+      "msrp_price": "",
+      "msrp_price_min": "1000",
+      "msrp_price_max": "2500"
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `msrp_price` | `string` | MSRP for simple (non-variable) products, in the store's smallest currency unit. Empty string for variable products or when no MSRP is set. |
+| `msrp_price_min` | `string` | Lowest MSRP across variations, in the store's smallest currency unit. Variable products only; empty for simple products. |
+| `msrp_price_max` | `string` | Highest MSRP across variations, in the store's smallest currency unit. Variable products only; empty for simple products. |
+
+All three fields are empty strings when no MSRP is configured for the product.
+
+## Rendering a "compare at" price
+
+```javascript JavaScript
+const msrp = product.extensions?.msrp_data;
+const isVariable = product.type === 'variable';
+
+if (isVariable && msrp?.msrp_price_min) {
+  // Show range: "MSRP: $10.00 – $25.00"
+  const min = parseFloat(msrp.msrp_price_min) / 100;
+  const max = parseFloat(msrp.msrp_price_max) / 100;
+} else if (msrp?.msrp_price) {
+  // Show single value: "Compare at: $10.00"
+  const compare = parseFloat(msrp.msrp_price) / 100;
+}
+```

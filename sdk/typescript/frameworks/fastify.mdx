@@ -1,0 +1,206 @@
+---
+title: "TypeScript SDK: Fastify Adapter"
+sidebarTitle: "Fastify"
+description: "Use the CoCart TypeScript SDK with Fastify — server-side route handlers and plugins for WooCommerce cart management."
+'og:title': "Using CoCart with Fastify — Headless WooCommerce Guide"
+'og:description': "Add WooCommerce cart management to your Fastify app with CoCart. Server-side route handlers, plugins, and TypeScript support."
+---
+
+<Info>
+  This guide was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 27th, 2026.
+</Info>
+
+The Fastify adapter provides a server-side CoCart client for building WooCommerce API backends with [Fastify](https://fastify.dev/), a high-performance Node.js web framework. The adapter reads cart keys from incoming request headers — no cookies needed.
+
+Since Fastify is a server-only framework, the adapter only exports `createServerClient`. There is no browser client or `attachCartKeyHeader` function.
+
+## Server Client
+
+Create a CoCart client inside a Fastify route handler. The cart key is read from the incoming request's `x-cart-key` header:
+
+```ts
+import Fastify from 'fastify';
+import { createServerClient } from '@cocartheadless/sdk/fastify';
+
+const app = Fastify();
+
+app.get('/cart', async (request, reply) => {
+  const client = createServerClient(process.env.COCART_STORE_URL!, request);
+  const cart = await client.cart().get();
+  return cart.toObject();
+});
+
+app.listen({ port: 3000 });
+```
+
+### With Authentication
+
+To access a logged-in customer's cart, pass their credentials via Basic Auth:
+
+```ts
+const client = createServerClient(process.env.COCART_STORE_URL!, request, {
+  username: 'customer@email.com',
+  password: 'customer_password',
+});
+```
+
+## Route Examples
+
+```ts
+// Get cart
+app.get('/api/cart', async (request) => {
+  const client = createServerClient(process.env.COCART_STORE_URL!, request);
+  const cart = await client.cart().get();
+  return cart.toObject();
+});
+
+// Add to cart
+app.post('/api/cart/add', async (request, reply) => {
+  const client = createServerClient(process.env.COCART_STORE_URL!, request);
+  const { productId, quantity } = request.body as { productId: string; quantity: number };
+
+  try {
+    const response = await client.cart().addItem(productId, { quantity });
+    return response.toObject();
+  } catch (e) {
+    reply.code(400);
+    return { error: (e as Error).message };
+  }
+});
+
+// Remove from cart
+app.delete('/api/cart/:itemKey', async (request) => {
+  const client = createServerClient(process.env.COCART_STORE_URL!, request);
+  const { itemKey } = request.params as { itemKey: string };
+  const response = await client.cart().removeItem(itemKey);
+  return response.toObject();
+});
+
+// List products
+app.get('/api/products', async (request) => {
+  const client = createServerClient(process.env.COCART_STORE_URL!, request);
+  const products = await client.products().list({ per_page: 12 });
+  return products.toObject();
+});
+```
+
+## Plugin
+
+Create a reusable Fastify plugin to decorate the request with a CoCart client, so you don't need to create one manually in every route:
+
+```ts
+import fp from 'fastify-plugin';
+import { createServerClient } from '@cocartheadless/sdk/fastify';
+
+export default fp(async (fastify) => {
+  fastify.decorateRequest('cocart', null);
+
+  fastify.addHook('onRequest', async (request) => {
+    request.cocart = createServerClient(
+      process.env.COCART_STORE_URL!,
+      request,
+    );
+  });
+});
+```
+
+Then use the decorated client in your routes:
+
+```ts
+app.get('/api/cart', async (request) => {
+  const cart = await request.cocart.cart().get();
+  return cart.toObject();
+});
+```
+
+## Full Example
+
+A complete Fastify app with CORS, cart CRUD routes, and a products endpoint:
+
+```ts
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
+import { createServerClient } from '@cocartheadless/sdk/fastify';
+
+const app = Fastify({ logger: true });
+
+// Enable CORS for frontend requests
+await app.register(cors, {
+  origin: true,
+  allowedHeaders: ['Content-Type', 'X-Cart-Key'],
+});
+
+// Helper to create a client from the request
+function cocart(request: any) {
+  return createServerClient(process.env.COCART_STORE_URL!, request);
+}
+
+// Get cart
+app.get('/api/cart', async (request) => {
+  const cart = await cocart(request).cart().get();
+  return cart.toObject();
+});
+
+// Add item to cart
+app.post('/api/cart/add', async (request, reply) => {
+  const { productId, quantity } = request.body as { productId: string; quantity: number };
+
+  try {
+    const response = await cocart(request).cart().addItem(productId, { quantity });
+    return response.toObject();
+  } catch (e) {
+    reply.code(400);
+    return { error: (e as Error).message };
+  }
+});
+
+// Update item in cart
+app.put('/api/cart/:itemKey', async (request, reply) => {
+  const { itemKey } = request.params as { itemKey: string };
+  const { quantity } = request.body as { quantity: number };
+
+  try {
+    const response = await cocart(request).cart().updateItem(itemKey, { quantity });
+    return response.toObject();
+  } catch (e) {
+    reply.code(400);
+    return { error: (e as Error).message };
+  }
+});
+
+// Remove item from cart
+app.delete('/api/cart/:itemKey', async (request) => {
+  const { itemKey } = request.params as { itemKey: string };
+  const response = await cocart(request).cart().removeItem(itemKey);
+  return response.toObject();
+});
+
+// Clear cart
+app.delete('/api/cart', async (request) => {
+  const response = await cocart(request).cart().clear();
+  return response.toObject();
+});
+
+// List products
+app.get('/api/products', async (request) => {
+  const products = await cocart(request).products().list({ per_page: 12 });
+  return products.toObject();
+});
+
+app.listen({ port: 3000 });
+```
+
+## Environment Variables
+
+```bash
+# .env
+COCART_STORE_URL=https://your-store.com
+```
+
+<Note>
+Fastify does not load `.env` files by default. Use [`@fastify/env`](https://github.com/fastify/fastify-env) or [`dotenv`](https://github.com/motdotla/dotenv) for environment variable management.
+</Note>
+
+## Browser Clients
+
+Since Fastify is a server-only framework, the adapter does not export a browser client or `attachCartKeyHeader`. If your frontend needs client-side cart key management, use the core SDK (`@cocartheadless/sdk`) directly or another framework adapter for your frontend (such as [Next.js](/sdk/typescript/frameworks/nextjs) or [Astro](/sdk/typescript/frameworks/astro)).

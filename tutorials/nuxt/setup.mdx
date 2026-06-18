@@ -70,6 +70,12 @@ This guide will walk you through setting up a Nuxt project configured to work wi
     ```bash
     npm install
     ```
+
+    Install the CoCart SDK:
+
+    ```bash
+    npm install @cocartheadless/sdk
+    ```
   </Tab>
   <Tab title="Nuxt 4">
     Create a new Nuxt 4 project using the official CLI:
@@ -90,6 +96,12 @@ This guide will walk you through setting up a Nuxt project configured to work wi
 
     ```bash
     npm install
+    ```
+
+    Install the CoCart SDK:
+
+    ```bash
+    npm install @cocartheadless/sdk
     ```
 
     <Note>
@@ -197,323 +209,37 @@ NUXT_PUBLIC_STORE_URL=https://yourstore.com
 
 ## Creating the CoCart Composable
 
-Create a composable to interact with CoCart. Create `composables/useCoCart.js`:
+The CoCart TypeScript SDK includes a Nuxt adapter. Create `composables/useCoCart.ts`:
 
-<Tabs>
-  <Tab title="Nuxt 3">
-    ```javascript
-    export const useCoCart = () => {
-      const config = useRuntimeConfig()
-      const STORE_URL = config.public.storeUrl
-      const API_BASE = `${STORE_URL}/wp-json/cocart/v2`
+```typescript
+import { CoCart } from '@cocartheadless/sdk';
 
-      /**
-       * Fetch products from CoCart API
-       */
-      const getProducts = async (params = {}) => {
-        const queryParams = {
-          per_page: params.per_page || 12,
-          page: params.page || 1,
-          ...params
-        }
+let client: CoCart | null = null;
 
-        try {
-          const { data, error } = await useFetch(`${API_BASE}/products`, {
-            query: queryParams
-          })
+export const useCoCart = () => {
+  const config = useRuntimeConfig();
 
-          if (error.value) {
-            console.error('Error fetching products:', error.value)
-            return []
-          }
+  if (!client) {
+    client = new CoCart(config.public.storeUrl as string || 'https://yourstore.com');
+  }
 
-          return data.value || []
-        } catch (err) {
-          console.error('Error fetching products:', err)
-          return []
-        }
-      }
+  return client;
+};
+```
 
-      /**
-       * Get a single product by ID
-       */
-      const getProduct = async (productId) => {
-        try {
-          const { data, error } = await useFetch(`${API_BASE}/products/${productId}`)
+Use it in your components and pages:
 
-          if (error.value) {
-            console.error('Error fetching product:', error.value)
-            return null
-          }
+```vue
+<script setup>
+const client = useCoCart();
 
-          return data.value
-        } catch (err) {
-          console.error('Error fetching product:', err)
-          return null
-        }
-      }
-
-      /**
-       * Add item to cart
-       */
-      const addToCart = async (productId, quantity = 1, options = {}) => {
-        try {
-          const { data, error } = await useFetch(`${API_BASE}/cart/add-item`, {
-            method: 'POST',
-            body: {
-              id: productId,
-              quantity: quantity,
-              ...options
-            }
-          })
-
-          if (error.value) {
-            throw new Error(error.value.message || 'Failed to add item to cart')
-          }
-
-          return data.value
-        } catch (err) {
-          console.error('Error adding to cart:', err)
-          throw err
-        }
-      }
-
-      /**
-       * Get current cart
-       */
-      const getCart = async (cartKey = null) => {
-        const url = cartKey
-          ? `${API_BASE}/cart?cart_key=${cartKey}`
-          : `${API_BASE}/cart`
-
-        try {
-          const { data, error } = await useFetch(url)
-
-          if (error.value) {
-            console.error('Error fetching cart:', error.value)
-            return null
-          }
-
-          return data.value
-        } catch (err) {
-          console.error('Error fetching cart:', err)
-          return null
-        }
-      }
-
-      /**
-       * Update cart item quantity
-       */
-      const updateCartItem = async (itemKey, quantity) => {
-        try {
-          const { data, error } = await useFetch(`${API_BASE}/cart/item/${itemKey}`, {
-            method: 'POST',
-            body: { quantity }
-          })
-
-          if (error.value) {
-            throw new Error(error.value.message || 'Failed to update cart item')
-          }
-
-          return data.value
-        } catch (err) {
-          console.error('Error updating cart item:', err)
-          throw err
-        }
-      }
-
-      /**
-       * Remove item from cart
-       */
-      const removeCartItem = async (itemKey) => {
-        try {
-          const { data, error } = await useFetch(`${API_BASE}/cart/item/${itemKey}`, {
-            method: 'DELETE'
-          })
-
-          if (error.value) {
-            throw new Error(error.value.message || 'Failed to remove cart item')
-          }
-
-          return data.value
-        } catch (err) {
-          console.error('Error removing cart item:', err)
-          throw err
-        }
-      }
-
-      return {
-        getProducts,
-        getProduct,
-        addToCart,
-        getCart,
-        updateCartItem,
-        removeCartItem
-      }
-    }
-    ```
-  </Tab>
-  <Tab title="Nuxt 4">
-    ```javascript
-    export const useCoCart = () => {
-      const config = useRuntimeConfig()
-      const STORE_URL = config.public.storeUrl
-      const API_BASE = `${STORE_URL}/wp-json/cocart/v2`
-
-      /**
-       * Fetch products from CoCart API
-       */
-      const getProducts = async (params = {}) => {
-        const queryParams = {
-          per_page: params.per_page || 12,
-          page: params.page || 1,
-          ...params
-        }
-
-        try {
-          const { data, error } = await useFetch(`${API_BASE}/products`, {
-            query: queryParams
-          })
-
-          if (error.value) {
-            console.error('Error fetching products:', error.value)
-            return []
-          }
-
-          return data.value || []
-        } catch (err) {
-          console.error('Error fetching products:', err)
-          return []
-        }
-      }
-
-      /**
-       * Get a single product by ID
-       */
-      const getProduct = async (productId) => {
-        try {
-          const { data, error } = await useFetch(`${API_BASE}/products/${productId}`)
-
-          if (error.value) {
-            console.error('Error fetching product:', error.value)
-            return null
-          }
-
-          return data.value
-        } catch (err) {
-          console.error('Error fetching product:', err)
-          return null
-        }
-      }
-
-      /**
-       * Add item to cart
-       */
-      const addToCart = async (productId, quantity = 1, options = {}) => {
-        try {
-          const { data, error } = await useFetch(`${API_BASE}/cart/add-item`, {
-            method: 'POST',
-            body: {
-              id: productId,
-              quantity: quantity,
-              ...options
-            }
-          })
-
-          if (error.value) {
-            throw new Error(error.value.message || 'Failed to add item to cart')
-          }
-
-          return data.value
-        } catch (err) {
-          console.error('Error adding to cart:', err)
-          throw err
-        }
-      }
-
-      /**
-       * Get current cart
-       */
-      const getCart = async (cartKey = null) => {
-        const url = cartKey
-          ? `${API_BASE}/cart?cart_key=${cartKey}`
-          : `${API_BASE}/cart`
-
-        try {
-          const { data, error } = await useFetch(url)
-
-          if (error.value) {
-            console.error('Error fetching cart:', error.value)
-            return null
-          }
-
-          return data.value
-        } catch (err) {
-          console.error('Error fetching cart:', err)
-          return null
-        }
-      }
-
-      /**
-       * Update cart item quantity
-       */
-      const updateCartItem = async (itemKey, quantity) => {
-        try {
-          const { data, error } = await useFetch(`${API_BASE}/cart/item/${itemKey}`, {
-            method: 'POST',
-            body: { quantity }
-          })
-
-          if (error.value) {
-            throw new Error(error.value.message || 'Failed to update cart item')
-          }
-
-          return data.value
-        } catch (err) {
-          console.error('Error updating cart item:', err)
-          throw err
-        }
-      }
-
-      /**
-       * Remove item from cart
-       */
-      const removeCartItem = async (itemKey) => {
-        try {
-          const { data, error } = await useFetch(`${API_BASE}/cart/item/${itemKey}`, {
-            method: 'DELETE'
-          })
-
-          if (error.value) {
-            throw new Error(error.value.message || 'Failed to remove cart item')
-          }
-
-          return data.value
-        } catch (err) {
-          console.error('Error removing cart item:', err)
-          throw err
-        }
-      }
-
-      return {
-        getProducts,
-        getProduct,
-        addToCart,
-        getCart,
-        updateCartItem,
-        removeCartItem
-      }
-    }
-    ```
-
-    <Info>
-    The composable code is identical for both Nuxt 3 and 4. Nuxt 4 maintains backward compatibility with Nuxt 3 APIs.
-    </Info>
-  </Tab>
-</Tabs>
+const products = await client.products().list({ per_page: 12 });
+const cart = await client.cart().get();
+</script>
+```
 
 <Tip>
-This composable is automatically imported in all your components and pages. Just call `const { getProducts } = useCoCart()` to use it!
+  The SDK handles cart key persistence, authentication, and request formatting automatically. See the [SDK documentation](/sdk/typescript) for the full API including cart management, product browsing, and JWT authentication.
 </Tip>
 
 ## Creating a Default Layout
@@ -534,12 +260,11 @@ Create a home page at `pages/index.vue`:
 
 ```vue
 <script setup>
-const { getProducts } = useCoCart()
+const client = useCoCart();
 
-// Fetch products on the server
 const { data: products } = await useAsyncData('products', () =>
-  getProducts({ per_page: 12 })
-)
+  client.products().list({ per_page: 12 })
+);
 </script>
 
 <template>
@@ -575,32 +300,25 @@ The `useAsyncData` composable automatically handles server-side rendering and cl
 Nuxt supports server API routes for server-side operations. Create `server/api/cart/add.post.js`:
 
 ```javascript
+import { CoCart } from '@cocartheadless/sdk';
+
 export default defineEventHandler(async (event) => {
   try {
-    const body = await readBody(event)
-    const { id, quantity = 1, ...options } = body
+    const body = await readBody(event);
+    const { id, quantity = 1, ...options } = body;
 
-    const config = useRuntimeConfig()
-    const STORE_URL = config.public.storeUrl
-    const API_BASE = `${STORE_URL}/wp-json/cocart/v2`
+    const config = useRuntimeConfig();
+    const client = new CoCart(config.public.storeUrl);
 
-    const response = await $fetch(`${API_BASE}/cart/add-item`, {
-      method: 'POST',
-      body: {
-        id,
-        quantity,
-        ...options
-      }
-    })
-
-    return response
+    const result = await client.cart().addItem(id, { quantity, ...options });
+    return result;
   } catch (error) {
     throw createError({
       statusCode: 500,
       message: error.message || 'Failed to add item to cart'
-    })
+    });
   }
-})
+});
 ```
 
 <Note>
@@ -857,7 +575,7 @@ Nuxt can be deployed to various platforms:
 
 <AccordionGroup>
   <Accordion title="CORS Errors">
-    If you encounter CORS errors, you may need to configure WordPress to allow cross-origin requests. See [CORS documentation](/documentation/cors).
+    If you encounter CORS errors, you may need to configure WordPress to allow cross-origin requests. See [CORS documentation](/cors).
 
     You can also add CORS headers in your Nuxt config:
 
@@ -931,6 +649,7 @@ Now that your Nuxt project is set up with CoCart:
 
 - [Nuxt Documentation](https://nuxt.com)
 - [Nuxt 4 Announcement](https://nuxt.com/blog/v4)
+- [CoCart TypeScript SDK](/sdk/typescript)
 - [CoCart API Reference](/api-reference/introduction)
 - [Tailwind CSS Documentation](https://tailwindcss.com)
 - [Vue.js Documentation](https://vuejs.org)

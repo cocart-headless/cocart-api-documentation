@@ -1,0 +1,49 @@
+---
+title: "Developer Reference"
+sidebarTitle: "Overview"
+description: "Overview of all developer resources for CoCart — filters, action hooks, functions, and contributing guidelines."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+CoCart exposes a rich set of WordPress hooks and functions for extending and customizing its behavior. Use this section to find the right hook or function for your use case.
+
+## Plugin Key Index
+
+Badges throughout the developer reference identify which plugin each hook or filter is available in:
+
+| Plugin    | Badge | Notes |
+|-----------|-------|-------|
+| Community | <Badge color="blue">Community</Badge> | Free plugin — [wordpress.org/plugins/cart-rest-api-for-woocommerce](https://wordpress.org/plugins/cart-rest-api-for-woocommerce/) |
+| Basic     | <Badge color="red">Basic</Badge> | Paid plugin |
+| Plus      | <Badge color="purple">Plus</Badge> | Paid plugin |
+| JWT       | <Badge color="green">JWT</Badge> | Free add-on — [wordpress.org/plugins/cocart-jwt-authentication](https://wordpress.org/plugins/cocart-jwt-authentication/) |
+
+<Info>
+  Filters and action hooks in the Community plugin are also available in Basic unless stated otherwise. Hooks in Basic are not available in Community.
+</Info>
+
+## Developer Resources
+
+<CardGroup cols={2}>
+  <Card title="Filters Reference" icon="filter" href="/developers/filters">
+    All PHP filter hooks — modify behavior for authentication, caching, cart, products, sessions, shipping, and more.
+  </Card>
+  <Card title="Action Hooks Reference" icon="tag" href="/developers/actions">
+    All PHP action hooks — respond to installation, session, cart item, authentication, and payment events.
+  </Card>
+  <Card title="JWT Filters" icon="key" href="/developers/jwt/filters">
+    Filter hooks specific to the JWT Authentication add-on.
+  </Card>
+  <Card title="JWT Actions" icon="key" href="/developers/jwt/actions">
+    Action hooks specific to the JWT Authentication add-on.
+  </Card>
+  <Card title="Functions Reference" icon="code" href="/developers/functions">
+    Public PHP functions available for use in themes and plugins.
+  </Card>
+  <Card title="Guiding Principles" icon="wrench" href="/developers/guiding-principles">
+    Design principles for extending CoCart endpoints.
+  </Card>
+</CardGroup>

@@ -1,0 +1,84 @@
+---
+title: "WooCommerce Bookings"
+sidebarTitle: "Bookings"
+description: "Expose booking configuration, selected dates, and resource data for bookable products in the CoCart cart and products APIs."
+tag: "In Testing"
+robots: "noindex, follow"
+---
+
+<Info>
+  This feature documentation was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 28th, 2026.
+</Info>
+
+[WooCommerce Bookings](https://woocommerce.com/products/woocommerce-bookings/) enables time- and date-based reservations for services, rentals, events, and appointments. The CoCart Plus integration surfaces bookable product configuration on product responses and the customer's chosen booking details on cart item responses.
+
+<Info>
+  This integration is available in CoCart Plus since <Tooltip tip="This is the version of CoCart Plus">v2.0.0</Tooltip> and requires WooCommerce Bookings to be installed and active.
+</Info>
+
+## Product response
+
+Bookable products receive a `booking_data` object in their `extensions` key containing the product's configuration.
+
+```json Example (product extensions excerpt)
+{
+  "extensions": {
+    "booking_data": {
+      "duration_type": "fixed",
+      "duration_unit": "hour",
+      "duration": 1,
+      "has_persons": true,
+      "min_persons": 1,
+      "max_persons": 8,
+      "has_resources": false,
+      "resource_label": "",
+      "booking_location": ""
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `duration_type` | `string` | `fixed` — the store sets the duration; `customer` — the customer chooses. |
+| `duration_unit` | `string` | Unit of time: `minute`, `hour`, `day`, `night`, `month`. |
+| `duration` | `integer` | Number of duration units per booking. |
+| `has_persons` | `boolean` | Whether the product supports person counts. |
+| `min_persons` | `integer` | Minimum number of persons required. |
+| `max_persons` | `integer` | Maximum number of persons allowed. |
+| `has_resources` | `boolean` | Whether the product has selectable resources (e.g. rooms, staff). |
+| `resource_label` | `string` | Label displayed to customers for the resource selector. |
+| `booking_location` | `string` | Location details for the booking. |
+
+## Cart item response
+
+Once a bookable product is added to the cart, its `extensions` key contains the customer's selected booking configuration.
+
+```json Example (cart item extensions excerpt)
+{
+  "extensions": {
+    "booking_data": {
+      "start_date": "June 10, 2026, 2:00 pm",
+      "end_date": "June 10, 2026, 3:00 pm",
+      "all_day": false,
+      "resource_id": 0,
+      "persons": [2],
+      "cost": "5000"
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `start_date` | `string` | Formatted booking start date and time. Empty string if not set. |
+| `end_date` | `string` | Formatted booking end date and time. Empty string if not set. |
+| `all_day` | `boolean` | Whether the booking spans the entire day. |
+| `resource_id` | `integer` | ID of the resource assigned to the booking. `0` if none. |
+| `persons` | `array` | Person counts per person type, as an array of integers. |
+| `cost` | `string` | Calculated booking cost in the store's smallest currency unit. |
+
+## Known limitations
+
+- The integration reads booking data that WooCommerce Bookings has already stored in the cart session. It does not handle availability checks or booking creation — those remain the responsibility of WooCommerce Bookings itself.
+- Booking forms must be built using WooCommerce Bookings' availability API or a dedicated bookings endpoint. CoCart surfaces the resulting data once the item is in the cart.

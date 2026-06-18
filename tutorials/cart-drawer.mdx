@@ -1,0 +1,508 @@
+---
+title: "Building a Cart Drawer"
+sidebarTitle: "Cart Drawer"
+description: "Build an interactive slide-out cart drawer with add, update, and remove — using vanilla JavaScript and the CoCart API."
+icon: "sidebar"
+---
+
+<Info>
+  This tutorial was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: April 9th, 2026.
+</Info>
+
+A cart drawer (also called a slide-out cart or cart sidebar) is the most common cart UI pattern in headless stores. Instead of navigating to a separate cart page, a panel slides in from the side of the screen showing the current cart contents. The user can update quantities, remove items, and proceed to checkout — all without leaving the page they're on.
+
+This tutorial builds a fully functional cart drawer using vanilla JavaScript and the CoCart REST API. The patterns here translate directly to any framework (React, Vue, Svelte, etc.).
+
+## Prerequisites
+
+- A WordPress site with WooCommerce and CoCart installed
+- At least one published product in your store
+- Basic knowledge of JavaScript and HTML
+
+## What You'll Build
+
+By the end of this tutorial, you'll have a cart drawer that:
+
+- Opens when an item is added to the cart
+- Displays items with thumbnails, names, prices, and quantities
+- Lets users increase, decrease, or remove items
+- Shows the cart total
+- Updates instantly using mutation responses (no extra API calls)
+- Persists across page reloads using the cart key
+
+## Step 1: The CoCart Client
+
+Start with a small wrapper around `fetch` that handles the cart key for you. Every CoCart response returns a `CoCart-API-Cart-Key` header — store it and send it back on every request so the server knows which cart you're working with.
+
+```javascript
+class CoCartClient {
+  constructor(baseUrl) {
+    this.baseUrl = baseUrl;
+    this.cartKey = localStorage.getItem('cocart_cart_key') || '';
+  }
+
+  async request(endpoint, options = {}) {
+    const url = new URL(`/wp-json/cocart/v2/${endpoint}`, this.baseUrl);
+
+    // Attach cart key so the server loads the correct session.
+    if (this.cartKey) {
+      url.searchParams.set('cart_key', this.cartKey);
+    }
+
+    const response = await fetch(url, {
+      headers: { 'Content-Type': 'application/json', ...options.headers },
+      ...options,
+    });
+
+    // Store the cart key from the response.
+    const newKey = response.headers.get('CoCart-API-Cart-Key');
+    if (newKey && newKey !== this.cartKey) {
+      this.cartKey = newKey;
+      localStorage.setItem('cocart_cart_key', newKey);
+    }
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || `Request failed: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  getCart() {
+    return this.request('cart');
+  }
+
+  addItem(productId, quantity = 1) {
+    return this.request('cart/add-item', {
+      method: 'POST',
+      body: JSON.stringify({ id: String(productId), quantity: String(quantity) }),
+    });
+  }
+
+  updateItem(itemKey, quantity) {
+    return this.request(`cart/item/${itemKey}`, {
+      method: 'PUT',
+      body: JSON.stringify({ quantity: String(quantity) }),
+    });
+  }
+
+  removeItem(itemKey) {
+    return this.request(`cart/item/${itemKey}`, {
+      method: 'DELETE',
+    });
+  }
+}
+```
+
+<Note>
+  Every mutation method (`addItem`, `updateItem`, `removeItem`) returns the **full updated cart** in its response. You never need a separate `getCart()` call after a mutation — use the response directly to update your UI.
+</Note>
+
+## Step 2: Cart State Management
+
+Keep a single source of truth for the cart state. When any API call returns cart data, pass it through `setCart()` to update both the state and the UI.
+
+```javascript
+const client = new CoCartClient('https://your-store.com');
+
+let cart = null;
+
+function setCart(data) {
+  cart = data;
+  renderDrawer();
+}
+
+// Load the cart on page load (if a cart key exists).
+async function initCart() {
+  if (!client.cartKey) return;
+
+  try {
+    const data = await client.getCart();
+    setCart(data);
+  } catch (err) {
+    // Cart may have expired. Clear the stored key and start fresh.
+    localStorage.removeItem('cocart_cart_key');
+    client.cartKey = '';
+  }
+}
+
+initCart();
+```
+
+## Step 3: Cart Actions
+
+Each action calls the API and updates the UI from the mutation response. No extra GET requests needed.
+
+```javascript
+async function handleAddToCart(productId) {
+  try {
+    const data = await client.addItem(productId);
+    setCart(data);
+    openDrawer();
+  } catch (err) {
+    console.error('Failed to add item:', err.message);
+  }
+}
+
+async function handleUpdateQuantity(itemKey, newQuantity) {
+  if (newQuantity < 1) {
+    return handleRemoveItem(itemKey);
+  }
+
+  try {
+    const data = await client.updateItem(itemKey, newQuantity);
+    setCart(data);
+  } catch (err) {
+    console.error('Failed to update item:', err.message);
+  }
+}
+
+async function handleRemoveItem(itemKey) {
+  try {
+    const data = await client.removeItem(itemKey);
+    setCart(data);
+
+    // Close the drawer if the cart is now empty.
+    if (data.item_count === 0) {
+      closeDrawer();
+    }
+  } catch (err) {
+    console.error('Failed to remove item:', err.message);
+  }
+}
+```
+
+## Step 4: Rendering the Drawer
+
+The render function reads the cart state and builds the HTML. This is the part you'd replace with JSX, Vue templates, or Svelte markup in a framework.
+
+```javascript
+function renderDrawer() {
+  const container = document.getElementById('cart-drawer-items');
+  const totalEl = document.getElementById('cart-drawer-total');
+  const countEl = document.getElementById('cart-drawer-count');
+
+  if (!cart || !cart.items || cart.items.length === 0) {
+    container.innerHTML = '<p class="cart-empty">Your cart is empty.</p>';
+    totalEl.textContent = '';
+    countEl.textContent = '0';
+    return;
+  }
+
+  countEl.textContent = cart.item_count;
+  totalEl.textContent = cart.totals.total;
+
+  container.innerHTML = cart.items
+    .map(
+      (item) => `
+      <div class="cart-item" data-key="${item.item_key}">
+        <img src="${item.featured_image}" alt="${item.name}" width="64" height="64" />
+        <div class="cart-item-details">
+          <span class="cart-item-name">${item.name}</span>
+          <span class="cart-item-price">${item.totals.total}</span>
+        </div>
+        <div class="cart-item-quantity">
+          <button onclick="handleUpdateQuantity('${item.item_key}', ${item.quantity.value - 1})">−</button>
+          <span>${item.quantity.value}</span>
+          <button onclick="handleUpdateQuantity('${item.item_key}', ${item.quantity.value + 1})">+</button>
+        </div>
+        <button class="cart-item-remove" onclick="handleRemoveItem('${item.item_key}')">✕</button>
+      </div>
+    `
+    )
+    .join('');
+}
+```
+
+## Step 5: Drawer Open/Close
+
+```javascript
+function openDrawer() {
+  document.getElementById('cart-drawer').classList.add('open');
+  document.body.classList.add('drawer-open');
+}
+
+function closeDrawer() {
+  document.getElementById('cart-drawer').classList.remove('open');
+  document.body.classList.remove('drawer-open');
+}
+```
+
+## Step 6: HTML and CSS
+
+The drawer markup and the "Add to Cart" buttons on your product listing:
+
+```html
+<!-- Cart icon / trigger -->
+<button onclick="openDrawer()" class="cart-icon">
+  Cart (<span id="cart-drawer-count">0</span>)
+</button>
+
+<!-- Product "Add to Cart" buttons (use your real product IDs) -->
+<button onclick="handleAddToCart(42)">Add to Cart</button>
+<button onclick="handleAddToCart(99)">Add to Cart</button>
+
+<!-- Cart drawer -->
+<div id="cart-drawer" class="cart-drawer">
+  <div class="cart-drawer-header">
+    <h2>Your Cart</h2>
+    <button onclick="closeDrawer()">✕</button>
+  </div>
+  <div id="cart-drawer-items" class="cart-drawer-items">
+    <p class="cart-empty">Your cart is empty.</p>
+  </div>
+  <div class="cart-drawer-footer">
+    <div class="cart-drawer-total">
+      Total: <strong id="cart-drawer-total"></strong>
+    </div>
+    <a href="/checkout" class="checkout-button">Checkout</a>
+  </div>
+</div>
+
+<!-- Overlay -->
+<div class="cart-drawer-overlay" onclick="closeDrawer()"></div>
+```
+
+```css
+/* Drawer slides in from the right */
+.cart-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 400px;
+  max-width: 90vw;
+  height: 100vh;
+  background: #fff;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.cart-drawer.open {
+  transform: translateX(0);
+}
+
+/* Overlay dims the page behind the drawer */
+.cart-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 999;
+}
+
+.drawer-open .cart-drawer-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Layout */
+.cart-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.cart-drawer-items {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.cart-drawer-footer {
+  padding: 1rem;
+  border-top: 1px solid #eee;
+}
+
+/* Cart item row */
+.cart-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.cart-item img {
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.cart-item-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.cart-item-name {
+  font-weight: 500;
+}
+
+.cart-item-price {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.cart-item-quantity {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cart-item-quantity button {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.cart-item-remove {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0.25rem;
+}
+
+.checkout-button {
+  display: block;
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 0.75rem;
+  background: #000;
+  color: #fff;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.cart-empty {
+  text-align: center;
+  color: #999;
+  padding: 2rem 0;
+}
+```
+
+## Preventing Double-Clicks
+
+API calls take time. If a user clicks "Add to Cart" twice quickly, you'll send two requests and potentially double the quantity. Add a simple loading guard:
+
+```javascript
+let isLoading = false;
+
+async function handleAddToCart(productId) {
+  if (isLoading) return;
+  isLoading = true;
+
+  try {
+    const data = await client.addItem(productId);
+    setCart(data);
+    openDrawer();
+  } catch (err) {
+    console.error('Failed to add item:', err.message);
+  } finally {
+    isLoading = false;
+  }
+}
+```
+
+Apply the same pattern to `handleUpdateQuantity` and `handleRemoveItem`. In a framework like React, you'd track this with `useState` or disable the button during the request.
+
+## Optimistic Updates
+
+For a faster-feeling UI, update the cart state immediately before the API responds, then reconcile when the response arrives:
+
+```javascript
+async function handleUpdateQuantity(itemKey, newQuantity) {
+  if (newQuantity < 1) return handleRemoveItem(itemKey);
+
+  // Optimistic: update the UI immediately.
+  const previousCart = { ...cart };
+  const optimisticCart = structuredClone(cart);
+  const item = optimisticCart.items.find((i) => i.item_key === itemKey);
+  if (item) {
+    item.quantity.value = newQuantity;
+    setCart(optimisticCart);
+  }
+
+  try {
+    // Reconcile: replace with the real server response.
+    const data = await client.updateItem(itemKey, newQuantity);
+    setCart(data);
+  } catch (err) {
+    // Rollback: restore the previous state on failure.
+    setCart(previousCart);
+    console.error('Failed to update item:', err.message);
+  }
+}
+```
+
+<Note>
+  Optimistic updates make the UI feel instant, but the totals (subtotal, tax, shipping) won't be accurate until the server response arrives — WooCommerce calculates those server-side. Update the quantities optimistically, but let the totals update when the real response comes back.
+</Note>
+
+## Using the TypeScript SDK
+
+If you use the official CoCart TypeScript SDK, the client code is simpler — the SDK handles cart key storage, ETag caching, and error typing for you:
+
+```typescript
+import { CoCart } from '@cocartheadless/sdk';
+
+const client = new CoCart('https://your-store.com');
+
+// Add item — SDK stores cart key automatically
+const response = await client.cart().addItem(42, 1);
+const cart = response.toObject();
+
+// Update quantity
+const updated = await client.cart().updateItem('item_key_here', { quantity: 3 });
+
+// Remove item
+const afterRemove = await client.cart().removeItem('item_key_here');
+```
+
+The rest of the tutorial (state management, rendering, open/close) stays the same — only the API calls change.
+
+## Adapting to Frameworks
+
+The patterns in this tutorial map directly to framework concepts:
+
+| Vanilla JS | React | Vue | Svelte |
+|-----------|-------|-----|--------|
+| `let cart = null` | `useState(null)` | `ref(null)` | `let cart = $state(null)` |
+| `setCart(data)` | `setCart(data)` | `cart.value = data` | `cart = data` |
+| `renderDrawer()` | Component re-renders automatically | Component re-renders automatically | Component re-renders automatically |
+| `isLoading` flag | `useState(false)` | `ref(false)` | `let isLoading = $state(false)` |
+| `onclick="..."` | `onClick={...}` | `@click="..."` | `onclick={...}` |
+
+The key architectural point is the same in every framework: **call the mutation endpoint, use its response to update state, and let the UI re-render from state**. No extra GET requests.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="ETag Cache Support" icon="arrow-right-arrow-left" href="/etag-cache-support">
+    Add conditional polling to detect cart changes from other tabs or devices.
+  </Card>
+  <Card title="Performance Playbook" icon="gauge-high" href="/knowledge-base/performance">
+    Optimize field selection, thumbnails, and response size for your cart drawer.
+  </Card>
+  <Card title="Guest to Customer Cart" icon="right-to-bracket" href="/knowledge-base/guest-to-customer-cart">
+    Handle the cart transition when a guest logs in.
+  </Card>
+  <Card title="Convert Cart to Order" icon="file-invoice-dollar" href="/tutorials/covert-cart-to-order">
+    Build a checkout flow that converts the cart into an order.
+  </Card>
+</CardGroup>

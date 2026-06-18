@@ -1,0 +1,242 @@
+---
+title: "CORS Errors"
+sidebarTitle: "CORS"
+description: "Diagnose and fix cross-origin request errors when connecting your frontend to CoCart."
+icon: "door-open"
+'og:title': "Troubleshooting CORS Errors with CoCart"
+---
+
+Cross-Origin Resource Sharing (CORS) errors are one of the most common issues when building a headless store. They happen when your frontend (running on one domain) tries to call the CoCart API (running on a different domain), and the browser blocks the request for security reasons.
+
+<Note>
+  **CORS is disabled by default in CoCart.** If your frontend and WordPress site are on different domains, you must enable it first. See the [CORS feature page](/cors) for setup instructions.
+</Note>
+
+## How to Read a CORS Error
+
+When a CORS error occurs, your browser blocks the response and shows an error in the developer console. Here are the most common ones and what they mean.
+
+<AccordionGroup>
+  <Accordion title="Access to fetch has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header">
+    **What it means:** The server did not include the `Access-Control-Allow-Origin` header in its response. The browser has no way to know if your frontend is allowed to read the response, so it blocks it.
+
+    **Most likely cause:** CORS is not enabled in CoCart.
+
+    **Fix:** Enable CORS by adding this to your theme's `functions.php` or a custom plugin:
+
+    ```php
+    add_filter( 'cocart_disable_all_cors', '__return_false' );
+    ```
+
+    If you've already enabled CORS and still see this error, the origin your frontend is sending may not match the allowed origin. See the [origin mismatch](#origin-mismatch) section below.
+  </Accordion>
+
+  <Accordion title="Access to fetch has been blocked by CORS policy: The 'Access-Control-Allow-Origin' header has a value that is not equal to the supplied origin">
+    **What it means:** The server returned an `Access-Control-Allow-Origin` header, but the value doesn't match the domain your frontend is running on.
+
+    **Example:** Your frontend is on `https://store.example.com` but the header returned `https://www.example.com`.
+
+    **Fix:** Update the `cocart_allow_origin` filter to return the correct origin:
+
+    ```php
+    add_filter( 'cocart_allow_origin', function() {
+        return 'https://store.example.com';
+    });
+    ```
+
+    Make sure the origin matches **exactly** — including the protocol (`https://`), subdomain, and port number if applicable.
+  </Accordion>
+
+  <Accordion title="Access to fetch has been blocked by CORS policy: Response to preflight request doesn't pass access control check">
+    **What it means:** Before the actual request, the browser sent a "preflight" OPTIONS request to check if the server allows the real request. The server's response to the preflight didn't include the right CORS headers.
+
+    **Most likely cause:** A server-level configuration (Apache, Nginx, or a caching plugin) is intercepting the OPTIONS request before CoCart can respond.
+
+    **Fix:** See the [preflight requests blocked](#preflight-requests-blocked) section below.
+  </Accordion>
+
+  <Accordion title="Access to fetch has been blocked by CORS policy: The value of the 'Access-Control-Allow-Credentials' header must be 'true'">
+    **What it means:** Your frontend is sending `credentials: 'include'` in the fetch request, but the server isn't returning `Access-Control-Allow-Credentials: true`.
+
+    **Most likely cause:** The `Access-Control-Allow-Origin` header is set to `*` (wildcard). Browsers do not allow credentials with a wildcard origin.
+
+    **Fix:** Set a specific origin instead of a wildcard:
+
+    ```php
+    add_filter( 'cocart_allow_origin', function() {
+        return 'https://store.example.com';
+    });
+    ```
+
+    CoCart automatically sets `Access-Control-Allow-Credentials: true` when the origin is a specific domain (not `*`).
+  </Accordion>
+
+  <Accordion title="Cannot read response headers (e.g., CoCart-API-Cart-Key or ETag)">
+    **What it means:** The response arrived successfully, but your JavaScript code cannot access certain headers. By default, browsers only expose a small set of "simple" response headers to JavaScript. Custom headers like `CoCart-API-Cart-Key` must be explicitly listed in `Access-Control-Expose-Headers`.
+
+    **Most likely cause:** A server-level CORS configuration is overriding CoCart's `Access-Control-Expose-Headers` header.
+
+    **What CoCart does:** When CORS is enabled, CoCart automatically exposes these headers:
+
+    - `CoCart-API-Cart-Key`
+    - `CoCart-API-Cart-Expiring`
+    - `CoCart-API-Cart-Expiration`
+    - `ETag`
+    - `CoCart-Cache`
+
+    **Fix:** Check if an Nginx or Apache CORS configuration is overriding CoCart's headers. See the [server overrides](#server-level-cors-overrides) section below.
+  </Accordion>
+</AccordionGroup>
+
+## Common Causes and Fixes
+
+### Origin mismatch
+
+The origin is the combination of protocol, domain, and port. All three must match exactly.
+
+These are all **different origins**:
+
+| Origin | Why it's different |
+|--------|-------------------|
+| `http://example.com` | HTTP, not HTTPS |
+| `https://example.com` | No `www` subdomain |
+| `https://www.example.com` | Has `www` subdomain |
+| `https://example.com:3000` | Custom port |
+| `https://store.example.com` | Different subdomain |
+
+If your frontend could run on multiple origins (for example, `www` and non-`www`), you can handle this dynamically:
+
+```php
+add_filter( 'cocart_allow_origin', function() {
+    $allowed = array(
+        'https://example.com',
+        'https://www.example.com',
+    );
+
+    $origin = get_http_origin();
+
+    if ( in_array( $origin, $allowed, true ) ) {
+        return $origin;
+    }
+
+    return '';
+});
+```
+
+### Preflight requests blocked
+
+Browsers send a preflight `OPTIONS` request before any request that uses custom headers (like `Authorization`) or non-simple methods (like `PUT` or `DELETE`). If something intercepts this request before CoCart handles it, you'll get a CORS error — even though CORS is properly enabled.
+
+**Check your `.htaccess` file.** Some security plugins or server configurations block OPTIONS requests. Add this **before** other rewrite rules:
+
+```apache
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
+</IfModule>
+```
+
+**Check your Nginx configuration.** If you use Nginx, ensure OPTIONS requests are passed to PHP rather than being handled at the server level:
+
+```nginx
+location /wp-json/ {
+    # Let WordPress/CoCart handle OPTIONS requests
+    if ($request_method = 'OPTIONS') {
+        # Don't add CORS headers here — let CoCart handle them
+        proxy_pass http://your_upstream;
+    }
+}
+```
+
+<Warning>
+  Avoid adding CORS headers directly in Nginx or Apache. If the server adds its own `Access-Control-Allow-Origin` header **and** CoCart adds one too, you'll end up with duplicate headers — which browsers treat as an error.
+</Warning>
+
+### Server-level CORS overrides
+
+Some hosting providers or server configurations add CORS headers at the web server level. When these combine with CoCart's headers, you get duplicate or conflicting values.
+
+**Symptoms:**
+- `The 'Access-Control-Allow-Origin' header contains multiple values` error in the browser console
+- Headers appear correct when you check individually, but the browser still blocks the request
+
+**How to check:** Use `curl` to inspect the raw headers:
+
+```bash
+curl -I -X OPTIONS \
+  -H "Origin: https://store.example.com" \
+  -H "Access-Control-Request-Method: GET" \
+  https://example.com/wp-json/cocart/v2/cart
+```
+
+Look for duplicate `Access-Control-Allow-Origin` headers in the output. If you see two, the server is adding one and CoCart is adding another.
+
+**Fix:** Remove the server-level CORS headers and let CoCart handle everything. The location depends on your setup:
+
+- **Nginx:** Check for `add_header 'Access-Control-Allow-Origin'` in your site config
+- **Apache/.htaccess:** Check for `Header set Access-Control-Allow-Origin` directives
+- **Cloudflare:** Check for CORS-related Transform Rules
+- **Hosting panel:** Some hosts (like cPanel or Plesk) have CORS settings in their UI
+
+### Local development
+
+During local development, your frontend typically runs on `http://localhost:3000` (or similar) while WordPress runs on a different local address.
+
+CoCart allows CORS in local environments by default, but you may still need to enable CORS and set the correct origin:
+
+```php
+add_filter( 'cocart_disable_all_cors', '__return_false' );
+
+add_filter( 'cocart_allow_origin', function() {
+    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+        return 'http://localhost:3000';
+    }
+
+    return 'https://store.example.com';
+});
+```
+
+<Tip>
+  Remember to update the origin when you deploy to production. A common approach is to use an environment variable or a WordPress constant defined in `wp-config.php`.
+</Tip>
+
+## Debugging Checklist
+
+If you're stuck, work through this checklist in order:
+
+<Steps>
+  <Step title="Confirm CORS is enabled">
+    Check that `cocart_disable_all_cors` returns `false`:
+
+    ```php
+    add_filter( 'cocart_disable_all_cors', '__return_false' );
+    ```
+  </Step>
+  <Step title="Check the actual response headers">
+    Use your browser's Network tab (or `curl -I`) to inspect the response headers on the failing request. Look for `Access-Control-Allow-Origin` and compare it to your frontend's origin.
+  </Step>
+  <Step title="Check for duplicate headers">
+    Search for `Access-Control-Allow-Origin` in the response. If it appears more than once, a server-level config is conflicting with CoCart.
+  </Step>
+  <Step title="Test with a simple GET request">
+    Strip your request down to the simplest possible case — a `GET` request with no custom headers. If this works, the issue is with preflight handling.
+  </Step>
+  <Step title="Check the preflight response">
+    In your browser's Network tab, look for a separate OPTIONS request before your actual request. Check that it returns `200` and includes the correct CORS headers.
+  </Step>
+  <Step title="Check plugins">
+    Temporarily disable security plugins (Wordfence, Sucuri, iThemes Security, etc.) to see if they're blocking or modifying CORS headers.
+  </Step>
+</Steps>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="CORS Configuration" icon="door-open" href="/cors">
+    Enable and configure CORS for your headless frontend.
+  </Card>
+  <Card title="Authentication Troubleshooting" icon="lock" href="/knowledge-base/troubleshoot/authentication">
+    Fix authentication issues that can look like CORS errors.
+  </Card>
+</CardGroup>

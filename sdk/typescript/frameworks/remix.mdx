@@ -1,0 +1,369 @@
+---
+title: "TypeScript SDK: Remix Adapter"
+sidebarTitle: "Remix"
+description: "Use the CoCart TypeScript SDK with Remix — browser client, loaders, actions, and cart key header mechanism."
+'og:title': "Using CoCart with Remix — Headless WooCommerce Guide"
+'og:description': "Add a WooCommerce cart to your Remix app with CoCart. Browser client, loaders, actions, and automatic X-Cart-Key header forwarding."
+---
+
+<Info>
+  This guide was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 27th, 2026.
+</Info>
+
+The Remix adapter handles sharing cart state between server-side loaders/actions and client-side components. Cart state is persisted in encrypted `localStorage` on the client — no cookies needed.
+
+## How It Works
+
+1. **Browser**: The client stores the cart key in encrypted `localStorage` using the Web Crypto API.
+2. **Navigation**: When the user navigates or submits a form, `attachCartKeyHeader()` automatically adds an `X-Cart-Key` header to the request by wrapping the browser's built-in `fetch()`.
+3. **Server**: Remix loaders and actions read the `X-Cart-Key` header from the incoming `Request` object to identify which cart belongs to this visitor.
+
+No cookies are used at any point — avoiding GDPR consent requirements, CORS restrictions, and cookie size limits.
+
+## Browser Client
+
+Create a CoCart client for use in client-side components. Remix does not expose environment variables to the browser automatically — you must pass them through the root loader (see [Environment Variables](#environment-variables)):
+
+```ts
+// app/lib/cocart.ts
+import { createBrowserClient, attachCartKeyHeader } from '@cocartheadless/sdk/remix';
+import { SessionManager } from '@cocartheadless/sdk';
+
+let client: ReturnType<typeof createBrowserClient> | null = null;
+let session: SessionManager | null = null;
+
+export async function getClient() {
+  if (client) return client;
+
+  client = createBrowserClient(window.ENV.COCART_STORE_URL, {
+    encryptionKey: window.ENV.COCART_ENCRYPTION_KEY,
+  });
+
+  await client.restoreSession();
+  attachCartKeyHeader(client);
+
+  return client;
+}
+
+export async function getSession() {
+  if (session) return session;
+
+  const c = await getClient();
+  session = new SessionManager(c, c.getStorage());
+
+  if (!session.getCartKey()) {
+    await session.initializeCart();
+  }
+
+  return session;
+}
+```
+
+## Server Client (Loaders)
+
+Create a CoCart client in your Remix loaders. The cart key is read from the incoming request's `X-Cart-Key` header:
+
+```ts
+// app/routes/cart.tsx
+import type { LoaderFunctionArgs } from '@remix-run/node';
+import { createServerClient } from '@cocartheadless/sdk/remix';
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  const client = createServerClient(process.env.COCART_STORE_URL!, request);
+  const cart = await client.cart().get();
+
+  return Response.json({
+    cart: cart.toObject(),
+    itemCount: cart.getItemCount(),
+  });
+}
+```
+
+### With Authentication
+
+To access a logged-in customer's cart, pass their credentials via Basic Auth:
+
+```ts
+import type { LoaderFunctionArgs } from '@remix-run/node';
+import { createServerClient } from '@cocartheadless/sdk/remix';
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  const client = createServerClient(process.env.COCART_STORE_URL!, request, {
+    username: 'customer@email.com',
+    password: 'customer_password',
+  });
+
+  const cart = await client.cart().get();
+
+  return Response.json({ cart: cart.toObject() });
+}
+```
+
+## Actions
+
+Use the server client in Remix actions for form submissions and mutations:
+
+```ts
+// app/routes/cart.tsx
+import type { ActionFunctionArgs } from '@remix-run/node';
+import { createServerClient } from '@cocartheadless/sdk/remix';
+
+export async function action({ request }: ActionFunctionArgs) {
+  const client = createServerClient(process.env.COCART_STORE_URL!, request);
+  const formData = await request.formData();
+  const productId = formData.get('productId') as string;
+  const quantity = Number(formData.get('quantity') || 1);
+
+  try {
+    const response = await client.cart().addItem(productId, { quantity });
+    return Response.json({ success: true, cart: response.toObject() });
+  } catch (e) {
+    return Response.json(
+      { success: false, error: (e as Error).message },
+      { status: 400 },
+    );
+  }
+}
+```
+
+## Resource Routes
+
+Use resource routes for API-style endpoints that return raw data without rendering a component:
+
+```ts
+// app/routes/api.cart.ts
+import type { LoaderFunctionArgs } from '@remix-run/node';
+import { createServerClient } from '@cocartheadless/sdk/remix';
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  const client = createServerClient(process.env.COCART_STORE_URL!, request);
+  const cart = await client.cart().get();
+  return Response.json(cart.toObject());
+}
+```
+
+## Full Example
+
+### Root Loader — Expose Env Vars to Client
+
+Remix requires you to explicitly pass environment variables to the browser through the root loader:
+
+```tsx
+// app/root.tsx
+import type { LoaderFunctionArgs } from '@remix-run/node';
+import {
+  Links,
+  Meta,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
+  useLoaderData,
+} from '@remix-run/react';
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  return Response.json({
+    ENV: {
+      COCART_STORE_URL: process.env.COCART_STORE_URL,
+      COCART_ENCRYPTION_KEY: process.env.COCART_ENCRYPTION_KEY,
+    },
+  });
+}
+
+export default function App() {
+  const data = useLoaderData<typeof loader>();
+
+  return (
+    <html lang="en">
+      <head>
+        <Meta />
+        <Links />
+      </head>
+      <body>
+        <Outlet />
+        <ScrollRestoration />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.ENV = ${JSON.stringify(data.ENV)}`,
+          }}
+        />
+        <Scripts />
+      </body>
+    </html>
+  );
+}
+```
+
+### Cart Page — Loader and Add to Cart
+
+```tsx
+// app/routes/cart.tsx
+import type { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
+import { useLoaderData, useFetcher } from '@remix-run/react';
+import { createServerClient } from '@cocartheadless/sdk/remix';
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  const client = createServerClient(process.env.COCART_STORE_URL!, request);
+  const cart = await client.cart().get();
+
+  return Response.json({
+    cart: cart.toObject(),
+    items: cart.getItems(),
+    itemCount: cart.getItemCount(),
+    isEmpty: cart.isEmpty(),
+  });
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+  const client = createServerClient(process.env.COCART_STORE_URL!, request);
+  const formData = await request.formData();
+  const intent = formData.get('intent');
+
+  if (intent === 'add') {
+    const productId = formData.get('productId') as string;
+    const quantity = Number(formData.get('quantity') || 1);
+    await client.cart().addItem(productId, { quantity });
+  }
+
+  if (intent === 'remove') {
+    const itemKey = formData.get('itemKey') as string;
+    await client.cart().removeItem(itemKey);
+  }
+
+  const cart = await client.cart().get();
+  return Response.json({ cart: cart.toObject() });
+}
+
+export default function CartPage() {
+  const { items, itemCount, isEmpty } = useLoaderData<typeof loader>();
+  const fetcher = useFetcher();
+
+  return (
+    <div>
+      <h1>Shopping Cart ({itemCount} items)</h1>
+
+      {isEmpty ? (
+        <p>Your cart is empty.</p>
+      ) : (
+        <ul>
+          {(items as any[]).map((item) => (
+            <li key={item.item_key}>
+              {item.name} — Qty: {item.quantity} — {item.totals.total}
+              <fetcher.Form method="post">
+                <input type="hidden" name="intent" value="remove" />
+                <input type="hidden" name="itemKey" value={item.item_key} />
+                <button type="submit">Remove</button>
+              </fetcher.Form>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+```
+
+### Product Listing Page
+
+```tsx
+// app/routes/products.tsx
+import type { LoaderFunctionArgs } from '@remix-run/node';
+import { useLoaderData, useFetcher } from '@remix-run/react';
+import { CoCart } from '@cocartheadless/sdk';
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  // Products are public — no auth needed
+  const client = new CoCart(process.env.COCART_STORE_URL!);
+  const response = await client.products().all({ per_page: '12' });
+
+  return Response.json({ products: response.toObject() });
+}
+
+export default function ProductsPage() {
+  const { products } = useLoaderData<typeof loader>();
+  const fetcher = useFetcher();
+
+  return (
+    <div>
+      <h1>Products</h1>
+      <div className="grid">
+        {(products as any[]).map((product) => (
+          <div key={product.id}>
+            <h2>{product.name}</h2>
+            <p>{product.price}</p>
+            <fetcher.Form method="post" action="/cart">
+              <input type="hidden" name="intent" value="add" />
+              <input type="hidden" name="productId" value={product.id} />
+              <input type="hidden" name="quantity" value="1" />
+              <button type="submit">
+                {fetcher.state === 'submitting' ? 'Adding...' : 'Add to Cart'}
+              </button>
+            </fetcher.Form>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+### Guest-to-Customer Login
+
+```tsx
+// app/routes/login.tsx
+import type { ActionFunctionArgs } from '@remix-run/node';
+import { useFetcher } from '@remix-run/react';
+import { createServerClient } from '@cocartheadless/sdk/remix';
+import { SessionManager } from '@cocartheadless/sdk';
+
+export async function action({ request }: ActionFunctionArgs) {
+  const client = createServerClient(process.env.COCART_STORE_URL!, request);
+  const session = new SessionManager(client);
+
+  const formData = await request.formData();
+  const email = formData.get('email') as string;
+  const password = formData.get('password') as string;
+
+  const response = await session.loginWithJwt(email, password, true);
+
+  return Response.json({ success: true, user: response.toObject() });
+}
+
+export default function LoginPage() {
+  const fetcher = useFetcher();
+
+  return (
+    <fetcher.Form method="post">
+      <input type="email" name="email" placeholder="Email" required />
+      <input type="password" name="password" placeholder="Password" required />
+      <button type="submit">
+        {fetcher.state === 'submitting' ? 'Logging in...' : 'Login'}
+      </button>
+    </fetcher.Form>
+  );
+}
+```
+
+## Environment Variables
+
+```bash
+# .env
+COCART_STORE_URL=https://your-store.com
+COCART_ENCRYPTION_KEY=your-secret-encryption-key
+```
+
+Remix uses `process.env` on the server. Client-side environment variables must be explicitly passed through the root loader and set on `window.ENV` — see the [root loader example](#root-loader--expose-env-vars-to-client) above.
+
+<Warning>
+Only pass public values (store URL, encryption key) through the root loader. Never expose sensitive credentials to the client.
+</Warning>
+
+## How `attachCartKeyHeader` Works
+
+`attachCartKeyHeader()` wraps `globalThis.fetch` so that every same-origin request automatically includes an `X-Cart-Key` header with the current cart key:
+
+- Remix loaders receive the cart key without cookies
+- Remix actions receive the cart key without cookies
+- Cross-origin requests are never modified
+- If no cart key is set, no header is added
+
+Call it once after creating the browser client and restoring the session.

@@ -1,0 +1,418 @@
+---
+title: "Setting Up Consumer Keys for the Sessions API"
+sidebarTitle: "Consumer Keys (Sessions API)"
+description: "Learn how to generate WooCommerce REST API consumer keys, store them securely, and authenticate with the CoCart Sessions API to manage cart sessions."
+icon: "key"
+'og:title': "How to Set Up Consumer Keys for CoCart Sessions API"
+'og:description': "Step-by-step guide to generating WooCommerce consumer keys and using them with the CoCart Sessions API to view, debug, and manage cart sessions."
+---
+
+The CoCart [Sessions API](/api-reference/v2/sessions/get-sessions) requires WooCommerce REST API authentication using consumer keys. This API is designed for **administrative and server-side operations** — viewing cart sessions, managing customer carts, and debugging session data.
+
+<Warning>
+    Consumer keys are NOT needed for the Cart API or Checkout API. Customers interact with those using [cart keys](/knowledge-base/cart-key). Only use consumer keys for Sessions API operations.
+</Warning>
+
+## Prerequisites
+
+- CoCart Community v4.2+ or CoCart Starter v5.0+
+- Administrator access to your WordPress dashboard
+- HTTPS enabled on your site (required for authenticated requests)
+
+## What is the Sessions API?
+
+<CardGroup cols={2}>
+    <Card title="View All Cart Sessions" icon="database">
+        Retrieve a paginated list of all active cart sessions in your store
+    </Card>
+
+    <Card title="Get Session Details" icon="magnifying-glass">
+        View specific cart session data including items, customer info, and totals
+    </Card>
+
+    <Card title="Delete Sessions" icon="trash">
+        Remove abandoned or invalid cart sessions programmatically
+    </Card>
+
+    <Card title="Debug Customer Issues" icon="bug">
+        Troubleshoot cart problems by inspecting session data and expiration
+    </Card>
+</CardGroup>
+
+## Step 1: Generate Consumer Keys
+
+### Via WordPress Admin
+
+<Steps>
+    <Step title="Navigate to WooCommerce REST API settings">
+        Go to **WooCommerce → Settings → Advanced → REST API** and click **Add Key**.
+    </Step>
+
+    <Step title="Configure key settings">
+        - **Description**: Enter a meaningful name (e.g., "CoCart Sessions API - Admin Dashboard")
+        - **User**: Select an administrator account
+        - **Permissions**: Choose the appropriate level:
+            - `Read` — For viewing sessions only (GET requests)
+            - `Read/Write` — Full access including deletion (recommended for session management)
+    </Step>
+
+    <Step title="Save your keys">
+        Click **Generate API Key**. You will see:
+        - **Consumer Key**: Starts with `ck_`
+        - **Consumer Secret**: Starts with `cs_`
+    </Step>
+</Steps>
+
+<Warning>
+    Copy and securely store both keys immediately. The consumer secret cannot be retrieved again after this screen.
+</Warning>
+
+### Via WP-CLI
+
+```bash
+# Generate read/write API key for Sessions API
+wp wc api create --user=1 --description="CoCart Sessions API - Admin" --permissions=read_write
+
+# Generate read-only API key for session monitoring
+wp wc api create --user=1 --description="CoCart Sessions API - Read Only" --permissions=read
+```
+
+## Step 2: Store Keys Securely
+
+Store your consumer keys in environment variables — never hardcode them in source code or commit them to version control.
+
+```bash .env
+COCART_CONSUMER_KEY=ck_your_consumer_key_here
+COCART_CONSUMER_SECRET=cs_your_consumer_secret_here
+COCART_API_URL=https://yourstore.com
+```
+
+<Warning>
+    Add `.env` to your `.gitignore` file. Consumer keys grant administrative access to session data — treat them like passwords.
+</Warning>
+
+<Tip>
+    For detailed guidance on credential management, token storage, and common security mistakes, see [Security Practices](/knowledge-base/security-practices).
+</Tip>
+
+## Step 3: Use the Sessions API
+
+The official SDKs handle authentication automatically. Pass your consumer key and secret when creating the client, then call the sessions methods.
+
+### List All Sessions
+
+<Tabs>
+    <Tab title="TypeScript">
+        ```typescript
+        import { CoCart } from '@cocartheadless/sdk';
+
+        const client = new CoCart('https://yourstore.com', {
+            consumerKey: process.env.COCART_CONSUMER_KEY,
+            consumerSecret: process.env.COCART_CONSUMER_SECRET,
+        });
+
+        const response = await client.sessions().all();
+        console.log(response.data);
+
+        // With pagination
+        const paginated = await client.sessions().all({ per_page: '50' });
+        ```
+    </Tab>
+    <Tab title="PHP">
+        ```php
+        use CoCart\CoCart;
+
+        $client = new CoCart('https://yourstore.com', [
+            'consumer_key'    => getenv('COCART_CONSUMER_KEY'),
+            'consumer_secret' => getenv('COCART_CONSUMER_SECRET'),
+        ]);
+
+        $response = $client->sessions()->all();
+
+        // With pagination
+        $paginated = $client->sessions()->all(['per_page' => '50']);
+        ```
+    </Tab>
+    <Tab title="Python">
+        ```python
+        import os
+        from cocart import CoCart
+
+        client = CoCart('https://yourstore.com',
+            consumer_key=os.environ['COCART_CONSUMER_KEY'],
+            consumer_secret=os.environ['COCART_CONSUMER_SECRET'],
+        )
+
+        response = client.sessions().all()
+
+        # With pagination
+        paginated = client.sessions().all({"per_page": "50"})
+        ```
+    </Tab>
+    <Tab title="Go">
+        ```go
+        client := cocart.NewClient("https://yourstore.com",
+            cocart.WithConsumerKey(os.Getenv("COCART_CONSUMER_KEY")),
+            cocart.WithConsumerSecret(os.Getenv("COCART_CONSUMER_SECRET")),
+        )
+
+        response, err := client.Sessions().All(ctx, nil)
+
+        // With pagination
+        response, err := client.Sessions().All(ctx, &cocart.PaginationParams{PerPage: 50})
+        ```
+    </Tab>
+</Tabs>
+
+### Get a Specific Session
+
+<Tabs>
+    <Tab title="TypeScript">
+        ```typescript
+        // By cart key
+        const session = await client.sessions().find('guest_abc123');
+
+        // By customer ID
+        const customerSession = await client.sessions().bySession(123);
+        ```
+    </Tab>
+    <Tab title="PHP">
+        ```php
+        // By cart key
+        $session = $client->sessions()->find('guest_abc123');
+
+        // By customer ID
+        $customerSession = $client->sessions()->byCustomer(123);
+        ```
+    </Tab>
+    <Tab title="Python">
+        ```python
+        # By cart key
+        session = client.sessions().find("guest_abc123")
+
+        # By customer ID
+        customer_session = client.sessions().by_session(123)
+        ```
+    </Tab>
+    <Tab title="Go">
+        ```go
+        // By cart key
+        session, err := client.Sessions().Find(ctx, "guest_abc123")
+
+        // By customer ID
+        customerSession, err := client.Sessions().BySession(ctx, 123)
+        ```
+    </Tab>
+</Tabs>
+
+### Get Session Items
+
+<Tabs>
+    <Tab title="TypeScript">
+        ```typescript
+        const items = await client.sessions().getItems('guest_abc123');
+        ```
+    </Tab>
+    <Tab title="PHP">
+        ```php
+        $items = $client->sessions()->getItems('guest_abc123');
+        ```
+    </Tab>
+    <Tab title="Python">
+        ```python
+        items = client.sessions().get_items("guest_abc123")
+        ```
+    </Tab>
+    <Tab title="Go">
+        ```go
+        items, err := client.Sessions().GetItems(ctx, "guest_abc123")
+        ```
+    </Tab>
+</Tabs>
+
+### Delete a Session
+
+<Tabs>
+    <Tab title="TypeScript">
+        ```typescript
+        // By cart key
+        await client.sessions().destroy('guest_abc123');
+
+        // By customer ID
+        await client.sessions().destroySession(123);
+        ```
+    </Tab>
+    <Tab title="PHP">
+        ```php
+        // By cart key
+        $client->sessions()->destroy('guest_abc123');
+
+        // By customer ID
+        $client->sessions()->destroyByCustomer(123);
+        ```
+    </Tab>
+    <Tab title="Python">
+        ```python
+        # By cart key
+        client.sessions().destroy("guest_abc123")
+
+        # By customer ID
+        client.sessions().destroy_session(123)
+        ```
+    </Tab>
+    <Tab title="Go">
+        ```go
+        // By cart key
+        _, err := client.Sessions().Destroy(ctx, "guest_abc123")
+
+        // By customer ID
+        _, err := client.Sessions().DestroySession(ctx, 123)
+        ```
+    </Tab>
+</Tabs>
+
+<Info>
+    For full SDK documentation including SessionManager and guest-to-customer cart transfer, see the Sessions API guide for your SDK: [TypeScript](/sdk/typescript/sessions) · [PHP](/sdk/php/sessions) · [Python](/sdk/python/sessions) · [Go](/sdk/go/sessions)
+</Info>
+
+## Step 4: Common Use Cases
+
+### Monitor Active Carts
+
+```typescript
+const response = await client.sessions().all({ per_page: '100' });
+const sessions = response.data;
+
+let totalValue = 0;
+let cartsWithItems = 0;
+
+for (const session of sessions) {
+    if (session.cart_items?.length > 0) {
+        cartsWithItems++;
+        totalValue += parseFloat(session.cart_totals?.total || '0');
+    }
+}
+
+console.log(`Active carts with items: ${cartsWithItems}`);
+console.log(`Total cart value: $${totalValue.toFixed(2)}`);
+```
+
+### Debug a Customer's Cart
+
+```typescript
+const session = await client.sessions().find('guest_abc123');
+
+console.log('Cart items:', session.data.cart_items);
+console.log('Customer:', session.data.customer);
+console.log('Totals:', session.data.cart_totals);
+console.log('Expires:', new Date(session.data.cart_expiry * 1000));
+```
+
+### Clean Up Abandoned Sessions
+
+```typescript
+const response = await client.sessions().all({ per_page: '100' });
+const thirtyDaysAgo = Date.now() / 1000 - (30 * 24 * 60 * 60);
+
+for (const session of response.data) {
+    if (session.cart_expiry < thirtyDaysAgo) {
+        await client.sessions().destroy(session.cart_key);
+        console.log(`Deleted expired session: ${session.cart_key}`);
+    }
+}
+```
+
+## Testing with cURL
+
+You can verify your consumer keys work by making a direct cURL request:
+
+```bash
+# Base64 encode your credentials: echo -n "ck_your_key:cs_your_secret" | base64
+curl -X GET 'https://yourstore.com/wp-json/cocart/v2/sessions?page=1&per_page=5' \
+  -H 'Authorization: Basic YOUR_BASE64_ENCODED_CREDENTIALS' \
+  -H 'Content-Type: application/json'
+```
+
+**Example success response:**
+
+```json
+[
+    {
+        "cart_key": "t_abc123def456",
+        "customer": {
+            "billing_email": "customer@example.com",
+            "billing_first_name": "John",
+            "billing_last_name": "Doe"
+        },
+        "cart_items": [
+            {
+                "item_key": "item_123",
+                "product_id": 42,
+                "quantity": 2
+            }
+        ],
+        "cart_totals": {
+            "total": "49.99"
+        },
+        "cart_expiry": 1735689600
+    }
+]
+```
+
+**Example error response (invalid credentials):**
+
+```json
+{
+    "code": "woocommerce_rest_cannot_view",
+    "message": "Sorry, you cannot list resources.",
+    "data": {
+        "status": 401
+    }
+}
+```
+
+## Troubleshooting
+
+<CardGroup cols={2}>
+    <Card title="401 Unauthorized" icon="lock">
+        - Verify your consumer key and secret are correct
+        - Check the Base64 encoding format: `base64(key:secret)`
+        - Confirm the key exists in WooCommerce → Settings → Advanced → REST API
+        - Ensure your site uses HTTPS
+    </Card>
+
+    <Card title="403 Forbidden" icon="ban">
+        - A read-only key cannot perform DELETE operations — use Read/Write
+        - The user associated with the key must have the `manage_woocommerce` capability
+        - Check for firewall or security plugin rules blocking the request
+    </Card>
+
+    <Card title="404 Not Found" icon="circle-question">
+        - Verify the endpoint URL: `/wp-json/cocart/v2/sessions`
+        - The specified cart key or session ID may not exist
+        - Ensure pretty permalinks are enabled in WordPress Settings → Permalinks
+    </Card>
+
+    <Card title="Empty Response" icon="database">
+        - No active cart sessions exist in the store
+        - The page number exceeds available results — try `page=1`
+        - Sessions may have expired and been cleaned up automatically
+    </Card>
+</CardGroup>
+
+## Related
+
+<CardGroup cols={2}>
+    <Card title="Sessions API Reference" icon="book" href="/api-reference/v2/sessions/get-sessions">
+        Full endpoint documentation with request/response schemas.
+    </Card>
+    <Card title="Security Practices" icon="shield" href="/knowledge-base/security-practices">
+        Credential storage, HTTPS requirements, and common mistakes.
+    </Card>
+    <Card title="Authentication" icon="key" href="/authentication">
+        Overview of all authentication methods supported by CoCart.
+    </Card>
+    <Card title="Cart Key" icon="hashtag" href="/knowledge-base/cart-key">
+        How cart keys work for guest and authenticated customers.
+    </Card>
+</CardGroup>

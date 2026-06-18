@@ -1,0 +1,267 @@
+---
+title: "TypeScript SDK: Vite Adapter"
+sidebarTitle: "Vite"
+description: "Use the CoCart TypeScript SDK with Vite — browser client for React, Vue, Svelte, and other Vite-powered SPAs."
+'og:title': "Using CoCart with Vite — Headless WooCommerce Guide"
+'og:description': "Add a WooCommerce cart to your Vite-powered SPA with CoCart. Browser client with encrypted localStorage and automatic cart key header forwarding."
+---
+
+<Info>
+  This guide was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 27th, 2026.
+</Info>
+
+The Vite adapter is designed for building WooCommerce storefronts as single-page applications. Vite is a build tool used by React, Vue, Svelte, Solid, and other frameworks. The adapter provides a browser client with encrypted `localStorage` and automatic cart key header forwarding. Since Vite SPAs don't have a server-side rendering layer, the adapter is client-only.
+
+## How It Works
+
+1. **Browser**: The client stores the cart key in encrypted `localStorage` using the Web Crypto API.
+2. **Requests**: `attachCartKeyHeader()` automatically adds an `X-Cart-Key` header to API requests sent to your backend proxy by wrapping the browser's built-in `fetch()`.
+
+No cookies are used at any point — avoiding GDPR consent requirements, CORS restrictions, and cookie size limits.
+
+## Browser Client
+
+Create a CoCart client for use in your Vite-powered SPA:
+
+```ts
+// src/lib/cocart.ts
+import { createBrowserClient, attachCartKeyHeader } from '@cocartheadless/sdk/vite';
+import { SessionManager } from '@cocartheadless/sdk';
+
+let client: ReturnType<typeof createBrowserClient> | null = null;
+let session: SessionManager | null = null;
+
+export async function getClient() {
+  if (client) return client;
+
+  client = createBrowserClient(import.meta.env.VITE_COCART_STORE_URL, {
+    encryptionKey: import.meta.env.VITE_COCART_ENCRYPTION_KEY,
+  });
+
+  await client.restoreSession();
+  attachCartKeyHeader(client);
+
+  return client;
+}
+
+export async function getSession() {
+  if (session) return session;
+
+  const c = await getClient();
+  session = new SessionManager(c, c.getStorage());
+
+  if (!session.getCartKey()) {
+    await session.initializeCart();
+  }
+
+  return session;
+}
+```
+
+## React Example
+
+Use the client in a React component to list products and add items to the cart:
+
+```tsx
+// src/components/ProductList.tsx
+import { useState, useEffect } from 'react';
+import { getClient } from '../lib/cocart';
+
+export function ProductList() {
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      const client = await getClient();
+      const response = await client.products().list({ per_page: 12 });
+      setProducts(response.toObject() as any[]);
+      setLoading(false);
+    }
+    fetchProducts();
+  }, []);
+
+  if (loading) return <p>Loading...</p>;
+
+  return (
+    <div>
+      {products.map((product) => (
+        <div key={product.id}>
+          <h2>{product.name}</h2>
+          <p>{product.price}</p>
+          <AddToCartButton productId={product.id} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function AddToCartButton({ productId }: { productId: number }) {
+  const [loading, setLoading] = useState(false);
+
+  const handleAdd = async () => {
+    setLoading(true);
+    try {
+      const client = await getClient();
+      await client.cart().addItem(productId, { quantity: 1 });
+      alert('Added to cart!');
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button onClick={handleAdd} disabled={loading}>
+      {loading ? 'Adding...' : 'Add to Cart'}
+    </button>
+  );
+}
+```
+
+## Vue Example
+
+Use Vue composables to wrap CoCart client calls:
+
+```ts
+// src/composables/useCoCart.ts
+import { ref, onMounted } from 'vue';
+import { getClient } from '../lib/cocart';
+
+export function useProducts() {
+  const products = ref<any[]>([]);
+  const loading = ref(true);
+
+  onMounted(async () => {
+    const client = await getClient();
+    const response = await client.products().list({ per_page: 12 });
+    products.value = response.toObject() as any[];
+    loading.value = false;
+  });
+
+  return { products, loading };
+}
+
+export function useCart() {
+  const cart = ref<any>(null);
+
+  async function addToCart(productId: number, quantity = 1) {
+    const client = await getClient();
+    const response = await client.cart().addItem(productId, { quantity });
+    cart.value = response.toObject();
+    return cart.value;
+  }
+
+  async function fetchCart() {
+    const client = await getClient();
+    const response = await client.cart().get();
+    cart.value = response.toObject();
+    return cart.value;
+  }
+
+  return { cart, addToCart, fetchCart };
+}
+```
+
+## Full Example: Cart Page
+
+A complete React cart page with add and remove functionality:
+
+```tsx
+// src/components/CartPage.tsx
+import { useState, useEffect, useCallback } from 'react';
+import { getClient } from '../lib/cocart';
+
+export function CartPage() {
+  const [cart, setCart] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchCart = useCallback(async () => {
+    const client = await getClient();
+    const response = await client.cart().get();
+    setCart(response.toObject());
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
+
+  const removeItem = async (itemKey: string) => {
+    const client = await getClient();
+    await client.cart().removeItem(itemKey);
+    await fetchCart();
+  };
+
+  const updateQuantity = async (itemKey: string, quantity: number) => {
+    const client = await getClient();
+    await client.cart().updateItem(itemKey, { quantity });
+    await fetchCart();
+  };
+
+  if (loading) return <p>Loading cart...</p>;
+  if (!cart || cart.items.length === 0) return <p>Your cart is empty.</p>;
+
+  return (
+    <div>
+      <h1>Shopping Cart</h1>
+      <ul>
+        {cart.items.map((item: any) => (
+          <li key={item.item_key}>
+            <span>{item.name} — Qty: {item.quantity} — {item.totals.total}</span>
+            <button onClick={() => updateQuantity(item.item_key, item.quantity + 1)}>+</button>
+            <button onClick={() => updateQuantity(item.item_key, Math.max(1, item.quantity - 1))}>-</button>
+            <button onClick={() => removeItem(item.item_key)}>Remove</button>
+          </li>
+        ))}
+      </ul>
+      <p>Total: {cart.totals.total}</p>
+    </div>
+  );
+}
+```
+
+## CORS Considerations
+
+Since Vite SPAs make direct API calls from the browser to your WooCommerce backend, you must configure CORS on the server to allow these requests. See the [CORS documentation](/cors) for setup instructions.
+
+During development, you can use Vite's built-in dev server proxy to avoid CORS issues entirely:
+
+```ts
+// vite.config.ts
+export default defineConfig({
+  server: {
+    proxy: {
+      '/wp-json': {
+        target: 'https://your-store.com',
+        changeOrigin: true,
+      },
+    },
+  },
+});
+```
+
+With this proxy, requests to `/wp-json` in development are forwarded to your WooCommerce store, bypassing CORS restrictions. In production, configure your server or CDN to proxy API requests, or enable CORS on the WooCommerce backend.
+
+## Environment Variables
+
+```bash
+# .env
+VITE_COCART_STORE_URL=https://your-store.com
+VITE_COCART_ENCRYPTION_KEY=your-secret-encryption-key
+```
+
+<Warning>
+All `VITE_` prefixed variables are exposed to client-side code and included in the browser bundle. Never put API secrets or consumer keys in Vite environment variables. Use a backend proxy for authenticated operations that require sensitive credentials.
+</Warning>
+
+## How `attachCartKeyHeader` Works
+
+`attachCartKeyHeader()` wraps `globalThis.fetch` so that every same-origin request automatically includes an `X-Cart-Key` header with the current cart key:
+
+- Backend proxy endpoints receive the cart key without cookies
+- Cross-origin requests are never modified
+- If no cart key is set, no header is added
+
+Call it once after creating the browser client and restoring the session.

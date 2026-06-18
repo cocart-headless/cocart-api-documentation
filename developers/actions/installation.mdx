@@ -1,0 +1,119 @@
+---
+title: "Installation Hooks"
+sidebarTitle: "Installation"
+description: "Action hooks that fire when CoCart or CoCart Plus is installed or updated. Use these to run setup tasks, clear caches, or trigger migrations."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Action Hooks overview](/developers/actions) for all hook categories and the [Developer Reference](/developers) for the plugin key index.
+</Tip>
+
+### `cocart_init`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Fires once the CoCart plugin has finished loading.
+
+<Note>Made available since v3.0.0</Note>
+
+**Usage**
+```php
+add_action( 'cocart_init', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_init` in repository](https://github.com/co-cart/co-cart/search?q=cocart_init&type=code)
+
+---
+
+### `cocart_updated`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Runs after CoCart has been updated.
+
+<Note>Made available since v1.2.0</Note>
+
+**Usage**
+```php
+add_action( 'cocart_updated', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_updated` in repository](https://github.com/co-cart/co-cart/search?q=cocart_updated&type=code)
+
+---
+
+### `cocart_installed`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Runs after CoCart has been installed.
+
+<Note>Made available since v1.2.0</Note>
+
+**Usage**
+```php
+add_action( 'cocart_installed', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_installed` in repository](https://github.com/co-cart/co-cart/search?q=cocart_installed&type=code)
+
+---
+
+### `cocart_plus_installed`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Fires after CoCart Plus has been installed.
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Usage**
+```php
+add_action( 'cocart_plus_installed', function() {
+    // Run setup tasks after Plus installation
+});
+```
+
+---
+
+### `cocart_register_settings_providers`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Fires on `admin_init` after the built-in settings providers are registered. Use this hook to register your add-on as a settings provider via `CoCart_Settings_Registry`.
+
+<Note>Made available since v5.0.0</Note>
+
+**Usage**
+```php
+add_action( 'cocart_register_settings_providers', function() {
+    CoCart_Settings_Registry::register( new My_Plugin_Settings_Provider() );
+} );
+```
+
+---
+
+### `cocart_plus_updated`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Fires after CoCart Plus has been updated to a new version.
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Usage**
+```php
+add_action( 'cocart_plus_updated', function() {
+    // Clear caches or run migration tasks after update
+});
+```

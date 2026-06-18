@@ -1,0 +1,182 @@
+---
+title: "WordPress Multisite"
+sidebarTitle: "Multisite"
+description: "How CoCart works on WordPress multisite networks, including setup, session isolation, and configuration."
+icon: "globe"
+tag: "NEW"
+'og:title': "Using CoCart on WordPress Multisite"
+---
+
+CoCart is fully compatible with WordPress multisite. Each site in your network gets its own independent cart sessions, database tables, and REST API endpoints — customers on one site cannot see or affect carts on another.
+
+This guide explains how CoCart behaves on multisite and what you need to know when setting it up.
+
+## Quick Setup
+
+<Steps>
+  <Step title="Network activate CoCart">
+    In your WordPress Network Admin, go to **Plugins** and network activate CoCart. This ensures all sites in the network can use the plugin and receive updates.
+
+    <Note>
+      Even if you only plan to use CoCart on a single site in the network, network activation is recommended so the plugin can be updated from the network admin.
+    </Note>
+  </Step>
+  <Step title="Activate WooCommerce on each site">
+    CoCart requires WooCommerce. Make sure WooCommerce is active on every site where you want to use CoCart. CoCart will do nothing on sites where WooCommerce is not active.
+  </Step>
+  <Step title="Configure each site independently">
+    CoCart settings, cart sessions, and product data are all per-site. Configure each site's WooCommerce store settings (currency, tax, shipping) as you normally would.
+  </Step>
+</Steps>
+
+## How It Works on Multisite
+
+### Each site is fully independent
+
+When CoCart is activated on a multisite network, every site operates as a completely separate store. Here's what that means in practice:
+
+| What | Scope | Details |
+|------|-------|---------|
+| **Cart sessions** | Per-site | Stored in each site's own `wp_X_cocart_carts` table |
+| **Persistent carts** | Per-site | Logged-in user carts are tied to the site's blog ID |
+| **REST API endpoints** | Per-site | Each site has its own `/wp-json/cocart/v2/` URL |
+| **Products & catalog** | Per-site | Uses each site's WooCommerce product data |
+| **Settings** | Per-site | Admin notices, options, and configuration are site-specific |
+| **Background updates** | Per-site | Database migrations run independently on each site |
+
+### API URLs
+
+The base URL for CoCart's REST API is different for each site, following your network's URL structure:
+
+**Subdomain multisite:**
+
+```
+https://shop-us.example.com/wp-json/cocart/v2/cart
+https://shop-eu.example.com/wp-json/cocart/v2/cart
+```
+
+**Subdirectory multisite:**
+
+```
+https://example.com/shop-us/wp-json/cocart/v2/cart
+https://example.com/shop-eu/wp-json/cocart/v2/cart
+```
+
+**Domain mapping** (each site has its own domain):
+
+```
+https://us-store.com/wp-json/cocart/v2/cart
+https://eu-store.com/wp-json/cocart/v2/cart
+```
+
+Your frontend must use the correct base URL for the site it's communicating with.
+
+### Session isolation
+
+Cart sessions are stored in site-specific database tables. On a multisite network, WordPress uses a unique table prefix for each site (e.g., `wp_2_`, `wp_3_`). CoCart creates its session table using this prefix:
+
+- Site 1: `wp_cocart_carts`
+- Site 2: `wp_2_cocart_carts`
+- Site 3: `wp_3_cocart_carts`
+
+This means there is **no possibility** of cart data leaking between sites — they are physically separate tables.
+
+Persistent carts for logged-in users are also per-site. A user who is logged into multiple sites in the network has a separate persistent cart on each one.
+
+### Site cleanup
+
+When a site is deleted from the network, CoCart automatically removes its `cocart_carts` table. No manual cleanup is needed.
+
+## Object Cache on Multisite
+
+If your multisite network uses a persistent object cache (Redis, Memcached), you must set a unique cache key salt for each site. Without this, cached cart data from one site could collide with another.
+
+Add this to your `wp-config.php`:
+
+```php
+define( 'WP_CACHE_KEY_SALT', 'your-unique-network-identifier_' );
+```
+
+WordPress automatically appends the blog ID to cache keys, but the salt adds an extra layer of protection — especially if you run multiple WordPress installations (multisite or otherwise) sharing the same Redis or Memcached instance.
+
+<Tip>
+  For more details on object cache configuration, see the [Object Cache troubleshooting guide](/knowledge-base/troubleshoot/object-cache).
+</Tip>
+
+## JWT Authentication on Multisite
+
+If you use CoCart's JWT authentication, you may want each site to have its own token issuer so that a token generated on one site cannot be used on another.
+
+Use the `cocart_jwt_auth_issuer` filter to set a site-specific issuer:
+
+```php
+add_filter( 'cocart_jwt_auth_issuer', function() {
+    return get_site_url();
+});
+```
+
+This ensures tokens are scoped to the site that issued them.
+
+## CORS on Multisite
+
+Each site in your network may have a different frontend domain. Configure CORS per-site to allow the correct origin:
+
+```php
+add_filter( 'cocart_disable_all_cors', '__return_false' );
+
+add_filter( 'cocart_allow_origin', function() {
+    // Each site returns its own frontend domain.
+    $origins = array(
+        1 => 'https://us-store.example.com',
+        2 => 'https://eu-store.example.com',
+        3 => 'https://uk-store.example.com',
+    );
+
+    $blog_id = get_current_blog_id();
+
+    return $origins[ $blog_id ] ?? '';
+});
+```
+
+If all sites share the same frontend domain, a single origin value is sufficient.
+
+## Licensing for Paid Add-ons
+
+If you use CoCart Starter, CoCart Plus, or other paid add-ons, you need a license for **each site** in the network where the add-on is active.
+
+For example:
+- 10 sites in the network, CoCart Plus active on 3 → you need a 3-site license
+- 5 sites in the network, CoCart Plus active on all 5 → you need a 5-site license
+
+Enter the license key on each site's plugin settings page individually.
+
+## Frequently Asked Questions
+
+<AccordionGroup>
+  <Accordion title="Can customers share a cart across sites in the network?">
+    No. Each site has its own cart session table and its own WooCommerce products. A cart on one site cannot reference products from another site. If you need a unified cart across multiple catalogs, you would need a single WooCommerce site with all products in one catalog.
+  </Accordion>
+
+  <Accordion title="Can a logged-in user have different carts on different sites?">
+    Yes. Even if a user account is shared across the network (which is the default in WordPress multisite), their persistent cart is stored per-site. Logging into Site A and adding items does not affect their cart on Site B.
+  </Accordion>
+
+  <Accordion title="Do I need to run database updates on every site?">
+    No. CoCart runs database migrations automatically when needed, and each site has its own background update queue. When CoCart is updated, the migration will run on each site the next time it is loaded.
+  </Accordion>
+
+  <Accordion title="What happens when I delete a site from the network?">
+    CoCart's session table for that site is automatically dropped along with the rest of the site's tables. No manual cleanup is required.
+  </Accordion>
+</AccordionGroup>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Object Cache Troubleshooting" icon="database" href="/knowledge-base/troubleshoot/object-cache">
+    Fix cache conflicts on multisite networks using Redis or Memcached.
+  </Card>
+  <Card title="CORS Configuration" icon="door-open" href="/cors">
+    Set up cross-origin access for your headless frontends.
+  </Card>
+</CardGroup>

@@ -1,0 +1,158 @@
+---
+title: "CoCart Starter Updates"
+sidebarTitle: "Basic Updates"
+description: "Keep up with all the latest improvements, features, and fixes in CoCart Starter."
+icon: "cart-shopping"
+rss: true
+---
+
+Stay up to date with the latest releases and improvements to CoCart Starter. Each update brings new features, bug fixes, and performance enhancements to extend CoCart's capabilities.
+
+<Note>
+  CoCart Starter is a premium plugin.
+</Note>
+
+---
+
+<Update label="June 15, 2026" description="v5.0.0">
+
+## Welcome to CoCart Starter
+
+CoCart Starter is the next chapter for CoCart, starting at version 5.0.0 to provide a seamless transition from the community edition. This is a major release packed with new features, performance improvements, and architectural changes that set the foundation for everything ahead.
+
+<Warning>
+  This release includes breaking changes if you have been using CoCart Community plugin. Please review the [full breaking changes guide](/breaking-changes/basic-v5) before upgrading.
+</Warning>
+
+### Batch Requests for All Endpoints
+
+[Batch requests](/batch-requests) are no longer limited to cart mutations. Every `GET` endpoint (except logout) now supports batching, so you can fetch products, cart data, and customer details in a single request—dramatically reducing round trips for complex page loads.
+
+### Expanded Product Filtering
+
+The Products API now gives you much more control over what you query. Filter products by multiple types at once using `include_types` and `exclude_types`, return only virtual products with the `virtual` parameter, fetch products by slug via a dedicated endpoint, and browse product brands through the new `cocart/v2/products/brands` endpoint. Products also now return brand information and global unique IDs in API v2 responses.
+
+### Cart Improvements
+
+Product variations can now be updated directly using the existing update item endpoint (`cocart/v2/cart/item/{item_key}`)—no need to remove and re-add. [See how to use](/api-reference/v2/working-with-variations#updating-variation-items-in-the-cart)
+
+You can also now [create an empty cart](/api-reference/v2/cart/post-create-cart) for guest customers with a simple POST request, which returns the cart key immediately. This is especially useful if you're not using one of our [SDKs](/sdk).
+
+### Your Own Product Reviews
+
+A new endpoint `cocart/v2/products/reviews/mine` returns only the authenticated customer's reviews—handy for account pages and review management.
+
+### Caching & Performance
+
+Building on the [ETag cache support](/etag-cache-support) introduced in [Community v4.9.0](/updates/community#etag-caching-&-session-reliability), CoCart Starter adds further performance improvements: cached API schemas for faster WordPress processing, cached product variation data by slug for quicker lookups, proper HTTP cache expiration headers on cart routes, and `X-HTTP-Method-Override` support for environments that restrict HTTP methods.
+
+We also added an experimental `Vary: Accept-Encoding` header support for servers that don't configure it is disabled by default to prevent duplicate Vary headers if the web server is already configured to add it.
+
+### Settings Page
+
+In your WordPress Dashboard, a new settings page under **CoCart → Settings** gives you direct control over key configuration without touching code including:
+
+* Permalink redirect for your headless frontend
+* WordPress access restrictions with optional allowed accessible pages
+* CORS and allowed origins
+* Session expiration for guest and logged-in customers
+* Authorization header server variable and allowed safe ports
+* Load Cart from Session feature.
+* Name your price feature.
+
+<Note>
+  Fields show a locked state when controlled by an external filter, with a link explaining what is overriding it.
+</Note>
+
+### Performance Mode
+
+A new performance mode reduces the number of plugins loaded during a CoCart REST request to only what is necessary, lowering memory usage and improving response times. Enable the plugins you need from the Integrations page.
+
+Two new filters `cocart_request_allowed_plugins` and `cocart_request_blocked_plugins` give you precise control over what loads, and `cocart_disable_wp_cron_on_request` controls whether WP-Cron spawning is suppressed during requests (default: `true` when performance mode is active).
+
+### WP-CLI Commands
+
+Two new [WP-CLI](/wp-cli) commands help you manage sessions from the command line:
+
+- `wp cocart status` — view the status of all carts in session
+- `wp cocart sessions` — inspect session details and check if specific sessions exist
+
+### Plugin Integrity & Management
+
+CoCart Starter performs an integrity check on all files within the plugin. If any files have been modified from the official release, you'll see a warning in your WordPress dashboard and error log. This helps ensure your installation is secure and functioning as intended.
+
+If the community edition is detected, CoCart Starter will automatically deactivate it to prevent conflicts. We recommend deleting the community version after upgrading.
+
+<Tip>
+  If you have `COCART_REMOVE_ALL_DATA` set to `true`, change it to `false` before uninstalling the community version to avoid data loss.
+</Tip>
+
+### Security Improvements
+
+Product meta data is no longer returned by default to prevent any PII exposure from third party plugins; you must now whitelist specific meta keys using the `cocart_products_allowed_meta_keys` filter. API routes are also hidden from the REST API index for added [security](/security).
+
+The route index no longer exposes all available routes unless your debugging.
+
+### Load Cart from Session — Now for Registered Customers
+
+The [Load Cart from Session](/load-cart#cocart-basic) feature has been completely rewritten and now supports registered customers. Previously only available for guests, registered customers can now seamlessly transfer from your headless storefront to the native WordPress site without logging in again.
+
+It works by combining two data points that are only available to customers who authenticated via the API: the cart key (their user ID) and the cart hash (representing the last cart change). Simply pass both as URL parameters:
+
+```
+https://your.store/?cocart-load-cart={cart_key}&c_hash={cart_hash}
+```
+
+### Session Handler Reliability
+
+In addition to the session caching fixes shipped in [Community v4.9.0](/updates/community), the session handler now stores the cart key internally for better optimization and consistency. WooCommerce's persistent cart has also been disabled to prevent stale user meta from overriding cart data.
+
+Cart merge on login is now more reliable too. When both a guest session and a logged-in session contain the same item, quantities are compared and the higher value is kept. Guest items not already in the customer's cart are added; existing items are always preserved. Administrators and shop managers are excluded from this behavior by design.
+
+### Architecture & Internal Changes
+
+Under the hood, the cart API has been restructured for better extensibility. The main cart controller now extends a new abstract controller, and all cart endpoints for API v2 extend from the v2 controller rather than v1—paving the way for a future v1 deprecation. All controllers now use abstract classes compatible with WordPress REST API standards, with shared taxonomy controllers and a new pagination utility class.
+
+We've also optimized the add-to-cart flow for smoother validation and broader WooCommerce extension compatibility, reduced unnecessary total calculations, improved [CORS](/cors) handling with wildcard fallbacks, and enhanced field filtering with nested `_fields` support.
+
+### Breaking Changes Summary
+
+This release includes significant breaking changes to response structures, headers, hooks, and function names. Key changes include renamed response headers (`CoCart-API-Cart-Key` → `Cart-Key`), restructured quantity objects, updated product category image responses, and a new plugin text domain (`cocart-basic`).
+
+[View the complete breaking changes guide →](/breaking-changes/basic-v5)
+
+### For Developers
+
+This release introduces 4 new action hooks covering cart creation, item updates, session setup, and settings registration; over 20 new filters spanning caching, security, cart extensions, quantity limits, product schema, CORS, and WordPress access control; new utility functions and classes for monetary formatting, pagination, and quantity limits; and updated logger APIs with named per-level methods. Several older filters and functions are deprecated.
+
+For the complete list of new hooks, filters, parameters, and deprecations, see the [developer reference](/developers) and the [breaking changes guide](/breaking-changes/basic-v5).
+
+A new `Cart-Hash` response header has also been added to help with debugging cart changes if you have `WP_DEBUG` enabled but the ETag header is the preferred header to use for identifying changes in the cart.
+
+</Update>
+
+---
+
+## Get CoCart Starter
+
+<Card title="Get CoCart Starter" icon="cart-plus" href="https://cocartapi.com/pricing/">
+  Unlock advanced features like batch requests, rate limiting, and priority support
+</Card>
+
+---
+
+## Need Help?
+
+<CardGroup cols={3}>
+  <Card title="Get Support" icon="life-ring" href="/support">
+    Need help? Check our support options
+  </Card>
+
+  <Card title="Join Community" icon="users" href="https://discord.gg/cocart">
+    Connect with other CoCart developers
+  </Card>
+
+  <Card title="View Roadmap" icon="map" href="/roadmap">
+    See what's coming next
+  </Card>
+</CardGroup>

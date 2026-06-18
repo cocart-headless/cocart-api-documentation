@@ -1,0 +1,62 @@
+---
+title: "Action Hooks Reference"
+sidebarTitle: "Overview"
+description: "Reference of all action hooks available in CoCart. Hook into installation, sessions, cart operations, item management, authentication, and more."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Developer Reference overview](/developers) for the full plugin key index.
+</Tip>
+
+<Tip>
+  Looking for JWT Authentication hooks? See [JWT actions](/developers/jwt/actions).
+</Tip>
+
+## Plugin Key Index
+
+Badges identify which plugin each filter is available in:
+
+| Plugin    | Badge |
+|-----------|-------|
+| Community | <Badge color="blue">Community</Badge> |
+| Basic     | <Badge color="red">Basic</Badge> |
+| Plus      | <Badge color="purple">Plus</Badge> |
+
+## Action Hook Categories
+
+<CardGroup cols={2}>
+  <Card title="Installation Hooks" href="/developers/actions/installation">
+    Fires on plugin install and update events for CoCart and CoCart Plus.
+  </Card>
+  <Card title="Session Management" href="/developers/actions/session-management">
+    Session save, cart load, and session override events.
+  </Card>
+  <Card title="Cart Updates" href="/developers/actions/cart-updates">
+    Fires before and after cart totals are recalculated.
+  </Card>
+  <Card title="Cart Items Management" href="/developers/actions/cart-items-management">
+    Adding, updating, removing, restoring, and quantity changes.
+  </Card>
+  <Card title="Cart Operations" href="/developers/actions/cart-operations">
+    Cart creation, emptying, clearing, and retrieval.
+  </Card>
+  <Card title="Authentication" href="/developers/actions/authentication">
+    Login permission granted and rate limit events.
+  </Card>
+  <Card title="Extensions" href="/developers/actions/extensions">
+    Extension callback registration.
+  </Card>
+  <Card title="Product Reviews" href="/developers/actions/product-reviews">
+    Fires after a product review is created via the REST API.
+  </Card>
+  <Card title="Payment & Shipping" href="/developers/actions/payment-shipping">
+    Payment gateway and shipping method selection events.
+  </Card>
+  <Card title="Deprecated" href="/developers/actions/deprecated">
+    Action hooks that have been deprecated and their replacements.
+  </Card>
+</CardGroup>

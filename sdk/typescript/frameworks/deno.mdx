@@ -1,0 +1,166 @@
+---
+title: "TypeScript SDK: Deno Adapter"
+sidebarTitle: "Deno"
+description: "Use the CoCart TypeScript SDK with Deno — Deno.serve(), Fresh islands, and Deno Deploy for WooCommerce cart management."
+'og:title': "Using CoCart with Deno — Headless WooCommerce Guide"
+'og:description': "Add WooCommerce cart management to your Deno app with CoCart. Deno.serve() handlers, Fresh framework support, and Deno Deploy."
+---
+
+<Info>
+  This guide was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 27th, 2026.
+</Info>
+
+The Deno adapter provides WooCommerce cart management for Deno.serve() handlers and Deno Fresh applications. It uses MemoryStorage since Deno doesn't provide `localStorage` in server contexts.
+
+## How It Works
+
+1. **Client**: The browser sends an `X-Cart-Key` header with each request to identify the cart.
+2. **Server**: The adapter reads the `X-Cart-Key` header from the standard `Request` object.
+3. **Fresh Islands**: For client-side components, `attachCartKeyHeader()` wraps `fetch()` to forward the cart key to your server.
+
+No cookies are used at any point — avoiding GDPR consent requirements, CORS restrictions, and cookie size limits.
+
+## Server Client
+
+Create a CoCart client inside a `Deno.serve()` handler. The cart key is read from the incoming request's `X-Cart-Key` header:
+
+```ts
+import { createServerClient } from '@cocartheadless/sdk/deno';
+
+Deno.serve(async (req) => {
+  const url = new URL(req.url);
+
+  if (url.pathname === '/api/cart') {
+    const client = createServerClient(Deno.env.get('COCART_STORE_URL')!, req);
+    const cart = await client.cart().get();
+    return Response.json(cart.toObject());
+  }
+
+  return new Response('Not Found', { status: 404 });
+});
+```
+
+### With Authentication
+
+To access a logged-in customer's cart, pass their credentials via Basic Auth:
+
+```ts
+const client = createServerClient(Deno.env.get('COCART_STORE_URL')!, req, {
+  username: 'customer@email.com',
+  password: 'customer_password',
+});
+```
+
+## General Client
+
+Use `createClient` for contexts where there is no incoming `Request` object. This creates a client backed by MemoryStorage:
+
+```ts
+import { createClient } from '@cocartheadless/sdk/deno';
+
+const client = createClient(Deno.env.get('COCART_STORE_URL')!);
+const products = await client.products().list({ per_page: 12 });
+console.log(products.toObject());
+```
+
+## Route Examples
+
+A complete routing pattern using `Deno.serve()`:
+
+```ts
+import { createServerClient } from '@cocartheadless/sdk/deno';
+
+Deno.serve(async (req) => {
+  const url = new URL(req.url);
+  const storeUrl = Deno.env.get('COCART_STORE_URL')!;
+
+  // GET /api/cart
+  if (url.pathname === '/api/cart' && req.method === 'GET') {
+    const client = createServerClient(storeUrl, req);
+    const cart = await client.cart().get();
+    return Response.json(cart.toObject());
+  }
+
+  // POST /api/cart/add
+  if (url.pathname === '/api/cart/add' && req.method === 'POST') {
+    const client = createServerClient(storeUrl, req);
+    const { productId, quantity } = await req.json();
+
+    try {
+      const response = await client.cart().addItem(productId, { quantity });
+      return Response.json(response.toObject());
+    } catch (e) {
+      return Response.json({ error: (e as Error).message }, { status: 400 });
+    }
+  }
+
+  // GET /api/products
+  if (url.pathname === '/api/products' && req.method === 'GET') {
+    const client = createServerClient(storeUrl, req);
+    const products = await client.products().list({ per_page: 12 });
+    return Response.json(products.toObject());
+  }
+
+  return new Response('Not Found', { status: 404 });
+});
+```
+
+## Deno Fresh
+
+### Route Handler
+
+Use the server client in a Fresh route handler:
+
+```ts
+// routes/api/cart.ts
+import type { Handlers } from '$fresh/server.ts';
+import { createServerClient } from '@cocartheadless/sdk/deno';
+
+export const handler: Handlers = {
+  async GET(req) {
+    const client = createServerClient(Deno.env.get('COCART_STORE_URL')!, req);
+    const cart = await client.cart().get();
+    return Response.json(cart.toObject());
+  },
+};
+```
+
+### Fresh Island (Client-Side)
+
+For interactive client-side components, use `createClient` with `attachCartKeyHeader`:
+
+```ts
+// islands/AddToCart.tsx
+import { createClient, attachCartKeyHeader } from '@cocartheadless/sdk/deno';
+
+const client = createClient('https://your-store.com');
+attachCartKeyHeader(client);
+```
+
+## Environment Variables
+
+```bash
+# .env
+COCART_STORE_URL=https://your-store.com
+```
+
+Load environment variables with the `--env` flag:
+
+```bash
+deno run --env --allow-net --allow-env main.ts
+```
+
+<Warning>
+On Deno Deploy, set environment variables in the project dashboard. The `--env` flag is only needed for local development.
+</Warning>
+
+## How `attachCartKeyHeader` Works
+
+`attachCartKeyHeader()` wraps `globalThis.fetch` so that every same-origin request automatically includes an `X-Cart-Key` header with the current cart key:
+
+- Server handlers receive the cart key without cookies
+- Fresh route handlers receive the cart key without cookies
+- Cross-origin requests are never modified
+- If no cart key is set, no header is added
+
+Call it once after creating the client.

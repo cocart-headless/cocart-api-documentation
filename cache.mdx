@@ -1,0 +1,218 @@
+---
+title: "Cache Control"
+sidebarTitle: "Cache"
+description: "Learn how CoCart automatically manages HTTP cache headers to optimize performance for your headless store."
+icon: "bolt"
+---
+
+Caching is one of the most effective ways to speed up your headless store. CoCart automatically sets the right HTTP cache headers on every response so that browsers, CDNs, and API clients know what to cache and what to always fetch fresh.
+
+**You don't need to configure anything** — CoCart handles cache headers out of the box. This page explains what happens behind the scenes and the filters available if you need more control.
+
+## How It Works
+
+CoCart splits its API routes into two categories:
+
+| Category | Examples | Caching behavior |
+|----------|----------|------------------|
+| **Cacheable** | Products, categories, tags, attributes, reviews | Cached with `max-age` and `Last-Modified` |
+| **Not cacheable** | Cart, logout, store info | Never cached (`no-cache, no-store`) |
+
+This distinction exists because **product data changes infrequently** (it's safe to serve a cached version for a while), but **cart data is unique to each customer** and must always be fresh.
+
+## What Headers Does CoCart Set?
+
+### On product endpoints (cacheable)
+
+When you request a product endpoint like `GET /wp-json/cocart/v2/products`, CoCart sends:
+
+```http
+Last-Modified: Mon, 07 Apr 2026 14:30:00 GMT
+Cache-Control: public, must-revalidate, max-age=3600, stale-while-revalidate=86400
+```
+
+Here's what each part means:
+
+- **`Last-Modified`** — The date the product was last updated. Browsers and CDNs use this to check if data has changed.
+- **`public`** — Any cache (browser, CDN, proxy) can store this response. Changes to `private` automatically when the user is logged in.
+- **`must-revalidate`** — Once the cached copy expires, the cache must check with the server before using it again.
+- **`max-age=3600`** — The response is considered fresh for 1 hour (3,600 seconds). During this time, caches can serve it without contacting the server.
+- **`stale-while-revalidate=86400`** — After `max-age` expires, caches can still serve the stale response for up to 24 hours (86,400 seconds) while fetching a fresh copy in the background. This prevents users from waiting for a slow revalidation.
+
+### On cart endpoints (not cacheable)
+
+When you request a cart endpoint like `GET /wp-json/cocart/v2/cart`, CoCart sends:
+
+```http
+Expires: Thu, 01-Jan-70 00:00:01 GMT
+Cache-Control: no-cache, no-store, must-revalidate, max-age=0, private
+Pragma: no-cache
+```
+
+This tells every cache layer — browser, CDN, proxy — to **never store this response**. Cart data is personal and changes frequently, so it must always come directly from the server.
+
+<Note>
+  The following routes are marked as not cacheable by default:
+
+  - `/cocart/v2/cart/*` — All cart endpoints
+  - `/cocart/v2/logout/`
+  - `/cocart/v2/store/`
+  - `/cocart/v1/get-cart/*`
+  - `/cocart/v1/logout/`
+</Note>
+
+## Skipping the Cache on Any Request
+
+<Info>
+  The `_skip_cache` parameter was introduced in **CoCart Community v4.9**.
+</Info>
+
+If you need a guaranteed fresh response — even on a normally cacheable endpoint like products — add the `_skip_cache` parameter to your request:
+
+```bash
+curl https://example.com/wp-json/cocart/v2/products?_skip_cache=true
+```
+
+This forces CoCart to send `no-cache` headers regardless of the route:
+
+```http
+Expires: Thu, 01-Jan-70 00:00:01 GMT
+Cache-Control: no-cache, no-store, must-revalidate, max-age=0
+Pragma: no-cache
+```
+
+<Tip>
+  This is useful during development or when you need to verify that product data has updated after a change. You should not use it in production on every request — it defeats the purpose of caching.
+</Tip>
+
+## Public vs. Private Cache
+
+CoCart automatically adjusts the cache visibility based on whether the user is logged in:
+
+| User state | `Cache-Control` visibility | What it means |
+|------------|----------------------------|---------------|
+| Guest (not logged in) | `public` | CDNs and shared caches can store the response |
+| Logged in | `private` | Only the user's browser can cache the response |
+
+This happens automatically. Logged-in users may see personalized pricing or restricted products, so their responses should never be stored in a shared cache.
+
+## WP REST API Cache Plugin Compatibility
+
+If you use the [WP REST API Cache](https://wordpress.org/plugins/wp-rest-api-cache/) plugin, CoCart automatically prevents cart and other non-cacheable routes from being cached by that plugin. Only product endpoints are allowed through.
+
+This is handled via the `rest_cache_skip` filter — no configuration needed on your part.
+
+## Customization with Filters
+
+CoCart provides three filters for developers who need to adjust the default cache behavior. These are especially useful for **high-traffic stores** where even small caching improvements can significantly reduce server load, lower response times, and help your store handle traffic spikes during sales events without scaling infrastructure.
+
+### Change how long products are cached
+
+By default, product responses are cached for **1 hour**. To change this:
+
+```php
+// Cache product responses for 30 minutes instead of 1 hour.
+add_filter( 'cocart_cache_max_age', function( $max_age ) {
+    return 30 * MINUTE_IN_SECONDS; // 1800 seconds
+});
+```
+
+The `$max_age` value is in seconds. WordPress provides [time constants](https://developer.wordpress.org/reference/hooks/wp_loaded/#time-constants) you can use:
+
+| Constant | Value |
+|----------|-------|
+| `MINUTE_IN_SECONDS` | 60 |
+| `HOUR_IN_SECONDS` | 3,600 |
+| `DAY_IN_SECONDS` | 86,400 |
+| `WEEK_IN_SECONDS` | 604,800 |
+
+<Tip>
+  **Running a flash sale or frequently updating prices?** Lower `max-age` to something like 5–10 minutes so customers see updated prices sooner. **Have a stable catalog that rarely changes?** Increase it to a few hours or even a day to serve more responses from cache and reduce database queries — this can make a noticeable difference when thousands of shoppers are browsing at once.
+</Tip>
+
+### Change the stale-while-revalidate duration
+
+By default, stale product responses can be served for up to **24 hours** while the cache fetches a fresh copy in the background. To change this:
+
+```php
+// Allow stale responses for up to 1 hour while revalidating.
+add_filter( 'cocart_stale_while_revalidate', function( $duration ) {
+    return HOUR_IN_SECONDS; // 3600 seconds
+});
+```
+
+This filter controls what happens **after** `max-age` expires. Instead of making every customer wait for the server to generate a fresh response, caches can serve the slightly stale version instantly while fetching new data behind the scenes. During high-traffic periods like product launches or holiday sales, this prevents a "thundering herd" — where hundreds of expired cache entries all hit your server at the same moment.
+
+<Warning>
+  Setting this too low may cause more cache misses and increase server load during traffic spikes. Setting it too high means customers could see outdated product data for longer. The default of 24 hours is a good balance for most stores.
+</Warning>
+
+### Change which routes are never cached
+
+By default, cart, logout, and store routes are never cached. You can add your own routes to this list:
+
+```php
+// Add a custom route that should never be cached.
+add_filter( 'cocart_send_cache_control_patterns', function( $patterns ) {
+    $patterns[] = '/^cocart\/v2\/my-custom-route/';
+    return $patterns;
+});
+```
+
+Each pattern is a [regular expression](https://www.php.net/manual/en/reference.pcre.pattern.syntax.php) matched against the request route. The default patterns are:
+
+```php
+array(
+    '/^cocart\/v2\/cart/',
+    '/^cocart\/v2\/logout/',
+    '/^cocart\/v2\/store/',
+    '/^cocart\/v1\/get-cart/',
+    '/^cocart\/v1\/logout/',
+)
+```
+
+<Tip>
+  If you have custom endpoints that return customer-specific or session-specific data, add them to this list. This ensures CDNs and shared caches never accidentally serve one customer's data to another — which is critical for stores handling high volumes of concurrent sessions.
+</Tip>
+
+<Warning>
+  Removing routes from this list (like cart routes) is not recommended. Cart data is session-specific and should never be served from a shared cache.
+</Warning>
+
+## CoCart Response Headers
+
+Every CoCart response includes a timestamp header:
+
+```http
+CoCart-Timestamp: 1712582400
+```
+
+This is a [Unix timestamp](https://en.wikipedia.org/wiki/Unix_time) of when the response was generated. You can use it to determine how old a response is.
+
+When `WP_DEBUG` is enabled, CoCart also includes a version header:
+
+```http
+CoCart-Version: 4.9.0
+```
+
+## Summary
+
+| What | Default | Customizable? |
+|------|---------|---------------|
+| Product cache duration | 1 hour | Yes — `cocart_cache_max_age` filter |
+| Stale-while-revalidate | 24 hours | Yes — `cocart_stale_while_revalidate` filter |
+| Cart caching | Disabled (always fresh) | Yes — `cocart_send_cache_control_patterns` filter |
+| Public/private visibility | Automatic (based on login state) | No |
+| `_skip_cache` parameter | Available on all routes | No |
+| WP REST API Cache compatibility | Automatic | No |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="ETag Cache Support" icon="arrow-right-arrow-left" href="/etag-cache-support">
+    Use conditional requests with ETags to avoid downloading unchanged data entirely.
+  </Card>
+  <Card title="CORS" icon="door-open" href="/cors">
+    Configure cross-origin access for your headless frontend.
+  </Card>
+</CardGroup>

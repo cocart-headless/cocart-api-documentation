@@ -1,60 +1,223 @@
 ---
 title: "Security Practices"
-description: "Learn about security practices for token storage and server-side configuration."
+description: "Practical security guidance for credentials, token storage, HTTPS, and authentication method selection when building with CoCart."
 icon: "shield"
-robots: "noindex, follow"
-tag: "WIP"
 ---
 
-> Dev note: This page needs improving.
+## Always Use HTTPS
 
-## Secure Storage
+CoCart authentication transmits sensitive data on every request:
 
-<Warning>
-    **localStorage** is vulnerable to XSS attacks and should not be used for storing sensitive tokens in production applications.
-</Warning>
+- **Basic Auth** encodes your username and password in the `Authorization` header on every API call.
+- **JWT tokens** are bearer credentials — anyone who intercepts one can use it until it expires.
 
-Here are recommended approaches for token storage, in order of security:
+Always point your client at an `https://` store URL. HTTP connections expose credentials and tokens to interception.
 
-1. **HttpOnly Cookies** (Most Secure)
-    - Protected from XSS attacks
-    - Automatic CSRF protection when configured properly
-    - Handled automatically by browsers
+### SSL verification
 
-2. **Web Workers + IndexedDB**
-    - Isolated from main thread
-    - Protected from XSS
-    - More complex implementation
-
-3. **In-Memory Storage**
-    - Cleared on page refresh
-    - Protected from XSS
-    - Requires state management solution
-
-## Server-Side Configuration
-
-Your server should set cookies with secure options:
+The PHP and Python SDKs default to verifying SSL certificates (`verify_ssl: true`). Do not disable this in production.
 
 <CodeGroup>
-    ```javascript JavaScript
-    // Example server-side cookie configuration (Express.js)
-    res.cookie('jwt_token', token, {
-        httpOnly: true,     // Prevents JavaScript access
-        secure: true,       // Requires HTTPS
-        sameSite: 'strict', // CSRF protection
-        maxAge: 3600000,    // 1 hour
-        path: '/'           // Cookie path
-    });
-    ```
+```php PHP
+use CoCart\CoCart;
+
+$client = new CoCart('https://your-store.com', [
+    'verify_ssl' => true, // default — do not set to false in production
+]);
+```
+
+```python Python
+from cocart import CoCart
+
+client = CoCart('https://your-store.com', verify_ssl=True)  # default
+```
 </CodeGroup>
 
-## Security Best Practices
+<Warning>
+  Setting `verify_ssl: false` disables certificate validation and leaves your requests vulnerable to man-in-the-middle attacks. Only use it in local development with self-signed certificates.
+</Warning>
 
-1. **Always use HTTPS** for token transmission
-2. **Set appropriate cookie flags:**
-    - HttpOnly
-    - Secure
-    - SameSite=Strict
-3. **Implement CSRF protection**
-4. **Use short token expiration times**
-5. **Rotate refresh tokens**
+---
+
+## Credential & Secret Management
+
+Never hardcode credentials or secret keys in source code or commit them to version control. Use environment variables instead.
+
+<CodeGroup>
+```php PHP
+use CoCart\CoCart;
+
+$client = new CoCart('https://your-store.com', [
+    'username' => getenv('COCART_USERNAME'),
+    'password' => getenv('COCART_PASSWORD'),
+]);
+```
+
+```python Python
+import os
+from cocart import CoCart
+
+client = CoCart('https://your-store.com',
+    username=os.environ['COCART_USERNAME'],
+    password=os.environ['COCART_PASSWORD'],
+)
+```
+
+```typescript TypeScript
+import { CoCart } from '@cocartheadless/sdk';
+
+const client = new CoCart('https://your-store.com', {
+    username: process.env.COCART_USERNAME,
+    password: process.env.COCART_PASSWORD,
+});
+```
+
+```go Go
+import cocart "github.com/cocart-headless/cocart-sdk-go"
+
+client := cocart.NewClient("https://your-store.com",
+    cocart.WithBasicAuth(os.Getenv("COCART_USERNAME"), os.Getenv("COCART_PASSWORD")),
+)
+```
+</CodeGroup>
+
+The same applies to your JWT secret key on the WordPress side — it belongs in `wp-config.php` as a constant, not in plugin settings or a theme file. See the [JWT setup guide](/authentication/jwt#secret-key-configuration) for details.
+
+---
+
+## Token Storage
+
+Where you store JWT tokens in your application determines your XSS exposure. Choose based on your architecture:
+
+| Method | XSS safe | Persists across reloads | Best for |
+|---|---|---|---|
+| HttpOnly Cookie | Yes | Yes | Browser or SSR apps |
+| `EncryptedStorage` (TypeScript SDK) | Yes | Yes | Browser SPAs |
+| `MemoryStorage` / in-memory (default) | Yes | No | Server-side runtimes |
+| `PhpSessionStorage` (PHP SDK) | Server-side | Yes | PHP-rendered apps |
+
+### HttpOnly cookies (browser / SSR)
+
+The most secure option for browser applications. Tokens stored in HttpOnly cookies are inaccessible to JavaScript, eliminating XSS theft. CSRF is a separate concern — mitigate it with the `SameSite` attribute and, where needed, a CSRF token.
+
+See [Server-side cookie configuration](#server-side-cookie-configuration) below for implementation.
+
+### `EncryptedStorage` (TypeScript SDK)
+
+For browser SPAs that need token persistence across page reloads without HttpOnly cookies, the TypeScript SDK provides `EncryptedStorage`. It wraps `localStorage` with AES-256-GCM encryption and PBKDF2 key derivation (100,000 iterations, SHA-256). Each write uses a random 12-byte IV, so identical values produce different ciphertext. Corrupted or tampered values are silently removed on failed decryption.
+
+```typescript TypeScript
+import { CoCart, EncryptedStorage } from '@cocartheadless/sdk';
+
+const client = new CoCart('https://your-store.com', {
+    storage: new EncryptedStorage(process.env.STORAGE_ENCRYPTION_KEY),
+});
+```
+
+Use a strong, randomly generated encryption key stored in an environment variable — not hardcoded.
+
+### `MemoryStorage` (default — Python, Go, TypeScript in Node)
+
+The default for server-side runtimes. Tokens are kept in process memory and never written to disk. Appropriate for request-scoped clients and server-rendered applications where the server holds session state. Tokens are lost on process restart.
+
+### `PhpSessionStorage` (PHP SDK)
+
+Persists the cart key and tokens in `$_SESSION`. Secure session configuration is your responsibility — ensure your `php.ini` includes:
+
+```ini
+session.cookie_secure = 1
+session.cookie_httponly = 1
+session.cookie_samesite = Lax
+```
+
+```php PHP
+use CoCart\CoCart;
+use CoCart\Storage\PhpSessionStorage;
+
+$client = new CoCart('https://your-store.com', [
+    'storage' => new PhpSessionStorage(),
+]);
+```
+
+<Warning>
+  Do not store JWT tokens in plain `localStorage` without encryption. It is readable by any JavaScript running on the page, including third-party scripts.
+</Warning>
+
+---
+
+## Server-Side Cookie Configuration
+
+When building a BFF (backend-for-frontend) or proxy layer that issues JWT tokens to the browser, set cookies with these flags:
+
+<CodeGroup>
+```javascript Node.js / Express
+res.cookie('jwt_token', token, {
+    httpOnly: true,    // prevents JavaScript access (XSS protection)
+    secure: true,      // HTTPS only
+    sameSite: 'lax',   // protects against CSRF; 'strict' blocks cross-site navigation (e.g. links from email)
+    maxAge: 3600000,   // 1 hour in milliseconds
+    path: '/',
+});
+```
+
+```php PHP
+setcookie('jwt_token', $token, [
+    'expires'  => time() + 3600,
+    'path'     => '/',
+    'secure'   => true,   // HTTPS only
+    'httponly' => true,   // prevents JavaScript access
+    'samesite' => 'Lax',  // 'Strict' works too but blocks navigation from external links
+]);
+```
+</CodeGroup>
+
+**`SameSite` values:**
+- `Lax` — blocks CSRF from cross-site POSTs but allows navigation (e.g. user clicking a link from an email). Recommended for most apps.
+- `Strict` — blocks all cross-site requests including navigations. Highest protection but may break login flows triggered from external links.
+
+---
+
+## Authentication Method Security
+
+| Method | Credentials sent | Token lifetime | Use case |
+|---|---|---|---|
+| Basic Auth | Every request | N/A (stateless) | Server-to-server, trusted environments |
+| JWT | Once (login), then tokens | Short-lived access + long-lived refresh | Customer-facing apps |
+| Consumer Keys | Every request | N/A (stateless) | Admin/server-to-server only |
+
+**Basic Auth** — username and password travel in every request header. HTTPS is not optional. Suitable for server-side code where credentials are never exposed to a browser.
+
+**JWT** — the preferred method for customer-facing applications. The access token is short-lived; the refresh token rotates on each use. Tokens are automatically revoked server-side on password change, email change, logout, or account deletion. All SDKs handle the refresh-on-401 cycle automatically. See [Token Management](/authentication/jwt/token-management) for details.
+
+**Consumer Keys** — WooCommerce API keys intended for admin and server-to-server operations (e.g. the Sessions API). Never include consumer keys in client-side code or expose them in a browser.
+
+---
+
+## What the SDKs Handle for You
+
+You do not need to implement these manually when using an official SDK:
+
+<Check>SSL certificate verification enabled by default (PHP, Python).</Check>
+<Check>JWT access token refreshed automatically on 401, with a guard against infinite refresh loops.</Check>
+<Check>Auth priority enforced: JWT takes precedence over Basic Auth, which takes precedence over Consumer Keys.</Check>
+<Check>AES-256-GCM encrypted localStorage available via `EncryptedStorage` (TypeScript SDK).</Check>
+<Check>Token revocation on security events handled server-side by the JWT plugin.</Check>
+
+---
+
+## Common Mistakes
+
+- **`verify_ssl: false` in production** — disables certificate validation. Remove it before deploying.
+- **Plain `localStorage` for tokens** — use `EncryptedStorage` (TypeScript) or HttpOnly cookies instead.
+- **Credentials in URLs** — never pass username/password as query parameters; use constructor options.
+- **Consumer keys in client-side bundles** — these are admin credentials and must stay server-side.
+- **Not testing token expiry** — verify your refresh flow works before shipping; a broken refresh silently logs users out.
+
+---
+
+## Related
+
+- [JWT Token Management](/authentication/jwt/token-management) — validate, refresh, and handle 401 errors
+- [JWT Setup](/authentication/jwt) — `COCART_JWT_AUTH_SECRET_KEY` configuration
+- [CORS](/cors) — cross-origin configuration for browser clients
+- [Security Policy](/overview/security-policy) — supported versions and vulnerability reporting

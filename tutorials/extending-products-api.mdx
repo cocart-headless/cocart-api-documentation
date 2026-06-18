@@ -1,0 +1,318 @@
+---
+title: "Extending the Products API"
+sidebarTitle: "Extending Products"
+description: "Add custom fields to product responses using filters — demonstrated with promotion and discount data."
+icon: "tags"
+keywords: ["products API", "extend", "custom fields", "discount", "promotion", "schema", "cocart_rest_v2_product_schema", "cocart_prepare_product_object_v2"]
+---
+
+<Note>
+  This tutorial targets only **CoCart Starter**. The filter names differ between API versions and since API v1 will be deprecated in the future, this tutorial focuses on v2.
+</Note>
+
+CoCart's Products API returns the standard WooCommerce product fields out of the box. When you need additional data — promotion details from a discount plugin, loyalty tier pricing, or any custom product meta — you can attach it to every product response using just two PHP filters.
+
+This tutorial demonstrates the pattern using a realistic example: exposing a `promotion` object on each product that surfaces sale pricing, scheduled dates, discount percentage, and a custom promotional label.
+
+## Filters used
+
+Two filters work together to extend the Products API:
+
+- **`cocart_rest_v2_product_schema`** — called when the product schema is built. Use this to declare any new fields you intend to return. Keeping the schema accurate benefits API consumers, TypeScript type generators, and OpenAPI tooling.
+- **`cocart_prepare_product_object_v2`** — called after every product response is assembled, for both the collection (`GET /cocart/v2/products`) and the single-product endpoint (`GET /cocart/v2/products/{id}`). Use this to read product data and attach it to the response.
+
+<CardGroup cols={2}>
+  <Card title="cocart_rest_v2_product_schema" icon="brackets-curly" href="/developers/filters#cocart_rest_v2_product_schema">
+    Schema extension filter reference.
+  </Card>
+  <Card title="cocart_prepare_product_object_v2" icon="filter" href="/developers/filters#cocart_prepare_product_object_v2">
+    Response population filter reference.
+  </Card>
+</CardGroup>
+
+## What you'll build
+
+A `promotion` object appended to every product response:
+
+```json
+{
+  "id": 42,
+  "name": "Slim Fit Chinos",
+  "promotion": {
+    "on_sale": true,
+    "sale_price": "34.99",
+    "regular_price": "49.99",
+    "discount_percent": 30,
+    "sale_start": "2026-04-01T00:00:00",
+    "sale_end": "2026-04-30T23:59:59",
+    "promo_label": "Spring Sale"
+  }
+}
+```
+
+The `promo_label` field is read from `_promo_label` product meta — a stand-in for any custom meta key your discount plugin or theme stores on the product.
+
+## Step 1 — Extend the schema
+
+Register the `promotion` field and its sub-properties so the schema stays accurate:
+
+```php
+add_filter( 'cocart_rest_v2_product_schema', function( $properties ) {
+    $properties['promotion'] = array(
+        'description' => __( 'Promotion and sale pricing details for the product.' ),
+        'type'        => 'object',
+        'context'     => array( 'view' ),
+        'readonly'    => true,
+        'properties'  => array(
+            'on_sale'          => array(
+                'description' => __( 'Whether the product is currently on sale.' ),
+                'type'        => 'boolean',
+                'context'     => array( 'view' ),
+                'readonly'    => true,
+            ),
+            'sale_price'       => array(
+                'description' => __( 'The formatted sale price.' ),
+                'type'        => 'string',
+                'context'     => array( 'view' ),
+                'readonly'    => true,
+            ),
+            'regular_price'    => array(
+                'description' => __( 'The formatted regular price.' ),
+                'type'        => 'string',
+                'context'     => array( 'view' ),
+                'readonly'    => true,
+            ),
+            'discount_percent' => array(
+                'description' => __( 'Percentage discount off the regular price, or 0 if not on sale.' ),
+                'type'        => 'integer',
+                'context'     => array( 'view' ),
+                'readonly'    => true,
+            ),
+            'sale_start'       => array(
+                'description' => __( 'ISO 8601 date the sale starts, or null if no start date is set.' ),
+                'type'        => array( 'string', 'null' ),
+                'context'     => array( 'view' ),
+                'readonly'    => true,
+            ),
+            'sale_end'         => array(
+                'description' => __( 'ISO 8601 date the sale ends, or null if no end date is set.' ),
+                'type'        => array( 'string', 'null' ),
+                'context'     => array( 'view' ),
+                'readonly'    => true,
+            ),
+            'promo_label'      => array(
+                'description' => __( 'Custom promotional label from product meta (_promo_label), or empty string if not set.' ),
+                'type'        => 'string',
+                'context'     => array( 'view' ),
+                'readonly'    => true,
+            ),
+        ),
+    );
+
+    return $properties;
+} );
+```
+
+<Note>
+  Every property must include `description`, `type`, and `context`. The `readonly` flag is recommended for fields that the API consumer cannot write back. Nullable fields use `'type' => array( 'string', 'null' )` to satisfy the JSON Schema spec.
+</Note>
+
+## Step 2 — Populate the data
+
+Attach the `promotion` object to every product response using the response filter. The `$response->data` array is a plain PHP array you can write to directly.
+
+Use the same price formatting pattern the Products API itself uses — `cocart_format_money()` paired with `CoCart_Utilities_Product_Helpers::get_price_from_tax_display_mode()`. This ensures prices respect the store's tax display setting (inc/excl) and decimal configuration, and returns a plain numeric string without HTML or currency symbols — matching what the existing `prices` object already returns:
+
+```php
+add_filter( 'cocart_prepare_product_object_v2', function( $response, $product, $request ) {
+    $tax_display_mode = CoCart_Utilities_Product_Helpers::get_tax_display_mode();
+    $price_function   = CoCart_Utilities_Product_Helpers::get_price_from_tax_display_mode( $tax_display_mode );
+
+    $on_sale       = $product->is_on_sale();
+    $regular_price = (float) $product->get_regular_price();
+    $sale_price    = (float) $product->get_sale_price();
+
+    // Calculate discount percent only when both prices are available.
+    $discount_percent = 0;
+    if ( $on_sale && $regular_price > 0 && $sale_price < $regular_price ) {
+        $discount_percent = (int) round( ( ( $regular_price - $sale_price ) / $regular_price ) * 100 );
+    }
+
+    // Sale schedule — WooCommerce stores these as WC_DateTime objects.
+    $date_from = $product->get_date_on_sale_from();
+    $date_to   = $product->get_date_on_sale_to();
+
+    $response->data['promotion'] = array(
+        'on_sale'          => $on_sale,
+        'sale_price'       => $on_sale ? cocart_format_money( $price_function( $product, array( 'price' => $sale_price ) ) ) : '',
+        'regular_price'    => cocart_format_money( $price_function( $product, array( 'price' => $regular_price ) ) ),
+        'discount_percent' => $discount_percent,
+        'sale_start'       => $date_from ? $date_from->format( 'Y-m-d\TH:i:s' ) : null,
+        'sale_end'         => $date_to   ? $date_to->format( 'Y-m-d\TH:i:s' )   : null,
+        'promo_label'      => (string) get_post_meta( $product->get_id(), '_promo_label', true ),
+    );
+
+    return $response;
+}, 10, 3 );
+```
+
+## Step 3 — Package as a plugin
+
+Wrap both filters in a WordPress plugin so they load reliably alongside CoCart:
+
+```php
+<?php
+/**
+ * Plugin Name: My Store – Promotion Fields
+ * Description: Adds promotion and sale data to CoCart product responses.
+ * Version: 1.0.0
+ * Requires Plugins: cocart
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+add_action( 'plugins_loaded', function() {
+    // Bail early if CoCart is not active.
+    if ( ! class_exists( 'CoCart' ) ) {
+        return;
+    }
+
+    add_filter( 'cocart_rest_v2_product_schema', function( $properties ) {
+        $properties['promotion'] = array(
+            'description' => __( 'Promotion and sale pricing details for the product.' ),
+            'type'        => 'object',
+            'context'     => array( 'view' ),
+            'readonly'    => true,
+            'properties'  => array(
+                'on_sale'          => array( 'description' => __( 'Whether the product is currently on sale.' ),              'type' => 'boolean',              'context' => array( 'view' ), 'readonly' => true ),
+                'sale_price'       => array( 'description' => __( 'The formatted sale price.' ),                              'type' => 'string',               'context' => array( 'view' ), 'readonly' => true ),
+                'regular_price'    => array( 'description' => __( 'The formatted regular price.' ),                          'type' => 'string',               'context' => array( 'view' ), 'readonly' => true ),
+                'discount_percent' => array( 'description' => __( 'Percentage discount off the regular price.' ),            'type' => 'integer',              'context' => array( 'view' ), 'readonly' => true ),
+                'sale_start'       => array( 'description' => __( 'ISO 8601 sale start date, or null.' ),                    'type' => array( 'string', 'null' ), 'context' => array( 'view' ), 'readonly' => true ),
+                'sale_end'         => array( 'description' => __( 'ISO 8601 sale end date, or null.' ),                      'type' => array( 'string', 'null' ), 'context' => array( 'view' ), 'readonly' => true ),
+                'promo_label'      => array( 'description' => __( 'Custom promotional label from _promo_label meta.' ),      'type' => 'string',               'context' => array( 'view' ), 'readonly' => true ),
+            ),
+        );
+        return $properties;
+    } );
+
+    add_filter( 'cocart_prepare_product_object_v2', function( $response, $product, $request ) {
+        $tax_display_mode = CoCart_Utilities_Product_Helpers::get_tax_display_mode();
+        $price_function   = CoCart_Utilities_Product_Helpers::get_price_from_tax_display_mode( $tax_display_mode );
+
+        $on_sale       = $product->is_on_sale();
+        $regular_price = (float) $product->get_regular_price();
+        $sale_price    = (float) $product->get_sale_price();
+
+        $discount_percent = 0;
+        if ( $on_sale && $regular_price > 0 && $sale_price < $regular_price ) {
+            $discount_percent = (int) round( ( ( $regular_price - $sale_price ) / $regular_price ) * 100 );
+        }
+
+        $date_from = $product->get_date_on_sale_from();
+        $date_to   = $product->get_date_on_sale_to();
+
+        $response->data['promotion'] = array(
+            'on_sale'          => $on_sale,
+            'sale_price'       => $on_sale ? cocart_format_money( $price_function( $product, array( 'price' => $sale_price ) ) ) : '',
+            'regular_price'    => cocart_format_money( $price_function( $product, array( 'price' => $regular_price ) ) ),
+            'discount_percent' => $discount_percent,
+            'sale_start'       => $date_from ? $date_from->format( 'Y-m-d\TH:i:s' ) : null,
+            'sale_end'         => $date_to   ? $date_to->format( 'Y-m-d\TH:i:s' )   : null,
+            'promo_label'      => (string) get_post_meta( $product->get_id(), '_promo_label', true ),
+        );
+
+        return $response;
+    }, 10, 3 );
+} );
+```
+
+<Tip>
+  CoCart's filters fire during the REST request lifecycle, which is after `plugins_loaded`. Registering your hooks inside `plugins_loaded` ensures CoCart is fully initialised before your code runs, without requiring `rest_api_init`.
+</Tip>
+
+## Requesting only the promotion field
+
+The Products API supports a `_fields` query parameter that limits which top-level fields are returned.
+
+<Note>
+  Registering your field in the schema via `cocart_rest_v2_product_schema` is what makes `_fields` aware of it. Without a schema entry, CoCart has no record of the field and `_fields` filtering will not include it even if the data is present in the response.
+</Note>
+
+Because the `promotion` field is declared in the schema, you can combine it with other fields to keep responses lean:
+
+```http
+GET /wp-json/cocart/v2/products?_fields=id,name,promotion
+```
+
+Response:
+
+```json
+{
+  "products": [
+    {
+      "id": 42,
+      "name": "Slim Fit Chinos",
+      "promotion": {
+        "on_sale": true,
+        "sale_price": "34.99",
+        "regular_price": "49.99",
+        "discount_percent": 30,
+        "sale_start": "2026-04-01T00:00:00",
+        "sale_end": "2026-04-30T23:59:59",
+        "promo_label": "Spring Sale"
+      }
+    }
+  ],
+  "page": 1,
+  "total_pages": 1,
+  "total_products": 1
+}
+```
+
+The same `_fields` parameter works on the single-product endpoint:
+
+```http
+GET /wp-json/cocart/v2/products/42?_fields=id,name,promotion
+```
+
+## Going further
+
+### Reading from a third-party discount plugin
+
+Popular discount plugins store their rule data in product meta. If you use **Advanced Coupons**, for example, you can read its product-level override meta directly in the filter:
+
+```php
+$sale_override = get_post_meta( $product->get_id(), 'acfw_product_sale_override', true );
+```
+
+Check the plugin's source or documentation for the exact meta keys it uses, then map those values into the fields you need.
+
+### Variable products
+
+`cocart_prepare_product_object_v2` fires for both simple products and individual variation objects. For variable products, WooCommerce returns `get_variation_sale_price( 'min' )` and `get_variation_sale_price( 'max' )` — you may want to branch on `$product->get_type()` to expose a price range instead of a single value:
+
+```php
+if ( $product->is_type( 'variable' ) ) {
+    $sale_min = (float) $product->get_variation_sale_price( 'min' );
+    $sale_max = (float) $product->get_variation_sale_price( 'max' );
+    // Build your own range representation here.
+}
+```
+
+### Caching
+
+CoCart caches product responses for one hour by default. If your promotion data can change more frequently than that (for example, a flash sale that starts mid-hour), lower the cache TTL with the `cocart_cache_max_age` filter or clear the cache when your discount plugin activates a promotion.
+
+## Filter reference
+
+<CardGroup cols={2}>
+  <Card title="cocart_rest_v2_product_schema" icon="brackets-curly" href="/developers/community/filters#cocart_rest_v2_product_schema">
+    Full reference for extending the product schema.
+  </Card>
+  <Card title="cocart_prepare_product_object_v2" icon="filter" href="/developers/community/filters#cocart_prepare_product_object_v2">
+    Full parameter reference for the product response filter.
+  </Card>
+</CardGroup>

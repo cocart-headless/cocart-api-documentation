@@ -1,0 +1,138 @@
+---
+title: "WooCommerce Warranty"
+sidebarTitle: "Warranty"
+description: "Expose warranty options on products and the customer's selected warranty on cart items in a headless CoCart storefront."
+tag: "In Testing"
+robots: "noindex, follow"
+---
+
+<Info>
+  This feature documentation was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 28th, 2026.
+</Info>
+
+[WooCommerce Warranty](https://codecanyon.net/item/woocommerce-warranty/7378946) lets store owners attach warranty options to products — either an included warranty or optional add-on tiers. The CoCart Plus integration exposes warranty configuration on product responses for form rendering, and the customer's selected warranty on cart item responses.
+
+<Info>
+  This integration is available in CoCart Plus since <Tooltip tip="This is the version of CoCart Plus">v2.0.0</Tooltip> and requires WooCommerce Warranty to be installed and active.
+</Info>
+
+## Product response
+
+Products with a warranty configured receive a `warranty` object in their `extensions` key. Products with no warranty are left unchanged.
+
+### Included warranty
+
+```json Example — included warranty (product extensions excerpt)
+{
+  "extensions": {
+    "warranty": {
+      "type": "included",
+      "label": "Warranty",
+      "options": [
+        {
+          "key": "2-years",
+          "duration": "2 years",
+          "cost": "0"
+        }
+      ]
+    }
+  }
+}
+```
+
+### Add-on warranty tiers
+
+```json Example — add-on warranty (product extensions excerpt)
+{
+  "extensions": {
+    "warranty": {
+      "type": "addon",
+      "label": "Extended Warranty",
+      "options": [
+        {
+          "key": "no-warranty",
+          "duration": "No warranty",
+          "cost": "0"
+        },
+        {
+          "key": "1-year",
+          "duration": "1 year",
+          "cost": "1000"
+        },
+        {
+          "key": "3-years",
+          "duration": "3 years",
+          "cost": "2500"
+        }
+      ]
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `type` | `string` | `included` — warranty is bundled at no extra cost; `addon` — customer selects a tier. |
+| `label` | `string` | Warranty field label shown to the customer. |
+| `options` | `array` | Available warranty tiers. |
+| `options[].key` | `string` | Slug to pass as `item_data.warranty` when adding to cart. |
+| `options[].duration` | `string` | Human-readable warranty duration (e.g. `1 year`, `Lifetime`). |
+| `options[].cost` | `string` | Additional cost for this tier (smallest currency unit). `"0"` for included or no-warranty options. |
+
+## Adding to cart with a warranty
+
+For add-on warranties, pass the option `key` as `item_data.warranty` when calling the add-item endpoint.
+
+<CodeGroup>
+  ```bash cURL
+  curl -X POST https://your-store.com/wp-json/cocart/v2/cart/add-item \
+    -H "Content-Type: application/json" \
+    -d '{
+      "id": 42,
+      "quantity": 1,
+      "item_data": {
+        "warranty": "1-year"
+      }
+    }'
+  ```
+
+  ```javascript JavaScript
+  await fetch('https://your-store.com/wp-json/cocart/v2/cart/add-item', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: 42,
+      quantity: 1,
+      item_data: { warranty: '1-year' }
+    })
+  });
+  ```
+</CodeGroup>
+
+Pass `"no-warranty"` as the key to explicitly decline a warranty when the no-warranty option is available.
+
+## Cart item response
+
+Cart items with a selected warranty include a `warranty` object in their `extensions` key.
+
+```json Example (cart item extensions excerpt)
+{
+  "extensions": {
+    "warranty": {
+      "label": "Extended Warranty",
+      "type": "addon",
+      "duration": "1 year",
+      "cost": "1000"
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `label` | `string` | Warranty label. |
+| `type` | `string` | `included` or `addon`. |
+| `duration` | `string` | Human-readable selected warranty duration. |
+| `cost` | `string` | Additional cost for the selected warranty (smallest currency unit). |
+
+Items where the customer chose "no warranty" do not include the `warranty` key.

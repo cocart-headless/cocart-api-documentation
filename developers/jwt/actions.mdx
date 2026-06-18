@@ -1,0 +1,107 @@
+---
+title: "JWT Authentication Action Hooks"
+sidebarTitle: "JWT Auth Actions"
+description: "Action hooks for the CoCart JWT Authentication plugin. Fire custom code when tokens are generated, refreshed, validated, deleted, or when a user authenticates via JWT."
+---
+
+<Note>
+    Download the [JWT Authentication for CoCart](https://wordpress.org/plugins/cocart-jwt-authentication/) plugin to use these hooks.
+</Note>
+
+<Tip>
+    See the [Developer Reference](/developers) for the full plugin key index. All hooks on this page apply to the <Badge color="green">JWT</Badge> add-on.
+</Tip>
+
+## Token Events
+
+### `cocart_jwt_token_generated`
+
+<Info>
+    Made available since v2.1.0
+</Info>
+
+Fires when a new JWT token is generated after successful authentication.
+
+```php
+add_action( 'cocart_jwt_token_generated', function( $token, $user ) {
+    // Log token generation
+    error_log("New token generated for user: {$user->ID}");
+}, 10, 2 );
+```
+
+### `cocart_jwt_auth_token_refreshed`
+
+<Info>
+    Made available since v2.1.0
+</Info>
+
+Fires when a token is refreshed using a refresh token.
+
+```php
+add_action( 'cocart_jwt_auth_token_refreshed', function( $token, $user ) {
+    // Track token refresh events
+    error_log("Token refreshed for user: {$user->ID}");
+}, 10, 2 );
+```
+
+### `cocart_jwt_auth_token_validated`
+
+<Info>
+    Made available since v2.1.0
+</Info>
+
+Fires when a token is successfully validated.
+
+```php
+add_action( 'cocart_jwt_auth_token_validated', function( $decoded ) {
+    // Access validated token data
+    $user_id = $decoded->data->user->id;
+    error_log("Token validated for user: {$user_id}");
+} );
+```
+
+## Token Management
+
+### `cocart_jwt_auth_token_deleted`
+
+<Info>
+    Made available since v2.1.0
+</Info>
+
+Fires when a token is deleted.
+
+```php
+add_action( 'cocart_jwt_auth_token_deleted', function( $user_id ) {
+    $user = get_user_by( 'id', $user_id );
+
+    // Cleanup after token deletion
+    error_log("Token for {$user->display_name} has been deleted");
+}, 10, 2 );
+```
+
+## Authentication Events
+
+### `cocart_jwt_auth_authenticated`
+
+<Info>
+    Made available since v3.0.0
+</Info>
+
+Fires when a user is authenticated via JWT token.
+
+```php
+add_action( 'cocart_jwt_auth_authenticated', function( $user ) {
+    // Send admin notification for VIP customers
+    if ( in_array( 'vip_customer', $user->roles ) ) {
+        wp_mail(
+            get_option( 'admin_email' ),
+            'VIP Customer Login',
+            "VIP customer {$user->display_name} has logged in via API."
+        );
+    }
+
+    // Track API usage analytics
+    $usage_count = get_user_meta( $user->ID, 'api_usage_count', true );
+    update_user_meta( $user->ID, 'api_usage_count', intval( $usage_count ) + 1 );
+} );
+```

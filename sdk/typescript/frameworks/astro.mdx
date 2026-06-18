@@ -1,0 +1,236 @@
+---
+title: "TypeScript SDK: Astro Adapter"
+sidebarTitle: "Astro"
+description: "Use the CoCart TypeScript SDK with Astro — browser client, SSR server client, API routes, and cart key header mechanism."
+icon: "rocket"
+'og:title': "Using CoCart with Astro — Headless WooCommerce Guide"
+'og:description': "Add a WooCommerce cart to your Astro site with CoCart. Browser client, SSR server client, API routes, and automatic X-Cart-Key header forwarding for session persistence."
+---
+
+<Info>
+  This guide was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+</Info>
+
+The Astro adapter solves the challenge of sharing cart state between server-side rendering (SSR) and client-side code. Cart state is persisted in encrypted `localStorage` on the client — no cookies needed.
+
+## How It Works
+
+1. **Browser**: The client stores the cart key in encrypted `localStorage` using the Web Crypto API.
+2. **Navigation**: When the user navigates to a new page, `attachCartKeyHeader()` automatically adds an `X-Cart-Key` header to the request by wrapping the browser's built-in `fetch()`.
+3. **Server**: Astro SSR reads the `X-Cart-Key` header from the incoming request to identify which cart belongs to this visitor.
+
+No cookies are used at any point — avoiding GDPR consent requirements, CORS restrictions, and cookie size limits.
+
+## Browser Client
+
+Create a CoCart client for use in client-side components and scripts:
+
+```ts
+import { createBrowserClient, attachCartKeyHeader } from '@cocartheadless/sdk/astro';
+
+const client = createBrowserClient('https://your-store.com', {
+  encryptionKey: 'your-secret-encryption-key',
+});
+
+// Restore any existing session from encrypted localStorage
+await client.restoreSession();
+
+// Patch fetch() to send X-Cart-Key header to your Astro server
+attachCartKeyHeader(client);
+```
+
+`createBrowserClient()` accepts all standard [CoCart options](/sdk/typescript/installation) plus a required `encryptionKey`:
+
+```ts
+const client = createBrowserClient('https://your-store.com', {
+  encryptionKey: 'your-secret-encryption-key',
+  timeout: 15000,
+  maxRetries: 2,
+});
+```
+
+## Server Client (SSR)
+
+Create a CoCart client in your Astro page or API route. The cart key is read from the incoming request's `X-Cart-Key` header:
+
+```ts
+---
+// src/pages/cart.astro
+import { createServerClient } from '@cocartheadless/sdk/astro';
+
+const client = createServerClient('https://your-store.com', Astro.request);
+const cart = await client.cart().get();
+const items = cart.getItems();
+---
+
+<h1>Your Cart ({cart.getItemCount()} items)</h1>
+<ul>
+  {items.map((item: any) => (
+    <li>{item.name} — {item.quantity} × {item.price}</li>
+  ))}
+</ul>
+```
+
+### With Authentication
+
+To access a logged-in customer's cart, pass their credentials via Basic Auth:
+
+```ts
+---
+import { createServerClient } from '@cocartheadless/sdk/astro';
+
+const client = createServerClient('https://your-store.com', Astro.request, {
+  username: 'customer@email.com',
+  password: 'customer_password',
+});
+
+const cart = await client.cart().get();
+---
+```
+
+## API Routes
+
+Use the server client in Astro API routes:
+
+```ts
+// src/pages/api/cart/add.ts
+import type { APIRoute } from 'astro';
+import { createServerClient } from '@cocartheadless/sdk/astro';
+
+export const POST: APIRoute = async ({ request }) => {
+  const client = createServerClient('https://your-store.com', request);
+  const body = await request.json();
+
+  try {
+    const response = await client.cart().addItem(body.productId, body.quantity);
+    return new Response(response.toJson(), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: (e as Error).message }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+};
+```
+
+## Full Example: Cart Page
+
+### Client-Side Setup
+
+```ts
+// src/lib/cocart.ts
+import { createBrowserClient, attachCartKeyHeader } from '@cocartheadless/sdk/astro';
+import { SessionManager } from '@cocartheadless/sdk';
+
+const client = createBrowserClient('https://your-store.com', {
+  encryptionKey: import.meta.env.PUBLIC_COCART_ENCRYPTION_KEY,
+});
+
+await client.restoreSession();
+attachCartKeyHeader(client);
+
+const session = new SessionManager(client, client.getStorage());
+
+// Initialize a guest cart if none exists
+if (!session.getCartKey()) {
+  await session.initializeCart();
+}
+
+export { client, session };
+```
+
+### Server-Side Cart Page
+
+```ts
+---
+// src/pages/cart.astro
+import { createServerClient } from '@cocartheadless/sdk/astro';
+
+const client = createServerClient(
+  import.meta.env.COCART_STORE_URL,
+  Astro.request,
+);
+
+const cart = await client.cart().get();
+---
+
+<html>
+  <body>
+    <h1>Shopping Cart</h1>
+
+    {cart.isEmpty() ? (
+      <p>Your cart is empty.</p>
+    ) : (
+      <>
+        <ul>
+          {cart.getItems().map((item: any) => (
+            <li>
+              {item.name} — Qty: {item.quantity} — {item.totals.total}
+            </li>
+          ))}
+        </ul>
+        <p>Total: {cart.get('totals.total')}</p>
+      </>
+    )}
+
+    <script>
+      import { client } from '../lib/cocart';
+
+      document.querySelectorAll('.remove-btn').forEach((btn) => {
+        btn.addEventListener('click', async (e) => {
+          const itemKey = (e.target as HTMLElement).dataset.itemKey!;
+          await client.cart().removeItem(itemKey);
+          location.reload();
+        });
+      });
+    </script>
+  </body>
+</html>
+```
+
+### Guest-to-Customer Login
+
+```ts
+// src/pages/api/auth/login.ts
+import type { APIRoute } from 'astro';
+import { createServerClient } from '@cocartheadless/sdk/astro';
+import { SessionManager } from '@cocartheadless/sdk';
+
+export const POST: APIRoute = async ({ request }) => {
+  const client = createServerClient('https://your-store.com', request);
+  const session = new SessionManager(client);
+
+  const { email, password } = await request.json();
+
+  const response = await session.loginWithJwt(email, password, true);
+
+  return new Response(response.toJson(), {
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+```
+
+## Environment Variables
+
+```bash
+# .env
+COCART_STORE_URL=https://your-store.com
+PUBLIC_COCART_ENCRYPTION_KEY=your-secret-encryption-key
+```
+
+<Warning>
+In Astro, only variables prefixed with `PUBLIC_` are available in client-side (browser) code. Keep sensitive credentials server-side only.
+</Warning>
+
+## How `attachCartKeyHeader` Works
+
+`attachCartKeyHeader()` wraps `globalThis.fetch` so that every same-origin request automatically includes an `X-Cart-Key` header with the current cart key:
+
+- Astro SSR pages receive the cart key without cookies
+- API routes receive the cart key without cookies
+- Cross-origin requests are never modified
+- If no cart key is set, no header is added
+
+Call it once after creating the browser client and restoring the session.

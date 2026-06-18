@@ -1,0 +1,314 @@
+---
+title: "Authentication & Security Filters"
+sidebarTitle: "Authentication & Security"
+description: "PHP filters for CORS, auth headers, trusted proxies, and rate limiting."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Filters Reference overview](/developers/filters) for the full plugin key index and all filter categories.
+</Tip>
+
+### `cocart_allow_origin`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to change the allowed HTTP origin result.
+
+<Note>Made available since v2.5.1</Note>
+
+**Parameters**
+
+<ParamField query="origin" type="string">
+  Origin URL if allowed, empty string if not.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_allow_origin', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_allow_origin` in repository](https://github.com/co-cart/co-cart/search?q=cocart_allow_origin&type=code)
+
+---
+
+### `cocart_auth_header`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to change the authorization header.
+
+<Note>Made available since v4.1.0</Note>
+
+**Parameters**
+
+<ParamField query="auth_header" type="string">
+  Authorization header.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_auth_header', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_auth_header` in repository](https://github.com/co-cart/co-cart/search?q=cocart_auth_header&type=code)
+
+---
+
+### `cocart_disable_all_cors`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Modifies if the "Cross Origin Headers" are allowed. Set as false to enable support.
+
+<Note>Made available since v2.2.0</Note>
+
+**Usage**
+```php
+add_filter( 'cocart_disable_all_cors', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_disable_all_cors` in repository](https://github.com/co-cart/co-cart/search?q=cocart_disable_all_cors&type=code)
+
+---
+
+### `cocart_install_capability`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter the current users capabilities to install a CoCart plugin.
+
+<Note>Made available since v4.1.0</Note>
+
+**Parameters**
+
+<ParamField query="capability" type="string">
+  Capability level.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_install_capability', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_install_capability` in repository](https://github.com/co-cart/co-cart/search?q=cocart_install_capability&type=code)
+
+---
+
+### `cocart_login_extras`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to add extra information based on the current user.
+
+<Note>Made available since v3.8.1</Note>
+
+**Parameters**
+
+<ParamField query="extra_information" type="array">
+  The extra information.
+</ParamField>
+
+<ParamField query="current_user" type="object">
+  The current user.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_login_extras', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_login_extras` in repository](https://github.com/co-cart/co-cart/search?q=cocart_login_extras&type=code)
+
+---
+
+### `cocart_send_nocache_headers`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Send nocache headers on authenticated requests.
+
+<Note>Made available since v4.2.0</Note>
+
+<Warning>**Deprecated:** 4.3.11 No longer used. See `cocart_send_cache_control_patterns` filter instead to control which routes are not cached.</Warning>
+
+**Parameters**
+
+<ParamField query="rest_send_nocache_headers" type="boolean">
+  Whether to send no-cache headers.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_send_nocache_headers', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_send_nocache_headers` in repository](https://github.com/co-cart/co-cart/search?q=cocart_send_nocache_headers&type=code)
+
+---
+
+### `cocart_login_permission_callback`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to modify the permission result after basic authentication. This is the primary hook for adding custom validation, external system checks, or role-based access control.
+
+<Note>Made available since v4.8.0</Note>
+
+**Parameters**
+
+<ParamField query="permission" type="boolean|WP_Error">
+  Current permission status (`true` after basic auth succeeds).
+</ParamField>
+
+<ParamField query="current_user" type="WP_User">
+  The authenticated user object.
+</ParamField>
+
+<ParamField query="request" type="WP_REST_Request">
+  The current REST API request.
+</ParamField>
+
+<ParamField query="endpoint" type="string">
+  The endpoint being accessed (e.g. `'login'`).
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_login_permission_callback', function( $permission, $current_user, $request, $endpoint ) {
+    // Return true to allow, or WP_Error to deny
+    if ( ! user_can( $current_user, 'access_api' ) ) {
+        return new WP_Error(
+            'cocart_insufficient_permissions',
+            'User lacks required permissions for API access',
+            array( 'status' => 403 )
+        );
+    }
+
+    return $permission;
+}, 10, 4 );
+```
+
+<Tip>
+See the [Authentication Injection tutorial](/tutorials/authentication-injection) for advanced examples including SSO, role-based access, and geolocation checks.
+</Tip>
+
+[Search `cocart_login_permission_callback` in repository](https://github.com/co-cart/co-cart/search?q=cocart_login_permission_callback&type=code)
+
+---
+
+### `cocart_trusted_proxies`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to define trusted proxy IP addresses for accurate client IP detection. Essential if you're running CoCart behind a reverse proxy, load balancer, or CDN.
+
+<Note>Made available since v4.8.0</Note>
+
+**Parameters**
+
+<ParamField query="trusted_proxies" type="array">
+  Array of trusted proxy IP addresses. Empty by default.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_trusted_proxies', function( $proxies ) {
+    return array(
+        '10.0.0.1',
+        '10.0.0.2',
+        '192.168.1.0/24', // CIDR notation supported
+    );
+} );
+```
+
+[Search `cocart_trusted_proxies` in repository](https://github.com/co-cart/co-cart/search?q=cocart_trusted_proxies&type=code)
+
+---
+
+### `cocart_allowed_http_origins`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filter allows you to change the origin types allowed for HTTP requests. Use this to extend or restrict which origins can access the API beyond the default CORS configuration.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="origins" type="array">
+  Array of allowed origin types.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_allowed_http_origins', function( $origins ) {
+    $origins[] = 'https://my-storefront.com';
+    $origins[] = 'https://staging.my-storefront.com';
+    return $origins;
+} );
+```
+
+---
+
+### `cocart_http_allowed_safe_ports`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filter allows you to control the list of ports considered safe for accessing the API. Useful for non-standard development or proxy setups.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="ports" type="array">
+  Array of allowed port numbers.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_http_allowed_safe_ports', function( $ports ) {
+    $ports[] = 8443;
+    return $ports;
+} );
+```
+
+---
+
+### `cocart_api_rate_limit_options`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Filters the rate limiting configuration options for the REST API. Adjust limits and time windows to suit your traffic patterns.
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Parameters**
+
+<ParamField query="options" type="array">
+  Rate limit options array containing `enabled` (bool), `limit` (int), and `seconds` (int).
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_api_rate_limit_options', function( $options ) {
+    $options['limit']   = 100; // Allow 100 requests
+    $options['seconds'] = 60;  // Per 60 seconds
+    return $options;
+} );
+```

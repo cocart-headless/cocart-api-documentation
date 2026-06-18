@@ -1,0 +1,669 @@
+---
+title: "Product Validation & Messages Filters"
+sidebarTitle: "Product Validation & Messages"
+description: "PHP filters for product validation, stock checking, quantity limits, and related error messages."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Filters Reference overview](/developers/filters) for the full plugin key index and all filter categories.
+</Tip>
+
+### `cocart_add_to_cart_quantity`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters the quantity for specified products.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="quantity" type="integer">
+  The original quantity of the item.
+</ParamField>
+
+<ParamField query="product_id" type="integer">
+  The product ID.
+</ParamField>
+
+<ParamField query="variation_id" type="integer">
+  The variation ID.
+</ParamField>
+
+<ParamField query="variation" type="array">
+  The variation data.
+</ParamField>
+
+<ParamField query="cart_item_data" type="array">
+  The cart item data.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_add_to_cart_quantity', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_add_to_cart_quantity` in repository](https://github.com/co-cart/co-cart/search?q=cocart_add_to_cart_quantity&type=code)
+
+---
+
+### `cocart_add_to_cart_sold_individually_found_in_cart`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Quantity for sold individual products can be filtered.
+
+<Note>Made available since v2.0.13</Note>
+
+**Usage**
+```php
+add_filter( 'cocart_add_to_cart_sold_individually_found_in_cart', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_add_to_cart_sold_individually_found_in_cart` in repository](https://github.com/co-cart/co-cart/search?q=cocart_add_to_cart_sold_individually_found_in_cart&type=code)
+
+---
+
+### `cocart_add_to_cart_sold_individually_quantity`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Quantity for sold individual products can be filtered.
+
+<Note>Made available since v2.0.13</Note>
+
+**Usage**
+```php
+add_filter( 'cocart_add_to_cart_sold_individually_quantity', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_add_to_cart_sold_individually_quantity` in repository](https://github.com/co-cart/co-cart/search?q=cocart_add_to_cart_sold_individually_quantity&type=code)
+
+---
+
+### `cocart_can_not_increase_quantity_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about product not being allowed to increase quantity.
+
+<Note>Made available since v1.0.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_can_not_increase_quantity_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_can_not_increase_quantity_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_can_not_increase_quantity_message&type=code)
+
+---
+
+### `cocart_can_not_update_item_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about can not update item.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_can_not_update_item_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_can_not_update_item_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_can_not_update_item_message&type=code)
+
+---
+
+### `cocart_cannot_add_product_type_to_cart_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about product type that cannot be added to the cart.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product_data" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_cannot_add_product_type_to_cart_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_cannot_add_product_type_to_cart_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cannot_add_product_type_to_cart_message&type=code)
+
+---
+
+### `cocart_cart_item_required_stock_is_not_enough`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Allows filter if product have enough stock to get added to the cart.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="has_stock" type="boolean">
+  If have enough stock.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+<ParamField query="cart_item" type="array">
+  Cart item values.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_cart_item_required_stock_is_not_enough', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_cart_item_required_stock_is_not_enough` in repository](https://github.com/co-cart/co-cart/search?q=cocart_cart_item_required_stock_is_not_enough&type=code)
+
+---
+
+### `cocart_invalid_variation_data_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about invalid variation data.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="attribute_label" type="string">
+  Attribute Label.
+</ParamField>
+
+<ParamField query="attribute" type="array">
+  Allowed values.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_invalid_variation_data_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_invalid_variation_data_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_invalid_variation_data_message&type=code)
+
+---
+
+### `cocart_missing_variation_data_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about missing variation data.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="missing_attributes" type="string">
+  Number of missing attributes.
+</ParamField>
+
+<ParamField query="missing_attributes" type="array">
+  List of missing attributes.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_missing_variation_data_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_missing_variation_data_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_missing_variation_data_message&type=code)
+
+---
+
+### `cocart_product_can_not_add_another_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about product not being allowed to add another.
+
+<Note>Made available since v3.0.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_product_can_not_add_another_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_product_can_not_add_another_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_product_can_not_add_another_message&type=code)
+
+---
+
+### `cocart_product_cannot_add_to_cart_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about product cannot be added to cart.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product_data" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_product_cannot_add_to_cart_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_product_cannot_add_to_cart_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_product_cannot_add_to_cart_message&type=code)
+
+---
+
+### `cocart_product_cannot_be_added_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about product that cannot be added to cart.
+
+<Note>Made available since v3.0.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_product_cannot_be_added_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_product_cannot_be_added_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_product_cannot_be_added_message&type=code)
+
+---
+
+### `cocart_product_cannot_be_purchased_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about product unable to be purchased.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_product_cannot_be_purchased_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_product_cannot_be_purchased_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_product_cannot_be_purchased_message&type=code)
+
+---
+
+### `cocart_product_does_not_exist_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about product does not exist.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_product_does_not_exist_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_product_does_not_exist_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_product_does_not_exist_message&type=code)
+
+---
+
+### `cocart_product_failed_validation_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about product failing validation.
+
+<Note>Made available since v1.0.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_product_failed_validation_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_product_failed_validation_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_product_failed_validation_message&type=code)
+
+---
+
+### `cocart_product_is_out_of_stock_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about product is out of stock.
+
+<Note>Made available since v2.1.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_product_is_out_of_stock_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_product_is_out_of_stock_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_product_is_out_of_stock_message&type=code)
+
+---
+
+### `cocart_product_not_enough_stock_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters message about product not having enough stock.
+
+<Note>Made available since v3.1.0</Note>
+
+**Parameters**
+
+<ParamField query="message" type="string">
+  Message.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+<ParamField query="stock_quantity" type="integer">
+  Quantity remaining.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_product_not_enough_stock_message', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_product_not_enough_stock_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_product_not_enough_stock_message&type=code)
+
+---
+
+### `cocart_quantity_maximum_allowed`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters the products maximum quantity allowed to be purchased.
+
+<Note>Made available since v3.1.0</Note>
+
+**Usage**
+```php
+add_filter( 'cocart_quantity_maximum_allowed', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_quantity_maximum_allowed` in repository](https://github.com/co-cart/co-cart/search?q=cocart_quantity_maximum_allowed&type=code)
+
+---
+
+### `cocart_quantity_minimum_requirement`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filters the minimum quantity requirement the product allows to be purchased.
+
+<Note>Made available since v3.1.0</Note>
+
+**Usage**
+```php
+add_filter( 'cocart_quantity_minimum_requirement', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_quantity_minimum_requirement` in repository](https://github.com/co-cart/co-cart/search?q=cocart_quantity_minimum_requirement&type=code)
+
+---
+
+### `cocart_product_quantity_editable`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filter allows you to control whether a cart item's quantity can be changed by the customer. When `false`, the quantity is locked and the `editable` field in the cart response reflects this.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="editable" type="boolean">
+  Whether the quantity can be changed. Default: `true`.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_product_quantity_editable', function( $editable, $product ) {
+    // Lock quantity for a specific product
+    if ( $product->get_id() === 123 ) {
+        return false;
+    }
+    return $editable;
+}, 10, 2 );
+```
+
+---
+
+### `cocart_quantity_multiple_of`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filter allows you to control the quantity step (multiple of) for a product. This determines the increment value when customers adjust quantities.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="multiple_of" type="integer">
+  The quantity step value. Default: `1`.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_quantity_multiple_of', function( $multiple_of, $product ) {
+    // Sell in packs of 6
+    if ( $product->get_category_ids() && in_array( 42, $product->get_category_ids() ) ) {
+        return 6;
+    }
+    return $multiple_of;
+}, 10, 2 );
+```
+
+---
+
+### `cocart_quantity_limit`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filter allows you to adjust the maximum quantity limit for a product after stock considerations have been applied.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="limit" type="integer">
+  The maximum quantity limit.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_quantity_limit', function( $limit, $product ) {
+    // Cap all products at 10
+    return min( $limit, 10 );
+}, 10, 2 );
+```
+
+---
+
+### `cocart_skip_woocommerce_item_validation`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter the item to skip product validation as it is added to cart.
+
+<Note>Made available since v3.0.0</Note>
+
+**Parameters**
+
+<ParamField query="validate_product" type="boolean">
+  Whether to validate the product or not.
+</ParamField>
+
+<ParamField query="product_data" type="array">
+  Contains the product data of the product to add to cart.
+</ParamField>
+
+<ParamField query="product_id" type="integer">
+  The product ID.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_skip_woocommerce_item_validation', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_skip_woocommerce_item_validation` in repository](https://github.com/co-cart/co-cart/search?q=cocart_skip_woocommerce_item_validation&type=code)

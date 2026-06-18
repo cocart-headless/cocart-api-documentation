@@ -1,0 +1,240 @@
+---
+title: "Product Helpers Functions"
+sidebarTitle: "Product Helpers"
+description: "Static methods on CoCart_Utilities_Product_Helpers for images, pricing, tax display, meta data, and product validation in REST API contexts."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Functions Reference overview](/developers/functions) for all function categories and the [Developer Reference](/developers) for the plugin key index.
+</Tip>
+
+### `CoCart_Utilities_Product_Helpers::get_product_image_sizes()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Returns all registered image sizes available for product images, merged with `full` and `custom`.
+
+<Note>Made available since v4.2.0</Note>
+
+**Returns**: `array` — Image size names.
+
+---
+
+### `CoCart_Utilities_Product_Helpers::get_images()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Returns all images (featured + gallery) for a product or product variation, each with `id`, `src` (keyed by size), `name`, `alt`, `position`, and `featured`. Falls back to the WooCommerce placeholder image when no images are set.
+
+<Note>Made available since v3.1.0</Note>
+
+**Parameters**
+
+<ParamField query="product" type="WC_Product|WC_Product_Variation">
+  The product object.
+</ParamField>
+
+**Returns**: `array` — Array of image data.
+
+---
+
+### `CoCart_Utilities_Product_Helpers::get_quantity_minimum_requirement()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Returns the minimum purchase quantity requirement for a product, filtered via `cocart_quantity_minimum_requirement`.
+
+<Note>Made available since v4.2.0</Note>
+
+**Parameters**
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Returns**: `int` — Minimum purchase quantity.
+
+---
+
+### `CoCart_Utilities_Product_Helpers::get_quantity_maximum_allowed()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Returns the maximum purchase quantity allowed for a product, filtered via `cocart_quantity_maximum_allowed`.
+
+<Note>Made available since v4.2.0</Note>
+
+**Parameters**
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Returns**: `int` — Maximum purchase quantity.
+
+---
+
+### `CoCart_Utilities_Product_Helpers::get_price_range()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Returns the price range for a variable or grouped product as an array with `from` and `to` keys formatted via `cocart_format_money()`.
+
+<Note>Made available since v3.1.0</Note>
+
+**Parameters**
+
+<ParamField query="product" type="WC_Product|WC_Product_Variable">
+  The product object.
+</ParamField>
+
+<ParamField query="tax_display_mode" type="string">
+  Tax display mode: `incl` or `excl`.
+</ParamField>
+
+**Returns**: `array` — Price range with `from` and `to` keys.
+
+---
+
+### `CoCart_Utilities_Product_Helpers::get_tax_display_mode()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Returns the effective tax display mode for the **shop**, validating the supplied value against `incl` or `excl`. Falls back to the `woocommerce_tax_display_shop` option.
+
+<Note>Made available since v3.1.0</Note>
+
+**Parameters**
+
+<ParamField query="tax_display_mode" type="string">
+  Provided tax display mode. Optional — omit to read from store settings.
+</ParamField>
+
+**Returns**: `string` — `incl` or `excl`.
+
+---
+
+### `CoCart_Utilities_Product_Helpers::get_price_from_tax_display_mode()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Returns the WooCommerce price function name (`wc_get_price_including_tax` or `wc_get_price_excluding_tax`) that matches the given tax display mode. Use the returned string as a callable alongside `cocart_format_money()` to format prices consistently with the Products API.
+
+<Note>Made available since v3.1.0</Note>
+
+**Parameters**
+
+<ParamField query="tax_display_mode" type="string">
+  Tax display mode: `incl` or `excl`.
+</ParamField>
+
+**Returns**: `string` — Function name to call for price calculation.
+
+**Example**
+
+```php
+$tax_display_mode = CoCart_Utilities_Product_Helpers::get_tax_display_mode();
+$price_function   = CoCart_Utilities_Product_Helpers::get_price_from_tax_display_mode( $tax_display_mode );
+
+$formatted_price = cocart_format_money( $price_function( $product, array( 'price' => $product->get_price() ) ) );
+```
+
+---
+
+### `CoCart_Utilities_Product_Helpers::get_meta_data()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Returns the allowed public meta data for a product, filtered through `cocart_products_allowed_meta_keys` and `cocart_products_get_safe_meta_data`.
+
+<Note>Made available since v3.11.0</Note>
+
+**Parameters**
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Returns**: `array` — Array of safe meta data values.
+
+---
+
+### `CoCart_Utilities_Product_Helpers::get_product_id()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Resolves a product ID or SKU string to an integer product ID. Returns early if the string is empty.
+
+<Note>Made available since v4.3.13</Note>
+
+**Parameters**
+
+<ParamField query="id" type="string">
+  A product ID (numeric string) or SKU.
+</ParamField>
+
+**Returns**: `int` — Product ID.
+
+---
+
+### `CoCart_Utilities_Product_Helpers::get_product_by_slug()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Returns a product object looked up by its slug.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="slug" type="string">
+  The product slug.
+</ParamField>
+
+**Returns**: `WC_Product` — The product object.
+
+---
+
+### `CoCart_Utilities_Product_Helpers::get_product_variation_by_slug()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Returns a product variation object looked up by its slug. Results are cached in the WordPress object cache for one hour.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="slug" type="string">
+  The product variation slug.
+</ParamField>
+
+**Returns**: `WC_Product|null` — The product variation object, or `null` if not found.
+
+---
+
+### `CoCart_Utilities_Product_Helpers::get_variation_id_from_variation_data()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Matches variation attributes from a request to a variation ID using the WooCommerce data store. Throws `CoCart_Data_Exception` if no match is found.
+
+<Note>Made available since v2.1.2</Note>
+
+**Parameters**
+
+<ParamField query="request" type="array">
+  Add-to-cart request params containing a `variation` key.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The parent variable product object.
+</ParamField>
+
+**Returns**: `int` — Matching variation ID.
+
+---

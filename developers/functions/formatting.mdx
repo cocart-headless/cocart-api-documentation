@@ -1,0 +1,153 @@
+---
+title: "Formatting Functions"
+sidebarTitle: "Formatting"
+description: "Functions for formatting monetary values, rounding numbers, variation data, price strings, and unit conversion."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Functions Reference overview](/developers/functions) for all function categories and the [Developer Reference](/developers) for the plugin key index.
+</Tip>
+
+### `cocart_format_money()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Converts monetary values from store settings to string based integers, using the smallest unit of a currency.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="value" type="int|float|string">
+  Value to format.
+</ParamField>
+
+<ParamField query="options" type="array">
+  Options influencing formatting. Accepts `currency`, `decimals`, `rounding_mode`, and `trim_zeros`.
+</ParamField>
+
+**Returns**: `string` — Formatted value.
+
+- **Defined in**: [`includes/cocart-formatting-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-formatting-functions.php)
+
+---
+
+### `cocart_round()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Round a value with a rounding mode, compatible across PHP 8.2–8.5+. Handles both integer constants and `RoundingMode` enum.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="value" type="float">
+  The value to round.
+</ParamField>
+
+<ParamField query="precision" type="int">
+  Number of decimal digits. Default: `0`.
+</ParamField>
+
+<ParamField query="mode" type="int">
+  Rounding mode constant. Default: `PHP_ROUND_HALF_UP`.
+</ParamField>
+
+**Returns**: `float` — The rounded value.
+
+- **Defined in**: [`includes/cocart-formatting-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-formatting-functions.php)
+
+---
+
+### `cocart_format_variation_data()`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Formats the product attributes for a variation. Converts slugs such as `attribute_pa_size` to `Size`.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="attributes" type="array">
+  Array of data from the cart.
+</ParamField>
+
+<ParamField query="product" type="WC_Product">
+  The product object.
+</ParamField>
+
+**Returns**: `array` — Formatted attribute data.
+
+- **Defined in**: [`includes/cocart-formatting-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-formatting-functions.php)
+
+---
+
+### `cocart_price_no_html()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Formats the price with a currency symbol without HTML wrappers. Forked from `wc_price()` for REST API use.
+
+<Note>Made available since v3.0.0</Note>
+
+**Parameters**
+
+<ParamField query="price" type="float">
+  Raw price.
+</ParamField>
+
+<ParamField query="args" type="array">
+  Formatting arguments. Accepts `ex_tax_label`, `currency`, `decimal_separator`, `thousand_separator`, `decimals`, and `price_format`.
+</ParamField>
+
+**Returns**: `string` — Formatted price string.
+
+- **Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-rest-functions.php)
+
+---
+
+### `cocart_let_to_num()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Converts PHP ini notation for numbers (like `2M`) to an integer.
+
+<Note>Made available since v3.7.0</Note>
+
+**Parameters**
+
+<ParamField query="size" type="string">
+  Size value in notation format.
+</ParamField>
+
+**Returns**: `int` — The numeric value.
+
+- **Defined in**: [`includes/cocart-formatting-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-formatting-functions.php)
+
+---
+
+### `cocart_get_min_max_price_meta_query()`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Get min/max price meta query args.
+
+<Note>Made available since v3.4.1</Note>
+
+**Parameters**
+
+<ParamField query="args" type="array">
+  Min price and max price arguments.
+</ParamField>
+
+**Returns**: `array`
+
+- **Defined in**: [`includes/cocart-rest-functions.php`](https://github.com/co-cart/co-cart/blob/trunk/includes/cocart-rest-functions.php)
+
+---

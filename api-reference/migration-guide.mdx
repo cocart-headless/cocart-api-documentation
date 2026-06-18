@@ -1,0 +1,209 @@
+---
+title: "Migrating from API v1 to API v2"
+description: "A complete guide to updating your integration from CoCart API v1 to v2, covering every breaking change, renamed parameter, and new capability."
+---
+
+API v2 is a ground-up redesign of the CoCart REST API. It introduces a consistent URL structure, richer response objects, RESTful conventions for item management, and new capabilities like bulk operations, session management, and cache control. v1 is no longer supported.
+
+This guide covers every change you need to make to migrate a working v1 integration.
+
+## Base URL
+
+Update the base path in all your API calls:
+
+| Version | Base URL |
+|---------|----------|
+| v1 | `/wp-json/cocart/v1` |
+| v2 | `/wp-json/cocart/v2` |
+
+## Cart endpoints
+
+All cart endpoints are now nested under `/cart`. Some HTTP methods changed to better reflect the action being performed.
+
+| v1 endpoint | v2 endpoint | Notes |
+|-------------|-------------|-------|
+| `GET /get-cart` | `GET /cart` | |
+| `GET /get-cart/{id}` | `GET /cart?cart_key={id}` | Path param moved to query param |
+| `GET /get-cart/customer/{id}` | Removed | Use the [Sessions API](/api-reference/community/v2/sessions/get-sessions) instead |
+| `POST /add-item` | `POST /cart/add-item` | Parameters renamed — see below |
+| `POST /item` | `POST /cart/item/{item_key}` | Key moved to URL path |
+| `DELETE /item` | `DELETE /cart/item/{item_key}` | Key moved to URL path |
+| `GET /item` | `PUT /cart/item/{item_key}` | Method changed from `GET` to `PUT`; key moved to path |
+| `POST /clear` | `POST /cart/clear` | New optional parameter added |
+| `GET /count-items` | `GET /cart/items/count` | |
+| `POST /calculate` | `POST /cart/calculate` | Parameter renamed — see below |
+| `GET /totals` | `GET /cart/totals` | |
+
+## Parameter changes
+
+### Add item (`POST /cart/add-item`)
+
+Several body parameters were renamed for clarity and consistency:
+
+| v1 parameter | v2 parameter | Reason |
+|--------------|--------------|--------|
+| `product_id` | `id` | Shorter name, consistent with product API conventions |
+| `cart_item_data` | `item_data` | Simplified to remove redundancy |
+| `return_cart` | `return_item` | v2 returns only the added item by default, not the full cart |
+| _(not available)_ | `email` | Capture guest customer email at add-to-cart time |
+| _(not available)_ | `phone` | Capture guest customer phone at add-to-cart time |
+| _(not available)_ | `price` | Override the item price (requires appropriate permissions) |
+
+`variation_id` is no longer a separate parameter. Pass variation attributes directly in the `variation` object.
+
+### Update, remove, and restore item
+
+The `cart_item_key` parameter was removed from the request body and query string. In v2, the item key is always a URL path segment:
+
+```
+# v1 — key in body or query
+DELETE /item?cart_item_key=abc123
+
+# v2 — key in path
+DELETE /cart/item/abc123
+```
+
+The `return_cart` parameter was also renamed:
+
+| v1 parameter | v2 parameter |
+|--------------|--------------|
+| `return_cart` | `return_status` (update, remove) |
+| `return_cart` | `return_item` (restore) |
+
+### Calculate (`POST /cart/calculate`)
+
+| v1 parameter | v2 parameter |
+|--------------|--------------|
+| `return` | `return_totals` |
+
+### Clear cart (`POST /cart/clear`)
+
+v2 adds one optional parameter with no v1 equivalent:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `keep_removed_items` | `false` | Preserve the removed items list after clearing |
+
+### Get cart thumbnail default
+
+The `thumb` parameter on `GET /cart` now defaults to `true` in v2 (it defaulted to `false` in v1). If your integration explicitly sets `thumb=false` to suppress thumbnails, that still works — but if you relied on the default being off, update your calls.
+
+## Response shape changes
+
+### Cart response
+
+v1 returned a flat object of cart items keyed by their item hash:
+
+```json
+{
+  "1c383cd30b7c298ab50293adfecb7b18": {
+    "key": "1c383cd30b7c298ab50293adfecb7b18",
+    "product_id": 35,
+    "quantity": 6,
+    "line_subtotal": 108.00,
+    "line_total": 108.00
+  }
+}
+```
+
+v2 returns a `CartV2` object containing the full cart state:
+
+```json
+{
+  "cart_hash": "...",
+  "cart_key": "...",
+  "currency": {
+    "currency_code": "USD",
+    "symbol": "$"
+  },
+  "customer": {
+    "billing_address": { ... },
+    "shipping_address": { ... }
+  },
+  "items": { ... },
+  "item_count": 1,
+  "coupons": [],
+  "shipping": { ... },
+  "fees": [],
+  "taxes": [],
+  "totals": { ... },
+  "removed_items": [],
+  "cross_sells": []
+}
+```
+
+Update any code that reads cart data directly from the response root — in v2 you access `response.items`, `response.totals`, `response.customer`, etc.
+
+### Cart item shape
+
+Cart item objects were restructured in v2:
+
+| v1 field | v2 field | Notes |
+|----------|----------|-------|
+| `key` | `item_key` | Renamed |
+| `product_id` | `id` | Renamed |
+| `quantity` (integer) | `quantity.value` | Now an object with `value`, `min_purchase`, `max_purchase` |
+| `line_subtotal` | `totals.subtotal` | Moved into `totals` object |
+| `line_subtotal_tax` | `totals.subtotal_tax` | Moved into `totals` object |
+| `line_total` | `totals.total` | Moved into `totals` object |
+| `line_tax` | `totals.tax` | Moved into `totals` object |
+
+## User management
+
+v1 only had a logout endpoint. v2 adds an explicit login endpoint for token-based authentication flows:
+
+| Endpoint | v1 | v2 |
+|----------|----|----|
+| Login | Not available | `POST /login` |
+| Logout | `POST /logout` | `POST /logout` |
+
+## Products endpoints
+
+Product endpoints have **no breaking changes**. The paths and parameters are identical between v1 and v2 — only the base URL changes from `/wp-json/cocart/v1` to `/wp-json/cocart/v2`.
+
+## New v2 capabilities
+
+After completing your migration, consider adopting these v2-only features:
+
+### Bulk add items
+
+Add multiple products in a single request instead of looping:
+
+```
+POST /cart/add-items
+```
+
+### Sessions API
+
+Admin-authenticated endpoints for viewing and managing customer carts server-side. Replaces the removed `GET /get-cart/customer/{id}`:
+
+- `GET /sessions` — list all active cart sessions
+- `GET /sessions/{id}` — retrieve a specific session
+- `DELETE /sessions/{id}` — delete a session
+
+### Store information
+
+```
+GET /store
+```
+
+Returns store metadata (name, currency, locale, and more) in a single call.
+
+### Cart items list
+
+```
+GET /cart/items
+```
+
+Returns only the items array without the full cart payload — useful when you only need to display cart contents.
+
+### HTTP cache control
+
+v2 responses include `ETag` and `CoCart-Cache` headers. You can use `If-None-Match` on subsequent requests to get a `304 Not Modified` response when the cart hasn't changed, reducing payload size. Pass `skip_cache=true` to force a fresh response.
+
+## Next steps
+
+- [API v2 Cart reference](/api-reference/community/v2/cart/get-cart)
+- [API v2 User Management](/api-reference/community/v2/user/post-login)
+- [API v2 Sessions reference](/api-reference/community/v2/sessions/get-sessions)
+- [API v2 Error codes](/api-reference/community/v2/error-codes)

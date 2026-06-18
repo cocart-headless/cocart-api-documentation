@@ -1,0 +1,259 @@
+---
+title: "Admin & Plugin Management Filters"
+sidebarTitle: "Admin & Plugin Management"
+description: "PHP filters for admin notices, plugin activation, submenus, and overall plugin configuration."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: May 17th, 2026.
+</Info>
+
+<Tip>
+  See the [Filters Reference overview](/developers/filters) for the full plugin key index and all filter categories.
+</Tip>
+
+### `cocart_enable_setup_wizard`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+See if we need the setup wizard or not.
+
+<Note>Made available since v3.1.0</Note>
+
+**Usage**
+```php
+add_filter( 'cocart_enable_setup_wizard', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_enable_setup_wizard` in repository](https://github.com/co-cart/co-cart/search?q=cocart_enable_setup_wizard&type=code)
+
+---
+
+### `cocart_get_plugins_for_cocart`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to get plugins which "maybe" are for CoCart.
+
+<Note>Made available since v4.3.0</Note>
+
+**Parameters**
+
+<ParamField query="matches" type="array">
+  Array of plugins that "maybe" are for CoCart.
+</ParamField>
+
+<ParamField query="plugins" type="array">
+  Array of plugins installed.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_get_plugins_for_cocart', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_get_plugins_for_cocart` in repository](https://github.com/co-cart/co-cart/search?q=cocart_get_plugins_for_cocart&type=code)
+
+---
+
+### `cocart_get_plugins_with_header`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to get the plugins that have a valid value for a specific header.
+
+<Note>Made available since v4.3.0</Note>
+
+**Parameters**
+
+<ParamField query="matches" type="array">
+  Array of plugins matched with header.
+</ParamField>
+
+<ParamField query="header" type="string">
+  Plugin header to search for.
+</ParamField>
+
+<ParamField query="plugins" type="array">
+  Array of plugins installed.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_get_plugins_with_header', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_get_plugins_with_header` in repository](https://github.com/co-cart/co-cart/search?q=cocart_get_plugins_with_header&type=code)
+
+---
+
+### `cocart_in_plugin_update_message`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter allows you to change the upgrade notice.
+
+<Note>Made available since v4.3.0</Note>
+
+**Usage**
+```php
+add_filter( 'cocart_in_plugin_update_message', function() {
+    // Your code here
+});
+```
+
+[Search `cocart_in_plugin_update_message` in repository](https://github.com/co-cart/co-cart/search?q=cocart_in_plugin_update_message&type=code)
+
+---
+
+### `cocart_register_submenu_page`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Hook to register submenu_pages class handlers The array element should be 'submenu_page_slug' => array( 'class_name' => array(), 'data' => array() )
+
+<Note>Made available since v3.10.0</Note>
+
+**Parameters**
+
+<ParamField query="submenus" type="array">
+  Array of submenu pages.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_register_submenu_page', function() {
+    // Your code here
+}, 10 );
+```
+
+[Search `cocart_register_submenu_page` in repository](https://github.com/co-cart/co-cart/search?q=cocart_register_submenu_page&type=code)
+
+---
+
+### `cocart_show_plugin_search`
+
+Plugin: <Badge color="blue">Community</Badge>
+
+Filter whether <Tooltip tip="Plugin Suggestions help you discover other plugins that work with CoCart." cta="Read more about it" href="/knowledge-base/plugin-suggestions">**CoCart Plugin Suggestions**</Tooltip> should be active.
+
+<Note>Made available since v4.1.0</Note>
+
+**Parameters**
+
+<ParamField query="show_suggestions" type="boolean">
+  True if CoCart Plugin Suggestions is active.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_show_plugin_search', function() { return false; });
+```
+
+[Search `cocart_show_plugin_search` in repository](https://github.com/co-cart/co-cart/search?q=cocart_show_plugin_search&type=code)
+
+---
+
+### `cocart_admin_menu_shortcuts`
+
+Plugin: <Badge color="red">Basic</Badge>
+
+Filter allows you to customize the admin menu shortcuts displayed in the CoCart admin pages.
+
+<Note>Made available since v5.0.0</Note>
+
+**Parameters**
+
+<ParamField query="shortcuts" type="array">
+  Array of admin menu shortcut items.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_admin_menu_shortcuts', function( $shortcuts ) {
+    $shortcuts[] = array(
+        'title' => 'My Custom Page',
+        'url'   => admin_url( 'admin.php?page=my-custom-page' ),
+    );
+    return $shortcuts;
+} );
+```
+
+---
+
+### `cocart_admin_screens`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Filters the list of admin screen page IDs where CoCart assets (scripts and styles) should be loaded.
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Parameters**
+
+<ParamField query="screens" type="array">
+  Array of screen IDs (e.g. `dashboard`, `plugins`, `toplevel_page_cocart`).
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_admin_screens', function( $screens ) {
+    // Load CoCart assets on your custom admin page
+    $screens[] = 'my-custom-page';
+    return $screens;
+} );
+```
+
+---
+
+### `cocart_plus_beta_notice_expiration`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Filters the expiration time for dismissing the beta notice in the admin dashboard.
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Parameters**
+
+<ParamField query="expiration_time" type="int">
+  Time in seconds before the notice reappears. Default: `WEEK_IN_SECONDS * 2` (2 weeks).
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_plus_beta_notice_expiration', function( $expiration_time ) {
+    // Dismiss for 30 days instead
+    return MONTH_IN_SECONDS;
+} );
+```
+
+---
+
+### `cocart_updates_screen_capability`
+
+Plugin: <Badge color="purple">Plus</Badge>
+
+Filters the required user capability to view the CoCart updates screen.
+
+<Note>Made available since v1.0.0 of CoCart Plus</Note>
+
+**Parameters**
+
+<ParamField query="capability" type="string">
+  The capability required. Default: `manage_options`.
+</ParamField>
+
+**Usage**
+```php
+add_filter( 'cocart_updates_screen_capability', function( $capability ) {
+    // Allow shop managers to view updates
+    return 'manage_woocommerce';
+} );
+```
