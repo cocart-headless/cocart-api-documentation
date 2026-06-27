@@ -196,7 +196,7 @@ client.set_main_plugin("legacy")
 
 ### What changes in legacy mode
 
-**Basic-only methods raise immediately.** Methods that require CoCart Starter raise a `VersionException` before making any HTTP request:
+**Starter-only methods raise immediately.** Methods that require CoCart Starter raise a `VersionException` before making any HTTP request:
 
 ```python
 from cocart.exceptions import VersionException
@@ -210,7 +210,7 @@ except VersionException as e:
     print(e)
 ```
 
-Basic-only methods include:
+Starter-only methods include:
 
 - `cart().create()`
 - `products().find_by_slug()`, `variation()`, `category()`, `tag()`

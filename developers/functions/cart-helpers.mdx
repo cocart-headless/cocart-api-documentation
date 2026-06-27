@@ -154,7 +154,7 @@ Returns the cart fees formatted for API responses.
 
 ### `CoCart_Utilities_Cart_Helpers::get_cart_totals()`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Returns the full set of cart totals (subtotal, fees, discounts, shipping, and tax) formatted for API responses.
 
@@ -176,7 +176,7 @@ Returns the full set of cart totals (subtotal, fees, discounts, shipping, and ta
 
 ### `CoCart_Utilities_Cart_Helpers::get_applied_coupons()`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Returns the applied coupons with label, discount type, plain saving amount, and HTML saving amount.
 
@@ -194,7 +194,7 @@ Returns the applied coupons with label, discount type, plain saving amount, and 
 
 ### `CoCart_Utilities_Cart_Helpers::get_taxes()`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Returns tax data for the cart based on store tax settings. Returns itemized lines when `woocommerce_tax_total_display` is set to `itemized`.
 
@@ -274,7 +274,7 @@ Returns WooCommerce notices stored in the session, then clears them.
 
 ### `CoCart_Utilities_Cart_Helpers::get_item_thumbnail_id()`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Returns the thumbnail attachment ID for a cart item's product, falling back to the parent product image or the WooCommerce placeholder.
 
@@ -304,7 +304,7 @@ Returns the thumbnail attachment ID for a cart item's product, falling back to t
 
 ### `CoCart_Utilities_Cart_Helpers::get_thumbnail_size()`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Returns the thumbnail image size name to use for cart item images, filtered via `cocart_item_thumbnail_size`.
 
@@ -322,7 +322,7 @@ Returns the thumbnail image size name to use for cart item images, filtered via 
 
 ### `CoCart_Utilities_Cart_Helpers::get_thumbnail_source()`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Returns the escaped URL for a cart item thumbnail given an attachment ID and size.
 
@@ -356,7 +356,7 @@ Returns the escaped URL for a cart item thumbnail given an attachment ID and siz
 
 ### `CoCart_Utilities_Cart_Helpers::get_item_basic()`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Returns basic item data (key, id, name, price, quantity, variation, and any extra cart item data) formatted for API responses.
 
@@ -382,7 +382,7 @@ Returns basic item data (key, id, name, price, quantity, variation, and any extr
 
 ### `CoCart_Utilities_Cart_Helpers::set_cart_item_quantity_sold_individually()`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Normalizes the quantity in a request to `1` for sold-individually products, filtered via `cocart_add_to_cart_sold_individually_quantity`.
 
@@ -400,7 +400,7 @@ Normalizes the quantity in a request to `1` for sold-individually products, filt
 
 ### `CoCart_Utilities_Cart_Helpers::set_cart_item_data()`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Applies the `cocart_add_cart_item_data` filter to allow plugins to inject custom item data before an item is added to the cart.
 
@@ -544,7 +544,7 @@ Checks whether the product in a cart item has sufficient stock for the requested
 
 ### `CoCart_Utilities_Cart_Helpers::is_postcode_valid()`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Validates a billing or shipping postcode against the WooCommerce validator for the relevant country. Accepts either a `WC_Customer` or `WP_REST_Request` object.
 
@@ -566,7 +566,7 @@ Validates a billing or shipping postcode against the WooCommerce validator for t
 
 ### `CoCart_Utilities_Cart_Helpers::is_country_valid()`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Validates a billing or shipping country code against the WooCommerce country list and allowed shipping countries. Accepts either a `WC_Customer` or `WP_REST_Request` object.
 

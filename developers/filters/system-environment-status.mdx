@@ -72,7 +72,7 @@ add_filter( 'cocart_is_rest_api_request', function() {
 
 ### `cocart_rest_should_load_namespace`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Filter allows you to determine whether a specific API namespace should be loaded. Use this to disable certain API namespaces for performance or security.
 
@@ -103,7 +103,7 @@ add_filter( 'cocart_rest_should_load_namespace', function( $should_load, $namesp
 
 ### `cocart_wp_disable_access`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Filter allows you to disable frontend access to the WordPress site entirely. When enabled, visitors are redirected to your headless storefront instead of seeing the WordPress theme.
 
@@ -124,7 +124,7 @@ add_filter( 'cocart_wp_disable_access', '__return_true' );
 
 ### `cocart_wp_frontend_url`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Filter allows you to control where visitors are redirected when accessing your WordPress site, if you have [disabled frontend access](#cocart_wp_disable_access).
 
@@ -147,7 +147,7 @@ add_filter( 'cocart_wp_frontend_url', function() {
 
 ### `cocart_wp_accessible_page_ids`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Filter allows you to specify which WordPress page IDs remain accessible when frontend access is disabled. By default, cart and checkout pages remain accessible to support the [Load Cart from Session](/load-cart) feature.
 

@@ -539,7 +539,6 @@
                   {
                     "group": "Knowledge Base",
                     "pages": [
-                      "knowledge-base/index",
                       "knowledge-base/faq",
                       "knowledge-base/security-practices",
                       "knowledge-base/http-security-headers",
@@ -583,7 +582,7 @@
                       "updates/index",
                       "updates/documentation",
                       "updates/community",
-                      "updates/basic",
+                      "updates/starter",
                       "updates/plus",
                       "updates/jwt"
                     ]
@@ -1217,7 +1216,7 @@
                       "updates/index",
                       "updates/documentation",
                       "updates/community",
-                      "updates/basic",
+                      "updates/starter",
                       "updates/plus",
                       "updates/jwt"
                     ]
@@ -1225,7 +1224,7 @@
                   {
                     "group": "Breaking Changes",
                     "pages": [
-                      "breaking-changes/basic-v5",
+                      "breaking-changes/starter-v5",
                       "breaking-changes/community-v4"
                     ]
                   }
@@ -1862,7 +1861,6 @@
                   {
                     "group": "Knowledge Base",
                     "pages": [
-                      "knowledge-base/index",
                       "knowledge-base/faq",
                       "knowledge-base/security-practices",
                       "knowledge-base/http-security-headers",
@@ -1906,7 +1904,7 @@
                       "updates/index",
                       "updates/documentation",
                       "updates/community",
-                      "updates/basic",
+                      "updates/starter",
                       "updates/plus",
                       "updates/jwt"
                     ]
@@ -1914,7 +1912,7 @@
                   {
                     "group": "Breaking Changes",
                     "pages": [
-                      "breaking-changes/basic-v5",
+                      "breaking-changes/starter-v5",
                       "breaking-changes/community-v4"
                     ]
                   }
@@ -2186,7 +2184,7 @@
     },
     {
       "source": "/breaking-changes/core-v5",
-      "destination": "/breaking-changes/basic-v5"
+      "destination": "/breaking-changes/starter-v5"
     },
     {
       "source": "/breaking-changes/core-v4",

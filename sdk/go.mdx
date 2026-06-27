@@ -203,7 +203,7 @@ client.SetMainPlugin(cocart.MainPluginLegacy)
 
 ### What changes in legacy mode
 
-**Basic-only methods return an error immediately.** Methods that require CoCart Starter return a `*VersionError` before making any HTTP request:
+**Starter-only methods return an error immediately.** Methods that require CoCart Starter return a `*VersionError` before making any HTTP request:
 
 ```go
 client := cocart.NewClient("https://your-store.com",
@@ -219,7 +219,7 @@ if errors.As(err, &vErr) {
 }
 ```
 
-Basic-only methods include:
+Starter-only methods include:
 
 - `Cart().Create()`
 - `Products().FindBySlug()`, `Variation()`, `Category()`, `Tag()`

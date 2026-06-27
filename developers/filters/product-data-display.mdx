@@ -333,7 +333,7 @@ add_filter( 'cocart_products_ignore_private_meta_keys', function() {
 
 ### `cocart_products_allowed_meta_keys`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Filter allows you to specify which product meta keys are allowed in API responses. In CoCart Starter, product meta is no longer returned by default to prevent PII exposure — you must whitelist specific keys using this filter.
 
@@ -358,7 +358,7 @@ add_filter( 'cocart_products_allowed_meta_keys', function( $allowed_keys, $produ
 ```
 
 <Warning>
-This replaces the `cocart_products_ignore_private_meta_keys` filter from the Community edition, which is [no longer used in Basic](/breaking-changes/basic-v5).
+  This replaces the `cocart_products_ignore_private_meta_keys` filter from the Community edition, which is [no longer used in Starter](/breaking-changes/starter-v5).
 </Warning>
 
 ---

@@ -14,7 +14,7 @@ description: "Static methods on CoCart_Utilities_Cache_Helpers for cache group p
 
 ### `CoCart_Utilities_Cache_Helpers::get_cache_prefix()`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Returns the cache prefix for a group. The prefix changes whenever the group is invalidated, effectively busting all cached values in that group.
 
@@ -32,7 +32,7 @@ Returns the cache prefix for a group. The prefix changes whenever the group is i
 
 ### `CoCart_Utilities_Cache_Helpers::invalidate_cache_group()`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Invalidates all cached values in a group by updating the group's cache prefix.
 
@@ -48,7 +48,7 @@ Invalidates all cached values in a group by updating the group's cache prefix.
 
 ### `CoCart_Utilities_Cache_Helpers::get_prefixed_key()`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Returns a cache key prefixed for the given group. Use with `wp_cache_get()` / `wp_cache_set()` to participate in group-level cache invalidation.
 
@@ -70,7 +70,7 @@ Returns a cache key prefixed for the given group. Use with `wp_cache_get()` / `w
 
 ### `CoCart_Utilities_Cache_Helpers::queue_delete_transient()`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Queues one or more transient keys for deletion on WordPress shutdown, avoiding redundant `delete_transient()` calls during a single request.
 
@@ -86,7 +86,7 @@ Queues one or more transient keys for deletion on WordPress shutdown, avoiding r
 
 ### `CoCart_Utilities_Cache_Helpers::delete_transients_on_shutdown()`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Deletes all queued transients. Runs automatically on the `shutdown` action — call `queue_delete_transient()` to schedule keys; this method fires automatically.
 
@@ -96,7 +96,7 @@ Deletes all queued transients. Runs automatically on the `shutdown` action — c
 
 ### `CoCart_Utilities_Cache_Helpers::get_transient_version()`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Returns a version string for a named transient group, creating it if it doesn't exist. Incrementing the version (via `$refresh = true`) invalidates all transients in that group, including in external object caches where direct DB deletion is not possible.
 

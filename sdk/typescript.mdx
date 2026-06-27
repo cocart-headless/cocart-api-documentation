@@ -258,7 +258,7 @@ client.setMainPlugin('legacy');
 
 ### What changes in legacy mode
 
-**Basic-only methods throw immediately.** Methods that require CoCart Starter will throw a `VersionError` before making any HTTP request:
+**Starter-only methods throw immediately.** Methods that require CoCart Starter will throw a `VersionError` before making any HTTP request:
 
 ```ts
 import { CoCart, VersionError } from '@cocartheadless/sdk';
@@ -274,7 +274,7 @@ try {
 }
 ```
 
-Basic-only methods include:
+Starter-only methods include:
 
 - `cart().create()`
 - `products().findBySlug()`, `variation()`, `category()`, `tag()`

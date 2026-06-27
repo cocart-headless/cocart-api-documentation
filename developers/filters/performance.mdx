@@ -18,7 +18,7 @@ description: "PHP filters for plugin loading, blocked plugins, WP-Cron, and perf
 
 ### `cocart_disable_wp_cron_on_request`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Controls whether WP-Cron spawning is disabled during CoCart REST API requests. Defaults to `true` — cron is disabled on every API request to avoid spawning unnecessary background processes.
 
@@ -40,7 +40,7 @@ add_filter( 'cocart_disable_wp_cron_on_request', '__return_false' );
 
 ### `cocart_request_allowed_plugins`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Filters the list of plugin files that are always allowed to load during a CoCart REST request when Performance mode is active. By default the safelist contains WooCommerce, CoCart Starter, and any plugin whose integration is enabled. All plugins in a `woocommerce-*` or `cocart-*` folder are also allowed automatically without needing to be added here.
 
@@ -65,7 +65,7 @@ add_filter( 'cocart_request_allowed_plugins', function( array $allowed ): array 
 
 ### `cocart_request_blocked_plugins`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Filters the list of plugin files that are always blocked from loading during a CoCart REST request when Performance mode is active. A blocked plugin takes precedence over the safelist — if a plugin appears in both lists it will not load. The blocklist is empty by default.
 

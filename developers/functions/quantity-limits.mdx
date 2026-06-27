@@ -18,7 +18,7 @@ description: "Instance methods on CoCart_Utilities_Quantity_Limits for calculati
 
 ### `CoCart_Utilities_Quantity_Limits::get_cart_item_quantity_limits()`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Returns the full set of quantity limits for a cart item: `minimum`, `maximum`, `multiple_of`, and `editable`.
 
@@ -36,7 +36,7 @@ Returns the full set of quantity limits for a cart item: `minimum`, `maximum`, `
 
 ### `CoCart_Utilities_Quantity_Limits::get_add_to_cart_limits()`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Returns the quantity limits (`minimum`, `maximum`, `multiple_of`) for a product's add-to-cart context, accounting for stock, sold-individually status, and filters.
 
@@ -58,7 +58,7 @@ Returns the quantity limits (`minimum`, `maximum`, `multiple_of`) for a product'
 
 ### `CoCart_Utilities_Quantity_Limits::normalize_cart_item_quantity()`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Adjusts a quantity to the nearest valid value according to the cart item's limits (minimum, maximum, and step). Returns `0` if the input is zero or negative.
 
@@ -80,7 +80,7 @@ Adjusts a quantity to the nearest valid value according to the cart item's limit
 
 ### `CoCart_Utilities_Quantity_Limits::validate_quantity()`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Single entry point for quantity validation. Checks the value is numeric, then validates it against the product or cart item limits. Pass a `WC_Product` for new-item validation or a cart item array for existing-item validation.
 
@@ -102,7 +102,7 @@ Single entry point for quantity validation. Checks the value is numeric, then va
 
 ### `CoCart_Utilities_Quantity_Limits::validate_cart_item_quantity()`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Validates a quantity against the limits for an existing cart item, returning a `WP_Error` if below minimum, above maximum, not a valid multiple, or not editable.
 
@@ -124,7 +124,7 @@ Validates a quantity against the limits for an existing cart item, returning a `
 
 ### `CoCart_Utilities_Quantity_Limits::get_remaining_stock_for_product()`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Returns the remaining stock for a product after subtracting reserved stock from any pending draft orders.
 

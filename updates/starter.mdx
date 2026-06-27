@@ -1,6 +1,6 @@
 ---
 title: "CoCart Starter Updates"
-sidebarTitle: "Basic Updates"
+sidebarTitle: "Starter Updates"
 description: "Keep up with all the latest improvements, features, and fixes in CoCart Starter."
 icon: "cart-shopping"
 rss: true
@@ -21,7 +21,7 @@ Stay up to date with the latest releases and improvements to CoCart Starter. Eac
 CoCart Starter is the next chapter for CoCart, starting at version 5.0.0 to provide a seamless transition from the community edition. This is a major release packed with new features, performance improvements, and architectural changes that set the foundation for everything ahead.
 
 <Warning>
-  This release includes breaking changes if you have been using CoCart Community plugin. Please review the [full breaking changes guide](/breaking-changes/basic-v5) before upgrading.
+  This release includes breaking changes if you have been using CoCart Community plugin. Please review the [full breaking changes guide](/breaking-changes/starter-v5) before upgrading.
 </Warning>
 
 ### Batch Requests for All Endpoints
@@ -119,13 +119,13 @@ We've also optimized the add-to-cart flow for smoother validation and broader Wo
 
 This release includes significant breaking changes to response structures, headers, hooks, and function names. Key changes include renamed response headers (`CoCart-API-Cart-Key` → `Cart-Key`), restructured quantity objects, updated product category image responses, and a new plugin text domain (`cocart-basic`).
 
-[View the complete breaking changes guide →](/breaking-changes/basic-v5)
+[View the complete breaking changes guide →](/breaking-changes/starter-v5)
 
 ### For Developers
 
 This release introduces 4 new action hooks covering cart creation, item updates, session setup, and settings registration; over 20 new filters spanning caching, security, cart extensions, quantity limits, product schema, CORS, and WordPress access control; new utility functions and classes for monetary formatting, pagination, and quantity limits; and updated logger APIs with named per-level methods. Several older filters and functions are deprecated.
 
-For the complete list of new hooks, filters, parameters, and deprecations, see the [developer reference](/developers) and the [breaking changes guide](/breaking-changes/basic-v5).
+For the complete list of new hooks, filters, parameters, and deprecations, see the [developer reference](/developers) and the [breaking changes guide](/breaking-changes/starter-v5).
 
 A new `Cart-Hash` response header has also been added to help with debugging cart changes if you have `WP_DEBUG` enabled but the ETag header is the preferred header to use for identifying changes in the cart.
 

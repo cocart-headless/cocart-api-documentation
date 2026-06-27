@@ -236,7 +236,7 @@ add_filter( 'cocart_cross_sells', function() {
 
 ### `cocart_cross_sell_item_thumbnail_src`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Filter allows you to change the thumbnail source URL for a cross-sell item.
 
@@ -491,7 +491,7 @@ add_filter( 'cocart_return_empty_cart', function() {
 
 ### `cocart_rest_response`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Filter allows you to modify any API response as a final step before it is returned. Use this as a last resort for adjusting the response based on the request made.
 
@@ -708,7 +708,7 @@ add_filter( 'cocart_customer_details', function( $response, $cart_customer ) {
 
 ### `cocart_cart_extensions`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Filters the extensions data appended to the cart response under the `extensions` key. Only applied when at least one callback is hooked. Use this to add custom data from your add-on or integration without modifying the core cart response structure.
 
@@ -749,7 +749,7 @@ add_filter( 'cocart_cart_extensions', function( $extension_data, $cart, $request
 
 ### `cocart_cart_extensions_schema`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Filters the cart-level schema properties for the `extensions` key. Use this alongside `cocart_cart_extensions` to ensure the REST API schema accurately reflects any data your integration adds.
 
@@ -786,7 +786,7 @@ add_filter( 'cocart_cart_extensions_schema', function( $properties ) {
 
 ### `cocart_cart_coupon`
 
-Plugin: <Badge color="red">Basic</Badge>
+Plugin: <Badge color="red">Starter</Badge>
 
 Filters the data entry for each applied coupon in the cart response. Use this to append custom metadata to coupon entries — for example, BOGO details, auto-apply flags, expiry dates, or role restrictions stored on the coupon post.
 
