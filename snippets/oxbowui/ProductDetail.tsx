@@ -1,5 +1,3 @@
-import React from 'react';
-
 export const ProductDetail = () => {
   const product = {
     name: 'Nike Air Max',

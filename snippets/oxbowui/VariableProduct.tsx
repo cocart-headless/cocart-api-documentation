@@ -1,5 +1,3 @@
-import React, { useState } from 'react';
-
 export const VariableProduct = () => {
   const product = {
     name: 'Nike Air Force 1\u00b407 Fresh',
@@ -24,7 +22,7 @@ export const VariableProduct = () => {
   const [activeColor, setActiveColor] = useState<string | null>(null);
   const [activeSize, setActiveSize] = useState<string | null>(null);
 
-  const buttonBase: React.CSSProperties = {
+  const buttonBase = {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
