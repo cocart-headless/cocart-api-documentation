@@ -2350,7 +2350,3 @@ components:
         message:
           type: string
           description: Human-readable confirmation message.
-security:
-  - {}
-  - basicAuth: []
-  - bearerAuth: []

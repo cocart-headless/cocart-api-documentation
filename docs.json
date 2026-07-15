@@ -14,602 +14,6 @@
   "navigation": {
     "versions": [
       {
-        "version": "community",
-        "default": false,
-        "anchors": [
-          {
-            "anchor": "Documentation",
-            "icon": "book",
-            "tabs": [
-              {
-                "tab": "User Guides",
-                "icon": "book",
-                "groups": [
-                  {
-                    "group": "Overview",
-                    "pages": [
-                      "introduction",
-                      "faq",
-                      "standards",
-                      "roadmap",
-                      "security-policy",
-                      "comparison/woographql",
-                      "comparison/woocommerce-store-api"
-                    ]
-                  },
-                  {
-                    "group": "Getting Started",
-                    "pages": [
-                      "getting-started/wordpress-setup",
-                      {
-                        "group": "CoCart Community",
-                        "icon": "cart-shopping",
-                        "pages": [
-                          "community/install",
-                          "community/quick-start"
-                        ]
-                      },
-                      "getting-started/plus",
-                      "getting-started/license-activation",
-                      "getting-started/composer",
-                      "updating-cocart",
-                      "upgrade-guide-v3-9-to-v4-9"
-                    ]
-                  },
-                  {
-                    "group": "Features",
-                    "pages": [
-                      "security",
-                      "batch-requests",
-                      "cors",
-                      "cache",
-                      "etag-cache-support",
-                      "rate-limiting",
-                      "force-permissions",
-                      "load-cart"
-                    ]
-                  },
-                  {
-                    "group": "Authentication",
-                    "pages": [
-                      "authentication/index",
-                      {
-                        "group": "JWT Authentication",
-                        "icon": "hashtag",
-                        "pages": [
-                          "authentication/jwt/index",
-                          "authentication/jwt/quick-start",
-                          "authentication/jwt/concepts",
-                          "authentication/jwt/token-management",
-                          "authentication/jwt/advanced-configuration"
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "group": "Developers",
-                    "pages": [
-                      "developers/index",
-                      "developers/guiding-principles",
-                      {
-                        "group": "Action hooks",
-                        "icon": "tag",
-                        "pages": [
-                          "developers/actions/index",
-                          "developers/actions/installation",
-                          "developers/actions/session-management",
-                          "developers/actions/cart-updates",
-                          "developers/actions/cart-items-management",
-                          "developers/actions/cart-operations",
-                          "developers/actions/authentication",
-                          "developers/actions/extensions",
-                          "developers/actions/product-reviews",
-                          "developers/actions/payment-shipping",
-                          "developers/actions/deprecated",
-                          "developers/jwt/actions"
-                        ]
-                      },
-                      {
-                        "group": "Filters",
-                        "icon": "filter",
-                        "pages": [
-                          "developers/filters/index",
-                          "developers/filters/authentication-security",
-                          "developers/filters/caching-etag",
-                          "developers/filters/cart-management-state",
-                          "developers/filters/cart-items-operations",
-                          "developers/filters/product-validation-messages",
-                          "developers/filters/session-customer-management",
-                          "developers/filters/product-data-display",
-                          "developers/filters/system-environment-status",
-                          "developers/filters/admin-plugin-management",
-                          "developers/filters/api-schema-parameters",
-                          "developers/filters/product-reviews",
-                          "developers/filters/shipping-packages",
-                          "developers/filters/performance",
-                          "developers/jwt/filters"
-                        ]
-                      },
-                      {
-                        "group": "Functions",
-                        "icon": "robot",
-                        "pages": [
-                          "developers/functions/index",
-                          "developers/functions/cart-data",
-                          "developers/functions/formatting",
-                          "developers/functions/rest-api-helpers",
-                          "developers/functions/utilities",
-                          "developers/functions/maintenance",
-                          "developers/functions/product-helpers",
-                          "developers/functions/cart-helpers",
-                          "developers/functions/cache-helpers",
-                          "developers/functions/quantity-limits",
-                          "developers/functions/deprecated"
-                        ]
-                      },
-                      {
-                        "group": "Contributing",
-                        "icon": "hand-holding-heart",
-                        "pages": [
-                          "developers/community/contributing",
-                          "contributing-to-docs"
-                        ]
-                      },
-                      "developers/resources"
-                    ]
-                  },
-                  {
-                    "group": "Tools and Resources",
-                    "pages": [
-                      "support",
-                      "tools",
-                      "raycast",
-                      "wp-cli",
-                      "ai-skills"
-                    ]
-                  },
-                  {
-                    "group": "For Community",
-                    "pages": [
-                      "community/index",
-                      "community/opening-issues",
-                      "support-policy"
-                    ]
-                  }
-                ]
-              },
-              {
-                "tab": "API Reference",
-                "icon": "code",
-                "groups": [
-                  {
-                    "group": "Overview",
-                    "pages": [
-                      "api-reference/index",
-                      "api-reference/faq",
-                      "api-reference/playground"
-                    ]
-                  },
-                  {
-                    "group": "JWT Authentication",
-                    "pages": [
-                      "authentication/jwt/quick-start",
-                      "api-reference/jwt/refresh-token",
-                      "api-reference/jwt/validate-token"
-                    ]
-                  },
-                  {
-                    "group": "API v1 (Deprecated in future)",
-                    "pages": [
-                      "api-reference/migration-guide",
-                      "api-reference/community/v1/error-codes",
-                      {
-                        "group": "Cart",
-                        "icon": "cart-shopping",
-                        "pages": [
-                          "api-reference/community/v1/cart/get-cart",
-                          "api-reference/community/v1/cart/get-cart-in-session",
-                          "api-reference/community/v1/cart/get-cart-customer",
-                          "api-reference/community/v1/cart/post-add-item",
-                          "api-reference/community/v1/cart/post-update-item",
-                          "api-reference/community/v1/cart/delete-remove-item",
-                          "api-reference/community/v1/cart/put-restore-item",
-                          "api-reference/community/v1/cart/post-clear-cart",
-                          "api-reference/community/v1/cart/get-count-items",
-                          "api-reference/community/v1/cart/post-calculate",
-                          "api-reference/community/v1/cart/get-totals"
-                        ]
-                      },
-                      {
-                        "group": "Products",
-                        "icon": "shirt",
-                        "pages": [
-                          "api-reference/community/v1/products/get-products",
-                          "api-reference/community/v1/products/get-product",
-                          "api-reference/community/v1/products/get-product-variations",
-                          "api-reference/community/v1/products/get-product-variation",
-                          "api-reference/community/v1/products/get-product-categories",
-                          "api-reference/community/v1/products/get-product-tags",
-                          "api-reference/community/v1/products/get-product-attributes",
-                          "api-reference/community/v1/products/get-product-attribute",
-                          "api-reference/community/v1/products/get-product-attribute-terms",
-                          "api-reference/community/v1/products/get-product-attribute-term",
-                          "api-reference/community/v1/products/get-product-reviews",
-                          "api-reference/community/v1/products/get-product-review"
-                        ]
-                      },
-                      {
-                        "group": "User Management",
-                        "icon": "user",
-                        "pages": [
-                          "api-reference/community/v1/user/logout"
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "group": "API v2",
-                    "pages": [
-                      "api-reference/community/v2/error-codes",
-                      "api-reference/v2/working-with-variations",
-                      "api-reference/v2/cart-item-extras",
-                      {
-                        "group": "Cart",
-                        "icon": "cart-shopping",
-                        "pages": [
-                          "api-reference/community/v2/cart/get-cart",
-                          "api-reference/community/v2/cart/post-add-item",
-                          "api-reference/community/v2/cart/post-add-items",
-                          "api-reference/community/v2/cart/post-calculate",
-                          "api-reference/community/v2/cart/post-clear",
-                          "api-reference/community/v2/cart/get-items-count",
-                          "api-reference/community/v2/cart/post-item-by-key",
-                          "api-reference/community/v2/cart/delete-item-by-key",
-                          "api-reference/community/v2/cart/put-item-by-key",
-                          "api-reference/community/v2/cart/get-totals",
-                          "api-reference/community/v2/cart/post-cart-update"
-                        ]
-                      },
-                      {
-                        "group": "Products",
-                        "icon": "shirt",
-                        "pages": [
-                          "api-reference/community/v2/products/get-products",
-                          "api-reference/community/v2/products/get-product",
-                          "api-reference/community/v2/products/get-product-variations",
-                          "api-reference/community/v2/products/get-product-variation",
-                          "api-reference/community/v2/products/get-product-categories",
-                          "api-reference/community/v2/products/get-product-category-by-id",
-                          "api-reference/community/v2/products/get-product-tags",
-                          "api-reference/community/v2/products/get-product-tag-by-id",
-                          "api-reference/community/v2/products/get-product-attributes",
-                          "api-reference/community/v2/products/get-product-attribute-by-id",
-                          "api-reference/community/v2/products/get-product-attribute-terms",
-                          "api-reference/community/v2/products/get-product-attribute-term",
-                          "api-reference/community/v2/products/get-product-reviews",
-                          "api-reference/community/v2/products/get-product-review"
-                        ]
-                      },
-                      {
-                        "group": "User Management",
-                        "icon": "user",
-                        "pages": [
-                          "api-reference/community/v2/user/post-login",
-                          "api-reference/community/v2/user/post-logout"
-                        ]
-                      },
-                      {
-                        "group": "Store",
-                        "icon": "store",
-                        "pages": [
-                          "api-reference/community/v2/store/get-store"
-                        ]
-                      },
-                      {
-                        "group": "Sessions",
-                        "icon": "database",
-                        "pages": [
-                          "api-reference/community/v2/sessions/get-sessions",
-                          "api-reference/community/v2/sessions/get-session",
-                          "api-reference/community/v2/sessions/delete-session"
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "group": "Plugins",
-                    "pages": [
-                      "api-reference/plugins/wc-name-your-price",
-                      "api-reference/plugins/wc-mix-and-match-products",
-                      "api-reference/plugins/two-factor-authentication",
-                      "api-reference/plugins/advanced-custom-fields"
-                    ]
-                  },
-                  {
-                    "group": "For Community",
-                    "pages": [
-                      "community/index",
-                      "community/opening-issues",
-                      "support-policy"
-                    ]
-                  }
-                ]
-              },
-              {
-                "tab": "CLI Reference",
-                "icon": "terminal",
-                "groups": [
-                  {
-                    "group": "CoCart CLI",
-                    "pages": [
-                      "cli-reference/index"
-                    ]
-                  },
-                  {
-                    "group": "Other CLI Commands",
-                    "pages": [
-                      "cli-reference/cli-jwt"
-                    ]
-                  },
-                  {
-                    "group": "For Community",
-                    "pages": [
-                      "community/index",
-                      "community/opening-issues",
-                      "support-policy"
-                    ]
-                  }
-                ]
-              },
-              {
-                "tab": "SDKs",
-                "icon": "puzzle-piece",
-                "groups": [
-                  {
-                    "group": "SDKs",
-                    "pages": [
-                      "sdk/index",
-                      {
-                        "group": "TypeScript",
-                        "icon": "js",
-                        "pages": [
-                          "sdk/typescript",
-                          "sdk/typescript/authentication",
-                          "sdk/typescript/cart",
-                          "sdk/typescript/products",
-                          "sdk/typescript/sessions",
-                          "sdk/typescript/error-handling",
-                          "sdk/typescript/utilities"
-                        ]
-                      },
-                      {
-                        "group": "PHP SDK",
-                        "icon": "php",
-                        "pages": [
-                          "sdk/php",
-                          "sdk/php/authentication",
-                          "sdk/php/cart",
-                          "sdk/php/products",
-                          "sdk/php/sessions",
-                          "sdk/php/error-handling",
-                          "sdk/php/utilities"
-                        ]
-                      },
-                      {
-                        "group": "Python SDK",
-                        "icon": "python",
-                        "pages": [
-                          "sdk/python",
-                          "sdk/python/authentication",
-                          "sdk/python/cart",
-                          "sdk/python/products",
-                          "sdk/python/sessions",
-                          "sdk/python/error-handling",
-                          "sdk/python/utilities"
-                        ]
-                      },
-                      {
-                        "group": "Go SDK",
-                        "icon": "golang",
-                        "pages": [
-                          "sdk/go",
-                          "sdk/go/authentication",
-                          "sdk/go/cart",
-                          "sdk/go/products",
-                          "sdk/go/sessions",
-                          "sdk/go/error-handling",
-                          "sdk/go/utilities"
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "group": "Framework Guides",
-                    "icon": "code",
-                    "pages": [
-                      "sdk/typescript/frameworks/astro",
-                      "sdk/typescript/frameworks/nextjs",
-                      "sdk/typescript/frameworks/nuxt",
-                      "sdk/typescript/frameworks/svelte",
-                      "sdk/typescript/frameworks/remix",
-                      "sdk/typescript/frameworks/hono",
-                      "sdk/typescript/frameworks/fastify",
-                      "sdk/typescript/frameworks/elysiajs",
-                      "sdk/typescript/frameworks/deno",
-                      "sdk/typescript/frameworks/vite"
-                    ]
-                  },
-                  {
-                    "group": "Hosted Platforms",
-                    "icon": "globe",
-                    "pages": [
-                      "sdk/typescript/frameworks/framer",
-                      "sdk/typescript/frameworks/webflow"
-                    ]
-                  }
-                ]
-              },
-              {
-                "tab": "Tutorials",
-                "icon": "graduation-cap",
-                "groups": [
-                  {
-                    "group": "Tutorials",
-                    "pages": [
-                      "tutorials/index",
-                      "tutorials/postman",
-                      "tutorials/yaak",
-                      "tutorials/covert-cart-to-order",
-                      "tutorials/authentication-injection",
-                      "tutorials/consumer-key-setup",
-                      "tutorials/extending-cart-creating-callbacks",
-                      "tutorials/extending-products-api",
-                      "tutorials/cart-drawer"
-                    ]
-                  },
-                  {
-                    "group": "Framework Integrations",
-                    "icon": "code",
-                    "pages": [
-                      {
-                        "group": "Astro",
-                        "icon": "rocket",
-                        "pages": [
-                          "tutorials/astro/setup",
-                          "tutorials/astro/oxbowui-product-list"
-                        ],
-                        "tag": "FEEDBACK REQUIRED"
-                      },
-                      {
-                        "group": "Next.js",
-                        "icon": "react",
-                        "pages": [
-                          "tutorials/nextjs/setup"
-                        ],
-                        "tag": "FEEDBACK REQUIRED"
-                      },
-                      {
-                        "group": "Nuxt",
-                        "icon": "mountain",
-                        "pages": [
-                          "tutorials/nuxt/setup"
-                        ],
-                        "tag": "FEEDBACK REQUIRED"
-                      },
-                      {
-                        "group": "SvelteKit",
-                        "icon": "fire",
-                        "pages": [
-                          "tutorials/sveltekit/setup"
-                        ],
-                        "tag": "FEEDBACK REQUIRED"
-                      },
-                      {
-                        "group": "React Native",
-                        "icon": "mobile",
-                        "pages": [
-                          "tutorials/react-native/setup"
-                        ],
-                        "tag": "FEEDBACK REQUIRED"
-                      }
-                    ],
-                    "tag": "WIP"
-                  },
-                  {
-                    "group": "Tips and Tricks",
-                    "pages": [
-                      "tutorials/typescript-types-generation",
-                      "tutorials/generate-image-dataurl"
-                    ]
-                  },
-                  {
-                    "group": "For Community",
-                    "pages": [
-                      "community/index",
-                      "community/opening-issues",
-                      "support-policy"
-                    ]
-                  }
-                ]
-              },
-              {
-                "tab": "Knowledge Base",
-                "icon": "block-question",
-                "groups": [
-                  {
-                    "group": "Knowledge Base",
-                    "pages": [
-                      "knowledge-base/faq",
-                      "knowledge-base/security-practices",
-                      "knowledge-base/http-security-headers",
-                      "knowledge-base/cart-key",
-                      "knowledge-base/adding-code",
-                      "knowledge-base/wp-config",
-                      "knowledge-base/guest-to-customer-cart",
-                      "knowledge-base/performance",
-                      "knowledge-base/multisite",
-                      "knowledge-base/plugin-suggestions",
-                      "knowledge-base/nulled-plugins"
-                    ]
-                  },
-                  {
-                    "group": "Troubleshooting",
-                    "pages": [
-                      "knowledge-base/troubleshoot/authentication",
-                      "knowledge-base/troubleshoot/jwt-authentication",
-                      "knowledge-base/troubleshoot/cors",
-                      "knowledge-base/troubleshoot/object-cache",
-                      "knowledge-base/troubleshoot/rest-api-caching"
-                    ]
-                  },
-                  {
-                    "group": "For Community",
-                    "pages": [
-                      "community/index",
-                      "community/opening-issues",
-                      "support-policy"
-                    ]
-                  }
-                ]
-              },
-              {
-                "tab": "Changelogs",
-                "icon": "clock-rotate-left",
-                "groups": [
-                  {
-                    "group": "Changelogs",
-                    "pages": [
-                      "updates/index",
-                      "updates/documentation",
-                      "updates/community",
-                      "updates/starter",
-                      "updates/plus",
-                      "updates/jwt"
-                    ]
-                  },
-                  {
-                    "group": "Breaking Changes",
-                    "pages": [
-                      "breaking-changes/community-v4"
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "anchor": "Feature requests",
-            "href": "https://cocartapi.com/suggest-a-feature/?ref=mintlify",
-            "icon": "bell-concierge"
-          },
-          {
-            "anchor": "Wall of Love",
-            "href": "https://cocartapi.com/wall-of-love/?ref=mintlify",
-            "icon": "heart"
-          }
-        ]
-      },
-      {
         "version": "latest",
         "default": true,
         "anchors": [
@@ -1245,6 +649,618 @@
         ]
       },
       {
+        "version": "community",
+        "anchors": [
+          {
+            "anchor": "Documentation",
+            "icon": "book",
+            "tabs": [
+              {
+                "tab": "User Guides",
+                "icon": "book",
+                "groups": [
+                  {
+                    "group": "Overview",
+                    "pages": [
+                      "introduction",
+                      "faq",
+                      "standards",
+                      "roadmap",
+                      "security-policy",
+                      "comparison/woographql",
+                      "comparison/woocommerce-store-api"
+                    ]
+                  },
+                  {
+                    "group": "Getting Started",
+                    "pages": [
+                      "getting-started/wordpress-setup",
+                      {
+                        "group": "CoCart Community",
+                        "icon": "cart-shopping",
+                        "pages": [
+                          "community/install",
+                          "community/quick-start"
+                        ]
+                      },
+                      "getting-started/plus",
+                      "getting-started/license-activation",
+                      "getting-started/composer",
+                      "updating-cocart",
+                      "upgrade-guide-v3-9-to-v4-9"
+                    ]
+                  },
+                  {
+                    "group": "Features",
+                    "pages": [
+                      "security",
+                      "batch-requests",
+                      "cors",
+                      "cache",
+                      "etag-cache-support",
+                      "rate-limiting",
+                      "force-permissions",
+                      "load-cart"
+                    ]
+                  },
+                  {
+                    "group": "Authentication",
+                    "pages": [
+                      "authentication/index",
+                      {
+                        "group": "JWT Authentication",
+                        "icon": "hashtag",
+                        "pages": [
+                          "authentication/jwt/index",
+                          "authentication/jwt/quick-start",
+                          "authentication/jwt/concepts",
+                          "authentication/jwt/token-management",
+                          "authentication/jwt/advanced-configuration"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "Developers",
+                    "pages": [
+                      "developers/index",
+                      "developers/guiding-principles",
+                      {
+                        "group": "Action hooks",
+                        "icon": "tag",
+                        "pages": [
+                          "developers/actions/index",
+                          "developers/actions/installation",
+                          "developers/actions/session-management",
+                          "developers/actions/cart-updates",
+                          "developers/actions/cart-items-management",
+                          "developers/actions/cart-operations",
+                          "developers/actions/authentication",
+                          "developers/actions/extensions",
+                          "developers/actions/product-reviews",
+                          "developers/actions/payment-shipping",
+                          "developers/actions/deprecated",
+                          "developers/jwt/actions"
+                        ]
+                      },
+                      {
+                        "group": "Filters",
+                        "icon": "filter",
+                        "pages": [
+                          "developers/filters/index",
+                          "developers/filters/authentication-security",
+                          "developers/filters/caching-etag",
+                          "developers/filters/cart-management-state",
+                          "developers/filters/cart-items-operations",
+                          "developers/filters/product-validation-messages",
+                          "developers/filters/session-customer-management",
+                          "developers/filters/product-data-display",
+                          "developers/filters/system-environment-status",
+                          "developers/filters/admin-plugin-management",
+                          "developers/filters/api-schema-parameters",
+                          "developers/filters/product-reviews",
+                          "developers/filters/shipping-packages",
+                          "developers/filters/performance",
+                          "developers/jwt/filters"
+                        ]
+                      },
+                      {
+                        "group": "Functions",
+                        "icon": "robot",
+                        "pages": [
+                          "developers/functions/index",
+                          "developers/functions/cart-data",
+                          "developers/functions/formatting",
+                          "developers/functions/rest-api-helpers",
+                          "developers/functions/utilities",
+                          "developers/functions/maintenance",
+                          "developers/functions/product-helpers",
+                          "developers/functions/cart-helpers",
+                          "developers/functions/cache-helpers",
+                          "developers/functions/quantity-limits",
+                          "developers/functions/deprecated"
+                        ]
+                      },
+                      {
+                        "group": "Contributing",
+                        "icon": "hand-holding-heart",
+                        "pages": [
+                          "developers/community/contributing",
+                          "contributing-to-docs"
+                        ]
+                      },
+                      "developers/resources"
+                    ]
+                  },
+                  {
+                    "group": "Tools and Resources",
+                    "pages": [
+                      "support",
+                      "tools",
+                      "raycast",
+                      "wp-cli",
+                      "ai-skills"
+                    ]
+                  },
+                  {
+                    "group": "For Community",
+                    "pages": [
+                      "community/index",
+                      "community/opening-issues",
+                      "support-policy"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "API Reference",
+                "icon": "code",
+                "groups": [
+                  {
+                    "group": "Overview",
+                    "pages": [
+                      "api-reference/index",
+                      "api-reference/faq",
+                      "api-reference/playground"
+                    ]
+                  },
+                  {
+                    "group": "JWT Authentication",
+                    "pages": [
+                      "authentication/jwt/quick-start",
+                      "api-reference/jwt/refresh-token",
+                      "api-reference/jwt/validate-token"
+                    ]
+                  },
+                  {
+                    "group": "API v1 (Deprecated in future)",
+                    "pages": [
+                      "api-reference/migration-guide",
+                      "api-reference/community/v1/error-codes",
+                      {
+                        "group": "Cart",
+                        "icon": "cart-shopping",
+                        "pages": [
+                          "api-reference/community/v1/cart/get-cart",
+                          "api-reference/community/v1/cart/get-cart-in-session",
+                          "api-reference/community/v1/cart/get-cart-customer",
+                          "api-reference/community/v1/cart/post-add-item",
+                          "api-reference/community/v1/cart/post-update-item",
+                          "api-reference/community/v1/cart/delete-remove-item",
+                          "api-reference/community/v1/cart/put-restore-item",
+                          "api-reference/community/v1/cart/post-clear-cart",
+                          "api-reference/community/v1/cart/get-count-items",
+                          "api-reference/community/v1/cart/post-calculate",
+                          "api-reference/community/v1/cart/get-totals"
+                        ]
+                      },
+                      {
+                        "group": "Products",
+                        "icon": "shirt",
+                        "pages": [
+                          "api-reference/community/v1/products/get-products",
+                          "api-reference/community/v1/products/get-product",
+                          "api-reference/community/v1/products/get-product-variations",
+                          "api-reference/community/v1/products/get-product-variation",
+                          "api-reference/community/v1/products/get-product-categories",
+                          "api-reference/community/v1/products/get-product-tags",
+                          "api-reference/community/v1/products/get-product-attributes",
+                          "api-reference/community/v1/products/get-product-attribute",
+                          "api-reference/community/v1/products/get-product-attribute-terms",
+                          "api-reference/community/v1/products/get-product-attribute-term",
+                          "api-reference/community/v1/products/get-product-reviews",
+                          "api-reference/community/v1/products/get-product-review"
+                        ]
+                      },
+                      {
+                        "group": "User Management",
+                        "icon": "user",
+                        "pages": [
+                          "api-reference/community/v1/user/logout"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "API v2",
+                    "pages": [
+                      "api-reference/community/v2/error-codes",
+                      "api-reference/v2/working-with-variations",
+                      "api-reference/v2/cart-item-extras",
+                      {
+                        "group": "Cart",
+                        "icon": "cart-shopping",
+                        "pages": [
+                          "api-reference/community/v2/cart/get-cart",
+                          "api-reference/community/v2/cart/post-add-item",
+                          "api-reference/community/v2/cart/post-add-items",
+                          "api-reference/community/v2/cart/post-calculate",
+                          "api-reference/community/v2/cart/post-clear",
+                          "api-reference/community/v2/cart/get-items-count",
+                          "api-reference/community/v2/cart/post-item-by-key",
+                          "api-reference/community/v2/cart/delete-item-by-key",
+                          "api-reference/community/v2/cart/put-item-by-key",
+                          "api-reference/community/v2/cart/get-totals",
+                          "api-reference/community/v2/cart/post-cart-update"
+                        ]
+                      },
+                      {
+                        "group": "Products",
+                        "icon": "shirt",
+                        "pages": [
+                          "api-reference/community/v2/products/get-products",
+                          "api-reference/community/v2/products/get-product",
+                          "api-reference/community/v2/products/get-product-variations",
+                          "api-reference/community/v2/products/get-product-variation",
+                          "api-reference/community/v2/products/get-product-categories",
+                          "api-reference/community/v2/products/get-product-category-by-id",
+                          "api-reference/community/v2/products/get-product-tags",
+                          "api-reference/community/v2/products/get-product-tag-by-id",
+                          "api-reference/community/v2/products/get-product-attributes",
+                          "api-reference/community/v2/products/get-product-attribute-by-id",
+                          "api-reference/community/v2/products/get-product-attribute-terms",
+                          "api-reference/community/v2/products/get-product-attribute-term",
+                          "api-reference/community/v2/products/get-product-reviews",
+                          "api-reference/community/v2/products/get-product-review"
+                        ]
+                      },
+                      {
+                        "group": "User Management",
+                        "icon": "user",
+                        "pages": [
+                          "api-reference/community/v2/user/post-login",
+                          "api-reference/community/v2/user/post-logout"
+                        ]
+                      },
+                      {
+                        "group": "Store",
+                        "icon": "store",
+                        "pages": [
+                          "api-reference/community/v2/store/get-store"
+                        ]
+                      },
+                      {
+                        "group": "Sessions",
+                        "icon": "database",
+                        "pages": [
+                          "api-reference/community/v2/sessions/get-sessions",
+                          "api-reference/community/v2/sessions/get-session",
+                          "api-reference/community/v2/sessions/delete-session"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "Plugins",
+                    "pages": [
+                      "api-reference/plugins/wc-name-your-price",
+                      "api-reference/plugins/wc-mix-and-match-products"
+                    ]
+                  },
+                  {
+                    "group": "For Community",
+                    "pages": [
+                      "community/index",
+                      "community/opening-issues",
+                      "support-policy"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "Integrations",
+                "icon": "plug",
+                "groups": [
+                  {
+                    "group": "Integrations",
+                    "pages": [
+                      "integrations/index"
+                    ]
+                  },
+                  {
+                    "group": "Compatibility",
+                    "pages": [
+                      "integrations/two-factor-authentication",
+                      "integrations/advanced-custom-fields"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "CLI Reference",
+                "icon": "terminal",
+                "groups": [
+                  {
+                    "group": "CoCart CLI",
+                    "pages": [
+                      "cli-reference/index"
+                    ]
+                  },
+                  {
+                    "group": "Other CLI Commands",
+                    "pages": [
+                      "cli-reference/cli-jwt"
+                    ]
+                  },
+                  {
+                    "group": "For Community",
+                    "pages": [
+                      "community/index",
+                      "community/opening-issues",
+                      "support-policy"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "SDKs",
+                "icon": "puzzle-piece",
+                "groups": [
+                  {
+                    "group": "SDKs",
+                    "pages": [
+                      "sdk/index",
+                      {
+                        "group": "TypeScript",
+                        "icon": "js",
+                        "pages": [
+                          "sdk/typescript",
+                          "sdk/typescript/authentication",
+                          "sdk/typescript/cart",
+                          "sdk/typescript/products",
+                          "sdk/typescript/sessions",
+                          "sdk/typescript/error-handling",
+                          "sdk/typescript/utilities"
+                        ]
+                      },
+                      {
+                        "group": "PHP SDK",
+                        "icon": "php",
+                        "pages": [
+                          "sdk/php",
+                          "sdk/php/authentication",
+                          "sdk/php/cart",
+                          "sdk/php/products",
+                          "sdk/php/sessions",
+                          "sdk/php/error-handling",
+                          "sdk/php/utilities"
+                        ]
+                      },
+                      {
+                        "group": "Python SDK",
+                        "icon": "python",
+                        "pages": [
+                          "sdk/python",
+                          "sdk/python/authentication",
+                          "sdk/python/cart",
+                          "sdk/python/products",
+                          "sdk/python/sessions",
+                          "sdk/python/error-handling",
+                          "sdk/python/utilities"
+                        ]
+                      },
+                      {
+                        "group": "Go SDK",
+                        "icon": "golang",
+                        "pages": [
+                          "sdk/go",
+                          "sdk/go/authentication",
+                          "sdk/go/cart",
+                          "sdk/go/products",
+                          "sdk/go/sessions",
+                          "sdk/go/error-handling",
+                          "sdk/go/utilities"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "Framework Guides",
+                    "icon": "code",
+                    "pages": [
+                      "sdk/typescript/frameworks/astro",
+                      "sdk/typescript/frameworks/nextjs",
+                      "sdk/typescript/frameworks/nuxt",
+                      "sdk/typescript/frameworks/svelte",
+                      "sdk/typescript/frameworks/remix",
+                      "sdk/typescript/frameworks/hono",
+                      "sdk/typescript/frameworks/fastify",
+                      "sdk/typescript/frameworks/elysiajs",
+                      "sdk/typescript/frameworks/deno",
+                      "sdk/typescript/frameworks/vite"
+                    ]
+                  },
+                  {
+                    "group": "Hosted Platforms",
+                    "icon": "globe",
+                    "pages": [
+                      "sdk/typescript/frameworks/framer",
+                      "sdk/typescript/frameworks/webflow"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "Tutorials",
+                "icon": "graduation-cap",
+                "groups": [
+                  {
+                    "group": "Tutorials",
+                    "pages": [
+                      "tutorials/index",
+                      "tutorials/postman",
+                      "tutorials/yaak",
+                      "tutorials/covert-cart-to-order",
+                      "tutorials/authentication-injection",
+                      "tutorials/consumer-key-setup",
+                      "tutorials/extending-cart-creating-callbacks",
+                      "tutorials/extending-products-api",
+                      "tutorials/cart-drawer"
+                    ]
+                  },
+                  {
+                    "group": "Framework Integrations",
+                    "icon": "code",
+                    "pages": [
+                      {
+                        "group": "Astro",
+                        "icon": "rocket",
+                        "pages": [
+                          "tutorials/astro/setup",
+                          "tutorials/astro/oxbowui-product-list"
+                        ],
+                        "tag": "FEEDBACK REQUIRED"
+                      },
+                      {
+                        "group": "Next.js",
+                        "icon": "react",
+                        "pages": [
+                          "tutorials/nextjs/setup"
+                        ],
+                        "tag": "FEEDBACK REQUIRED"
+                      },
+                      {
+                        "group": "Nuxt",
+                        "icon": "mountain",
+                        "pages": [
+                          "tutorials/nuxt/setup"
+                        ],
+                        "tag": "FEEDBACK REQUIRED"
+                      },
+                      {
+                        "group": "SvelteKit",
+                        "icon": "fire",
+                        "pages": [
+                          "tutorials/sveltekit/setup"
+                        ],
+                        "tag": "FEEDBACK REQUIRED"
+                      },
+                      {
+                        "group": "React Native",
+                        "icon": "mobile",
+                        "pages": [
+                          "tutorials/react-native/setup"
+                        ],
+                        "tag": "FEEDBACK REQUIRED"
+                      }
+                    ],
+                    "tag": "WIP"
+                  },
+                  {
+                    "group": "Tips and Tricks",
+                    "pages": [
+                      "tutorials/typescript-types-generation",
+                      "tutorials/generate-image-dataurl"
+                    ]
+                  },
+                  {
+                    "group": "For Community",
+                    "pages": [
+                      "community/index",
+                      "community/opening-issues",
+                      "support-policy"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "Knowledge Base",
+                "icon": "block-question",
+                "groups": [
+                  {
+                    "group": "Knowledge Base",
+                    "pages": [
+                      "knowledge-base/faq",
+                      "knowledge-base/security-practices",
+                      "knowledge-base/http-security-headers",
+                      "knowledge-base/cart-key",
+                      "knowledge-base/adding-code",
+                      "knowledge-base/wp-config",
+                      "knowledge-base/guest-to-customer-cart",
+                      "knowledge-base/performance",
+                      "knowledge-base/multisite",
+                      "knowledge-base/plugin-suggestions",
+                      "knowledge-base/nulled-plugins"
+                    ]
+                  },
+                  {
+                    "group": "Troubleshooting",
+                    "pages": [
+                      "knowledge-base/troubleshoot/authentication",
+                      "knowledge-base/troubleshoot/jwt-authentication",
+                      "knowledge-base/troubleshoot/cors",
+                      "knowledge-base/troubleshoot/object-cache",
+                      "knowledge-base/troubleshoot/rest-api-caching"
+                    ]
+                  },
+                  {
+                    "group": "For Community",
+                    "pages": [
+                      "community/index",
+                      "community/opening-issues",
+                      "support-policy"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "Changelogs",
+                "icon": "clock-rotate-left",
+                "groups": [
+                  {
+                    "group": "Changelogs",
+                    "pages": [
+                      "updates/index",
+                      "updates/documentation",
+                      "updates/community",
+                      "updates/starter",
+                      "updates/plus",
+                      "updates/jwt"
+                    ]
+                  },
+                  {
+                    "group": "Breaking Changes",
+                    "pages": [
+                      "breaking-changes/community-v4"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anchor": "Feature requests",
+            "href": "https://cocartapi.com/suggest-a-feature/?ref=mintlify",
+            "icon": "bell-concierge"
+          },
+          {
+            "anchor": "Wall of Love",
+            "href": "https://cocartapi.com/wall-of-love/?ref=mintlify",
+            "icon": "heart"
+          }
+        ]
+      },
+      {
         "version": "pre-release",
         "anchors": [
           {
@@ -1454,26 +1470,26 @@
                         "group": "Cart",
                         "icon": "cart-shopping",
                         "pages": [
-                          "api-reference/v2/cart/pre-release/get-cart",
-                          "api-reference/v2/cart/pre-release/post-add-item",
-                          "api-reference/v2/cart/pre-release/post-add-items",
-                          "api-reference/v2/cart/pre-release/post-calculate",
-                          "api-reference/v2/cart/pre-release/post-clear",
-                          "api-reference/v2/cart/pre-release/post-apply-coupon",
-                          "api-reference/v2/cart/pre-release/get-coupons",
-                          "api-reference/v2/cart/pre-release/delete-coupons",
-                          "api-reference/v2/cart/pre-release/delete-coupons-by-code",
-                          "api-reference/v2/cart/pre-release/get-coupons-validate",
-                          "api-reference/v2/cart/pre-release/delete-items",
-                          "api-reference/v2/cart/pre-release/get-items-count",
-                          "api-reference/v2/cart/pre-release/post-item-by-key",
-                          "api-reference/v2/cart/pre-release/delete-item-by-key",
-                          "api-reference/v2/cart/pre-release/put-item-by-key",
-                          "api-reference/v2/cart/pre-release/get-cart-mini",
-                          "api-reference/v2/cart/pre-release/post-add-fee",
-                          "api-reference/v2/cart/pre-release/post-remove-fees",
-                          "api-reference/v2/cart/pre-release/post-set-shipping-method",
-                          "api-reference/v2/cart/pre-release/post-cart-update"
+                          "api-reference/v2/cart/get-cart",
+                          "api-reference/v2/cart/post-add-item",
+                          "api-reference/v2/cart/post-add-items",
+                          "api-reference/v2/cart/post-calculate",
+                          "api-reference/v2/cart/post-clear",
+                          "api-reference/pre-release/cart/post-apply-coupon",
+                          "api-reference/pre-release/cart/get-coupons",
+                          "api-reference/pre-release/cart/delete-coupons",
+                          "api-reference/pre-release/cart/delete-coupons-by-code",
+                          "api-reference/pre-release/cart/get-coupons-validate",
+                          "api-reference/pre-release/cart/delete-items",
+                          "api-reference/v2/cart/get-items-count",
+                          "api-reference/v2/cart/post-item-by-key",
+                          "api-reference/v2/cart/delete-item-by-key",
+                          "api-reference/v2/cart/put-item-by-key",
+                          "api-reference/pre-release/cart/get-cart-mini",
+                          "api-reference/pre-release/cart/post-add-fee",
+                          "api-reference/pre-release/cart/post-remove-fees",
+                          "api-reference/pre-release/cart/post-set-shipping-method",
+                          "api-reference/v2/cart/post-cart-update"
                         ]
                       },
                       {
@@ -1496,12 +1512,12 @@
                         "group": "Products",
                         "icon": "shirt",
                         "pages": [
-                          "api-reference/v2/products/pre-release/get-products",
+                          "api-reference/v2/products/get-products",
                           "api-reference/v2/products/get-product",
                           "api-reference/v2/products/get-product-by-slug",
                           "api-reference/v2/products/get-product-variations",
                           "api-reference/v2/products/get-product-variation",
-                          "api-reference/v2/products/pre-release/get-product-shipping-rates",
+                          "api-reference/pre-release/products/get-product-shipping-rates",
                           "api-reference/v2/products/get-product-categories",
                           "api-reference/v2/products/get-product-category-by-id",
                           "api-reference/v2/products/get-product-tags",
@@ -1531,7 +1547,6 @@
                           "api-reference/pre-release/my-account/get-my-account-single-order",
                           "api-reference/pre-release/my-account/get-my-account-single-order-downloads",
                           "api-reference/pre-release/my-account/get-my-account-downloads",
-                          "api-reference/pre-release/my-account/get-my-account-reviews",
                           "api-reference/pre-release/my-account/subscriptions/get-my-account-subscriptions",
                           "api-reference/pre-release/my-account/subscriptions/get-my-account-single-subscription",
                           "api-reference/pre-release/my-account/subscriptions/post-subscription-renew",
@@ -1556,7 +1571,7 @@
                         "group": "Store",
                         "icon": "store",
                         "pages": [
-                          "api-reference/v2/store/pre-release/get-store"
+                          "api-reference/v2/store/get-store"
                         ]
                       },
                       {
@@ -1974,7 +1989,7 @@
       }
     ],
     "primary": {
-      "type" :"button",
+      "type": "button",
       "label": "Pricing",
       "href": "https://cocartapi.com/pricing/?ref=mintlify"
     }
