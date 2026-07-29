@@ -1,5 +1,4 @@
 openapi: 3.0.3
-
 info:
   title: CoCart Plus - API v2
   version: 2.0.0
@@ -21,17 +20,17 @@ info:
   license:
     name: GNU General Public License v3.0
     url: http://www.gnu.org/licenses/gpl-3.0.html
-
 externalDocs:
   description: Find out more about CoCart API
   url: https://docs.cocartapi.com
-
 servers:
-  - url: "{protocol}://{host}/wp-json/cocart/v2"
+  - url: '{protocol}://{host}/wp-json/cocart/v2'
     description: API v2
     variables:
       protocol:
-        enum: [http, https]
+        enum:
+          - http
+          - https
         default: https
       host:
         default: example-store.com
@@ -2350,3 +2349,7 @@ components:
         message:
           type: string
           description: Human-readable confirmation message.
+security:
+  - {}
+  - basicAuth: []
+  - bearerAuth: []

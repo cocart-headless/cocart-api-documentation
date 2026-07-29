@@ -153,6 +153,8 @@ paths:
                     name: "Wireless Bluetooth Headphones"
                     title: "Wireless Bluetooth Headphones"
                     price: "1800"
+                    regular_price: "2200"
+                    on_sale: true
                     quantity:
                       value: 2
                       minimum: 1
@@ -182,6 +184,8 @@ paths:
                     name: "Premium Cotton T-Shirt - Large, Navy Blue"
                     title: "Premium Cotton T-Shirt"
                     price: "8000"
+                    regular_price: "8000"
+                    on_sale: false
                     quantity:
                       value: 1
                       minimum: 1
@@ -255,8 +259,9 @@ paths:
                     total: 5.00
                     tax: 0.50
                 taxes:
-                  - label: "Sales Tax"
-                    total: "1310"
+                  - key: "total"
+                    name: "Sales Tax"
+                    price: "1310"
                 totals:
                   subtotal: "11600"
                   subtotal_tax: "1160"
@@ -472,6 +477,8 @@ paths:
                         name: "Wireless Bluetooth Headphones"
                         title: "Wireless Bluetooth Headphones"
                         price: "1800"
+                        regular_price: "2200"
+                        on_sale: true
                         quantity:
                           value: 1
                           minimum: 1
@@ -532,6 +539,8 @@ paths:
                     name: "Wireless Bluetooth Headphones"
                     title: "Wireless Bluetooth Headphones"
                     price: "1800"
+                    regular_price: "2200"
+                    on_sale: true
                     quantity:
                       value: 1
                       minimum: 1
@@ -730,6 +739,8 @@ paths:
                 name: "Wireless Bluetooth Headphones"
                 title: "Wireless Bluetooth Headphones"
                 price: "1800"
+                regular_price: "2200"
+                on_sale: true
                 quantity:
                   value: 2
                   minimum: 1
@@ -1073,6 +1084,8 @@ paths:
                   name: "Wireless Bluetooth Headphones"
                   title: "Wireless Bluetooth Headphones"
                   price: "1800"
+                  regular_price: "2200"
+                  on_sale: true
                   quantity:
                     value: 2
                     minimum: 1
@@ -1102,6 +1115,8 @@ paths:
                   name: "Premium Cotton T-Shirt - Large, Navy Blue"
                   title: "Premium Cotton T-Shirt"
                   price: "8000"
+                  regular_price: "8000"
+                  on_sale: false
                   quantity:
                     value: 1
                     minimum: 1
@@ -4882,7 +4897,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/CartItem"
+                  $ref: "#/components/schemas/SessionCartItem"
         "401":
           description: Unauthorized - authentication required.
           content:
@@ -5198,6 +5213,12 @@ components:
         price:
           type: string
           description: Current product price. Raw numeric value (e.g. "1800") by default; formatted string (e.g. "$18.00") when the `formatted` query parameter is true.
+        regular_price:
+          type: string
+          description: Product regular price (before any sale), so the original price can be displayed when the item is discounted. Raw numeric value by default; formatted string when `formatted=true`.
+        on_sale:
+          type: boolean
+          description: Whether the product is currently on sale.
         quantity:
           type: object
           description: Quantity information for this item.
@@ -5289,6 +5310,113 @@ components:
           type: object
           description: Additional data added by third-party extensions via the `cocart_cart_item_extensions` filter. Empty object when no extensions hook this filter.
           additionalProperties: true
+
+    SessionCartItem:
+      type: object
+      description: Cart item as returned by the admin session endpoints. Does not include the price fields or extensions added to CartItem, since sessions return the raw stored cart data.
+      properties:
+        item_key:
+          type: string
+          description: Unique identifier for the item within the cart.
+        id:
+          type: integer
+          description: Product ID.
+        name:
+          type: string
+          description: Product name.
+        title:
+          type: string
+          description: Product title.
+        price:
+          type: string
+          description: Current product price. Raw numeric value (e.g. "1800") by default; formatted string (e.g. "$18.00") when the `formatted` query parameter is true.
+        quantity:
+          type: object
+          description: Quantity information for this item.
+          properties:
+            value:
+              type: number
+              description: Current quantity of the item in the cart.
+            minimum:
+              type: number
+              description: The minimum purchase amount required.
+            maximum:
+              type: number
+              description: The maximum purchase amount allowed. If -1 the item has an unlimited purchase amount.
+            multiple_of:
+              type: number
+              description: The quantity must be a multiple of this value.
+            editable:
+              type: boolean
+              description: Whether the quantity of the item is editable.
+        totals:
+          type: object
+          description: Item totals. All values are raw numeric strings (e.g. "3600") by default; formatted strings (e.g. "$36.00") when `formatted=true`.
+          properties:
+            subtotal:
+              type: string
+              description: Line subtotal (before discounts).
+            subtotal_tax:
+              type: string
+              description: Line subtotal tax.
+            total:
+              type: string
+              description: Line total (after discounts).
+            tax:
+              type: string
+              description: Line total tax.
+        slug:
+          type: string
+          description: Product slug.
+        meta:
+          type: object
+          description: Item metadata.
+          properties:
+            product_type:
+              type: string
+              description: Product type.
+            sku:
+              type: string
+              description: Product SKU.
+            dimensions:
+              type: object
+              description: Product dimensions.
+              properties:
+                length:
+                  type: string
+                  description: Product length.
+                width:
+                  type: string
+                  description: Product width.
+                height:
+                  type: string
+                  description: Product height.
+                unit:
+                  type: string
+                  description: Dimension unit.
+            weight:
+              type: string
+              description: Product weight.
+            variation:
+              description: Chosen attributes (for variations).
+              oneOf:
+                - type: object
+                  additionalProperties:
+                    type: string
+                - type: array
+                  items:
+                    type: string
+          additionalProperties: true
+        backorders:
+          type: string
+          description: Backorder status.
+        cart_item_data:
+          type: object
+          description: Custom cart item data.
+          additionalProperties: true
+        featured_image:
+          type: string
+          description: Product featured image URL.
 
     Currency:
       type: object
@@ -5508,22 +5636,19 @@ components:
     CartTax:
       type: object
       description: |
-        Tax entry. Structure depends on the WooCommerce tax display setting:
-        - Non-itemized: `{ label, total }` — a single combined tax line.
-        - Itemized: `{ name, price }` — one entry per tax rate.
+        Tax entry. Always shaped as `{ key, name, price }`, regardless of the WooCommerce tax display setting:
+        - Itemized: one entry per WooCommerce tax rate, keyed by its rate code (e.g. "GB-VAT-1").
+        - Non-itemized: a single synthetic entry keyed `total`.
       properties:
-        label:
+        key:
           type: string
-          description: Tax label (non-itemized mode).
-        total:
-          type: string
-          description: Combined tax total as raw numeric string, e.g. "1310" (non-itemized mode). Formatted string when `formatted=true`.
+          description: Tax rate code (e.g. "GB-VAT-1"), or "total" for the synthetic non-itemized entry.
         name:
           type: string
-          description: Tax rate name (itemized mode).
+          description: Tax rate name/label.
         price:
           type: string
-          description: Tax amount as raw numeric string (itemized mode). Formatted string when `formatted=true`.
+          description: Tax amount as raw numeric string, e.g. "1310". Formatted string when `formatted=true`.
 
     AppliedCoupon:
       type: object

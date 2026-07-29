@@ -1,10 +1,10 @@
 ---
 title: "CoCart Playground"
-description: "Setup a WooCommerce store demo with CoCart to play around."
+description: "Set up a live WooCommerce store demo with CoCart to test the REST API."
 icon: "trowel"
 ---
 
-Create reproducible WooCommerce testing environment with CoCart to test out the REST API right away. It generates a blueprint that:
+Create a reproducible WooCommerce testing environment with CoCart to test out the REST API right away. Call the REST API from Postman, cURL, an SDK, or your own app. It generates a blueprint that:
 
 - Configures pretty permalinks
 - Installs WooCommerce
@@ -12,8 +12,7 @@ Create reproducible WooCommerce testing environment with CoCart to test out the 
 - Skips the onboarding wizard
 - Configures basic WooCommerce settings
 - Imports sample products
-- Installs CoCart, JWT Authentication and CORS support
-- Installs Safe SVG and Leira Letter Avatar plugins
+- Installs CoCart and JWT Authentication
 - Installs the Storefront theme
 
 The rest is up to you to play around with.
@@ -30,17 +29,16 @@ The rest is up to you to play around with.
 
 ## What to expect from Playground:
 
-- The playground is valid for **5 days**. After that the site expires, all data will be erased and can no longer be accessed.
-- Test CoCart on a clean WordPress sandbox.
+- The Playground is valid for **5 days**. After that the site expires, all data will be erased and can no longer be accessed.
+- Test CoCart on a clean WordPress site.
+- Includes **CoCart Plus**.
 - Don’t worry about issues with CORS. It’s already setup.
 - Try all our core features. No strings attached. Search, filter and return product data you need. Add products to cart either as a guest or a registered customer.
 - Push CoCart to its limits. Don’t worry about breaking anything, it’s just a demo site.
 
 <AccordionGroup>
     <Accordion title="Can I install, import content or change WordPress to a Network Site?">
-        Yes to all. You are the administrator of the playground.
-
-        For more information about the WordPress Playground please visit [https://wordpress.org/playground/](https://wordpress.org/playground/)
+        Yes to all. You are the administrator of the Playground.
     </Accordion>
 
     <Accordion title="Taxes are disabled?">
@@ -52,10 +50,6 @@ The rest is up to you to play around with.
     </Accordion>
 
     <Accordion title="The Playground is not setting up?">
-        WordPress Playground is not stable and may have an issue creating an environment at times. If not succeeding, please consider [creating a sandbox instead](https://app.instawp.io/launch?t=cocart-demo-core-only&d=v2).
+        It's possible that we are out of resources to provide a new demo. I recommend try installing [LocalWP](https://localwp.com/) and setting up a playground of your own. Seek [support](/support/) if your require help.
     </Accordion>
 </AccordionGroup>
-
-<Info>
-    Sandbox sites are live for **only 5 days** and also include **CoCart Plus**. Some taxes and shipping options have also been configured.
-</Info>
