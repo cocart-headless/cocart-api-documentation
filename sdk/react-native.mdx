@@ -1,0 +1,326 @@
+---
+title: "React Native SDK"
+sidebarTitle: "Overview"
+description: "Official React Native SDK for the CoCart REST API. A hooks-based wrapper over the TypeScript SDK for building headless WooCommerce storefronts in React Native and Expo apps."
+'og:title': "CoCart React Native SDK — Install, Configure & Connect to WooCommerce"
+'og:description': "Install and configure the CoCart React Native SDK. CoCartProvider setup, MMKV/AsyncStorage adapters, hooks for cart, products, and account, and JWT authentication."
+---
+
+<Info>
+  This guide was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
+</Info>
+
+<Warning>
+  This SDK is still in active development and not yet ready for production use — expect breaking changes before a stable release ships. It is a thin wrapper over the [TypeScript SDK](/sdk/typescript) and requires `@cocartheadless/sdk` as a peer dependency; all core logic (authentication, cart, products, sessions, JWT, 2FA, account, error handling) is inherited from it automatically.
+</Warning>
+
+The official React Native SDK for the CoCart REST API. It doesn't provide pre-built UI screens or native components — it provides state and data via hooks (`useCart`, `useProducts`, `useAccount`, and more) that you wire into your own screens using standard React Native primitives.
+
+## Requirements
+
+- React Native 0.72+ or Expo SDK 50+
+- React 18+
+- CoCart plugin installed on your WooCommerce store
+- [`@cocartheadless/sdk`](/sdk/typescript) ^1.0.0 (peer dependency)
+- [CoCart JWT Authentication](https://wordpress.org/plugins/cocart-jwt-authentication/) plugin _(optional, for JWT auth)_
+
+## Installation
+
+```bash
+npm install @cocartheadless/react-native-sdk @cocartheadless/sdk
+```
+
+### Optional: Native Storage
+
+For persistent cart sessions across app restarts (recommended):
+
+**MMKV** (fast synchronous storage — requires a native build):
+
+```bash
+npm install react-native-mmkv
+cd ios && pod install
+```
+
+**AsyncStorage** (async, Expo managed workflow compatible):
+
+```bash
+npm install @react-native-async-storage/async-storage
+```
+
+If neither is installed, sessions are kept in memory only and lost on app restart.
+
+## Quick Start
+
+Wrap your app in `CoCartProvider`, then use hooks in any component:
+
+```tsx
+import React from 'react';
+import { CoCartProvider, MMKVStorage } from '@cocartheadless/react-native-sdk';
+import { StorefrontScreen } from './screens/StorefrontScreen';
+
+export default function App() {
+  return (
+    <CoCartProvider
+      siteURL="https://your-store.com"
+      options={{ storage: new MMKVStorage() }}
+    >
+      <StorefrontScreen />
+    </CoCartProvider>
+  );
+}
+```
+
+```tsx
+import React from 'react';
+import { View, Text, Button, FlatList } from 'react-native';
+import { useCart, useCartMutations, useProducts } from '@cocartheadless/react-native-sdk';
+
+export function StorefrontScreen() {
+  const { products, loading: productsLoading } = useProducts();
+  const { cart, loading: cartLoading } = useCart();
+  const { addItem } = useCartMutations();
+
+  if (productsLoading || cartLoading) return <Text>Loading...</Text>;
+
+  return (
+    <View>
+      <FlatList
+        data={products?.toObject() as any[]}
+        keyExtractor={(item) => String(item.id)}
+        renderItem={({ item }) => (
+          <View>
+            <Text>{item.name}</Text>
+            <Button title="Add to Cart" onPress={() => addItem(item.id, 1)} />
+          </View>
+        )}
+      />
+      <Text>Cart items: {cart?.getItemCount() ?? 0}</Text>
+    </View>
+  );
+}
+```
+
+## Provider Configuration Options
+
+The `CoCartProvider` accepts an `options` prop that maps directly to `CoCartOptions` from `@cocartheadless/sdk`. You only need to include the ones relevant to your setup — everything has sensible defaults.
+
+```tsx
+import { CoCartProvider, MMKVStorage } from '@cocartheadless/react-native-sdk';
+
+<CoCartProvider
+  siteURL="https://your-store.com"
+  options={{
+    // Storage — persist cart key and JWT tokens across app restarts
+    storage: new MMKVStorage(),
+    storageKey: 'cocart_cart_key',     // default: 'cocart_cart_key'
+
+    // Guest session — resume an existing cart
+    cartKey: 'existing_cart_key',
+
+    // Basic Auth
+    username: 'customer@email.com',
+    password: 'password',
+
+    // JWT Auth
+    jwtToken: 'your-jwt-token',
+    jwtRefreshToken: 'your-refresh-token',
+
+    // HTTP settings
+    timeout: 30000,         // milliseconds (default: 30000)
+    maxRetries: 2,          // retry 429, 503, and timeouts
+
+    // REST API prefix (default: 'wp-json')
+    restPrefix: 'wp-json',
+
+    // API namespace (default: 'cocart')
+    namespace: 'cocart',
+
+    // CoCart main plugin: 'basic' (default) or 'legacy'
+    mainPlugin: 'basic',
+
+    // Custom auth header name (default: 'Authorization')
+    authHeaderName: 'X-Auth-Token',
+
+    // Enable debug logging to console (default: false)
+    debug: true,
+  }}
+  autoRestoreSession={true}  // default: true — restore cart key on mount and foreground
+>
+  <App />
+</CoCartProvider>
+```
+
+## Storage Adapters
+
+Storage adapters control where the cart key (guest session) and JWT tokens are persisted. Without a storage adapter, sessions are kept in memory only and lost on app restart.
+
+### MMKVStorage (recommended)
+
+[`react-native-mmkv`](https://github.com/mrousavy/react-native-mmkv) is a synchronous, high-performance storage library backed by MMKV (used in the WeChat app). It is the fastest option and works on both iOS and Android.
+
+<Note>Requires a native build — not compatible with the Expo managed workflow unless using a custom dev client.</Note>
+
+```tsx
+import { MMKVStorage } from '@cocartheadless/react-native-sdk';
+
+<CoCartProvider siteURL="..." options={{ storage: new MMKVStorage() }}>
+```
+
+By default, data is stored in an MMKV instance with the ID `cocart`. To isolate multiple stores:
+
+```tsx
+new MMKVStorage('my-store-id')
+```
+
+### AsyncStorageAdapter
+
+[`@react-native-async-storage/async-storage`](https://react-native-async-storage.github.io/async-storage/) is an asynchronous key-value store. It is the standard storage solution for the Expo managed workflow and plain React Native projects.
+
+```tsx
+import { AsyncStorageAdapter } from '@cocartheadless/react-native-sdk';
+
+<CoCartProvider siteURL="..." options={{ storage: new AsyncStorageAdapter() }}>
+```
+
+All keys are prefixed with `cocart_` by default to avoid collisions. To use a custom prefix:
+
+```tsx
+new AsyncStorageAdapter('myapp_')
+```
+
+### MemoryStorage (no persistence)
+
+For testing or when you intentionally do not want session persistence:
+
+```tsx
+import { MemoryStorage } from '@cocartheadless/react-native-sdk';
+
+<CoCartProvider siteURL="..." options={{ storage: new MemoryStorage() }}>
+```
+
+### Custom Storage
+
+Implement `StorageInterface` from `@cocartheadless/sdk` to use any storage backend:
+
+```tsx
+import type { StorageInterface } from '@cocartheadless/react-native-sdk';
+
+class SecureStorage implements StorageInterface {
+  async get(key: string) {
+    return SecureStore.getItemAsync(key);
+  }
+  async set(key: string, value: string) {
+    await SecureStore.setItemAsync(key, value);
+  }
+  async delete(key: string) {
+    await SecureStore.deleteItemAsync(key);
+  }
+}
+```
+
+## Session Restore
+
+`CoCartProvider` calls `client.restoreSession()` automatically:
+
+- **On mount** — restores the cart key from storage so the first request sends the correct guest session
+- **On foreground** — when the app returns from background (`AppState === 'active'`), the session is restored again in case storage was updated elsewhere
+
+To disable automatic restore:
+
+```tsx
+<CoCartProvider siteURL="..." autoRestoreSession={false}>
+```
+
+You can then call it manually:
+
+```tsx
+import { useCoCart } from '@cocartheadless/react-native-sdk';
+
+const client = useCoCart();
+await client.restoreSession();
+```
+
+## White-Labelling / Custom REST Prefix
+
+WordPress exposes its REST API at `/wp-json/` by default. If your site changes this prefix, or if the CoCart plugin has been renamed (white-labelled):
+
+```tsx
+// Custom REST prefix (site uses /api/ instead of /wp-json/)
+<CoCartProvider
+  siteURL="https://your-store.com"
+  options={{ restPrefix: 'api' }}
+>
+// Requests go to: https://your-store.com/api/cocart/v2/cart
+
+// White-labelled namespace
+<CoCartProvider
+  siteURL="https://your-store.com"
+  options={{ namespace: 'mystore' }}
+>
+// Requests go to: https://your-store.com/wp-json/mystore/v2/cart
+```
+
+## Legacy Plugin Support
+
+To use the SDK with the CoCart Community plugin (`cart-rest-api-for-woocommerce` v4.x):
+
+```tsx
+<CoCartProvider
+  siteURL="https://your-store.com"
+  options={{ mainPlugin: 'legacy' }}
+>
+```
+
+Methods that require CoCart Starter will throw a `VersionError` before making any HTTP request. See [Error Handling](/sdk/react-native/error-handling#legacy-plugin-version-guard) for details.
+
+## Direct Client Access
+
+Outside of the provider pattern, you can construct and use the client directly for one-off operations:
+
+```tsx
+import { CoCart, MMKVStorage } from '@cocartheadless/react-native-sdk';
+
+const client = new CoCart('https://your-store.com', {
+  storage: new MMKVStorage(),
+});
+
+await client.restoreSession();
+const products = await client.products().all();
+```
+
+## Key Features
+
+- **Storage adapters** — `MMKVStorage` and `AsyncStorageAdapter` so cart sessions and tokens persist across app restarts
+- **`CoCartProvider`** — constructs the client, restores the session on mount and on app foreground
+- **Hooks** — `useCart`, `useCartMutations`, `useProducts`, `useAccount` for idiomatic React Native usage
+- **Full TypeScript SDK core** — authentication, cart, products, sessions, JWT, 2FA, account, and error handling are all inherited from `@cocartheadless/sdk`
+
+## Documentation
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="lock" href="/sdk/react-native/authentication">
+    Guest sessions, Basic Auth, JWT, Two Factor Auth, and consumer keys
+  </Card>
+  <Card title="Cart API" icon="cart-shopping" href="/sdk/react-native/cart">
+    Add, update, remove items, coupons, shipping, and ETag caching
+  </Card>
+  <Card title="Products API" icon="shirt" href="/sdk/react-native/products">
+    Browse, filter, paginate products, variations, categories, and tags
+  </Card>
+  <Card title="Account API" icon="user" href="/sdk/react-native/account">
+    Customer profile, orders, downloads, and reviews
+  </Card>
+  <Card title="Hooks Reference" icon="code" href="/sdk/react-native/hooks">
+    useCart, useCartMutations, useProducts, useAccount, and useCoCart
+  </Card>
+  <Card title="Error Handling" icon="circle-exclamation" href="/sdk/react-native/error-handling">
+    Error hierarchy, catching errors, and HTTP status code mapping
+  </Card>
+  <Card title="Utilities" icon="wrench" href="/sdk/react-native/utilities">
+    Currency formatting, validation functions, and timezone helpers
+  </Card>
+</CardGroup>
+
+## Source
+
+The SDK is open source. View the source and report issues on [GitHub](https://github.com/cocart-headless/cocart-react-native-sdk).

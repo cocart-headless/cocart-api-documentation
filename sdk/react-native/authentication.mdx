@@ -1,0 +1,271 @@
+---
+title: "React Native SDK: Authentication"
+sidebarTitle: "Authentication"
+description: "Guest sessions, Basic Auth, JWT authentication with auto-refresh, Two Factor Authentication, and consumer keys with the CoCart React Native SDK."
+'og:title': "Authentication — CoCart React Native SDK"
+'og:description': "Authenticate guests, customers, and admins with the CoCart React Native SDK — guest sessions, Basic Auth, JWT with auto-refresh, 2FA, and consumer keys."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
+</Info>
+
+**Authentication** is how your app proves to the server who is making the request — whether you're a guest shopper, a logged-in customer, or a store admin.
+
+All authentication is handled by the underlying `@cocartheadless/sdk`. Access the client via `useCoCart()` to call auth methods directly.
+
+## Guest Customers
+
+No setup is needed for guest shopping. The SDK manages the session automatically:
+
+1. The first request creates a new guest session on the server, which returns a `Cart-Key` in the response.
+2. The SDK stores that key using your configured storage adapter.
+3. All subsequent requests send the cart key so the server knows which cart to use.
+
+```tsx
+import { CoCartProvider, MMKVStorage, useCart } from '@cocartheadless/react-native-sdk';
+
+// Provider persists the cart key via MMKVStorage
+function App() {
+  return (
+    <CoCartProvider siteURL="https://your-store.com" options={{ storage: new MMKVStorage() }}>
+      <CartScreen />
+    </CoCartProvider>
+  );
+}
+
+function CartScreen() {
+  const { cart } = useCart(); // cart key captured and stored automatically
+}
+```
+
+### Resuming a Known Cart Key
+
+If you already have a cart key:
+
+```tsx
+<CoCartProvider
+  siteURL="https://your-store.com"
+  options={{ cartKey: 'existing_cart_key' }}
+>
+```
+
+## Basic Auth
+
+For customers authenticating with their WordPress username and password:
+
+```tsx
+<CoCartProvider
+  siteURL="https://your-store.com"
+  options={{
+    username: 'customer@email.com',
+    password: 'customer_password',
+  }}
+>
+```
+
+Or set at runtime after a login form submission:
+
+```tsx
+import { useCoCart } from '@cocartheadless/react-native-sdk';
+
+function LoginScreen() {
+  const client = useCoCart();
+
+  async function handleLogin(username: string, password: string) {
+    client.setAuth(username, password);
+    // Subsequent requests are now authenticated
+    const cart = await client.cart().get();
+  }
+}
+```
+
+## JWT Authentication
+
+**JWT (JSON Web Token)** lets customers log in once and receive a short-lived token. The SDK sends that token with each request instead of the password. When it expires, the SDK can automatically refresh it.
+
+Requires the [CoCart JWT Authentication](https://wordpress.org/plugins/cocart-jwt-authentication/) plugin (v3.0+).
+
+### Login
+
+```tsx
+import { useCoCart } from '@cocartheadless/react-native-sdk';
+
+function LoginScreen() {
+  const client = useCoCart();
+
+  async function handleLogin(username: string, password: string) {
+    const response = await client.login(username, password);
+    console.log(response.get('display_name')); // 'John'
+    // All subsequent requests use the acquired JWT token
+  }
+}
+```
+
+### Logout
+
+```tsx
+await client.logout(); // Clears JWT and calls the server logout endpoint
+```
+
+### Auto-Refresh
+
+When using `client.login()`, auto-refresh is enabled automatically. Expired tokens are refreshed behind the scenes and the original request is retried.
+
+To enable it when setting a token manually:
+
+```tsx
+client.setJwtToken('eyJ...');
+client.setRefreshToken('refresh_hash_...');
+client.jwt().setAutoRefresh(true);
+```
+
+### Persisting Tokens Across App Restarts
+
+Pass the storage adapter to a `JwtManager` instance so tokens survive restarts:
+
+```tsx
+import { CoCart, JwtManager, MMKVStorage } from '@cocartheadless/react-native-sdk';
+
+const storage = new MMKVStorage();
+const client = new CoCart('https://your-store.com', { storage });
+const jwt = new JwtManager(client, storage, { autoRefresh: true });
+
+// On app start — restore saved tokens
+await jwt.restoreTokensFromStorage();
+
+// Login — tokens are saved to MMKV automatically
+await jwt.login('customer@email.com', 'password');
+```
+
+### JWT Utility Methods
+
+```tsx
+const jwt = client.jwt();
+
+jwt.hasTokens();            // true if a JWT token is present
+jwt.isTokenExpired();       // true if token is expired (local check, no HTTP)
+jwt.getTokenExpiry();       // unix timestamp of expiry
+jwt.isAutoRefreshEnabled(); // check auto-refresh status
+jwt.setAutoRefresh(true);   // enable at runtime
+await jwt.refresh();        // manually refresh the token
+await jwt.validate();       // validate token with server (true/false)
+await jwt.clearTokens();    // clear tokens from client and storage
+```
+
+## Two Factor Authentication
+
+When a customer has 2FA enabled on their account, `login()` throws a `TwoFactorAuthRequiredError` instead of completing. Catch it and prompt the user for their code, then call `verifyTwoFactor()`.
+
+Requires the [WordPress Two Factor](https://wordpress.org/plugins/two-factor/) plugin and CoCart Plus v1.6.0+.
+
+```tsx
+import {
+  useCoCart,
+  TwoFactorAuthRequiredError,
+  AuthenticationError,
+} from '@cocartheadless/react-native-sdk';
+
+function LoginScreen() {
+  const client = useCoCart();
+  const [pending2FA, setPending2FA] = React.useState<{
+    username: string;
+    password: string;
+    error: TwoFactorAuthRequiredError;
+  } | null>(null);
+
+  async function handleLogin(username: string, password: string) {
+    try {
+      await client.login(username, password);
+      // Success — navigate to home
+    } catch (e) {
+      if (e instanceof TwoFactorAuthRequiredError) {
+        // Show 2FA code input
+        setPending2FA({ username, password, error: e });
+      } else if (e instanceof AuthenticationError) {
+        // Wrong password etc.
+        console.log('Login failed:', e.message);
+      }
+    }
+  }
+
+  async function handleVerify2FA(code: string) {
+    if (!pending2FA) return;
+    const { username, password, error } = pending2FA;
+
+    await client.jwt().verifyTwoFactor(
+      username,
+      password,
+      code,
+      error.defaultProvider ?? undefined,
+    );
+    // Success — navigate to home
+  }
+}
+```
+
+### TwoFactorAuthRequiredError Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `availableProviders` | `string[]` | Providers the user can choose (e.g. `['totp', 'email']`) |
+| `defaultProvider` | `string \| null` | Provider the server uses by default |
+| `emailSent` | `boolean` | Whether a code was already sent via email |
+
+### Specifying a Provider
+
+```tsx
+// Force a specific provider
+await client.jwt().verifyTwoFactor(username, password, code, 'email');
+await client.jwt().verifyTwoFactor(username, password, code, 'totp');
+await client.jwt().verifyTwoFactor(username, password, backupCode, 'backup');
+```
+
+## Consumer Keys (Admin)
+
+For server-to-server operations or admin endpoints like the Sessions API. Generate consumer keys in **WooCommerce > Settings > Advanced > REST API**.
+
+```tsx
+const client = new CoCart('https://your-store.com', {
+  consumerKey: 'ck_xxxxx',
+  consumerSecret: 'cs_xxxxx',
+});
+```
+
+## Custom Auth Header Name
+
+Some hosting providers strip the standard `Authorization` header. Configure a different header name:
+
+```tsx
+<CoCartProvider
+  siteURL="https://your-store.com"
+  options={{
+    authHeaderName: 'X-Auth-Token',
+    username: 'customer@email.com',
+    password: 'password',
+  }}
+>
+```
+
+## Authentication Priority
+
+If multiple auth methods are configured simultaneously, the SDK uses this order:
+
+1. **JWT Token** — `Bearer` header
+2. **Basic Auth** — `Basic` encoded header
+3. **Consumer Keys** — `Basic` encoded header
+
+### Switching Auth at Runtime
+
+```tsx
+const client = useCoCart();
+
+// Switch to Basic Auth (clears JWT)
+client.setAuth('user', 'pass');
+
+// Switch to JWT (clears Basic Auth)
+client.setJwtToken('new.jwt.token');
+
+// Clear all auth and cart session
+await client.clearSession();
+```

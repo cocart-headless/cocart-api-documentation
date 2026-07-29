@@ -1,0 +1,442 @@
+---
+title: "Building a Cart Drawer for Next.js"
+sidebarTitle: "Cart Drawer"
+description: "Add a slide-over cart drawer to your Next.js store with the CoCart TypeScript SDK — cart state, add/remove/update items, and a live item count."
+tag: "WIP"
+robots: "noindex, follow"
+---
+
+<Warning>
+    This tutorial was written by [Claude Code (an AI)](https://claude.com/product/claude-code) and is still a work in progress. Follow along with caution. If the tutorial was helpful or a specific part was not clear/correct, please provide feedback at the bottom of the page. Thank you.
+</Warning>
+
+This tutorial builds a client-side cart drawer on top of the Next.js project from the [setup guide](./setup) — a slide-over panel that lists cart items, lets shoppers change quantities or remove items, and shows a running total, backed by a shared cart context.
+
+## What you'll build
+
+- A `CartProvider` that loads the cart on mount and exposes cart state and actions to your whole app
+- An `AddToCartButton` for product cards and product pages
+- A `CartDrawer` slide-over panel with quantity controls, item removal, and totals
+
+## Prerequisites
+
+- A Next.js project [set up with CoCart](./setup), including `src/lib/cocart.ts` and its `getClient()` browser client
+- CoCart installed and activated on your WordPress site
+- Basic knowledge of React Context and Client Components
+
+<Note>
+  This tutorial only covers simple products. Variable products (size/color selectors) need extra attribute handling when adding to the cart — that's a good candidate for a follow-up tutorial.
+</Note>
+
+<Tip>
+  This is a Next.js-specific, SDK-based walkthrough. The [general Cart Drawer tutorial](/tutorials/cart-drawer) covers the same UI pattern in more depth — double-click guards, optimistic updates with rollback, and how the pattern maps across frameworks — using the REST API directly. Read that one too if you want those patterns; they apply here as well.
+</Tip>
+
+## Creating the Cart Context
+
+The cart context loads the current cart once on mount (the SDK's Next.js adapter persists the cart key in `localStorage`, so returning visitors keep their cart) and exposes actions that update both the server and the local state.
+
+Create `src/components/cart-provider.tsx`:
+
+```tsx
+'use client';
+
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from 'react';
+import type { CartItem, CartTotals, CurrencyInfo, Response } from '@cocartheadless/sdk';
+import { getClient } from '@/lib/cocart';
+
+interface CartState {
+  items: CartItem[];
+  totals: CartTotals;
+  currency: CurrencyInfo | null;
+}
+
+interface CartContextType {
+  cart: CartState;
+  isOpen: boolean;
+  isLoading: boolean;
+  openCart: () => void;
+  closeCart: () => void;
+  addItem: (productId: number, quantity?: number) => Promise<void>;
+  removeItem: (itemKey: string) => Promise<void>;
+  updateQuantity: (itemKey: string, quantity: number) => Promise<void>;
+  itemCount: number;
+}
+
+const CartContext = createContext<CartContextType | undefined>(undefined);
+
+const EMPTY_STATE: CartState = { items: [], totals: {} as CartTotals, currency: null };
+
+export function CartProvider({ children }: { children: ReactNode }) {
+  const [cart, setCart] = useState<CartState>(EMPTY_STATE);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const applyResponse = useCallback((response: Response) => {
+    setCart({
+      items: response.getItems(),
+      totals: response.getTotals(),
+      currency: response.getCurrency(),
+    });
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const client = getClient();
+        await client.restoreSession();
+        const response = await client.cart().get();
+        applyResponse(response);
+      } catch (error) {
+        console.error('Failed to load cart:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, [applyResponse]);
+
+  const addItem = useCallback(
+    async (productId: number, quantity = 1) => {
+      const client = getClient();
+      const response = await client.cart().addItem(productId, quantity);
+      applyResponse(response);
+      setIsOpen(true);
+    },
+    [applyResponse]
+  );
+
+  const removeItem = useCallback(
+    async (itemKey: string) => {
+      const client = getClient();
+      const response = await client.cart().removeItem(itemKey);
+      applyResponse(response);
+    },
+    [applyResponse]
+  );
+
+  const updateQuantity = useCallback(
+    async (itemKey: string, quantity: number) => {
+      const client = getClient();
+      const response =
+        quantity <= 0
+          ? await client.cart().removeItem(itemKey)
+          : await client.cart().updateItem(itemKey, quantity);
+      applyResponse(response);
+    },
+    [applyResponse]
+  );
+
+  const itemCount = cart.items.reduce((sum, item) => sum + item.quantity.value, 0);
+
+  return (
+    <CartContext.Provider
+      value={{
+        cart,
+        isOpen,
+        isLoading,
+        openCart: () => setIsOpen(true),
+        closeCart: () => setIsOpen(false),
+        addItem,
+        removeItem,
+        updateQuantity,
+        itemCount,
+      }}
+    >
+      {children}
+    </CartContext.Provider>
+  );
+}
+
+export function useCart() {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  return context;
+}
+```
+
+<Tip>
+  `updateItem()`/`removeItem()`/`addItem()` all return the full updated cart, so `applyResponse()` re-reads items, totals, and currency from every response — the local state never drifts from the server.
+</Tip>
+
+<Warning>
+  Firing a request on every click of a quantity stepper works, but sends one API call per click. For production, debounce rapid changes (batch them with `cart().updateItems()`, which accepts multiple item keys at once) before sending the request.
+</Warning>
+
+## Wiring Up the Provider
+
+Wrap your root layout in `CartProvider` so any component in the tree can call `useCart()`. Update `src/app/layout.tsx`:
+
+```typescript
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import { CartProvider } from "@/components/cart-provider";
+import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "My Headless Store",
+  description: "Your headless WooCommerce store powered by CoCart",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <body className={inter.className}>
+        <CartProvider>{children}</CartProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+## Adding an "Add to Cart" Button
+
+Create `src/components/add-to-cart-button.tsx`:
+
+```tsx
+'use client';
+
+import { useState } from 'react';
+import { useCart } from '@/components/cart-provider';
+
+export function AddToCartButton({ productId }: { productId: number }) {
+  const { addItem } = useCart();
+  const [isAdding, setIsAdding] = useState(false);
+
+  const handleClick = async () => {
+    setIsAdding(true);
+    try {
+      await addItem(productId);
+    } catch (error) {
+      alert((error as Error).message);
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={isAdding}
+      className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-zinc-900"
+    >
+      {isAdding ? 'Adding...' : 'Add to Cart'}
+    </button>
+  );
+}
+```
+
+Use it on the homepage from the [setup guide](./setup):
+
+```typescript
+import { AddToCartButton } from '@/components/add-to-cart-button';
+
+// Inside the product grid:
+<AddToCartButton productId={product.id} />
+```
+
+## Building the Cart Drawer
+
+Create `src/components/cart-drawer.tsx`. This is a fixed-position slide-over panel styled with plain Tailwind utilities — no extra UI library required:
+
+```tsx
+'use client';
+
+import { useCart } from '@/components/cart-provider';
+import { CurrencyFormatter } from '@cocartheadless/sdk';
+
+const formatter = new CurrencyFormatter();
+
+export function CartDrawer() {
+  const { cart, isOpen, isLoading, closeCart, removeItem, updateQuantity, itemCount } = useCart();
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className={`fixed inset-0 z-40 bg-black/40 transition-opacity ${
+          isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+        }`}
+        onClick={closeCart}
+      />
+
+      {/* Panel */}
+      <div
+        className={`fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-white shadow-xl transition-transform dark:bg-zinc-900 ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        <div className="flex items-center justify-between border-b p-4 dark:border-zinc-800">
+          <h2 className="text-lg font-semibold">Your Cart ({itemCount})</h2>
+          <button onClick={closeCart} aria-label="Close cart" className="text-2xl leading-none">
+            &times;
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4">
+          {isLoading ? (
+            <p className="text-zinc-500">Loading...</p>
+          ) : cart.items.length === 0 ? (
+            <p className="text-zinc-500">Your cart is empty.</p>
+          ) : (
+            <ul className="space-y-4">
+              {cart.items.map((item) => (
+                <li key={item.item_key} className="flex gap-3">
+                  {item.featured_image && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={item.featured_image}
+                      alt={item.name}
+                      className="h-16 w-16 rounded-md object-cover"
+                    />
+                  )}
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{item.name}</p>
+                    {cart.currency && (
+                      <p className="text-sm text-zinc-500">
+                        {formatter.format(Number(item.price), cart.currency)}
+                      </p>
+                    )}
+                    <div className="mt-1 flex items-center gap-2">
+                      <button
+                        onClick={() => updateQuantity(item.item_key, item.quantity.value - (item.quantity.multiple_of || 1))}
+                        className="h-6 w-6 rounded border text-sm dark:border-zinc-700"
+                      >
+                        −
+                      </button>
+                      <span className="w-6 text-center text-sm">{item.quantity.value}</span>
+                      <button
+                        onClick={() => updateQuantity(item.item_key, item.quantity.value + (item.quantity.multiple_of || 1))}
+                        disabled={item.quantity.maximum > 0 && item.quantity.value >= item.quantity.maximum}
+                        className="h-6 w-6 rounded border text-sm disabled:opacity-50 dark:border-zinc-700"
+                      >
+                        +
+                      </button>
+                      <button
+                        onClick={() => removeItem(item.item_key)}
+                        className="ml-2 text-xs text-red-600 hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                  {cart.currency && (
+                    <p className="text-sm font-medium">
+                      {formatter.format(Number(item.totals.total), cart.currency)}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {cart.items.length > 0 && cart.currency && (
+          <div className="border-t p-4 dark:border-zinc-800">
+            <div className="mb-4 flex justify-between font-medium">
+              <span>Total</span>
+              <span>{formatter.format(Number(cart.totals.total), cart.currency)}</span>
+            </div>
+            <a
+              href="/checkout"
+              className="block w-full rounded-md bg-zinc-900 px-4 py-2 text-center text-sm font-medium text-white dark:bg-white dark:text-zinc-900"
+            >
+              Checkout
+            </a>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+```
+
+<Note>
+  CoCart returns prices as smallest-unit integers (e.g. `4599` for $45.99). `CurrencyFormatter` (from `@cocartheadless/sdk`) converts them to a localized string using the cart's own `currency` object — see the [utilities guide](/sdk/typescript/utilities) for locale options.
+</Note>
+
+## Adding the Cart Trigger
+
+Add a button that opens the drawer and shows the item count — typically in your site header. Create `src/components/cart-trigger.tsx`:
+
+```tsx
+'use client';
+
+import { useCart } from '@/components/cart-provider';
+
+export function CartTrigger() {
+  const { openCart, itemCount } = useCart();
+
+  return (
+    <button onClick={openCart} className="relative p-2" aria-label="Open cart">
+      🛒
+      {itemCount > 0 && (
+        <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs text-white">
+          {itemCount}
+        </span>
+      )}
+    </button>
+  );
+}
+```
+
+Then render both the trigger and the drawer somewhere shared, such as your root layout:
+
+```typescript
+import { CartDrawer } from "@/components/cart-drawer";
+import { CartTrigger } from "@/components/cart-trigger";
+
+// Inside <CartProvider>, e.g. in a header component:
+<CartTrigger />
+<CartDrawer />
+```
+
+## Testing Your Cart Drawer
+
+1. Run `npm run dev` and visit your homepage
+2. Click **Add to Cart** on a product — the drawer should open automatically with the item listed
+3. Use the quantity buttons to increase/decrease the quantity, and confirm the line total and cart total update
+4. Click **Remove** and confirm the item disappears
+5. Reload the page — the cart should still contain your items, since the cart key persists in `localStorage`
+
+## Troubleshooting
+
+### Cart doesn't persist across page reloads
+
+Confirm `NEXT_PUBLIC_COCART_STORE_URL` is set and that `getClient()` in `src/lib/cocart.ts` calls `attachCartKeyHeader()`. Check your browser's Application/Storage tab for a CoCart entry in `localStorage`.
+
+### "useCart must be used within a CartProvider"
+
+Make sure `<CartProvider>` wraps the part of the tree rendering `CartDrawer`, `CartTrigger`, or `AddToCartButton` — usually by wrapping `{children}` in `src/app/layout.tsx` as shown above.
+
+### Quantity changes feel slow
+
+Each click sends a separate request. See the debouncing note under [Creating the Cart Context](#creating-the-cart-context) for batching rapid changes.
+
+## Next Steps
+
+- Implement guest-to-customer login with cart merging
+- Add a full `/cart` page alongside the drawer for users who prefer a dedicated view
+- Debounce quantity updates for a snappier feel under rapid clicks
+- Explore [product variations](/sdk/typescript/products) to support variable products in `AddToCartButton`
+
+## Resources
+
+- [CoCart TypeScript SDK](/sdk/typescript) — Full SDK documentation
+- [Next.js Adapter Guide](/sdk/typescript/frameworks/nextjs) — `createBrowserClient`, `createServerClient`, and `attachCartKeyHeader`
+- [TypeScript SDK Utilities](/sdk/typescript/utilities) — `CurrencyFormatter` and price formatting
+- [Next.js Setup Guide](./setup) — Prerequisite for this tutorial

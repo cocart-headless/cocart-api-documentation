@@ -40,14 +40,39 @@ icon: "lock"
             Should the customer forget the username they created or what was assigned when registering as a customer, using their email address instead is good alternative.
         </Note>
 
-        <RequestExample>
+        <CodeGroup>
         ```bash cURL
-            curl --request POST \
-                --url https://localhost/wp-json/cocart/v2/login \
-                --header "Authorization: Basic " + btoa('username:password')
-                --header "Content-Type: application/json"
+        curl --request POST \
+            --url https://localhost/wp-json/cocart/v2/login \
+            --user "username:password" \
+            --header "Content-Type: application/json"
         ```
-        </RequestExample>
+
+        ```javascript JavaScript
+        const response = await fetch('https://localhost/wp-json/cocart/v2/login', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Basic ' + btoa('username:password'),
+            'Content-Type': 'application/json',
+          },
+        });
+        ```
+
+        ```typescript TypeScript SDK
+        import { CoCart, SessionManager } from '@cocartheadless/sdk';
+
+        const client = new CoCart('https://localhost');
+        const session = new SessionManager(client);
+
+        // Sets Basic Auth on the client and merges any guest cart
+        // into the customer's cart (pass `false` to skip merging).
+        const response = await session.login('username', 'password');
+        ```
+        </CodeGroup>
+
+        <Note>
+          With the SDK, there's no separate call to the `/login` endpoint — `SessionManager.login()` applies Basic Auth to the client and fetches the cart in one step, merging the guest cart along the way. See the [TypeScript SDK authentication guide](/sdk/typescript/authentication) for JWT login and other session-handling options.
+        </Note>
     </Accordion>
 
     <Accordion title="Not possible to use authentication headers, alternative?">

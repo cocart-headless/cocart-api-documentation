@@ -175,10 +175,15 @@ pages, err := paginator.Collect(ctx)
 
 ## Single Product
 
-### By ID
+### By ID or SKU
+
+`Find()` accepts either the numeric product/variation ID or the product's SKU — either one works:
 
 ```go
 response, err := client.Products().Find(ctx, 123)
+
+// Or by SKU
+response, err := client.Products().Find(ctx, "PCT-2024")
 
 name := response.Get("name", "")
 price := response.Get("price", "")

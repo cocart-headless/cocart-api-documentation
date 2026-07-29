@@ -7,16 +7,17 @@ description: "Handle errors from the CoCart Python SDK — exception hierarchy, 
 ---
 
 <Info>
-  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
 </Info>
 
 ## Exception Hierarchy
 
 ```
 CoCartException (base)
-├── AuthenticationException   (401, 403)
-├── ValidationException       (400)
-└── VersionException          (CoCart Starter required)
+├── AuthenticationException      (401, 403)
+│   └── TwoFactorRequiredException  (2FA code required to complete login)
+├── ValidationException          (400)
+└── VersionException             (CoCart Starter required)
 ```
 
 All exceptions extend `cocart.exceptions.CoCartException`, which extends Python's built-in `Exception`.
@@ -40,8 +41,8 @@ except ValidationException as e:
 except AuthenticationException as e:
     # 401 or 403 — invalid credentials, expired token, forbidden
     print(f"Auth Error: {e}")
-    print(f"Error Code: {e.error_code}")
-    print(f"HTTP Code: {e.http_code}")       # 401 or 403
+    print(f"Error Code: {e.error_code}")     # e.g. "cocart_authentication_error"
+    print(f"HTTP Code: {e.http_code}")        # 401 or 403
 except CoCartException as e:
     # Any other API error (404, 500, etc.)
     print(f"API Error: {e}")
@@ -183,6 +184,21 @@ except ValidationException as e:
     # e.error_code => "cocart_not_enough_in_stock"
     pass
 ```
+
+### Two-Factor Authentication Required
+
+```python
+from cocart.exceptions import TwoFactorRequiredException
+
+try:
+    client.login("customer@email.com", "password")
+except TwoFactorRequiredException as e:
+    # e.available_providers => ["email", "totp"]
+    # e.default_provider    => "email"
+    pass
+```
+
+See [Authentication](/sdk/python/authentication#two-factor-authentication-2fa) for the full 2FA login flow.
 
 ### Invalid Input (Client-Side Validation)
 

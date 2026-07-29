@@ -1,0 +1,147 @@
+---
+title: "Swift SDK: Sessions API"
+sidebarTitle: "Sessions API"
+description: "Manage cart sessions and storage adapters with the CoCart Swift SDK — admin sessions endpoint, Keychain storage, and guest session lifecycle."
+'og:title': "Sessions API — CoCart Swift SDK"
+'og:description': "Admin sessions endpoint for managing active carts server-side, Keychain and in-memory storage adapters, and the full guest-to-customer cart transfer flow."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
+</Info>
+
+A **session** represents a single shopping cart — either a guest visitor's cart or a logged-in customer's cart. The server keeps track of all active sessions so that each visitor gets their own cart. This page covers two things:
+
+1. **Admin Sessions Endpoint** — For store administrators to view and manage all active cart sessions.
+2. **Storage Adapters** — How the SDK persists guest cart keys across app launches.
+
+## Admin Sessions Endpoint
+
+The Sessions endpoint is for administrators to manage cart sessions server-side. It requires WooCommerce REST API credentials (see [Consumer Keys](/sdk/swift/authentication#consumer-keys-admin)).
+
+```swift
+import CoCart
+
+let client = CoCart("https://your-store.com", options: CoCartOptions(
+    consumerKey: "ck_xxxxx",
+    consumerSecret: "cs_xxxxx"
+))
+```
+
+### List All Sessions
+
+```swift
+let response = try await client.sessions().all()
+
+// With parameters
+let response = try await client.sessions().all(["per_page": "50"])
+```
+
+### Find a Session
+
+```swift
+// By cart key
+let response = try await client.sessions().get("guest_abc123")
+```
+
+### Delete a Session
+
+```swift
+let response = try await client.sessions().delete("guest_abc123")
+```
+
+### Delete All Sessions
+
+```swift
+let response = try await client.sessions().deleteAll()
+```
+
+## Storage Adapters
+
+A **storage adapter** is a small class that knows how to save and retrieve data. The SDK needs storage to persist things like cart keys so they survive app restarts. Different environments need different storage strategies:
+
+- **Production** — Uses the Keychain to securely save data that persists across app launches.
+- **Tests / SwiftUI Previews** — Uses in-memory storage so tests are isolated and don't touch the Keychain.
+
+All storage adapters conform to the same `CoCartStorage` protocol, so you can swap them freely.
+
+### KeychainStorage
+
+The default storage adapter. Uses Apple's Keychain Services to securely store cart keys and other sensitive data. Data is encrypted at rest by the operating system and persists across app launches, device reboots, and app updates.
+
+```swift
+// Used automatically — no configuration needed
+let client = CoCart("https://your-store.com")
+
+// Or configure with a custom service identifier
+let storage = KeychainStorage(service: "com.myapp.cocart")
+let client = CoCart("https://your-store.com", options: CoCartOptions(storage: storage))
+```
+
+### MemoryStorage
+
+Stores data in the application's memory. Data is lost when the app is terminated. Best for unit tests and SwiftUI previews where you need isolated, predictable behavior.
+
+```swift
+import CoCart
+
+let storage = MemoryStorage()
+let client = CoCart("https://your-store.com", options: CoCartOptions(storage: storage))
+```
+
+### Custom Storage
+
+If the built-in adapters don't fit your needs, you can create your own. Just conform to the `CoCartStorage` protocol — it defines three methods: `read`, `write`, and `delete`:
+
+```swift
+import CoCart
+
+class UserDefaultsStorage: CoCartStorage {
+    func read(_ key: String) async throws -> String? {
+        UserDefaults.standard.string(forKey: key)
+    }
+
+    func write(_ key: String, value: String) async throws {
+        UserDefaults.standard.set(value, forKey: key)
+    }
+
+    func delete(_ key: String) async throws {
+        UserDefaults.standard.removeObject(forKey: key)
+    }
+}
+```
+
+The protocol supports both synchronous and asynchronous implementations via `async throws`.
+
+## Guest Session Lifecycle
+
+This is one of the most important flows in headless e-commerce. A visitor shops as a guest (no account needed), fills up their cart, then decides to log in or create an account. You want their guest cart items to carry over to their customer cart — otherwise they'd lose everything and have to start over. Here's the full flow:
+
+```swift
+import CoCart
+
+let client = CoCart("https://your-store.com")
+
+// 1. Restore previous session on app launch
+try await client.restoreSession()
+
+// 2. If no previous session, guest browses and adds items
+try await client.cart().addItem(123, quantity: 2)
+try await client.cart().addItem(456, quantity: 1)
+print(client.cartKey) // Optional("guest_abc123...")
+
+// 3. Guest decides to log in (cart transfers to customer account)
+try await client.login("customer@email.com", password: "password")
+
+// 4. Guest cart items are now in the customer's cart
+let cart = try await client.cart().get()
+let items = cart.getItems() // Contains items 123 and 456
+
+// 5. Later, customer logs out
+try await client.logout()
+
+// 6. Clear the session
+try await client.clearSession()
+```
+
+See [Authentication](/sdk/swift/authentication) for more on JWT and Basic Auth setup.

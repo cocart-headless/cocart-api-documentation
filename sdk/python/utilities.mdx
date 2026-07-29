@@ -7,7 +7,7 @@ description: "Utility classes in the CoCart Python SDK — currency formatting a
 ---
 
 <Info>
-  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
 </Info>
 
 The SDK includes standalone utility classes for currency formatting and timezone conversion. These work with data already returned by the API — no extra HTTP requests needed.
@@ -15,6 +15,8 @@ The SDK includes standalone utility classes for currency formatting and timezone
 ## CurrencyFormatter
 
 CoCart's API returns prices as smallest-unit integers (e.g., `4599` for $45.99) along with currency metadata. `CurrencyFormatter` converts these into human-readable strings.
+
+### Setup
 
 ```python
 from cocart.currency_formatter import CurrencyFormatter
@@ -93,6 +95,8 @@ print(f"Total: {formatter.format(totals['total'], currency)}")
 WooCommerce stores dates in the store's configured timezone (often UTC). `TimezoneHelper` converts these to any other timezone.
 
 <Note>Timezone conversion requires the `zoneinfo` module (Python 3.9+). On Windows, install the `tzdata` package: `pip install tzdata`</Note>
+
+### Setup
 
 ```python
 from cocart.timezone import TimezoneHelper

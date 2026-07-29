@@ -7,7 +7,7 @@ description: "Manage shopping carts with the CoCart Go SDK — add, update, remo
 ---
 
 <Info>
-  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
 </Info>
 
 The Cart API handles all shopping cart operations.
@@ -57,6 +57,11 @@ if errors.As(err, &valErr) {
 }
 ```
 
+Validation rules:
+
+- **Product ID** — Must be a positive integer (`AddItem`, `AddVariation`)
+- **Quantity** — Must be a positive number (`AddItem`, `AddVariation`, `UpdateItem`)
+
 You can also use the validation functions directly:
 
 ```go
@@ -78,6 +83,9 @@ response, err := client.Cart().AddItem(ctx, 123, 2)
 
 // Shorthand alias
 response, err := client.Cart().Add(ctx, 123, 2)
+
+// A SKU also works — the server resolves it to a product ID
+response, err := client.Cart().AddItem(ctx, "BLUE-SHIRT-L", 1)
 ```
 
 ### Add with Options
@@ -102,13 +110,16 @@ response, err := client.Cart().AddVariation(ctx, 456, 1, map[string]string{
 })
 ```
 
-### Add Multiple Items at Once
+### Add Multiple Children of a Grouped Product at Once
+
+`AddItems` is **not** a generic "add several unrelated products" call — it only accepts a single WooCommerce Grouped Product ID plus a map of that group's child product IDs to quantities. To add several unrelated products in one request, use `client.Batch()` instead (see [Batch Requests](#batch-requests), requires the CoCart Plus plugin).
 
 ```go
-response, err := client.Cart().AddItems(ctx, []cocart.CartItemData{
-	{ID: "123", Quantity: "2"},
-	{ID: "456", Quantity: "1"},
-	{ID: "789", Quantity: "3"},
+// groupedProductID 100 has children 123, 456, 789
+response, err := client.Cart().AddItems(ctx, 100, map[string]int{
+	"123": 2,
+	"456": 1,
+	"789": 3,
 })
 ```
 
@@ -123,8 +134,19 @@ response, err := client.Cart().UpdateItem(ctx, "abc123def456...", 5)
 
 ### Update Multiple Items at Once
 
+There is no bulk-update route on the server, so `UpdateItems` issues one `UpdateItem` request per entry, sequentially, and returns the response from the last one:
+
 ```go
 response, err := client.Cart().UpdateItems(ctx, map[string]int{
+	"abc123def456...": 3,
+	"def789ghi012...": 1,
+})
+```
+
+For a true single round trip, use `BatchUpdateItems` instead (requires the CoCart Plus plugin — it dispatches every item update through `client.Batch()` in one request):
+
+```go
+response, err := client.Cart().BatchUpdateItems(ctx, map[string]int{
 	"abc123def456...": 3,
 	"def789ghi012...": 1,
 })
@@ -140,8 +162,19 @@ response, err := client.Cart().RemoveItem(ctx, "abc123def456...")
 
 ### Remove Multiple Items at Once
 
+Same as `UpdateItems`, `RemoveItems` removes one item per request, sequentially, and returns the response from the last removal:
+
 ```go
 response, err := client.Cart().RemoveItems(ctx, []string{
+	"abc123def456...",
+	"def789ghi012...",
+})
+```
+
+For a true single round trip, use `BatchRemoveItems` instead (requires the CoCart Plus plugin):
+
+```go
+response, err := client.Cart().BatchRemoveItems(ctx, []string{
 	"abc123def456...",
 	"def789ghi012...",
 })
@@ -158,6 +191,28 @@ response, err := client.Cart().RestoreItem(ctx, "abc123def456...")
 ```go
 response, err := client.Cart().GetRemovedItems(ctx)
 ```
+
+## Batch Requests
+
+<Note>Requires the CoCart Plus plugin.</Note>
+
+`client.Batch()` dispatches multiple sub-requests (`{method, path, body}`) to `{namespace}/batch` in a single call, returning one merged, up-to-date cart response with per-operation notices instead of one response per request. Use it for mixed operations that `AddItems`/`UpdateItems`/`RemoveItems` can't express in one round trip — e.g. adding one product and removing another at the same time:
+
+```go
+response, err := client.Batch(ctx, []cocart.BatchRequestItem{
+	{
+		Method: http.MethodPost,
+		Path:   "/cocart/v2/cart/add-item",
+		Body:   map[string]any{"id": "123", "quantity": "2"},
+	},
+	{
+		Method: http.MethodDelete,
+		Path:   "/cocart/v2/cart/item/abc123def456...",
+	},
+})
+```
+
+`BatchUpdateItems` and `BatchRemoveItems` (shown above) are typed convenience wrappers over `client.Batch()` for the common case of updating/removing several items at once.
 
 ## Cart Management
 
@@ -245,8 +300,12 @@ response, err := client.Cart().CheckCoupons(ctx)
 
 ### Update Customer
 
+<Note>
+  `UpdateCustomer` always sets the billing address on the cart. If `shipping` is `nil` or empty, billing is mirrored into the shipping fields too (same as leaving "ship to a different address" unchecked at checkout). Pass a distinct `shipping` map to ship somewhere else — this also sets `ship_to_different_address: true`.
+</Note>
+
 ```go
-// Update billing address
+// Billing only — shipping mirrors billing automatically
 response, err := client.Cart().UpdateCustomer(ctx,
 	map[string]string{
 		"first_name": "John",
@@ -259,12 +318,20 @@ response, err := client.Cart().UpdateCustomer(ctx,
 		"postcode":   "10001",
 		"country":    "US",
 	},
-	nil, // no shipping update
+	nil, // shipping mirrors billing
 )
 
-// Update shipping address
+// Distinct billing and shipping addresses
 response, err := client.Cart().UpdateCustomer(ctx,
-	nil, // no billing update
+	map[string]string{
+		"first_name": "John",
+		"last_name":  "Doe",
+		"address_1":  "123 Main St",
+		"city":       "New York",
+		"state":      "NY",
+		"postcode":   "10001",
+		"country":    "US",
+	},
 	map[string]string{
 		"first_name": "John",
 		"last_name":  "Doe",
@@ -274,12 +341,6 @@ response, err := client.Cart().UpdateCustomer(ctx,
 		"postcode":   "90001",
 		"country":    "US",
 	},
-)
-
-// Update both at once
-response, err := client.Cart().UpdateCustomer(ctx,
-	map[string]string{"email": "john@example.com"},
-	map[string]string{"address_1": "456 Oak Ave"},
 )
 ```
 
@@ -301,19 +362,23 @@ response, err := client.Cart().GetShippingMethods(ctx)
 
 <Note>Requires the CoCart Plus plugin.</Note>
 
+Select a rate by its key (see a shipping package's `rates` map, e.g. from `GetShippingMethods`). Pass a package ID to restrict the selection to one package; omit it to apply the rate to every package.
+
 ```go
 response, err := client.Cart().SetShippingMethod(ctx, "flat_rate:1")
+
+// Restrict to one package
+response, err := client.Cart().SetShippingMethod(ctx, "flat_rate:1", "0")
 ```
 
 ### Calculate Shipping
 
+<Warning>
+  `CalculateShipping` is deprecated: `POST /cart/calculate/shipping` does not exist in the CoCart REST API, so this method now ignores its `address` argument and simply delegates to `Calculate`. To actually calculate shipping for a destination, call `UpdateCustomer` with the destination address (the server recalculates totals as part of that request), then call `Calculate` directly.
+</Warning>
+
 ```go
-response, err := client.Cart().CalculateShipping(ctx, map[string]string{
-	"country":  "US",
-	"state":    "CA",
-	"postcode": "90001",
-	"city":     "Los Angeles",
-})
+response, err := client.Cart().Calculate(ctx)
 ```
 
 ## Fees
@@ -407,6 +472,12 @@ hash := response.GetCartHash()
 
 // Notices
 notices := response.GetNotices()
+
+// Tax lines — normalized to a flat slice regardless of whether the
+// plugin/version returns "taxes" as an array or a legacy object keyed
+// by tax rate code
+taxes := response.GetTaxes()
+hasTaxes := response.HasTaxes()
 
 // Dot-notation access
 subtotal := response.Get("totals.subtotal", "0")

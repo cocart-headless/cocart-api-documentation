@@ -1,0 +1,90 @@
+---
+title: "Kotlin SDK: Sessions API"
+sidebarTitle: "Sessions API"
+description: "Manage guest cart sessions as an admin with the CoCart Kotlin SDK Sessions API, plus storage adapters for cart key and token persistence."
+'og:title': "Sessions API — CoCart Kotlin SDK"
+'og:description': "List, fetch, and delete guest cart sessions with WooCommerce consumer keys, and configure EncryptedSharedPreferences or custom storage adapters."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
+</Info>
+
+The Sessions API is an admin-only API for managing guest cart sessions. It requires WooCommerce Consumer Keys (not customer credentials).
+
+## Setup
+
+Generate consumer keys in your WooCommerce admin: WooCommerce > Settings > Advanced > REST API. Create a key with Read/Write permissions.
+
+```kotlin
+val client = CoCart(context, "https://your-store.com", CoCartOptions(
+    consumerKey = "ck_xxxxx",
+    consumerSecret = "cs_xxxxx"
+))
+```
+
+## List All Sessions
+
+```kotlin
+val response = client.sessions().all()
+```
+
+## Get a Session
+
+```kotlin
+val response = client.sessions().get("guest_abc123")
+```
+
+## Delete a Session
+
+```kotlin
+client.sessions().delete("guest_abc123")
+```
+
+## Storage Adapters
+
+By default the SDK uses `EncryptedSharedPreferences` when an Android `Context` is provided, or `MemoryStorage` when `context` is `null`. You can supply a custom adapter via `CoCartOptions.storage`:
+
+```kotlin
+import com.cocart.sdk.storage.CoCartStorage
+
+class MyCustomStorage : CoCartStorage {
+    override suspend fun get(key: String): String? { /* ... */ }
+    override suspend fun set(key: String, value: String) { /* ... */ }
+    override suspend fun delete(key: String) { /* ... */ }
+}
+
+val client = CoCart(context, "https://your-store.com", CoCartOptions(
+    storage = MyCustomStorage()
+))
+```
+
+### MemoryStorage
+
+`MemoryStorage` holds data in a plain `MutableMap`. It is useful for:
+
+- Unit tests (no Android context needed)
+- Server-side or non-Android environments
+- Short-lived client instances where persistence is not needed
+
+```kotlin
+import com.cocart.sdk.storage.MemoryStorage
+
+val client = CoCart(null, "https://your-store.com", CoCartOptions(
+    storage = MemoryStorage()
+))
+```
+
+### Storage Key
+
+The key under which the cart key is stored defaults to `cocart_cart_key`. Override it if multiple CoCart clients coexist in the same app:
+
+```kotlin
+val clientA = CoCart(context, "https://store-a.com", CoCartOptions(
+    storageKey = "cocart_cart_key_store_a"
+))
+
+val clientB = CoCart(context, "https://store-b.com", CoCartOptions(
+    storageKey = "cocart_cart_key_store_b"
+))
+```

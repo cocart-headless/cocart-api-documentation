@@ -1,0 +1,501 @@
+---
+title: "Swift SDK: Cart API"
+sidebarTitle: "Cart API"
+description: "Manage shopping carts with the CoCart Swift SDK — add, update, remove items, coupons, customer details, shipping, fees, and ETag caching."
+'og:title': "Headless WooCommerce Cart API — CoCart Swift SDK"
+'og:description': "Manage WooCommerce carts from Swift. async/await throughout, client-side validation before network calls, add/update/remove items, coupons, shipping, fees, and ETag caching."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
+</Info>
+
+The Cart API handles all shopping cart operations — adding items, updating quantities, applying coupons, managing shipping, and more. This is the core of any headless WooCommerce storefront.
+
+**How cart sessions work:**
+
+- **Guest customers** — The first request creates a new guest session. The server returns a `Cart-Key` (a unique identifier like `guest_abc123`) which the SDK extracts and stores automatically in the Keychain. All subsequent requests use this key so the server knows which cart belongs to which visitor.
+- **Authenticated customers** — The server identifies the cart by the WordPress user account. No cart key is needed because the server already knows who you are from your authentication credentials.
+
+To access cart methods, call `client.cart()`:
+
+```swift
+let cart = client.cart()
+```
+
+## Create Cart
+
+Create a new guest cart session without adding items. Only available for non-authenticated (guest) users.
+
+```swift
+let response = try await client.cart().create()
+print(response.getString("cart_key")) // Optional("guest_abc123...")
+```
+
+## Get Cart
+
+```swift
+let response = try await client.cart().get()
+
+// With parameters
+let response = try await client.cart().get(["thumb": "true", "default": "true"])
+```
+
+### Type-Safe Field Filtering
+
+A full cart response includes many fields (items, totals, coupons, shipping, customer, etc.). If you only need a few of them, `getFiltered()` tells the server to send back only the fields you list. This means less data transferred and faster responses, especially on slow connections.
+
+```swift
+let response = try await client.cart().getFiltered(["items", "totals"])
+```
+
+This sends `?_fields=items,totals` to the server, so only those fields are returned over the wire.
+
+## Client-Side Validation
+
+**Client-side validation** means the SDK checks your inputs _before_ sending anything to the server. If you pass an invalid product ID (like `-1`) or a quantity of `0`, the SDK throws an error immediately. This saves time because you don't have to wait for a server round-trip just to find out the input was bad.
+
+```swift
+do {
+    try await client.cart().addItem(-1, quantity: 0)
+} catch let error as CoCartError {
+    // error == .validation("Product ID must be a positive integer")
+    // No network request was made
+}
+```
+
+Validation rules:
+
+- **Product ID** — Must be a positive integer (`addItem`, `addVariation`)
+- **Quantity** — Must be a positive number (`addItem`, `addVariation`, `updateItem`)
+
+You can also use the validation functions directly:
+
+```swift
+import CoCart
+
+try validateProductID(123)             // OK
+try validateProductID(-1)              // throws CoCartError.validation
+try validateQuantity(2)                // OK
+try validateQuantity(0)                // throws CoCartError.validation
+try validateEmail("user@example.com")  // OK
+try validateEmail("not-an-email")      // throws CoCartError.validation
+```
+
+## Adding Items
+
+### Add a Simple Product
+
+```swift
+// Product ID 123, quantity 2
+let response = try await client.cart().addItem(123, quantity: 2)
+
+// Shorthand
+let response = try await client.cart().add(123, quantity: 2)
+
+// A SKU also works — the server resolves it to a product ID
+let response = try await client.cart().addItem("BLUE-SHIRT-L", quantity: 1)
+```
+
+### Add with Options
+
+```swift
+let response = try await client.cart().addItem(123, quantity: 1, options: [
+    "item_data": [
+        "gift_message": "Happy Birthday!",
+        "engraving": "John"
+    ],
+    "email": "customer@email.com",
+    "return_item": true
+])
+```
+
+### Add a Variable Product
+
+A **variable product** is a product with options like size or color. In WooCommerce, these are called "variations." When adding a variable product, you specify which variation the customer chose:
+
+```swift
+let response = try await client.cart().addVariation(456, quantity: 1, attributes: [
+    "attribute_pa_color": "blue",
+    "attribute_pa_size": "large"
+])
+```
+
+### Add Multiple Children of a Grouped Product at Once
+
+`addItems()` is **not** a generic "add several unrelated products" call — the server's `add-items` endpoint only supports adding children of a single WooCommerce **Grouped Product** in one request. Pass the grouped product's ID plus a map of child product ID to quantity:
+
+```swift
+let response = try await client.cart().addItems(100, items: [
+    "123": 2,
+    "456": 1
+])
+
+// Or as an ordered array of (id, quantity) entries
+let response = try await client.cart().addItems(100, items: [
+    (id: "123", quantity: 2),
+    (id: "456", quantity: 1)
+])
+```
+
+To add several unrelated products in a single request, use [`client.batch()`](#batch-requests) instead.
+
+## Updating Items
+
+Every item in the cart has a unique **item key** — a long string like `abc123def456...` that identifies that specific item. You receive item keys in cart responses (in the `item_key` field of each item). You use this key to tell the server which item you want to update or remove.
+
+```swift
+// Item keys are returned in cart responses
+let response = try await client.cart().updateItem("abc123def456...", quantity: 5)
+
+// With additional options
+let response = try await client.cart().updateItem("abc123def456...", quantity: 3, options: [
+    "item_data": ["gift_wrap": true]
+])
+```
+
+### Update Multiple Items at Once
+
+There is no real bulk-update endpoint on the server, so this sends one `updateItem()` request per entry, sequentially, and returns the response from the last update:
+
+```swift
+let response = try await client.cart().updateItems([
+    "abc123def456...": 3,
+    "def789ghi012...": 1
+])
+```
+
+For a true single round trip (requires the CoCart Plus plugin), use `batchUpdateItems()` instead, which dispatches every update through [`batch()`](#batch-requests):
+
+```swift
+let response = try await client.cart().batchUpdateItems([
+    "abc123def456...": 3,
+    "def789ghi012...": 1
+])
+```
+
+## Removing & Restoring Items
+
+### Remove an Item
+
+```swift
+let response = try await client.cart().removeItem("abc123def456...")
+```
+
+### Remove Multiple Items at Once
+
+There is no real bulk-remove endpoint on the server, so this sends one `removeItem()` request per item, sequentially, and returns the response from the last removal:
+
+```swift
+let response = try await client.cart().removeItems([
+    "abc123def456...",
+    "def789ghi012..."
+])
+```
+
+For a true single round trip (requires the CoCart Plus plugin), use `batchRemoveItems()` instead:
+
+```swift
+let response = try await client.cart().batchRemoveItems([
+    "abc123def456...",
+    "def789ghi012..."
+])
+```
+
+### Restore a Removed Item
+
+```swift
+let response = try await client.cart().restoreItem("abc123def456...")
+```
+
+### Get Removed Items
+
+```swift
+let response = try await client.cart().getRemovedItems()
+```
+
+## Cart Management
+
+### Clear Cart
+
+```swift
+let response = try await client.cart().clear()
+
+// Alias
+let response = try await client.cart().empty()
+```
+
+### Calculate Totals
+
+```swift
+let response = try await client.cart().calculate()
+```
+
+### Update Cart
+
+```swift
+let response = try await client.cart().update([
+    "customer_note": "Please gift wrap."
+])
+```
+
+## Totals & Counts
+
+### Get Totals
+
+```swift
+// Raw values
+let response = try await client.cart().getTotals()
+
+// Formatted with currency (HTML)
+let response = try await client.cart().getTotals(formatted: true)
+```
+
+### Get Item Count
+
+```swift
+let response = try await client.cart().getItemCount()
+```
+
+### Get Cart Items
+
+Get only the items in the cart (lighter than fetching the full cart):
+
+```swift
+let response = try await client.cart().getItems()
+```
+
+### Get a Single Cart Item
+
+```swift
+let response = try await client.cart().getItem("abc123def456...")
+```
+
+## Coupons
+
+<Note>Requires the CoCart Plus plugin.</Note>
+
+### Apply a Coupon
+
+```swift
+let response = try await client.cart().applyCoupon("SUMMER20")
+```
+
+### Remove a Coupon
+
+```swift
+let response = try await client.cart().removeCoupon("SUMMER20")
+```
+
+### Get Applied Coupons
+
+```swift
+let response = try await client.cart().getCoupons()
+```
+
+### Validate Applied Coupons
+
+```swift
+let response = try await client.cart().checkCoupons()
+```
+
+## Customer Details
+
+### Update Customer
+
+Billing fields are sent unprefixed and shipping fields are sent `s_`-prefixed, matching the server's actual `update-customer` callback. If you omit `shipping` (or pass an empty dictionary), billing is mirrored into the shipping fields — same as leaving "ship to a different address" unchecked at a normal WooCommerce checkout — and `ship_to_different_address` is left unset. It's only sent as `true` when you provide a distinct shipping address.
+
+```swift
+// Update billing address only (shipping mirrors billing)
+let response = try await client.cart().updateCustomer(billing: [
+    "first_name": "John",
+    "last_name": "Doe",
+    "email": "john@example.com",
+    "phone": "+1234567890",
+    "address_1": "123 Main St",
+    "city": "New York",
+    "state": "NY",
+    "postcode": "10001",
+    "country": "US"
+])
+
+// Update both billing and a distinct shipping address
+let response = try await client.cart().updateCustomer(
+    billing: ["email": "john@example.com"],
+    shipping: ["address_1": "456 Oak Ave", "city": "Los Angeles", "state": "CA"]
+)
+```
+
+### Get Customer Details
+
+```swift
+let response = try await client.cart().getCustomer()
+```
+
+## Shipping
+
+### Get Available Shipping Methods
+
+```swift
+let response = try await client.cart().getShippingMethods()
+```
+
+### Set Shipping Method
+
+<Note>Requires the CoCart Plus plugin.</Note>
+
+Select a rate for a shipping package. `rateID` is the rate's key from a shipping package's `rates` map (e.g. `flat_rate:1`). Omit `packageID` to apply the rate to every package:
+
+```swift
+let response = try await client.cart().setShippingMethod("flat_rate:1")
+
+// Restrict the selection to a single package
+let response = try await client.cart().setShippingMethod("flat_rate:1", packageID: "0")
+```
+
+### Calculate Shipping
+
+<Warning>
+  `calculateShipping()` is deprecated: there is no address-taking shipping-calculation endpoint in the CoCart REST API, so this method now ignores its `address` argument and just delegates to `calculate()`. To calculate shipping for a destination, call `updateCustomer()` with that address first (the server recalculates totals as part of that request), then call `calculate()` — or just call `calculate()` directly.
+</Warning>
+
+```swift
+let response = try await client.cart().calculate()
+```
+
+## Fees
+
+<Note>Requires the CoCart Plus plugin.</Note>
+
+### Get Cart Fees
+
+```swift
+let response = try await client.cart().getFees()
+```
+
+### Add a Fee
+
+```swift
+// Non-taxable fee
+let response = try await client.cart().addFee("Rush Processing", amount: 9.99)
+
+// Taxable fee
+let response = try await client.cart().addFee("Gift Wrapping", amount: 4.99, taxable: true)
+```
+
+### Remove All Fees
+
+```swift
+let response = try await client.cart().removeFees()
+```
+
+## Cross-Sells
+
+**Cross-sells** are product recommendations based on what's currently in the cart. For example, if a customer has a laptop in their cart, cross-sells might suggest a laptop bag or mouse. These are configured in WooCommerce's product settings.
+
+```swift
+let response = try await client.cart().getCrossSells()
+```
+
+## Batch Requests
+
+<Note>Requires the CoCart Plus plugin.</Note>
+
+`client.batch()` dispatches multiple sub-requests in a single HTTP round trip via `{namespace}/batch`, and returns one merged, up-to-date cart response instead of one response per request. This is what `batchUpdateItems()` / `batchRemoveItems()` use under the hood, and is also useful for combining otherwise-unrelated cart operations (including adding several unrelated products, which `addItems()` no longer does):
+
+```swift
+let response = try await client.batch([
+    BatchRequestItem(method: "POST", path: "/cocart/v2/cart/add-item", body: ["id": "123", "quantity": "2"]),
+    BatchRequestItem(method: "POST", path: "/cocart/v2/cart/add-item", body: ["id": "456", "quantity": "1"]),
+])
+```
+
+If the server doesn't have the batch route registered (CoCart Plus isn't active), this throws `CoCartError.api` with `code == "cocart_plugin_required"`.
+
+## ETag / Conditional Requests
+
+**ETag** (Entity Tag) is a caching mechanism. When the server responds, it includes an `ETag` header — a unique fingerprint of the data. On the next request, the SDK automatically sends this fingerprint back via `If-None-Match`. If the data hasn't changed, the server responds with `304 Not Modified` (no body); the SDK now transparently returns the cached body/headers from the matching fresh request instead of an empty response, saving bandwidth and speeding up responses without changing what you get back.
+
+ETag support is **enabled by default**.
+
+```swift
+// First request: full response with ETag header
+let response = try await client.cart().get()
+
+// Second request: sends If-None-Match automatically
+let response2 = try await client.cart().get()
+if response2.isNotModified() {
+    print("Cart has not changed")
+    // response2 still has the same cart data as `response`
+}
+```
+
+### Disable ETag
+
+```swift
+// Via constructor
+let client = CoCart("https://your-store.com", options: CoCartOptions(etag: false))
+
+// At runtime
+client.setETag(false)
+```
+
+### Cache Status
+
+The `CoCart-Cache` response header indicates server-side cache status:
+
+```swift
+let response = try await client.cart().get()
+print(response.getCacheStatus()) // Optional("HIT"), Optional("MISS"), or Optional("SKIP")
+```
+
+## Working with Responses
+
+Every cart method returns a `CoCartResponse` that wraps the server's reply. Instead of digging through raw JSON, you can use helper methods to access common data. The `get()` method supports **dot notation** — a way to reach nested values using dots (e.g., `"totals.subtotal"` instead of manually traversing dictionaries):
+
+```swift
+let response = try await client.cart().get()
+
+// Cart items
+let items = response.getItems()
+
+// Cart totals
+let totals = response.getTotals()
+
+// Item count
+let count = response.getItemCount()
+
+// Cart key (from headers)
+let cartKey = response.getCartKey()
+
+// Cart hash
+let hash = response.getCartHash()
+
+// Notices
+let notices = response.getNotices()
+
+// Tax lines, normalized to a flat array of { key, name, price } regardless
+// of whether the server returned an array or a legacy tax-rate-code-keyed object
+let taxes = response.getTaxes()
+if response.hasTaxes() {
+    print("Cart has \(taxes.count) tax line(s)")
+}
+
+// Dot-notation access
+let subtotal = response.getString("totals.subtotal")
+let firstItemName = response.getString("items.0.name")
+
+// Check if key exists
+if response.has("totals.discount_total") {
+    print("Discount applied!")
+}
+
+// Full data
+let data = response.toDictionary()
+let json = try response.toJSON()
+
+// Decode into your own Codable models
+let decoded = try response.decode(MyCartModel.self)
+```
+
+See [Error Handling](/sdk/swift/error-handling) for handling API errors.

@@ -7,7 +7,7 @@ description: "Manage shopping carts with the CoCart PHP SDK — add items, updat
 ---
 
 <Info>
-  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
 </Info>
 
 The Cart API handles all shopping cart operations.
@@ -37,7 +37,7 @@ $response = $client->cart()->get();
 
 // With parameters
 $response = $client->cart()->get([
-    '_fields' => 'items,totals', // Limit returned fields
+    '_fields' => 'items,totals', // Limit returned fields (also accepts 'fields')
     'thumb' => 'true',           // Include product thumbnails
     'default' => 'true',         // Return default cart data
 ]);
@@ -67,6 +67,9 @@ $response = $client->cart()->addItem(123, 2);
 
 // Shorthand
 $response = $client->cart()->add(123, 2);
+
+// A SKU also works — the server resolves it to a product ID
+$response = $client->cart()->addItem('BLUE-SHIRT-L', 1);
 ```
 
 ### Add with Options
@@ -99,15 +102,23 @@ $response = $client->cart()->addItem(456, 1, [
 ]);
 ```
 
-### Add Multiple Items at Once
+### Add Children of a Grouped Product at Once
+
+<Note>
+  `addItems()` is specifically for adding multiple children of one WooCommerce Grouped Product in a single request — not a generic "add several unrelated products" call. For adding unrelated products in one round trip, use [Batch Requests](#batch-requests) instead.
+</Note>
 
 ```php
-$response = $client->cart()->addItems([
-    ['id' => '123', 'quantity' => '2'],
-    ['id' => '456', 'quantity' => '1', 'variation' => [
-        'attribute_pa_color' => 'red',
-    ]],
-    ['id' => '789', 'quantity' => '3'],
+// Grouped product 100 has children 200 and 300
+$response = $client->cart()->addItems(100, [
+    '200' => 2,
+    '300' => 1,
+]);
+
+// Or using the full { id, quantity } entry format
+$response = $client->cart()->addItems(100, [
+    ['id' => 200, 'quantity' => 2],
+    ['id' => 300, 'quantity' => 1],
 ]);
 ```
 
@@ -116,6 +127,7 @@ $response = $client->cart()->addItems([
 Update the quantity of a cart item using its item key:
 
 ```php
+// Item keys are returned in cart responses
 $response = $client->cart()->updateItem('abc123def456...', 5);
 
 // With additional options
@@ -126,6 +138,10 @@ $response = $client->cart()->updateItem('abc123def456...', 3, [
 
 ### Update Multiple Items at Once
 
+<Note>
+  There is no bulk-update endpoint in the CoCart REST API, so `updateItems()` issues one request per item, sequentially, and returns the response from the last update. For a true single round trip, use `batchUpdateItems()` (requires the CoCart Plus plugin) instead.
+</Note>
+
 ```php
 // Shorthand: item_key => quantity
 $response = $client->cart()->updateItems([
@@ -133,10 +149,16 @@ $response = $client->cart()->updateItems([
     'def789ghi012...' => 1,
 ]);
 
-// Full format with additional options
+// Full format
 $response = $client->cart()->updateItems([
     ['item_key' => 'abc123def456...', 'quantity' => 3],
     ['item_key' => 'def789ghi012...', 'quantity' => 1],
+]);
+
+// Single round trip via batch (requires CoCart Plus)
+$response = $client->cart()->batchUpdateItems([
+    'abc123def456...' => 3,
+    'def789ghi012...' => 1,
 ]);
 ```
 
@@ -150,8 +172,18 @@ $response = $client->cart()->removeItem('abc123def456...');
 
 ### Remove Multiple Items at Once
 
+<Note>
+  Same as `updateItems()`, there is no bulk-remove endpoint, so `removeItems()` issues one request per item, sequentially, and returns the response from the last removal. For a true single round trip, use `batchRemoveItems()` (requires the CoCart Plus plugin) instead.
+</Note>
+
 ```php
 $response = $client->cart()->removeItems([
+    'abc123def456...',
+    'def789ghi012...',
+]);
+
+// Single round trip via batch (requires CoCart Plus)
+$response = $client->cart()->batchRemoveItems([
     'abc123def456...',
     'def789ghi012...',
 ]);
@@ -244,8 +276,12 @@ $response = $client->cart()->checkCoupons();
 
 ### Update Customer
 
+<Note>
+  Billing fields are sent unprefixed; shipping fields are sent `s_`-prefixed. If `shipping` is omitted or empty, billing is mirrored into the shipping fields (same as leaving "ship to a different address" unchecked at checkout) and `ship_to_different_address` is left unset. It's only set to `true` when a distinct `shipping` address is actually given.
+</Note>
+
 ```php
-// Update billing address
+// Update billing address (shipping is mirrored from billing automatically)
 $response = $client->cart()->updateCustomer(
     billing: [
         'first_name' => 'John',
@@ -260,10 +296,27 @@ $response = $client->cart()->updateCustomer(
     ]
 );
 
-// Update both at once
+// Billing + a distinct shipping address (sets ship_to_different_address: true)
 $response = $client->cart()->updateCustomer(
-    billing: ['email' => 'john@example.com'],
-    shipping: ['address_1' => '456 Oak Ave']
+    billing: [
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'email' => 'john@example.com',
+        'address_1' => '123 Main St',
+        'city' => 'New York',
+        'state' => 'NY',
+        'postcode' => '10001',
+        'country' => 'US',
+    ],
+    shipping: [
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'address_1' => '456 Oak Ave',
+        'city' => 'Los Angeles',
+        'state' => 'CA',
+        'postcode' => '90001',
+        'country' => 'US',
+    ]
 );
 ```
 
@@ -285,19 +338,23 @@ $response = $client->cart()->getShippingMethods();
 
 <Note>Requires the CoCart Plus plugin.</Note>
 
+Select a shipping rate by its `rate_id` (found in a shipping package's `rates` map). Pass a `$packageId` to restrict the selection to a single package; omit it to apply the rate to every package.
+
 ```php
 $response = $client->cart()->setShippingMethod('flat_rate:1');
+
+// Restrict to one package
+$response = $client->cart()->setShippingMethod('flat_rate:1', 'package_1');
 ```
 
 ### Calculate Shipping
 
+<Warning>
+  `calculateShipping()` is deprecated. There is no address-taking shipping-calculation endpoint in the CoCart REST API — the method now ignores its `$address` argument and delegates to `calculate()`. To actually calculate shipping, call `updateCustomer()` with the destination address first (the server recalculates totals and shipping packages as part of that request), then call `calculate()` directly.
+</Warning>
+
 ```php
-$response = $client->cart()->calculateShipping([
-    'country' => 'US',
-    'state' => 'CA',
-    'postcode' => '90001',
-    'city' => 'Los Angeles',
-]);
+$response = $client->cart()->calculate();
 ```
 
 ## Fees
@@ -338,7 +395,7 @@ $response = $client->cart()->getCrossSells();
 
 <Note>Requires the CoCart Plus plugin.</Note>
 
-Submit multiple write operations in a single HTTP request. Up to 25 operations per batch.
+Submit multiple write operations in a single HTTP request for better performance. Up to 25 operations per batch.
 
 ```php
 $response = $client->batch()
@@ -347,6 +404,8 @@ $response = $client->batch()
     ->add('cart/apply-coupon', ['coupon' => 'SAVE10'])
     ->execute();
 ```
+
+For cart-only requests, the server returns the final cart state with all notices merged.
 
 ### Available Methods
 
@@ -424,6 +483,8 @@ $client->clearETagCache();
 
 ## Working with Responses
 
+All cart methods return a `Response` object with cart-specific helpers:
+
 ```php
 $response = $client->cart()->get();
 
@@ -438,6 +499,18 @@ $count = $response->getItemCount();
 
 // Cart key (from headers)
 $cartKey = $response->getCartKey();
+
+// Cart hash
+$hash = $response->getCartHash();
+
+// Notices
+$notices = $response->getNotices();
+
+// Tax lines, normalized to a flat array of ['key' => ..., 'name' => ..., 'price' => ...]
+// regardless of whether the plugin returns 'taxes' as an array or a legacy
+// object keyed by tax rate code.
+$taxes = $response->getTaxes();
+$hasTaxes = $response->hasTaxes();
 
 // Dot-notation access
 $subtotal = $response->get('totals.subtotal');

@@ -415,9 +415,12 @@
                           "sdk/typescript/authentication",
                           "sdk/typescript/cart",
                           "sdk/typescript/products",
+                          "sdk/typescript/account",
                           "sdk/typescript/sessions",
+                          "sdk/typescript/extensions",
                           "sdk/typescript/error-handling",
-                          "sdk/typescript/utilities"
+                          "sdk/typescript/utilities",
+                          "sdk/typescript/localization"
                         ]
                       },
                       {
@@ -428,6 +431,7 @@
                           "sdk/php/authentication",
                           "sdk/php/cart",
                           "sdk/php/products",
+                          "sdk/php/account",
                           "sdk/php/sessions",
                           "sdk/php/error-handling",
                           "sdk/php/utilities"
@@ -441,6 +445,7 @@
                           "sdk/python/authentication",
                           "sdk/python/cart",
                           "sdk/python/products",
+                          "sdk/python/account",
                           "sdk/python/sessions",
                           "sdk/python/error-handling",
                           "sdk/python/utilities"
@@ -458,6 +463,62 @@
                           "sdk/go/error-handling",
                           "sdk/go/utilities"
                         ]
+                      },
+                      {
+                        "group": "Kotlin SDK",
+                        "icon": "android",
+                        "pages": [
+                          "sdk/kotlin",
+                          "sdk/kotlin/authentication",
+                          "sdk/kotlin/cart",
+                          "sdk/kotlin/products",
+                          "sdk/kotlin/account",
+                          "sdk/kotlin/sessions",
+                          "sdk/kotlin/error-handling",
+                          "sdk/kotlin/utilities"
+                        ]
+                      },
+                      {
+                        "group": "Swift SDK",
+                        "icon": "apple",
+                        "pages": [
+                          "sdk/swift",
+                          "sdk/swift/authentication",
+                          "sdk/swift/cart",
+                          "sdk/swift/products",
+                          "sdk/swift/account",
+                          "sdk/swift/sessions",
+                          "sdk/swift/error-handling",
+                          "sdk/swift/utilities"
+                        ]
+                      },
+                      {
+                        "group": "Flutter SDK",
+                        "icon": "mobile",
+                        "pages": [
+                          "sdk/flutter",
+                          "sdk/flutter/authentication",
+                          "sdk/flutter/cart",
+                          "sdk/flutter/products",
+                          "sdk/flutter/account",
+                          "sdk/flutter/sessions",
+                          "sdk/flutter/error-handling",
+                          "sdk/flutter/utilities"
+                        ]
+                      },
+                      {
+                        "group": "React Native SDK",
+                        "icon": "react",
+                        "pages": [
+                          "sdk/react-native",
+                          "sdk/react-native/authentication",
+                          "sdk/react-native/cart",
+                          "sdk/react-native/products",
+                          "sdk/react-native/account",
+                          "sdk/react-native/hooks",
+                          "sdk/react-native/error-handling",
+                          "sdk/react-native/utilities"
+                        ]
                       }
                     ]
                   },
@@ -474,7 +535,8 @@
                       "sdk/typescript/frameworks/fastify",
                       "sdk/typescript/frameworks/elysiajs",
                       "sdk/typescript/frameworks/deno",
-                      "sdk/typescript/frameworks/vite"
+                      "sdk/typescript/frameworks/vite",
+                      "sdk/typescript/frameworks/tanstack-start"
                     ]
                   },
                   {
@@ -510,19 +572,20 @@
                     "icon": "code",
                     "pages": [
                       {
+                        "group": "Next.js",
+                        "icon": "react",
+                        "pages": [
+                          "tutorials/nextjs/setup",
+                          "tutorials/nextjs/cart-drawer"
+                        ],
+                        "tag": "New"
+                      },
+                      {
                         "group": "Astro",
                         "icon": "rocket",
                         "pages": [
                           "tutorials/astro/setup",
                           "tutorials/astro/oxbowui-product-list"
-                        ],
-                        "tag": "FEEDBACK REQUIRED"
-                      },
-                      {
-                        "group": "Next.js",
-                        "icon": "react",
-                        "pages": [
-                          "tutorials/nextjs/setup"
                         ],
                         "tag": "FEEDBACK REQUIRED"
                       },
@@ -1028,9 +1091,12 @@
                           "sdk/typescript/authentication",
                           "sdk/typescript/cart",
                           "sdk/typescript/products",
+                          "sdk/typescript/account",
                           "sdk/typescript/sessions",
+                          "sdk/typescript/extensions",
                           "sdk/typescript/error-handling",
-                          "sdk/typescript/utilities"
+                          "sdk/typescript/utilities",
+                          "sdk/typescript/localization"
                         ]
                       },
                       {
@@ -1041,6 +1107,7 @@
                           "sdk/php/authentication",
                           "sdk/php/cart",
                           "sdk/php/products",
+                          "sdk/php/account",
                           "sdk/php/sessions",
                           "sdk/php/error-handling",
                           "sdk/php/utilities"
@@ -1054,6 +1121,7 @@
                           "sdk/python/authentication",
                           "sdk/python/cart",
                           "sdk/python/products",
+                          "sdk/python/account",
                           "sdk/python/sessions",
                           "sdk/python/error-handling",
                           "sdk/python/utilities"
@@ -1071,6 +1139,62 @@
                           "sdk/go/error-handling",
                           "sdk/go/utilities"
                         ]
+                      },
+                      {
+                        "group": "Kotlin SDK",
+                        "icon": "android",
+                        "pages": [
+                          "sdk/kotlin",
+                          "sdk/kotlin/authentication",
+                          "sdk/kotlin/cart",
+                          "sdk/kotlin/products",
+                          "sdk/kotlin/account",
+                          "sdk/kotlin/sessions",
+                          "sdk/kotlin/error-handling",
+                          "sdk/kotlin/utilities"
+                        ]
+                      },
+                      {
+                        "group": "Swift SDK",
+                        "icon": "apple",
+                        "pages": [
+                          "sdk/swift",
+                          "sdk/swift/authentication",
+                          "sdk/swift/cart",
+                          "sdk/swift/products",
+                          "sdk/swift/account",
+                          "sdk/swift/sessions",
+                          "sdk/swift/error-handling",
+                          "sdk/swift/utilities"
+                        ]
+                      },
+                      {
+                        "group": "Flutter SDK",
+                        "icon": "mobile",
+                        "pages": [
+                          "sdk/flutter",
+                          "sdk/flutter/authentication",
+                          "sdk/flutter/cart",
+                          "sdk/flutter/products",
+                          "sdk/flutter/account",
+                          "sdk/flutter/sessions",
+                          "sdk/flutter/error-handling",
+                          "sdk/flutter/utilities"
+                        ]
+                      },
+                      {
+                        "group": "React Native SDK",
+                        "icon": "react",
+                        "pages": [
+                          "sdk/react-native",
+                          "sdk/react-native/authentication",
+                          "sdk/react-native/cart",
+                          "sdk/react-native/products",
+                          "sdk/react-native/account",
+                          "sdk/react-native/hooks",
+                          "sdk/react-native/error-handling",
+                          "sdk/react-native/utilities"
+                        ]
                       }
                     ]
                   },
@@ -1087,7 +1211,8 @@
                       "sdk/typescript/frameworks/fastify",
                       "sdk/typescript/frameworks/elysiajs",
                       "sdk/typescript/frameworks/deno",
-                      "sdk/typescript/frameworks/vite"
+                      "sdk/typescript/frameworks/vite",
+                      "sdk/typescript/frameworks/tanstack-start"
                     ]
                   },
                   {
@@ -1123,19 +1248,20 @@
                     "icon": "code",
                     "pages": [
                       {
+                        "group": "Next.js",
+                        "icon": "react",
+                        "pages": [
+                          "tutorials/nextjs/setup",
+                          "tutorials/nextjs/cart-drawer"
+                        ],
+                        "tag": "New"
+                      },
+                      {
                         "group": "Astro",
                         "icon": "rocket",
                         "pages": [
                           "tutorials/astro/setup",
                           "tutorials/astro/oxbowui-product-list"
-                        ],
-                        "tag": "FEEDBACK REQUIRED"
-                      },
-                      {
-                        "group": "Next.js",
-                        "icon": "react",
-                        "pages": [
-                          "tutorials/nextjs/setup"
                         ],
                         "tag": "FEEDBACK REQUIRED"
                       },
@@ -1696,9 +1822,12 @@
                           "sdk/typescript/authentication",
                           "sdk/typescript/cart",
                           "sdk/typescript/products",
+                          "sdk/typescript/account",
                           "sdk/typescript/sessions",
+                          "sdk/typescript/extensions",
                           "sdk/typescript/error-handling",
-                          "sdk/typescript/utilities"
+                          "sdk/typescript/utilities",
+                          "sdk/typescript/localization"
                         ]
                       },
                       {
@@ -1709,6 +1838,7 @@
                           "sdk/php/authentication",
                           "sdk/php/cart",
                           "sdk/php/products",
+                          "sdk/php/account",
                           "sdk/php/sessions",
                           "sdk/php/error-handling",
                           "sdk/php/utilities"
@@ -1722,6 +1852,7 @@
                           "sdk/python/authentication",
                           "sdk/python/cart",
                           "sdk/python/products",
+                          "sdk/python/account",
                           "sdk/python/sessions",
                           "sdk/python/error-handling",
                           "sdk/python/utilities"
@@ -1739,6 +1870,62 @@
                           "sdk/go/error-handling",
                           "sdk/go/utilities"
                         ]
+                      },
+                      {
+                        "group": "Kotlin SDK",
+                        "icon": "android",
+                        "pages": [
+                          "sdk/kotlin",
+                          "sdk/kotlin/authentication",
+                          "sdk/kotlin/cart",
+                          "sdk/kotlin/products",
+                          "sdk/kotlin/account",
+                          "sdk/kotlin/sessions",
+                          "sdk/kotlin/error-handling",
+                          "sdk/kotlin/utilities"
+                        ]
+                      },
+                      {
+                        "group": "Swift SDK",
+                        "icon": "apple",
+                        "pages": [
+                          "sdk/swift",
+                          "sdk/swift/authentication",
+                          "sdk/swift/cart",
+                          "sdk/swift/products",
+                          "sdk/swift/account",
+                          "sdk/swift/sessions",
+                          "sdk/swift/error-handling",
+                          "sdk/swift/utilities"
+                        ]
+                      },
+                      {
+                        "group": "Flutter SDK",
+                        "icon": "mobile",
+                        "pages": [
+                          "sdk/flutter",
+                          "sdk/flutter/authentication",
+                          "sdk/flutter/cart",
+                          "sdk/flutter/products",
+                          "sdk/flutter/account",
+                          "sdk/flutter/sessions",
+                          "sdk/flutter/error-handling",
+                          "sdk/flutter/utilities"
+                        ]
+                      },
+                      {
+                        "group": "React Native SDK",
+                        "icon": "react",
+                        "pages": [
+                          "sdk/react-native",
+                          "sdk/react-native/authentication",
+                          "sdk/react-native/cart",
+                          "sdk/react-native/products",
+                          "sdk/react-native/account",
+                          "sdk/react-native/hooks",
+                          "sdk/react-native/error-handling",
+                          "sdk/react-native/utilities"
+                        ]
                       }
                     ]
                   },
@@ -1755,7 +1942,8 @@
                       "sdk/typescript/frameworks/fastify",
                       "sdk/typescript/frameworks/elysiajs",
                       "sdk/typescript/frameworks/deno",
-                      "sdk/typescript/frameworks/vite"
+                      "sdk/typescript/frameworks/vite",
+                      "sdk/typescript/frameworks/tanstack-start"
                     ]
                   },
                   {
@@ -1764,6 +1952,19 @@
                     "pages": [
                       "sdk/typescript/frameworks/framer",
                       "sdk/typescript/frameworks/webflow"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "AI Agents",
+                "icon": "robot",
+                "groups": [
+                  {
+                    "group": "AI Agents",
+                    "pages": [
+                      "ai-agents/index",
+                      "ai-agents/how-it-works"
                     ]
                   }
                 ]
@@ -1809,19 +2010,20 @@
                     "icon": "code",
                     "pages": [
                       {
+                        "group": "Next.js",
+                        "icon": "react",
+                        "pages": [
+                          "tutorials/nextjs/setup",
+                          "tutorials/nextjs/cart-drawer"
+                        ],
+                        "tag": "New"
+                      },
+                      {
                         "group": "Astro",
                         "icon": "rocket",
                         "pages": [
                           "tutorials/astro/setup",
                           "tutorials/astro/oxbowui-product-list"
-                        ],
-                        "tag": "FEEDBACK REQUIRED"
-                      },
-                      {
-                        "group": "Next.js",
-                        "icon": "react",
-                        "pages": [
-                          "tutorials/nextjs/setup"
                         ],
                         "tag": "FEEDBACK REQUIRED"
                       },

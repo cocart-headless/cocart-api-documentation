@@ -1,0 +1,110 @@
+---
+title: "Swift SDK: Account API"
+sidebarTitle: "Account API"
+description: "Access customer profiles, order history, downloads, and reviews with the CoCart Swift SDK Account API."
+'og:title': "Customer Account API — CoCart Swift SDK"
+'og:description': "Read and update a logged-in customer's profile, list and fetch orders (including guest order lookup), downloadable files, and submitted reviews from Swift."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
+</Info>
+
+<Note>
+  The Account API is fully supported by this SDK, but the Account API itself is not yet available in a released version of the CoCart plugin — it's coming in a future release. This documentation is ready for when it ships.
+</Note>
+
+The account resource gives an authenticated customer access to their own profile, password, order history, downloads, and reviews. All methods require the customer to be authenticated (Basic Auth or JWT).
+
+Access the account endpoint via `client.account()`.
+
+```swift
+let client = CoCart("https://your-store.com", options: CoCartOptions(
+    jwtToken: "eyJ..."
+))
+```
+
+See [Authentication](/sdk/swift/authentication) for the full guide including JWT auto-refresh.
+
+## Profile
+
+### Get Profile
+
+```swift
+let response = try await client.account().getProfile()
+```
+
+### Update Profile
+
+```swift
+let response = try await client.account().updateProfile([
+    "account_first_name": "Jane",
+    "account_last_name": "Doe",
+    "account_display_name": "Jane Doe",
+    "account_email": "jane@example.com",
+])
+```
+
+### Change Password
+
+```swift
+let response = try await client.account().changePassword(
+    current: "old-password",
+    password: "new-password",
+    confirm: "new-password"
+)
+```
+
+## Orders
+
+### Get Order History
+
+```swift
+let response = try await client.account().getOrders()
+
+// With pagination
+let response = try await client.account().getOrders(["page": "2", "per_page": "10", "order": "DESC"])
+```
+
+### Get a Single Order
+
+```swift
+let response = try await client.account().getOrder(123)
+```
+
+### Get a Guest Order
+
+Looks up an order placed as a guest, verified by billing email:
+
+```swift
+let response = try await client.account().getGuestOrder(123, email: "jane@example.com")
+```
+
+## Downloads
+
+### Get Downloads for an Order
+
+```swift
+let response = try await client.account().getOrderDownloads(123)
+
+// For a guest order
+let response = try await client.account().getGuestOrderDownloads(123, email: "jane@example.com")
+```
+
+### Get All Downloads
+
+```swift
+let response = try await client.account().getDownloads()
+```
+
+## Reviews
+
+### Get Reviews
+
+```swift
+let response = try await client.account().getReviews()
+```
+
+## Error Handling
+
+See [Error Handling](/sdk/swift/error-handling) for how a missing CoCart plugin/version is reported (a `cocart_plugin_required` error) when calling these methods.

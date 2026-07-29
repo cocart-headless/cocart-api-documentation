@@ -7,7 +7,7 @@ description: "Browse your WooCommerce catalog with the CoCart TypeScript SDK —
 ---
 
 <Info>
-  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 28th, 2026.
 </Info>
 
 The Products API lets you browse your store's catalog. It is publicly accessible and does not require authentication.
@@ -19,8 +19,8 @@ const products = client.products();
 ## List Products
 
 ```ts
-const response = await client.products().all();
-const response = await client.products().all({ per_page: '20', page: '1' });
+const response = await products.all();
+const response = await products.all({ per_page: '20', page: '1' });
 ```
 
 ## Parameters Reference
@@ -48,10 +48,10 @@ All list methods accept an optional `params` object:
 ### By Category
 
 ```ts
-const response = await client.products().byCategory('electronics');
+const response = await products.byCategory('electronics');
 
 // With additional params
-const response = await client.products().byCategory('electronics', {
+const response = await products.byCategory('electronics', {
   per_page: '20',
   orderby: 'price',
   order: 'asc',
@@ -61,42 +61,42 @@ const response = await client.products().byCategory('electronics', {
 ### By Tag
 
 ```ts
-const response = await client.products().byTag('new-arrival');
+const response = await products.byTag('new-arrival');
 ```
 
 ### Featured Products
 
 ```ts
-const response = await client.products().featured();
-const response = await client.products().featured({ per_page: '4' });
+const response = await products.featured();
+const response = await products.featured({ per_page: '4' });
 ```
 
 ### Products on Sale
 
 ```ts
-const response = await client.products().onSale();
+const response = await products.onSale();
 ```
 
 ### By Price Range
 
 ```ts
 // Products between $10 and $50
-const response = await client.products().byPriceRange(10, 50);
+const response = await products.byPriceRange(10, 50);
 
 // Products under $25
-const response = await client.products().byPriceRange(null, 25);
+const response = await products.byPriceRange(null, 25);
 
 // Products over $100
-const response = await client.products().byPriceRange(100);
+const response = await products.byPriceRange(100);
 ```
 
 ### Search
 
 ```ts
-const response = await client.products().search('wireless headphones');
+const response = await products.search('wireless headphones');
 
 // Search within a category
-const response = await client.products().search('headphones', {
+const response = await products.search('headphones', {
   category: 'electronics',
 });
 ```
@@ -104,7 +104,7 @@ const response = await client.products().search('headphones', {
 ### Combining Filters
 
 ```ts
-const response = await client.products().all({
+const response = await products.all({
   category: 'clothing',
   on_sale: 'true',
   min_price: '20',
@@ -118,9 +118,9 @@ const response = await client.products().all({
 ### By Stock Status
 
 ```ts
-const response = await client.products().byStockStatus('instock');
-const response = await client.products().byStockStatus('outofstock');
-const response = await client.products().byStockStatus('onbackorder');
+const response = await products.byStockStatus('instock');
+const response = await products.byStockStatus('outofstock');
+const response = await products.byStockStatus('onbackorder');
 ```
 
 ## Pagination & Sorting
@@ -129,23 +129,23 @@ const response = await client.products().byStockStatus('onbackorder');
 
 ```ts
 // Page 1, 12 products per page
-const response = await client.products().paginate(1, 12);
+const response = await products.paginate(1, 12);
 
 // Page 2
-const response = await client.products().paginate(2, 12);
+const response = await products.paginate(2, 12);
 ```
 
 ### Sort Helper
 
 ```ts
-const response = await client.products().sortBy('price');        // Cheapest first
-const response = await client.products().sortBy('price', 'desc'); // Most expensive first
-const response = await client.products().sortBy('date', 'desc');  // Newest first
-const response = await client.products().sortBy('popularity', 'desc');
-const response = await client.products().sortBy('rating', 'desc');
+const response = await products.sortBy('price');        // Cheapest first
+const response = await products.sortBy('price', 'desc'); // Most expensive first
+const response = await products.sortBy('date', 'desc');  // Newest first
+const response = await products.sortBy('popularity', 'desc');
+const response = await products.sortBy('rating', 'desc');
 
 // Combine with other filters
-const response = await client.products().sortBy('price', 'asc', {
+const response = await products.sortBy('price', 'asc', {
   category: 'electronics',
   on_sale: 'true',
 });
@@ -156,15 +156,15 @@ const response = await client.products().sortBy('price', 'asc', {
 `allPaginated()` returns an async iterator that automatically fetches the next page when the current one is done:
 
 ```ts
-for await (const page of client.products().allPaginated({ per_page: 20 })) {
-  const products = page.toObject() as any[];
-  for (const product of products) {
+for await (const page of products.allPaginated({ per_page: 20 })) {
+  const items = page.toObject() as any[];
+  for (const product of items) {
     console.log(product.name);
   }
 }
 
 // Or collect all pages into an array
-const allPages = await client.products().allPaginated({ per_page: 20 }).toArray();
+const allPages = await products.allPaginated({ per_page: 20 }).toArray();
 ```
 
 ### Manual Pagination
@@ -175,11 +175,11 @@ const perPage = 20;
 let totalPages = 1;
 
 do {
-  const response = await client.products().paginate(page, perPage);
-  const products = response.toObject() as any[];
+  const response = await products.paginate(page, perPage);
+  const items = response.toObject() as any[];
   totalPages = response.getTotalPages() ?? 1;
 
-  for (const product of products) {
+  for (const product of items) {
     console.log(`${product.name} - $${product.price}`);
   }
 
@@ -189,10 +189,15 @@ do {
 
 ## Single Product
 
-### By ID
+### By ID or SKU
+
+`find()` accepts either the numeric product/variation ID or the product's SKU — either one works:
 
 ```ts
-const response = await client.products().find(123);
+const response = await products.find(123);
+
+// Or by SKU
+const response2 = await products.find('PCT-2024');
 
 const data = response.toObject() as any;
 console.log(data.name);
@@ -203,7 +208,7 @@ console.log(data.description);
 ### By Slug
 
 ```ts
-const response = await client.products().findBySlug('blue-hoodie');
+const response = await products.findBySlug('blue-hoodie');
 ```
 
 ## Variations
@@ -211,7 +216,7 @@ const response = await client.products().findBySlug('blue-hoodie');
 ### List All Variations
 
 ```ts
-const response = await client.products().variations(123);
+const response = await products.variations(123);
 
 for (const variation of response.toObject() as any[]) {
   console.log(`${variation.id}: ${variation.price}`);
@@ -221,7 +226,7 @@ for (const variation of response.toObject() as any[]) {
 ### Get a Specific Variation
 
 ```ts
-const response = await client.products().variation(123, 456);
+const response = await products.variation(123, 456);
 ```
 
 ## Categories
@@ -229,14 +234,14 @@ const response = await client.products().variation(123, 456);
 ### List All Categories
 
 ```ts
-const response = await client.products().categories();
-const response = await client.products().categories({ per_page: '50' });
+const response = await products.categories();
+const response = await products.categories({ per_page: '50' });
 ```
 
 ### Get a Single Category
 
 ```ts
-const response = await client.products().category(15);
+const response = await products.category(15);
 ```
 
 ## Tags
@@ -244,13 +249,13 @@ const response = await client.products().category(15);
 ### List All Tags
 
 ```ts
-const response = await client.products().tags();
+const response = await products.tags();
 ```
 
 ### Get a Single Tag
 
 ```ts
-const response = await client.products().tag(8);
+const response = await products.tag(8);
 ```
 
 ## Attributes
@@ -260,33 +265,33 @@ Attributes define product variations — things like "Color" or "Size". Each att
 ### List All Attributes
 
 ```ts
-const response = await client.products().attributes();
+const response = await products.attributes();
 ```
 
 ### Get a Single Attribute
 
 ```ts
-const response = await client.products().attribute(1);
+const response = await products.attribute(1);
 ```
 
 ### Get Attribute Terms
 
 ```ts
-const response = await client.products().attributeTerms(1);
+const response = await products.attributeTerms(1);
 ```
 
 ### Get a Single Attribute Term
 
 ```ts
-const response = await client.products().attributeTerm(1, 5);
+const response = await products.attributeTerm(1, 5);
 ```
 
 ### Slug-Based Attribute Lookups
 
 ```ts
-const response = await client.products().attributeBySlug('color');
-const response = await client.products().attributeTermsBySlug('color');
-const response = await client.products().attributeTermBySlug('color', 'red');
+const response = await products.attributeBySlug('color');
+const response = await products.attributeTermsBySlug('color');
+const response = await products.attributeTermBySlug('color', 'red');
 ```
 
 ## Brands
@@ -294,23 +299,23 @@ const response = await client.products().attributeTermBySlug('color', 'red');
 ### List All Brands
 
 ```ts
-const response = await client.products().brands();
-const response = await client.products().brands({ per_page: '50' });
+const response = await products.brands();
+const response = await products.brands({ per_page: '50' });
 ```
 
 ### Get a Single Brand
 
 ```ts
-const response = await client.products().brand(5);
+const response = await products.brand(5);
 ```
 
 ### Filter Products by Brand
 
 ```ts
-const response = await client.products().byBrand('nike');
+const response = await products.byBrand('nike');
 
 // With additional params
-const response = await client.products().byBrand('nike', {
+const response = await products.byBrand('nike', {
   per_page: '20',
   orderby: 'price',
   order: 'asc',
@@ -322,13 +327,13 @@ const response = await client.products().byBrand('nike', {
 ### List All Reviews
 
 ```ts
-const response = await client.products().reviews();
+const response = await products.reviews();
 ```
 
 ### Reviews for a Specific Product
 
 ```ts
-const response = await client.products().productReviews(123);
+const response = await products.productReviews(123);
 ```
 
 ### My Reviews
@@ -336,7 +341,7 @@ const response = await client.products().productReviews(123);
 Get reviews written by the authenticated user:
 
 ```ts
-const response = await client.products().myReviews();
+const response = await products.myReviews();
 ```
 
 ## SEO Data
@@ -346,7 +351,7 @@ const response = await client.products().myReviews();
 ### By Product ID
 
 ```ts
-const response = await client.products().seo(123);
+const response = await products.seo(123);
 
 console.log(response.get('provider'));           // 'yoast', 'rankmath', etc.
 console.log(response.get('meta_data.title'));
@@ -357,16 +362,16 @@ console.log(response.get('schema'));             // JSON-LD structured data
 ### By Product Slug
 
 ```ts
-const response = await client.products().seoBySlug('blue-hoodie');
+const response = await products.seoBySlug('blue-hoodie');
 ```
 
 ## Working with Responses
 
 ```ts
-const response = await client.products().all({ per_page: '5' });
+const response = await products.all({ per_page: '5' });
 
 // As object
-const products = response.toObject();
+const productList = response.toObject();
 
 // Check success
 if (response.isSuccessful()) {
@@ -376,10 +381,47 @@ if (response.isSuccessful()) {
 }
 
 // Dot-notation access
-const response2 = await client.products().find(123);
+const response2 = await products.find(123);
 console.log(response2.get('name'));
 console.log(response2.get('price'));
 console.log(response2.get('categories.0.name'));
 ```
 
 See [Error Handling](/sdk/typescript/error-handling) for handling API errors.
+
+## Custom Fields
+
+If your store adds custom fields to product responses — via ACF, custom REST API extensions, or `register_rest_field()` — they are already accessible. The `Product` type includes an index signature (`[key: string]: unknown`) so any extra fields returned by the API pass through the SDK without being stripped.
+
+Access them directly on the response object:
+
+```ts
+const response = await products.find(123);
+const product = response.toObject();
+
+// Custom field added server-side
+console.log((product as any).my_custom_field);
+console.log((product as any).acf?.colour);
+```
+
+For a better experience, extend the `Product` interface in your own codebase to type your custom fields:
+
+```ts
+import type { Product } from '@cocartheadless/sdk';
+
+interface MyProduct extends Product {
+  my_custom_field: string;
+  acf?: {
+    colour: string;
+    size_guide_url: string;
+  };
+}
+
+const response = await products.find(123);
+const product = response.toObject() as MyProduct;
+
+console.log(product.my_custom_field); // typed
+console.log(product.acf?.colour);     // typed
+```
+
+This pattern works for all product methods — `all()`, `find()`, `search()`, `byCategory()`, etc.

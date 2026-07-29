@@ -1,0 +1,281 @@
+---
+title: "Kotlin SDK: Authentication"
+sidebarTitle: "Authentication"
+description: "Authenticate with the CoCart Kotlin SDK — guest sessions, Basic Auth, JWT with auto-refresh, two-factor authentication, and consumer keys."
+'og:title': "Authentication — CoCart Kotlin SDK"
+'og:description': "Guest sessions, Basic Auth, JWT with auto-refresh, two-factor authentication, consumer keys, and custom auth headers with the CoCart Kotlin SDK for Android."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
+</Info>
+
+Authentication is how your application proves to the server who is making the request. The server needs to know whether you're a guest shopper, a registered customer, or a store admin, so it can show you the right cart and allow the right actions.
+
+CoCart supports multiple authentication methods depending on the use case.
+
+## Guest Customers
+
+No authentication is needed for guest cart operations. A guest is someone shopping without logging in. The SDK automatically manages the guest session for you:
+
+1. **First request** — No cart key exists yet. The CoCart server creates a new guest session and returns a `Cart-Key` in the response.
+2. **SDK extracts it** — The SDK reads the `Cart-Key` from the response and stores it automatically in `EncryptedSharedPreferences`.
+3. **Subsequent requests** — The stored cart key is sent with every request so the server knows which cart belongs to which visitor.
+
+```kotlin
+val client = CoCart(context, "https://your-store.com")
+
+// Add item — cart key is captured from the response automatically
+client.cart().addItem(123, 2)
+
+println(client.getCartKey()) // "guest_abc123..."
+
+// Subsequent requests use the same cart
+val cart = client.cart().get()
+```
+
+### Restoring a Session
+
+Call `restoreSession()` once on app start to reload a previously stored cart key from `EncryptedSharedPreferences`:
+
+```kotlin
+class MyViewModel : ViewModel() {
+    val client = CoCart(context, "https://your-store.com")
+
+    init {
+        viewModelScope.launch {
+            client.restoreSession()
+            // Now the client has the persisted cart key
+        }
+    }
+}
+```
+
+### Resuming with a Known Cart Key
+
+If you already have a cart key, pass it directly:
+
+```kotlin
+val client = CoCart(context, "https://your-store.com", CoCartOptions(
+    cartKey = "existing_cart_key"
+))
+```
+
+## Basic Auth
+
+Basic Authentication sends the username and password encoded in a header with every request. It should only be used over HTTPS.
+
+```kotlin
+val client = CoCart(context, "https://your-store.com", CoCartOptions(
+    username = "customer@email.com",
+    password = "customer_password"
+))
+
+// Or set at runtime
+val client2 = CoCart(context, "https://your-store.com")
+client2.setAuth("customer@email.com", "password")
+
+// Check auth status
+client2.isAuthenticated() // true
+client2.isGuest()         // false
+```
+
+## JWT Authentication
+
+JWT (JSON Web Token) is a more secure authentication method. Instead of sending your password with every request, you log in once and receive a short-lived token. When it expires, the SDK can automatically refresh it without asking the customer to log in again.
+
+If the [CoCart JWT Authentication](https://wordpress.org/plugins/cocart-jwt-authentication/) plugin (v3.0+) is installed, `login()` acquires JWT tokens automatically. If the plugin is not installed, `login()` throws an `AuthException`. For stores without JWT, use Basic Auth via `setAuth()`.
+
+### Login
+
+```kotlin
+val client = CoCart(context, "https://your-store.com")
+
+val response = client.login("customer@email.com", "password")
+
+println(response.get("display_name")) // "John"
+println(response.get("user_id"))      // "123"
+
+// Subsequent requests automatically use the acquired credentials
+val cart = client.cart().get()
+```
+
+### Logout
+
+```kotlin
+client.logout() // Clears JWT and refresh tokens, resets to guest mode
+```
+
+### Refresh an Expired Token
+
+```kotlin
+client.jwt().refresh()
+```
+
+### Validate a Token
+
+```kotlin
+client.jwt().validate()
+```
+
+### Check Token Expiry
+
+JWT tokens have a built-in expiration time. You can check locally — without contacting the server — whether the token has expired:
+
+```kotlin
+// Check if expired (with optional leeway in seconds)
+if (client.jwt().isTokenExpired()) {
+    client.jwt().refresh()
+}
+
+// Refresh 5 minutes before expiry
+if (client.jwt().isTokenExpired(leeway = 300)) {
+    client.jwt().refresh()
+}
+
+// Get the expiry timestamp
+val expiry = client.jwt().getTokenExpiry()
+if (expiry != null) {
+    println("Token expires at: $expiry")
+}
+```
+
+### Auto-Refresh
+
+When auto-refresh is enabled, the SDK detects expired tokens behind the scenes, requests a new one using the refresh token, and retries — all transparently:
+
+```kotlin
+client.setJwtToken("eyJ...")
+client.setRefreshToken("refresh_hash_...")
+client.jwt().setAutoRefresh(true)
+
+// Expired tokens are refreshed and retried automatically
+val cart = client.cart().get()
+```
+
+Use `withAutoRefresh` to wrap a block of calls:
+
+```kotlin
+val result = client.jwt().withAutoRefresh {
+    client.cart().get()
+}
+```
+
+### JWT Utility Methods
+
+```kotlin
+client.jwt().hasTokens()            // true if a JWT token is set
+client.jwt().isTokenExpired()       // true if token is expired (local check)
+client.jwt().getTokenExpiry()       // unix timestamp of token expiry, or null
+client.jwt().isAutoRefreshEnabled() // check auto-refresh status
+client.jwt().setAutoRefresh(true)   // enable/disable at runtime
+```
+
+## Two-Factor Authentication
+
+Two-Factor Authentication (2FA) adds an extra layer of security. After entering their username and password, the customer must also provide a verification code from an authenticator app, via email, or a backup code.
+
+This requires the [WordPress Two Factor](https://wordpress.org/plugins/two-factor/) plugin alongside CoCart Plus v1.6.0+.
+
+### The Two-Step Login Flow
+
+When a customer with 2FA enabled logs in, the server responds with a challenge rather than a JWT token. The SDK translates this into a `TwoFactorAuthRequiredException`, which you catch and handle by prompting the customer for their code:
+
+```kotlin
+import com.cocart.sdk.errors.TwoFactorAuthRequiredException
+
+try {
+    client.login("customer@email.com", "password")
+    // Login succeeded — no 2FA configured for this user
+} catch (e: TwoFactorAuthRequiredException) {
+    // Server requires a 2FA code
+    println("Available providers: ${e.availableProviders}") // ["totp", "email"]
+    println("Default provider: ${e.defaultProvider}")       // "totp"
+    println("Email already sent: ${e.emailSent}")           // false
+
+    // Prompt the customer for their verification code
+    val code = promptUserForCode()
+
+    // Complete the login with the code
+    client.jwt().loginWith2fa("customer@email.com", "password", code)
+}
+```
+
+### Specifying a Provider
+
+```kotlin
+// Use email provider (server sends a code via email)
+client.jwt().loginWith2fa("customer@email.com", "password", code, provider = "email")
+
+// Use TOTP provider (code from authenticator app)
+client.jwt().loginWith2fa("customer@email.com", "password", code, provider = "totp")
+```
+
+### TwoFactorAuthRequiredException Properties
+
+| Property | Type | Description |
+|---|---|---|
+| `availableProviders` | `List<String>` | Providers the user can choose from (e.g. `["totp", "email"]`) |
+| `defaultProvider` | `String?` | The provider the server will use by default |
+| `emailSent` | `Boolean` | Whether the server has already sent a code via email |
+
+## Consumer Keys (Admin)
+
+Consumer keys are API credentials generated in the WooCommerce admin panel (WooCommerce > Settings > Advanced > REST API). They are meant for server-to-server access and administrative operations like managing cart sessions.
+
+```kotlin
+val client = CoCart(context, "https://your-store.com", CoCartOptions(
+    consumerKey = "ck_xxxxx",
+    consumerSecret = "cs_xxxxx"
+))
+
+val sessions = client.sessions().all()
+```
+
+## Custom Auth Header Name
+
+Some hosting providers or reverse proxies strip or block the `Authorization` header. You can configure the SDK to send credentials under a different header name:
+
+```kotlin
+val client = CoCart(context, "https://your-store.com", CoCartOptions(
+    authHeaderName = "X-Auth-Token",
+    username = "customer@email.com",
+    password = "password"
+))
+// Sends: X-Auth-Token: Basic <base64>
+```
+
+This works with all auth methods (Basic Auth, JWT, Consumer Keys). You can also set it at runtime:
+
+```kotlin
+val client = CoCart(context, "https://your-store.com")
+    .setAuthHeaderName("X-Auth-Token")
+    .setAuth("user", "pass")
+```
+
+## Authentication Priority
+
+If multiple authentication methods are configured, the SDK uses this priority order:
+
+1. **JWT Token** (`jwtToken`) — `Authorization: Bearer <token>`
+2. **Basic Auth** (`username` / `password`) — `Authorization: Basic <base64>`
+3. **Consumer Keys** (`consumerKey` / `consumerSecret`) — `Authorization: Basic <base64>`
+4. **Guest** — no auth header; cart key sent via query param and one header — `Cart-Key` for `MainPlugin.BASIC`, `CoCart-API-Cart-Key` for `MainPlugin.LEGACY`
+
+### Switching Auth at Runtime
+
+```kotlin
+// Start with JWT
+val client = CoCart(context, "https://your-store.com", CoCartOptions(
+    jwtToken = "eyJ..."
+))
+
+// Switch to Basic Auth (clears JWT)
+client.setAuth("user", "pass")
+
+// Switch to JWT (clears Basic Auth)
+client.setJwtToken("new.jwt.token")
+
+// Clear everything — back to guest
+client.clearSession()
+```

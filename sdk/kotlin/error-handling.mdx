@@ -1,0 +1,297 @@
+---
+title: "Kotlin SDK: Error Handling"
+sidebarTitle: "Error Handling"
+description: "The CoCart Kotlin SDK exception hierarchy — catching errors, exception properties, and HTTP status code mapping."
+'og:title': "Error Handling — CoCart Kotlin SDK"
+'og:description': "Catch CoCartException, AuthException, ValidationException, VersionException, NetworkException, and RateLimitException with the CoCart Kotlin SDK."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
+</Info>
+
+When something goes wrong — a product doesn't exist, the customer isn't logged in, or the server has a problem — the SDK throws an exception. You catch them using `try`/`catch` blocks.
+
+## Exception Hierarchy
+
+The SDK uses a hierarchy of exception classes. A hierarchy means that `AuthException` and `ValidationException` are special types of `CoCartException` — so if you catch `CoCartException`, you catch all of them.
+
+```
+CoCartException (base)                    — any API error
+├── AuthException                         — login / permission problems (401, 403)
+│   └── TwoFactorAuthRequiredException    — 2FA code required to complete login (401)
+├── ValidationException                   — bad input (400)
+├── VersionException                      — method requires CoCart Starter (legacy mode)
+├── NetworkException                      — connection / timeout failures
+└── RateLimitException                    — 429 Too Many Requests
+```
+
+All exceptions extend `CoCartException`, which extends `Exception`. Use `is` checks to handle different types.
+
+## Catching Exceptions
+
+```kotlin
+import com.cocart.sdk.errors.*
+
+try {
+    client.cart().addItem(999, 1.0)
+} catch (e: VersionException) {
+    // Method requires CoCart Starter but SDK is in legacy mode
+    println("Upgrade required: ${e.message}")
+} catch (e: ValidationException) {
+    // 400 — product not found, out of stock, invalid quantity, etc.
+    println("Validation error: ${e.message}")
+    println("Status code: ${e.statusCode}") // 400
+} catch (e: TwoFactorAuthRequiredException) {
+    // Handle 2FA before any other AuthException check
+    println("2FA required — providers: ${e.availableProviders}")
+} catch (e: AuthException) {
+    // 401 or 403 — invalid credentials, expired token, forbidden
+    println("Auth error: ${e.message}")
+    println("Error code: ${e.errorCode}")
+    println("Status code: ${e.statusCode}") // 401 or 403
+} catch (e: RateLimitException) {
+    // 429 Too Many Requests
+    val retryAfter = e.retryAfter
+    println("Rate limited. Retry after ${retryAfter}s")
+} catch (e: NetworkException) {
+    // Connection failure, timeout, DNS error
+    println("Network error: ${e.message}")
+} catch (e: CoCartException) {
+    // Any other API error (404, 500, etc.)
+    println("API error: ${e.message}")
+    println("Status code: ${e.statusCode}")
+}
+```
+
+## Exception Properties
+
+All exceptions provide these properties:
+
+| Property | Type | Description |
+|---|---|---|
+| `message` | `String` | Human-readable error message from the API |
+| `statusCode` | `Int?` | HTTP status code (400, 401, 403, 429, 500, etc.) |
+| `data` | `Map<String, Any?>?` | Full API response body for debugging |
+
+`AuthException` also provides:
+
+| Property | Type | Description |
+|---|---|---|
+| `errorCode` | `String?` | API error code (e.g. `cocart_authentication_error`) |
+
+`RateLimitException` also provides:
+
+| Property | Type | Description |
+|---|---|---|
+| `retryAfter` | `Long?` | Seconds to wait before retrying (from `Retry-After` header) |
+
+`TwoFactorAuthRequiredException` also provides:
+
+| Property | Type | Description |
+|---|---|---|
+| `availableProviders` | `List<String>` | Providers the user can choose from (e.g. `["totp", "email"]`) |
+| `defaultProvider` | `String?` | The provider the server will use by default |
+| `emailSent` | `Boolean` | Whether the server has already sent a code via email |
+
+## Inspecting the Full API Response
+
+Every `CoCartException` carries the full API response data for debugging:
+
+```kotlin
+try {
+    client.cart().addItem(999, 1.0)
+} catch (e: CoCartException) {
+    println(e.data)
+    // e.g. { "code" -> "cocart_product_not_found", "message" -> "...", "data" -> {...} }
+}
+```
+
+## JWT Token Expiry
+
+Check if a token is expired before making requests, or handle the error after:
+
+```kotlin
+val jwt = client.jwt()
+
+// Proactive check
+if (jwt.isTokenExpired()) {
+    jwt.refresh()
+}
+
+// Or handle the error
+try {
+    client.cart().get()
+} catch (e: AuthException) {
+    if (jwt.hasTokens()) {
+        jwt.refresh()
+        client.cart().get() // Retry
+    } else {
+        throw e
+    }
+}
+```
+
+Or let the SDK handle it automatically:
+
+```kotlin
+val result = client.jwt().withAutoRefresh {
+    client.cart().get()
+}
+```
+
+See [Authentication](/sdk/kotlin/authentication#auto-refresh) for details.
+
+## HTTP Status Code Mapping
+
+| HTTP Status | Exception Thrown | Typical Causes |
+|---|---|---|
+| 400 | `ValidationException` | Invalid product ID, out of stock, invalid quantity, missing required fields |
+| 401 | `AuthException` | Missing or invalid credentials |
+| 401 | `TwoFactorAuthRequiredException` | Login succeeded but a 2FA code is required |
+| 403 | `AuthException` | Expired JWT token, insufficient permissions |
+| 404 | `CoCartException` | Endpoint not found, item key not found |
+| 429 | `RateLimitException` | Too many requests |
+| 500 | `CoCartException` | Server error |
+| Network failure | `NetworkException` | No connection, DNS failure, timeout |
+
+## Client-Side Validation Exceptions
+
+The SDK validates certain inputs before making a network request. These throw `ValidationException` immediately — no HTTP call is made:
+
+```kotlin
+try {
+    client.cart().addItem(-1, 0.0)
+} catch (e: ValidationException) {
+    // e.message  => "Product ID must be a positive integer"
+    // e.statusCode is null — no HTTP request was made
+}
+```
+
+Client-side validation checks:
+
+| Method | Validation | Error Message |
+|---|---|---|
+| `addItem(id, qty)` | `id` must be a positive integer | "Product ID must be a positive integer" |
+| `addItem(id, qty)` | `qty` must be greater than zero | "Quantity must be greater than zero" |
+| `addVariation(id, qty, ...)` | Same as above | Same as above |
+| `updateItem(key, qty)` | `qty` must be greater than zero | "Quantity must be greater than zero" |
+| `find(id)` | `id` must be a positive integer | "Product ID must be a positive integer" |
+| `variation(id, varId)` | Both IDs must be positive integers | "Product ID must be a positive integer" |
+
+Standalone validation functions are also available for use in your own code:
+
+```kotlin
+import com.cocart.sdk.validation.*
+import com.cocart.sdk.errors.ValidationException
+
+try {
+    validateProductId(-1)         // throws ValidationException
+    validateQuantity(0.0)         // throws ValidationException
+    validateEmail("not-an-email") // throws ValidationException
+} catch (e: ValidationException) {
+    println(e.message)
+}
+```
+
+## Common Error Scenarios
+
+### Product Not Found
+
+```kotlin
+try {
+    client.cart().addItem(999999, 1.0)
+} catch (e: ValidationException) {
+    // e.message => "Product not found"
+}
+```
+
+### Out of Stock
+
+```kotlin
+try {
+    client.cart().addItem(123, 100.0)
+} catch (e: CoCartException) {
+    println(e.data?.get("code")) // "cocart_not_enough_in_stock"
+}
+```
+
+### Two-Factor Authentication Required
+
+```kotlin
+import com.cocart.sdk.errors.TwoFactorAuthRequiredException
+import com.cocart.sdk.errors.AuthException
+
+try {
+    client.login("customer@email.com", "password")
+} catch (e: TwoFactorAuthRequiredException) {
+    // e.availableProviders => ["totp", "email"]
+    // e.defaultProvider    => "totp"
+    // e.emailSent          => false
+    val code = promptUserForCode()
+    client.jwt().loginWith2fa("customer@email.com", "password", code)
+} catch (e: AuthException) {
+    // Wrong password, missing plugin, etc.
+    println("Auth failed: ${e.message}")
+}
+```
+
+### CoCart Plugin Required
+
+When calling account methods without the CoCart plugin installed:
+
+```kotlin
+try {
+    client.account().getProfile()
+} catch (e: CoCartException) {
+    if (e.data?.get("code") == "cocart_plugin_required") {
+        // CoCart plugin is not active on the store
+    }
+}
+```
+
+### Legacy Plugin Version Guard
+
+When using `MainPlugin.LEGACY`, Basic-only methods throw immediately:
+
+```kotlin
+import com.cocart.sdk.errors.VersionException
+
+val client = CoCart(context, "https://your-store.com", CoCartOptions(
+    mainPlugin = MainPlugin.LEGACY
+))
+
+try {
+    client.products().findBySlug("blue-hoodie")
+} catch (e: VersionException) {
+    // e.message => "findBySlug() requires CoCart Starter. Please upgrade..."
+    // e.statusCode is null — no HTTP request was made
+}
+```
+
+### Rate Limiting
+
+```kotlin
+try {
+    client.cart().get()
+} catch (e: RateLimitException) {
+    val wait = e.retryAfter ?: 60L
+    println("Rate limited. Try again in ${wait}s")
+    // delay(wait * 1000) and retry
+}
+```
+
+### Network / Timeout Errors
+
+```kotlin
+val client = CoCart(context, "https://your-store.com", CoCartOptions(
+    timeout = 10_000L // 10 seconds
+))
+
+try {
+    client.cart().get()
+} catch (e: NetworkException) {
+    println("Network error: ${e.message}")
+    // e.cause holds the original IOException
+}
+```

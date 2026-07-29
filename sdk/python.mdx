@@ -7,15 +7,19 @@ description: "Official Python SDK for the CoCart REST API. Supports requests and
 ---
 
 <Info>
-  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
 </Info>
+
+<Warning>
+  This SDK is still in active development and hasn't had a stable release yet — the version on PyPI predates a tagged 1.0. Expect the API surface to keep moving until the first official release.
+</Warning>
 
 The official Python SDK for the CoCart REST API. Works with Python 3.9+.
 
 ## Requirements
 
 - Python 3.9 or higher
-- `requests` library _(installed automatically)_
+- One of the following HTTP clients: `requests` _(installed automatically)_, or `httpx` _(optional — `pip install httpx`)_
 - CoCart plugin installed on your WooCommerce store
 - [CoCart JWT Authentication](https://wordpress.org/plugins/cocart-jwt-authentication/) plugin _(optional, for JWT features)_
 

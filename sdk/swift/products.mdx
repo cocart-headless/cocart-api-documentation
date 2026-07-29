@@ -1,0 +1,212 @@
+---
+title: "Swift SDK: Products API"
+sidebarTitle: "Products API"
+description: "Browse, filter, and search the WooCommerce product catalog with the CoCart Swift SDK."
+'og:title': "Products API — CoCart Swift SDK"
+'og:description': "Browse, filter, paginate, and search WooCommerce products from Swift. Categories, tags, attributes, variations, and reviews — no authentication required."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
+</Info>
+
+The Products API lets you browse your store's catalog — listing products, searching, filtering by category or price, and reading product details. It is publicly accessible and does not require authentication, just like a customer browsing your store's shelves.
+
+```swift
+let products = client.products()
+```
+
+## List Products
+
+```swift
+let response = try await client.products().all()
+let response = try await client.products().all(["per_page": "20", "page": "1"])
+```
+
+## Parameters Reference
+
+**Query parameters** are options you send alongside a request to filter or control the results. They are appended to the URL as `?key=value` pairs. The SDK handles this for you — just pass a dictionary with the parameters you want.
+
+All list methods accept an optional `params` dictionary with these query parameters:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `page` | int | Page number (default: 1) |
+| `per_page` | int | Items per page (default: 10, max: 100) |
+| `search` | string | Search term |
+| `category` | string | Filter by category slug |
+| `tag` | string | Filter by tag slug |
+| `status` | string | Product status |
+| `featured` | bool | Show only featured products |
+| `on_sale` | bool | Show only products on sale |
+| `min_price` | string | Minimum price |
+| `max_price` | string | Maximum price |
+| `stock_status` | string | Stock status (`instock`, `outofstock`, `onbackorder`) |
+| `orderby` | string | Sort field (`date`, `id`, `title`, `slug`, `price`, `popularity`, `rating`) |
+| `order` | string | Sort direction (`asc`, `desc`) |
+
+## Filtering
+
+### By Category
+
+```swift
+let response = try await client.products().all(["category": "electronics"])
+
+// With additional params
+let response = try await client.products().all([
+    "category": "electronics",
+    "per_page": "20",
+    "orderby": "price",
+    "order": "asc"
+])
+```
+
+### Featured Products
+
+```swift
+let response = try await client.products().all(["featured": "true"])
+let response = try await client.products().all(["featured": "true", "per_page": "4"])
+```
+
+### Products on Sale
+
+```swift
+let response = try await client.products().all(["on_sale": "true"])
+```
+
+### By Price Range
+
+```swift
+// Products between $10 and $50
+let response = try await client.products().all(["min_price": "10", "max_price": "50"])
+
+// Products under $25
+let response = try await client.products().all(["max_price": "25"])
+
+// Products over $100
+let response = try await client.products().all(["min_price": "100"])
+```
+
+### Search
+
+```swift
+let response = try await client.products().all(["search": "wireless headphones"])
+
+// Search within a category
+let response = try await client.products().all([
+    "search": "headphones",
+    "category": "electronics"
+])
+```
+
+### Combining Filters
+
+```swift
+let response = try await client.products().all([
+    "category": "clothing",
+    "on_sale": "true",
+    "min_price": "20",
+    "max_price": "100",
+    "orderby": "popularity",
+    "order": "desc",
+    "per_page": "12"
+])
+```
+
+### By Stock Status
+
+```swift
+let response = try await client.products().all(["stock_status": "instock"])
+let response = try await client.products().all(["stock_status": "outofstock"])
+let response = try await client.products().all(["stock_status": "onbackorder"])
+```
+
+## Single Product
+
+### By ID or SKU
+
+`get()` accepts either the numeric product/variation ID or the product's SKU — either one works:
+
+```swift
+let response = try await client.products().get(123)
+
+// Or by SKU
+let response = try await client.products().get("PCT-2024")
+
+print(response.getString("name"))
+print(response.getString("price"))
+print(response.getString("description"))
+```
+
+## Variations
+
+**Variations** are the specific versions of a variable product. For example, a T-shirt product might have variations for "Red / Small", "Red / Large", "Blue / Small", etc. Each variation has its own price, stock level, and SKU.
+
+### List All Variations
+
+```swift
+let response = try await client.products().variations(123)
+```
+
+### Get a Specific Variation
+
+```swift
+let response = try await client.products().variation(123, variationID: 456)
+```
+
+## Categories
+
+### List All Categories
+
+```swift
+let response = try await client.products().categories()
+let response = try await client.products().categories(["per_page": "50"])
+```
+
+## Tags
+
+### List All Tags
+
+```swift
+let response = try await client.products().tags()
+```
+
+## Attributes
+
+**Attributes** are the properties that define product variations — things like "Color", "Size", or "Material". Each attribute has **terms** (the specific values), such as "Red", "Blue", "Green" for a "Color" attribute. Attributes are configured in WooCommerce under Products > Attributes.
+
+### List All Attributes
+
+```swift
+let response = try await client.products().attributes()
+```
+
+## Reviews
+
+### Reviews for a Specific Product
+
+```swift
+let response = try await client.products().reviews(123)
+```
+
+## Working with Responses
+
+All methods return a `CoCartResponse`:
+
+```swift
+let response = try await client.products().all(["per_page": "5"])
+
+// Access nested data with dot notation
+let response = try await client.products().get(123)
+print(response.getString("name"))
+print(response.getString("price"))
+print(response.getString("categories.0.name"))
+
+// Full data as dictionary
+let data = response.toDictionary()
+
+// Decode into your own Codable model
+let product = try response.decode(MyProduct.self)
+```
+
+See [Error Handling](/sdk/swift/error-handling) for handling API errors.

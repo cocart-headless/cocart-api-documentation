@@ -1,0 +1,138 @@
+---
+title: "Kotlin SDK: Utilities"
+sidebarTitle: "Utilities"
+description: "Currency formatting, response transformers, ETag cache management, and debug logging with the CoCart Kotlin SDK."
+'og:title': "Utilities — CoCart Kotlin SDK"
+'og:description': "Format WooCommerce prices with CurrencyFormatter, post-process responses with responseTransformer, manage the ETag cache, and enable Logcat debug output."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
+</Info>
+
+## Currency Formatter
+
+The `CurrencyFormatter` class formats WooCommerce price amounts using the currency data returned by the API. It handles symbol position, decimal separators, thousand separators, and decimal places.
+
+```kotlin
+import com.cocart.sdk.utilities.CurrencyFormatter
+
+val fmt = CurrencyFormatter()
+```
+
+### format()
+
+Formats an amount (in the store's smallest unit, e.g. cents) as a display string with the currency symbol:
+
+```kotlin
+val cart = client.cart().get()
+val currency = cart.getCurrency()!!
+
+fmt.format(4599L, currency)  // "$45.99"
+fmt.format(1000L, currency)  // "$10.00"
+```
+
+### formatDecimal()
+
+Formats an amount as a plain decimal string without the currency symbol:
+
+```kotlin
+fmt.formatDecimal(4599L, currency)  // "45.99"
+fmt.formatDecimal(1000L, currency)  // "10.00"
+```
+
+### Currency Object
+
+The currency data comes from `response.getCurrency()`. It is a `Map<String, Any?>` with these fields:
+
+| Field | Type | Example |
+|---|---|---|
+| `symbol` | `String` | `"$"` |
+| `decimals` | `Number` | `2` |
+| `decimal_separator` | `String` | `"."` |
+| `thousand_separator` | `String` | `","` |
+| `position` | `String` | `"left"` |
+
+Supported `position` values:
+
+| Value | Result |
+|---|---|
+| `"left"` | `$45.99` |
+| `"right"` | `45.99$` |
+| `"left_space"` | `$ 45.99` |
+| `"right_space"` | `45.99 $` |
+
+### Manual Currency Map
+
+You can also construct the currency map manually:
+
+```kotlin
+val currency = mapOf(
+    "symbol" to "£",
+    "decimals" to 2,
+    "decimal_separator" to ".",
+    "thousand_separator" to ",",
+    "position" to "left"
+)
+
+fmt.format(2999L, currency)  // "£29.99"
+```
+
+## Response Transformer
+
+The `responseTransformer` option lets you post-process every API response before it is returned to your code. This is useful for logging, analytics, or transforming data into a custom format:
+
+```kotlin
+import com.cocart.sdk.http.CoCartResponse
+
+val client = CoCart(context, "https://your-store.com", CoCartOptions(
+    responseTransformer = { response ->
+        // Log every response
+        println("Response ${response.statusCode}: ${response.toJson()}")
+        response // return it unchanged, or return a modified response
+    }
+))
+```
+
+The transformer receives a `CoCartResponse` and must return a `CoCartResponse`. The returned instance is what your calling code receives.
+
+## ETag Cache
+
+The SDK maintains an in-memory ETag cache to send `If-None-Match` headers on repeat requests. This is enabled by default.
+
+```kotlin
+// Disable ETags globally
+client.setETag(false)
+
+// Clear the ETag cache (forces fresh data on next request)
+client.clearETagCache()
+```
+
+When the server returns `304 Not Modified`, the response has `statusCode = 304` and `isNotModified() = true`:
+
+```kotlin
+val response = client.cart().get()
+
+if (response.isNotModified()) {
+    // Use your previously cached cart data
+} else {
+    // Process fresh data
+    val items = response.getItems()
+}
+```
+
+## Debug Logging
+
+Enable debug logging to print request/response details to Logcat:
+
+```kotlin
+val client = CoCart(context, "https://your-store.com")
+    .setDebug(true)
+```
+
+With debug enabled, each request prints:
+
+```
+[CoCart] GET https://your-store.com/wp-json/cocart/v2/cart
+[CoCart] Response 200
+```

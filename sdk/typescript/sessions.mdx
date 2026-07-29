@@ -7,7 +7,7 @@ description: "Manage cart sessions with the CoCart TypeScript SDK — admin sess
 ---
 
 <Info>
-  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 28th, 2026.
 </Info>
 
 This page covers two things:
@@ -72,11 +72,18 @@ The `SessionManager` handles a common e-commerce flow: a visitor browses as a gu
 ### Basic Setup
 
 ```ts
-import { CoCart, SessionManager, EncryptedStorage } from '@cocartheadless/sdk';
+import { CoCart, SessionManager } from '@cocartheadless/sdk';
 
-const storage = new EncryptedStorage('my-secret-key');
-const client = new CoCart('https://your-store.com', { storage });
-const session = new SessionManager(client, storage);
+// In a browser, LocalStorage is used automatically — no extra configuration needed
+const client = new CoCart('https://your-store.com');
+const session = new SessionManager(client, client.getStorage());
+```
+
+For encrypted storage, pass an `encryptionKey` — no import required:
+
+```ts
+const client = new CoCart('https://your-store.com', { encryptionKey: 'my-secret-key' });
+const session = new SessionManager(client, client.getStorage());
 ```
 
 ### Initialize a Cart
@@ -160,11 +167,10 @@ See [Storage Adapters](/sdk/typescript#storage-adapters) in the TypeScript SDK o
 A complete guest-to-customer cart transfer flow:
 
 ```ts
-import { CoCart, SessionManager, EncryptedStorage } from '@cocartheadless/sdk';
+import { CoCart, SessionManager } from '@cocartheadless/sdk';
 
-const storage = new EncryptedStorage('my-secret-key');
-const client = new CoCart('https://your-store.com', { storage });
-const session = new SessionManager(client, storage);
+const client = new CoCart('https://your-store.com', { encryptionKey: 'my-secret-key' });
+const session = new SessionManager(client, client.getStorage());
 
 // 1. Initialize guest session
 await session.initializeCart();

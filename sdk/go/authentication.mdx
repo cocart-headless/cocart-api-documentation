@@ -7,8 +7,10 @@ description: "Authenticate with CoCart using the Go SDK — guest sessions, Basi
 ---
 
 <Info>
-  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
 </Info>
+
+CoCart supports multiple authentication methods depending on the use case.
 
 ## Guest Customers
 
@@ -156,6 +158,108 @@ client.JWT().IsTokenExpired()   // true if token is expired (local check)
 client.JWT().GetTokenExpiry()   // *time.Time of token expiry (nil if no token)
 client.JWT().ClearTokens()      // clear all JWT tokens
 ```
+
+## Two Factor Authentication
+
+<Note>Requires the [WordPress Two Factor plugin](https://wordpress.org/plugins/two-factor/), alongside CoCart Plus v1.6.0+ or CoCart Community v4.8+.</Note>
+
+If a user has 2FA enabled, the server returns a `401` challenge response on the first login attempt instead of tokens. The SDK surfaces this as a `*TwoFactorRequiredError`, which you catch and handle before completing login with the OTP code.
+
+### Basic Flow
+
+```go
+import (
+    cocart "github.com/cocart-headless/cocart-sdk-go"
+    "errors"
+)
+
+client := cocart.NewClient("https://your-store.com")
+ctx := context.Background()
+
+response, err := client.JWT().Login(ctx, "customer@email.com", "password")
+if err != nil {
+    var twoFactorErr *cocart.TwoFactorRequiredError
+    if errors.As(err, &twoFactorErr) {
+        // Prompt the user for their code, then complete login
+        code := "123456" // e.g. from user input or TOTP app
+
+        response, err = client.JWT().LoginWith2FA(ctx, "customer@email.com", "password", code)
+        if err != nil {
+            log.Fatal(err)
+        }
+    } else {
+        log.Fatal(err)
+    }
+}
+
+fmt.Println(response.Get("display_name", "")) // "john"
+```
+
+### Inspecting the Challenge
+
+The error carries metadata from the server about which 2FA providers are available:
+
+```go
+var twoFactorErr *cocart.TwoFactorRequiredError
+if errors.As(err, &twoFactorErr) {
+    providers  := twoFactorErr.AvailableProviders // []string{"email", "totp"}
+    defaultP   := twoFactorErr.DefaultProvider    // "totp"
+    emailSent  := twoFactorErr.EmailSent          // true if email code was auto-sent
+
+    // Ask the user which provider to use, then:
+    response, err = client.JWT().LoginWith2FA(ctx, "customer@email.com", "password", code, "email")
+}
+```
+
+### Specifying a Provider
+
+Pass the provider name as a variadic argument. If omitted, the server uses its default:
+
+```go
+// TOTP (authenticator app)
+client.JWT().LoginWith2FA(ctx, username, password, totpCode, "totp")
+
+// Email
+client.JWT().LoginWith2FA(ctx, username, password, emailCode, "email")
+
+// Backup code
+client.JWT().LoginWith2FA(ctx, username, password, backupCode, "backup-codes")
+
+// Let server decide (uses last-used or primary provider)
+client.JWT().LoginWith2FA(ctx, username, password, code)
+```
+
+### With SessionManager (Cart Merge)
+
+If you are using `SessionManager` and want to merge a guest cart after login:
+
+```go
+session := cocart.NewSessionManager(client, storage)
+
+response, err := session.LoginWithJWT(ctx, username, password, false)
+if err != nil {
+    var twoFactorErr *cocart.TwoFactorRequiredError
+    if errors.As(err, &twoFactorErr) {
+        response, err = session.LoginWithJWT2FA(ctx, username, password, code, "", true)
+        // Guest cart is merged automatically
+        if err != nil {
+            log.Fatal(err)
+        }
+    } else {
+        log.Fatal(err)
+    }
+}
+```
+
+Pass an empty string for `provider` to use the server's default.
+
+### Supported 2FA Providers
+
+| Provider | Value | Notes |
+|---|---|---|
+| TOTP | `"totp"` | Authenticator apps (Google Authenticator, Authy). 6-digit code, 30-second window. |
+| Email | `"email"` | Code sent via email. When email is the default provider, the code is sent automatically on the first login attempt (`EmailSent` is `true`). |
+| Backup Codes | `"backup-codes"` | Single-use static codes for account recovery. |
 
 ## Consumer Keys (Admin)
 

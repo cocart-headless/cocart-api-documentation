@@ -7,7 +7,7 @@ description: "Official TypeScript/JavaScript SDK for the CoCart REST API. Zero d
 ---
 
 <Info>
-  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 28th, 2026.
 </Info>
 
 The official TypeScript SDK for the CoCart REST API. Works in Node.js 20+ and modern browsers.
@@ -39,6 +39,19 @@ bun add @cocartheadless/sdk
 ```
 
 </CodeGroup>
+
+### Via CDN (Framer, Webflow, plain HTML)
+
+For platforms where you just need a `<script>` tag — no npm required — load the SDK from jsDelivr or unpkg. This exposes all SDK exports under the `CoCart` global:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/@cocartheadless/sdk/dist/index.global.js"></script>
+<script>
+  const client = new CoCart('https://your-store.com');
+</script>
+```
+
+See the dedicated [Framer](/sdk/typescript/frameworks/framer) and [Webflow](/sdk/typescript/frameworks/webflow) guides.
 
 ## Configuration Options
 
@@ -76,12 +89,13 @@ const client = new CoCart('https://your-store.com', {
   // Retry transient failures (429, 503, timeouts)
   maxRetries: 2,
 
-  // Storage adapter (default: MemoryStorage)
+  // Storage adapter — auto-detected: LocalStorage in browsers, MemoryStorage in Node.js/SSR
+  // Pass a custom adapter to override, or use encryptionKey to switch to EncryptedStorage
   // See Sessions & Storage docs for options
-  storage: new MemoryStorage(),
+  storage: new LocalStorage(),
   storageKey: 'cocart_cart_key',
 
-  // Encryption key for EncryptedStorage
+  // Encryption key — automatically uses EncryptedStorage in the browser when set
   encryptionKey: 'your-secret-key',
 
   // Custom auth header name (default: 'Authorization')
@@ -96,6 +110,10 @@ const client = new CoCart('https://your-store.com', {
 
   // Enable debug logging to console (default: false)
   debug: true,
+
+  // Locale for SDK-internal messages (default: 'en-us')
+  // Requires a matching locale import, e.g. import '@cocartheadless/sdk/i18n/fr'
+  locale: 'en-us',
 });
 ```
 
@@ -113,6 +131,7 @@ const client = CoCart.create('https://your-store.com')
   .setAuthHeaderName('X-Auth-Token')
   .setETag(true)
   .setMainPlugin('basic')
+  .setLocale('en-us')
   .setDebug(true);
 ```
 
@@ -213,8 +232,22 @@ client.setStorage(new EncryptedStorage('new-key'));
 
 If you are building with a JavaScript framework, the SDK provides adapters that handle the differences between server-side rendering (SSR) and client-side code automatically.
 
-- [Astro Setup Guide](/sdk/typescript/frameworks/astro)
-- [Next.js Setup Guide](/sdk/typescript/frameworks/nextjs)
+- [Astro](/sdk/typescript/frameworks/astro)
+- [Next.js](/sdk/typescript/frameworks/nextjs)
+- [Nuxt](/sdk/typescript/frameworks/nuxt)
+- [SvelteKit](/sdk/typescript/frameworks/svelte)
+- [Remix](/sdk/typescript/frameworks/remix)
+- [TanStack Start](/sdk/typescript/frameworks/tanstack-start)
+- [Hono](/sdk/typescript/frameworks/hono)
+- [Fastify](/sdk/typescript/frameworks/fastify)
+- [Elysia.js](/sdk/typescript/frameworks/elysiajs)
+- [Deno](/sdk/typescript/frameworks/deno)
+- [Vite](/sdk/typescript/frameworks/vite)
+
+For platforms without a build step — Framer, Webflow, or plain HTML — load the SDK from a CDN instead:
+
+- [Framer](/sdk/typescript/frameworks/framer)
+- [Webflow](/sdk/typescript/frameworks/webflow)
 
 ## White-Labelling / Custom REST Prefix
 
@@ -282,7 +315,7 @@ Starter-only methods include:
 - `products().brands()`, `brand()`, `byBrand()`
 - `products().myReviews()`
 
-**Field filtering uses `fields` instead of `_fields`.** the community plugin uses CoCart's custom `fields` query parameter, while CoCart Starter uses the WordPress standard `_fields`. The SDK handles this automatically.
+**Field filtering uses `fields` instead of `_fields`.** The community plugin uses CoCart's custom `fields` query parameter, while CoCart Starter uses the WordPress standard `_fields`. The SDK handles this automatically.
 
 ## Quick Start
 
@@ -292,7 +325,7 @@ import { CoCart } from '@cocartheadless/sdk';
 const client = new CoCart('https://your-store.com');
 
 // Add an item to the cart
-const response = await client.cart().addItem(123, { quantity: 2 });
+const response = await client.cart().addItem(123, 2);
 
 // Get the cart
 const cart = await client.cart().get();
@@ -304,24 +337,28 @@ console.log(cart.getItemCount());
 - **Zero runtime dependencies** — uses native `fetch` (Node.js 20+)
 - **ESM + CJS dual output** — works in any environment
 - **Typed responses** with full TypeScript generics
-- **JWT authentication** with auto-refresh
+- **JWT authentication** with auto-refresh and Two Factor Authentication support
+- **Extension system** — install third-party modules via `.use()`, and typed `.batch()` for single-round-trip bulk cart operations (CoCart Plus)
 - **Encrypted localStorage** for browser session persistence (AES-256-GCM)
 - **ETag conditional requests** for reduced bandwidth
 - **Event system** for request/response lifecycle hooks
-- **Framework adapters** for Astro and Next.js
+- **Framework adapters** for Astro, Next.js, Nuxt, SvelteKit, Remix, TanStack Start, Hono, Fastify, Elysia.js, Deno, and Vite — plus CDN guides for Framer and Webflow
 - **Legacy plugin support** for older CoCart versions
 
 ## Documentation
 
 <CardGroup cols={2}>
   <Card title="Authentication" icon="lock" href="/sdk/typescript/authentication">
-    Guest sessions, Basic Auth, JWT, consumer keys, and custom auth headers
+    Guest sessions, Basic Auth, JWT, Two Factor Auth, consumer keys, and custom auth headers
   </Card>
   <Card title="Cart API" icon="cart-shopping" href="/sdk/typescript/cart">
-    Add, update, remove items, coupons, shipping, fees, and ETag caching
+    Add, update, remove items, coupons, shipping, fees, batch requests, and ETag caching
   </Card>
   <Card title="Products API" icon="shirt" href="/sdk/typescript/products">
     Browse, filter, paginate products, variations, categories, and reviews
+  </Card>
+  <Card title="Account API" icon="user" href="/sdk/typescript/account">
+    Customer profile, orders, downloads, and reviews (CoCart Plus)
   </Card>
   <Card title="Sessions API" icon="database" href="/sdk/typescript/sessions">
     Admin sessions endpoint, SessionManager, and cart transfer on login
@@ -329,11 +366,17 @@ console.log(cart.getItemCount());
   <Card title="Error Handling" icon="circle-exclamation" href="/sdk/typescript/error-handling">
     Exception hierarchy, catching errors, and HTTP status code mapping
   </Card>
+  <Card title="Extensions & Events" icon="plug" href="/sdk/typescript/extensions">
+    Install extensions with `.use()`, subscribe to lifecycle events, and `client.batch()`
+  </Card>
   <Card title="Utilities" icon="wrench" href="/sdk/typescript/utilities">
     Currency formatting, timezone helpers, and response transformers
   </Card>
+  <Card title="Localization" icon="language" href="/sdk/typescript/localization">
+    Translate SDK-internal messages independently of the store's language
+  </Card>
   <Card title="Framework Guides" icon="code" href="/sdk/typescript/frameworks/astro">
-    Astro and Next.js adapter guides
+    Astro, Next.js, Nuxt, SvelteKit, Remix, TanStack Start, and more
   </Card>
 </CardGroup>
 

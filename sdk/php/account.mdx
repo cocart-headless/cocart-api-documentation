@@ -1,0 +1,227 @@
+---
+title: "PHP SDK: Account API"
+sidebarTitle: "Account API"
+description: "Access customer profiles, order history, downloads, and reviews with the CoCart PHP SDK Account API."
+'og:title': "Customer Account API — CoCart PHP SDK"
+'og:description': "Read and update a logged-in customer's profile, list and fetch orders (including guest order lookup), downloadable files, and submitted reviews from PHP."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
+</Info>
+
+<Note>
+  The Account API is fully supported by this SDK, but the Account API itself is not yet available in a released version of the CoCart plugin — it's coming in a future release. This documentation is ready for when it ships.
+</Note>
+
+The account endpoint gives authenticated customers access to their profile, order history, downloads, and reviews. All methods require the customer to be authenticated (Basic Auth or JWT) — guest access is not supported (except the dedicated guest order/download lookups below).
+
+Access the account endpoint via `$client->account()`.
+
+<Note>
+  The account API is provided by the CoCart Plus plugin. If the plugin is not installed, any account method throws a `CoCartException` with error code `cocart_plugin_required` instead of a network error. See [Error Handling](/sdk/php/error-handling) for how this is reported.
+</Note>
+
+## Authentication
+
+Every account call must be made as an authenticated user. Set credentials when creating the client:
+
+```php
+// Basic Auth
+$client = new CoCart('https://your-store.com', [
+    'username' => 'customer@example.com',
+    'password' => 'their-password',
+]);
+
+// JWT
+$client = new CoCart('https://your-store.com', [
+    'jwt_token' => 'eyJ...',
+]);
+```
+
+See [Authentication](/sdk/php/authentication) for the full guide including JWT auto-refresh.
+
+## Profile
+
+### Get Profile
+
+Returns the customer's account details including billing and shipping addresses, order count, and total spend.
+
+```php
+$response = $client->account()->getProfile();
+$profile = $response->toArray();
+
+echo $profile['user']['first_name'];              // 'Jane'
+echo $profile['user']['email'];                    // 'jane@example.com'
+echo $profile['user']['orders_count'];              // 14
+echo $profile['user']['total_spent'];               // '320.00'
+echo $profile['user']['is_paying_customer'];        // true
+echo $profile['user']['avatar_url'];                // 'https://...'
+echo $profile['user']['addresses']['billing'];      // billing address
+echo $profile['user']['addresses']['shipping'];     // shipping address
+
+// Most recent order (null if no orders yet)
+echo $profile['recent_order']['order_id'];          // 1042
+echo $profile['recent_order']['order_date'];        // '2025-11-03T10:22:00'
+
+// Store-side meta
+echo $profile['meta']['is_vat_exempt'];             // false
+```
+
+### Update Profile
+
+Updates the customer's name, display name, and email address.
+
+```php
+$response = $client->account()->updateProfile([
+    'account_first_name' => 'Jane',
+    'account_last_name' => 'Doe',
+    'account_display_name' => 'Jane Doe',
+    'account_email' => 'jane@example.com',
+]);
+
+echo $response->get('success'); // true
+echo $response->get('message'); // 'Account details updated.'
+```
+
+### Change Password
+
+```php
+$response = $client->account()->changePassword(
+    current: 'old-password',
+    password: 'new-password',
+    confirm: 'new-password',
+);
+```
+
+## Orders
+
+### List Orders
+
+Returns a paginated list of the customer's orders.
+
+```php
+$response = $client->account()->getOrders();
+$data = $response->toArray();
+
+foreach ($data['orders'] as $order) {
+    echo $order['order_id'];      // 1042
+    echo $order['order_status'];  // 'completed'
+    echo $order['order_date'];    // '2025-11-03'
+    echo $order['item_count'];    // 3
+    echo $order['order_total'];   // '64.50'
+}
+
+// Pagination links
+echo $data['pagination']['next'];     // URL or null
+echo $data['pagination']['previous']; // URL or null
+```
+
+**Parameters:**
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `page` | `string` | `'1'` | Page number (1–100) |
+| `per_page` | `string` | `'10'` | Results per page (1–50) |
+| `order` | `'ASC' \| 'DESC'` | `'DESC'` | Sort direction |
+
+```php
+// Page 2, 20 per page, oldest first
+$response = $client->account()->getOrders(['page' => '2', 'per_page' => '20', 'order' => 'ASC']);
+```
+
+### Get a Single Order
+
+Returns full detail for one order.
+
+```php
+$response = $client->account()->getOrder(1042);
+$order = $response->toArray();
+
+echo $order['order_number'];    // '1042'
+echo $order['order_status'];    // 'completed'
+echo $order['order_currency'];  // 'USD'
+print_r($order['items']);       // line items array
+print_r($order['totals']);      // totals array
+print_r($order['downloads']);   // downloadable files on this order
+```
+
+### Get a Guest Order
+
+For guest order look-up pages — no auth required, but the order ID and billing email must match:
+
+```php
+$response = $client->account()->getGuestOrder(1042, 'jane@example.com');
+```
+
+## Downloads
+
+### All Downloads
+
+Returns every downloadable file available to the customer across all orders.
+
+```php
+$response = $client->account()->getDownloads();
+$downloads = $response->toArray();
+
+foreach ($downloads as $file) {
+    echo $file['product_name'];        // 'My eBook'
+    echo $file['download_name'];       // 'my-ebook-v2.pdf'
+    echo $file['file'];                // 'https://store.com/wp-content/...'
+    echo $file['downloads_remaining']; // '3' or 'Unlimited'
+    echo $file['download_expires'];    // '2026-12-31' or 'Never'
+}
+```
+
+### Downloads for a Single Order
+
+Returns only the downloadable files attached to a specific order.
+
+```php
+$response = $client->account()->getOrderDownloads(1042);
+$files = $response->toArray();
+```
+
+### Guest Order Downloads
+
+For guest order look-up pages — no auth required, but the order ID and billing email must match:
+
+```php
+$response = $client->account()->getGuestOrderDownloads(1042, 'jane@example.com');
+```
+
+## Reviews
+
+Returns the reviews the customer has submitted.
+
+```php
+$response = $client->account()->getReviews();
+$reviews = $response->toArray();
+```
+
+<Note>
+  The reviews endpoint is currently in development and the response shape is not yet finalized.
+</Note>
+
+## Error Handling
+
+Account methods inherit the standard SDK exception hierarchy. Authentication failures throw `AuthenticationException`, missing routes (plugin not installed) throw a `CoCartException` with error code `cocart_plugin_required`:
+
+```php
+use CoCart\Exceptions\CoCartException;
+use CoCart\Exceptions\AuthenticationException;
+
+try {
+    $profile = $client->account()->getProfile();
+} catch (AuthenticationException $e) {
+    // Redirect to login
+} catch (CoCartException $e) {
+    if ($e->getErrorCode() === 'cocart_plugin_required') {
+        // Account API plugin is not installed on this store
+    } else {
+        throw $e;
+    }
+}
+```
+
+See [Error Handling](/sdk/php/error-handling) for the full exception hierarchy.

@@ -1,0 +1,251 @@
+---
+title: "TypeScript SDK: Extensions & Events"
+sidebarTitle: "Extensions & Events"
+description: "Extend the CoCart TypeScript SDK with custom modules via .use(), subscribe to client lifecycle events, and dispatch batch requests."
+'og:title': "Extensions, Events & Batch Requests — CoCart TypeScript SDK"
+'og:description': "Write and publish CoCart SDK extensions with .use(), subscribe to request/response/retry/auth lifecycle events, and use client.batch() for single-round-trip bulk operations."
+---
+
+<Info>
+  This guide was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 28th, 2026.
+</Info>
+
+The CoCart SDK is designed to be extended. An **extension** is a small object with a `name` and an `install` function — nothing more. When you call `.use()`, the SDK calls `install(client)` and exposes whatever it returns as `client.<name>`.
+
+## How Extensions Work
+
+```text
+createMyExtension()              →  { name: 'myExtension', install(client) { ... } }
+client.use(createMyExtension())  →  calls install(client), stores the result
+client.myExtension               →  the object returned by install()
+```
+
+`.use()` is **idempotent** — calling it twice with the same extension name installs it once and returns the same client. It throws if the name conflicts with an existing property on the client.
+
+You can also pass extensions to the constructor so they are installed before any other code runs:
+
+```ts
+const client = new CoCart('https://your-store.com', {
+  extensions: [createMyExtension()],
+});
+```
+
+## Minimal Example
+
+```ts
+import type { CoCart, CoCartExtension } from '@cocartheadless/sdk';
+
+interface MyExtensionSDK {
+  ping(): string;
+}
+
+export function createMyExtension(): CoCartExtension<'myExtension', MyExtensionSDK> {
+  return {
+    name: 'myExtension',
+    install(client: CoCart): MyExtensionSDK {
+      return {
+        ping: () => `pong from ${client.getStoreUrl()}`,
+      };
+    },
+  };
+}
+```
+
+Install and use:
+
+```ts
+import { CoCart } from '@cocartheadless/sdk';
+import { createMyExtension } from './my-extension';
+
+const client = new CoCart('https://your-store.com').use(createMyExtension());
+
+client.myExtension.ping(); // 'pong from https://your-store.com'
+```
+
+## TypeScript Autocomplete via Module Augmentation
+
+`client.myExtension` is already typed from `.use()`'s return type. But `client.extension('myExtension')` — the lookup method — needs a separate declaration so TypeScript knows what it returns.
+
+Add this augmentation in your extension's source file (or a `global.d.ts`):
+
+```ts
+declare module '@cocartheadless/sdk' {
+  interface CoCartExtensionRegistry {
+    myExtension: MyExtensionSDK;
+  }
+}
+```
+
+Once augmented:
+
+```ts
+const ext = client.extension('myExtension'); // typed as MyExtensionSDK
+```
+
+## Subscribing to Client Events
+
+Extensions are the right place to wire up cross-cutting concerns — logging, analytics, error tracking, tracing. The CoCart client emits events for every HTTP request, response, retry, and auth refresh.
+
+| Event | When it fires | Payload |
+|---|---|---|
+| `request` | Before each HTTP request | `method`, `url`, `headers`, `body?` |
+| `response` | After each successful response | `method`, `url`, `status`, `duration` |
+| `error` | When a request fails | `method`, `url`, `error` |
+| `retry` | Before each retry attempt | `method`, `url`, `attempt`, `maxRetries`, `delay`, `reason` |
+| `auth:refresh` | After a JWT refresh attempt | `success` |
+
+You don't need to write an extension to listen — `client.on()` / `client.off()` work directly:
+
+```ts
+client.on('request', (e) => console.log(`${e.method} ${e.url}`));
+client.on('response', (e) => console.log(`${e.status} in ${e.duration}ms`));
+client.on('error', (e) => console.error(e.error));
+```
+
+Subscribe in `install()` when building an extension. Store references to the listener functions so you can unsubscribe later via a `destroy()` method on the returned API:
+
+```ts
+import type {
+  CoCart,
+  CoCartExtension,
+  RequestEvent,
+  ResponseEvent,
+  ErrorEvent,
+} from '@cocartheadless/sdk';
+
+interface AnalyticsSDK {
+  destroy(): void;
+}
+
+export function createAnalyticsExtension(): CoCartExtension<'analytics', AnalyticsSDK> {
+  return {
+    name: 'analytics',
+    install(client: CoCart): AnalyticsSDK {
+      const starts = new Map<string, number>();
+
+      const onRequest = ({ url }: RequestEvent) => {
+        starts.set(url, Date.now());
+      };
+
+      const onResponse = ({ url, status }: ResponseEvent) => {
+        const ms = Date.now() - (starts.get(url) ?? Date.now());
+        console.log(`[analytics] ${status} ${url} — ${ms}ms`);
+        starts.delete(url);
+      };
+
+      const onError = ({ url, error }: ErrorEvent) => {
+        console.error(`[analytics] error on ${url}`, error);
+      };
+
+      client.on('request', onRequest);
+      client.on('response', onResponse);
+      client.on('error', onError);
+
+      return {
+        destroy() {
+          client.off('request', onRequest);
+          client.off('response', onResponse);
+          client.off('error', onError);
+        },
+      };
+    },
+  };
+}
+```
+
+<Note>
+  Event listeners are called synchronously. Errors thrown inside a listener are silently swallowed by the SDK — they will not break requests or surface to callers.
+</Note>
+
+## Making API Calls From an Extension
+
+`install()` receives the full `CoCart` instance. Your extension can call any client method:
+
+```ts
+install(client: CoCart) {
+  return {
+    async getCustomData() {
+      const response = await client.get('/wp-json/my-plugin/v1/custom-data');
+      return response.toObject();
+    },
+  };
+}
+```
+
+## Cleanup and Teardown
+
+There is no `uninstall` lifecycle — extensions live for the duration of the client instance. If your extension allocates resources (timers, event listeners, network connections), expose a `destroy()` method on the public API and document that callers should call it when they are done with the client.
+
+## Publishing as an npm Package
+
+Structure your package so consumers can install and use the extension in one line:
+
+```text
+my-extension/
+  src/
+    index.ts        ← exports factory function + public types + module augmentation
+  package.json
+  tsconfig.json
+```
+
+**`package.json`** — declare `@cocartheadless/sdk` as a peer dependency:
+
+```json
+{
+  "name": "my-cocart-extension",
+  "peerDependencies": {
+    "@cocartheadless/sdk": ">=1.0.0"
+  }
+}
+```
+
+**`src/index.ts`** — export everything the consumer needs, including the module augmentation:
+
+```ts
+export type { MyExtensionSDK } from './types.js';
+export { createMyExtension } from './extension.js';
+
+// Module augmentation — consumers get autocomplete without any extra setup
+declare module '@cocartheadless/sdk' {
+  interface CoCartExtensionRegistry {
+    myExtension: import('./types.js').MyExtensionSDK;
+  }
+}
+```
+
+With this in place, a consumer installs `my-cocart-extension`, imports the factory, and gets full autocomplete with no extra configuration.
+
+## Official Extensions
+
+Two first-party analytics extensions are published as separate packages and installed the same way as any other extension via `extensions: [...]`:
+
+- **`@cocartheadless/analytics-datafast`** — [Datafast](https://datafa.st) analytics. Auto-tracks `add_to_cart`, `remove_from_cart`, `cart_cleared`, `checkout_started`, and `purchase` events, with GDPR cookieless mode support and a manual `track()` / `identify()` / `trackPageview()` API.
+- **`@cocartheadless/analytics-gtm`** — Google Tag Manager. Pushes GA4 ecommerce events (`add_to_cart`, `remove_from_cart`, `cart_cleared`, `begin_checkout`, `purchase`, `api_error`) to `window.dataLayer` automatically.
+
+```ts
+import { CoCart } from '@cocartheadless/sdk';
+import { createDatafast } from '@cocartheadless/analytics-datafast';
+
+const client = new CoCart('https://your-store.com', {
+  extensions: [
+    createDatafast({ websiteId: 'your-datafast-website-id' }),
+  ],
+});
+// Automatic tracking is now active — no further setup needed.
+```
+
+## Batch Requests
+
+<Note>Requires the CoCart Plus plugin.</Note>
+
+`client.batch()` dispatches multiple sub-requests to the `cocart/batch` endpoint in a single HTTP call, returning one merged, up-to-date cart response with per-operation notices instead of one response per request:
+
+```ts
+const response = await client.batch([
+  { method: 'POST', path: '/cocart/v2/cart/add-item', body: { id: '123', quantity: '2' } },
+  { method: 'POST', path: '/cocart/v2/cart/item/abc123def456...', body: { quantity: '3' } },
+  { method: 'DELETE', path: '/cocart/v2/cart/item/def789ghi012...' },
+]);
+```
+
+See [Cart API — Batch Requests](/sdk/typescript/cart#batch-requests) for the typed `Cart.batchUpdateItems()` / `Cart.batchRemoveItems()` convenience wrappers built on top of `client.batch()`.

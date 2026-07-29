@@ -1,0 +1,231 @@
+---
+title: "Flutter SDK"
+sidebarTitle: "Overview"
+description: "Official Flutter SDK for the CoCart REST API. Fluent, chainable configuration, secure session storage, JWT authentication with auto-refresh, and ETag conditional requests."
+'og:title': "CoCart Flutter SDK — Install, Configure & Connect to WooCommerce"
+'og:description': "Install and configure the CoCart Flutter SDK. pub.dev package, fluent setters, secure storage adapters, custom auth headers, debug mode, and legacy plugin support."
+---
+
+<Info>
+  This guide was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
+</Info>
+
+<Warning>
+  This SDK is still in development and not yet ready for production use. It has not had a stable release yet, so expect the API surface to change before the first tagged version ships. Please provide feedback if you experience a bug.
+</Warning>
+
+The official Flutter SDK for the CoCart REST API. Build headless WooCommerce storefronts with Flutter. Requires Flutter 3.10+ and Dart 3.0+.
+
+## Requirements
+
+- Flutter 3.10 or higher
+- Dart 3.0 or higher
+- CoCart plugin installed on your WooCommerce store
+- [CoCart JWT Authentication](https://wordpress.org/plugins/cocart-jwt-authentication/) plugin _(optional, for JWT features)_
+
+## Installation
+
+Add to your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  cocart: ^1.0.0
+```
+
+Then run:
+
+```bash
+flutter pub get
+```
+
+## Configuration Options
+
+```dart
+final client = CoCart('https://your-store.com', CoCartOptions(
+  // Guest session
+  cartKey: null,                    // Pre-seed a known cart key
+  storageKey: 'cocart_cart_key',    // Key used in secure storage
+
+  // Basic Auth
+  username: null,                   // WordPress username or email
+  password: null,                   // WordPress password
+
+  // JWT Auth
+  jwtToken: null,                   // Pre-set JWT token
+  jwtRefreshToken: null,            // Pre-set refresh token
+
+  // Consumer Keys (admin / Sessions API)
+  consumerKey: null,                // WooCommerce consumer key (ck_...)
+  consumerSecret: null,             // WooCommerce consumer secret (cs_...)
+
+  // HTTP
+  timeout: Duration(seconds: 30),   // Request timeout
+  maxRetries: 2,                    // Retry count on network failure
+
+  // REST prefix / namespace
+  restPrefix: 'wp-json',            // WordPress REST prefix
+  namespace: 'cocart',              // CoCart namespace
+
+  // Plugin version target
+  mainPlugin: 'basic',              // 'basic' (default) or 'legacy'
+
+  // Auth header override (proxy support)
+  authHeaderName: 'Authorization',  // Custom auth header name
+
+  // Storage
+  storage: null,                    // Custom CoCartStorage implementation
+  encryptionKey: null,              // Encryption key for secure storage
+
+  // Misc
+  extraHeaders: {},                 // Additional HTTP headers
+  responseTransformer: null,        // Transform responses before returning
+  etag: true,                       // Enable ETag conditional requests
+  debug: false,                     // Print debug logs
+));
+```
+
+### Fluent Configuration
+
+All config options can also be set at runtime using fluent setters that return `this` for chaining:
+
+```dart
+final client = CoCart.create('https://your-store.com')
+    .setTimeout(15000)
+    .setMaxRetries(3)
+    .setRestPrefix('wp-json')
+    .setNamespace('cocart')
+    .addHeader('X-Custom', 'value')
+    .setAuthHeaderName('X-Auth-Token')
+    .setETag(true)
+    .setMainPlugin('basic')
+    .setDebug(true);
+```
+
+#### Available Setters
+
+| Method | Description |
+|---|---|
+| `setTimeout(int ms)` | Set request timeout in milliseconds |
+| `setMaxRetries(int n)` | Set retry count on network failure |
+| `setRestPrefix(String prefix)` | Set WordPress REST prefix |
+| `setNamespace(String ns)` | Set CoCart namespace |
+| `addHeader(String key, String value)` | Add a custom HTTP header |
+| `setAuthHeaderName(String name)` | Override the auth header name |
+| `setETag(bool enabled)` | Enable or disable ETag caching |
+| `setMainPlugin(String plugin)` | Set target plugin version |
+| `setDebug(bool enabled)` | Enable or disable debug logging |
+
+## White-Labelling / Custom REST Prefix
+
+If your store uses a custom REST prefix or white-labelled namespace:
+
+```dart
+// Custom REST prefix
+final client = CoCart('https://your-store.com',
+    CoCartOptions(restPrefix: 'api'));
+
+// White-labelled namespace
+final client = CoCart('https://your-store.com',
+    CoCartOptions(namespace: 'my-brand'));
+
+// Both together — requests go to: /api/my-brand/v2/...
+final client = CoCart('https://your-store.com',
+    CoCartOptions(restPrefix: 'api', namespace: 'my-brand'));
+```
+
+## Legacy Plugin Support
+
+If your store runs the older CoCart plugin (before CoCart Starter):
+
+```dart
+final client = CoCart('https://your-store.com',
+    CoCartOptions(mainPlugin: 'legacy'));
+```
+
+### Behavior differences in legacy mode
+
+- Methods that require CoCart Starter (e.g. `products().findBySlug()`) throw a `VersionError`
+- Field filtering uses `fields` instead of `_fields`
+
+```dart
+// Throws VersionError in legacy mode
+try {
+  await client.products().findBySlug('my-product');
+} on VersionError catch (e) {
+  print(e); // "findBySlug requires CoCart Starter — not available in legacy mode"
+}
+```
+
+## Custom Storage
+
+By default, the SDK uses `flutter_secure_storage` for persisting cart keys and tokens. You can provide a custom storage implementation:
+
+```dart
+class MyCustomStorage implements CoCartStorage {
+  @override
+  Future<String?> read(String key) async { /* ... */ }
+
+  @override
+  Future<void> write(String key, String value) async { /* ... */ }
+
+  @override
+  Future<void> delete(String key) async { /* ... */ }
+}
+
+final client = CoCart('https://your-store.com',
+    CoCartOptions(storage: MyCustomStorage()));
+```
+
+For testing, use the built-in `MemoryStorage`:
+
+```dart
+final client = CoCart('https://your-store.com',
+    CoCartOptions(storage: MemoryStorage()));
+```
+
+See [Sessions API](/sdk/flutter/sessions) for more on storage adapters.
+
+## Key Features
+
+- **Fluent, chainable API** — configure and call in one expression
+- **Typed responses** with dot-notation access
+- **Client-side input validation** before any network request
+- **Currency formatting utility**
+- **Event system** for request/response lifecycle hooks
+- **Response transformer** for custom processing
+- **Configurable auth header name** (proxy support)
+- **Secure session storage** via `flutter_secure_storage`
+- **JWT authentication** with auto-refresh
+- **ETag / conditional requests** for bandwidth optimization
+- **Legacy CoCart plugin support**
+- **Guest session management** with automatic cart key capture
+
+## Documentation
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="lock" href="/sdk/flutter/authentication">
+    Guest sessions, Basic Auth, JWT, consumer keys, and custom auth headers
+  </Card>
+  <Card title="Cart API" icon="cart-shopping" href="/sdk/flutter/cart">
+    Add, update, remove items, coupons, shipping, fees, and ETag caching
+  </Card>
+  <Card title="Products API" icon="shirt" href="/sdk/flutter/products">
+    Browse, filter, paginate products, variations, categories, and reviews
+  </Card>
+  <Card title="Account API" icon="user" href="/sdk/flutter/account">
+    Customer profile, order history, downloads, and reviews
+  </Card>
+  <Card title="Sessions API" icon="database" href="/sdk/flutter/sessions">
+    Admin sessions endpoint, storage adapters, and guest-to-customer flow
+  </Card>
+  <Card title="Error Handling" icon="circle-exclamation" href="/sdk/flutter/error-handling">
+    Error hierarchy, validation errors, and HTTP status code mapping
+  </Card>
+  <Card title="Utilities" icon="wrench" href="/sdk/flutter/utilities">
+    Currency formatting, response transformers, event system, and debug mode
+  </Card>
+</CardGroup>
+
+## Source
+
+The SDK is open source. View the source and report issues on [GitHub](https://github.com/cocart-headless/cocart-flutter-sdk).

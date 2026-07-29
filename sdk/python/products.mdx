@@ -7,7 +7,7 @@ description: "Browse your WooCommerce catalog with the CoCart Python SDK — lis
 ---
 
 <Info>
-  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
 </Info>
 
 The Products API is publicly accessible and does not require authentication.
@@ -160,7 +160,18 @@ response = client.products().sort_by("price", "asc", {
 })
 ```
 
-### Paginated Iterator
+### Using Parameters Directly
+
+```python
+response = client.products().all({
+    "page": 1,
+    "per_page": 10,
+    "orderby": "price",
+    "order": "asc",
+})
+```
+
+### Paginated Loop (Iterator)
 
 The SDK provides a `Paginator` that implements Python's iterator protocol. Use it with a standard `for` loop:
 
@@ -197,10 +208,15 @@ while True:
 
 ## Single Product
 
-### By ID
+### By ID or SKU
+
+`find()` accepts either the numeric product/variation ID or the product's SKU — either one works:
 
 ```python
 response = client.products().find(123)
+
+# Or by SKU
+response = client.products().find("PCT-2024")
 
 data = response.to_dict()
 print(data["name"])
@@ -352,7 +368,7 @@ response = client.products().my_reviews()
 
 ## SEO Data
 
-<Note>Requires the CoCart SEO Pack plugin.</Note>
+<Note>Requires the [CoCart SEO Pack](https://cocartapi.com) plugin.</Note>
 
 Get SEO metadata, Open Graph, Twitter cards, and Schema.org structured data for products.
 

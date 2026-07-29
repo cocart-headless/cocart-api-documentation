@@ -7,7 +7,7 @@ description: "Manage shopping carts with the CoCart Python SDK — add, update, 
 ---
 
 <Info>
-  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
 </Info>
 
 The Cart API handles all shopping cart operations.
@@ -67,6 +67,9 @@ response = client.cart().add_item(123, quantity=2)
 
 # Shorthand
 response = client.cart().add(123, 2)
+
+# A SKU also works — the server resolves it to a product ID
+response = client.cart().add_item("BLUE-SHIRT-L", quantity=1)
 ```
 
 ### Add with Options
@@ -97,15 +100,21 @@ response = client.cart().add_item(456, quantity=1, variation={
 })
 ```
 
-### Add Multiple Items at Once
+### Add Multiple Children of a Grouped Product at Once
+
+`add_items()` is for adding multiple children of a single WooCommerce Grouped Product in one request — not for adding several unrelated products. For that, use `client.batch()` instead (requires CoCart Plus).
 
 ```python
-response = client.cart().add_items([
-    {"id": "123", "quantity": "2"},
-    {"id": "456", "quantity": "1", "variation": {
-        "attribute_pa_color": "red",
-    }},
-    {"id": "789", "quantity": "3"},
+# Shorthand: child product ID => quantity
+response = client.cart().add_items(100, {
+    "123": 2,
+    "456": 1,
+})
+
+# Full format
+response = client.cart().add_items(100, [
+    {"id": "123", "quantity": 2},
+    {"id": "456", "quantity": 1},
 ])
 ```
 
@@ -125,6 +134,10 @@ response = client.cart().update_item("abc123def456...", 3,
 
 ### Update Multiple Items at Once
 
+<Note>
+  There's no real bulk-update endpoint on the server, so `update_items()` sends one request per item, sequentially, and returns the response from the last update (reflecting the fully-updated cart).
+</Note>
+
 ```python
 # Shorthand: item_key => quantity
 response = client.cart().update_items({
@@ -139,6 +152,15 @@ response = client.cart().update_items([
 ])
 ```
 
+For a true single round trip (requires CoCart Plus), use `batch_update_items()` instead — it builds the same entries into a `client.batch()` call:
+
+```python
+response = client.cart().batch_update_items({
+    "abc123def456...": 3,
+    "def789ghi012...": 1,
+})
+```
+
 ## Removing & Restoring Items
 
 ### Remove an Item
@@ -149,8 +171,21 @@ response = client.cart().remove_item("abc123def456...")
 
 ### Remove Multiple Items at Once
 
+<Note>
+  Like `update_items()`, `remove_items()` sends one request per item key, sequentially, and returns the response from the last removal.
+</Note>
+
 ```python
 response = client.cart().remove_items([
+    "abc123def456...",
+    "def789ghi012...",
+])
+```
+
+For a true single round trip (requires CoCart Plus), use `batch_remove_items()` instead:
+
+```python
+response = client.cart().batch_remove_items([
     "abc123def456...",
     "def789ghi012...",
 ])
@@ -241,8 +276,12 @@ response = client.cart().check_coupons()
 
 ### Update Customer
 
+<Note>
+  `update_customer()` sends billing fields unprefixed (`first_name`, `address_1`, ...) and shipping fields `s_`-prefixed (`s_first_name`, `s_address_1`, ...). If `shipping` is omitted or empty, billing is mirrored into the `s_` fields automatically — same as leaving "ship to a different address" unchecked at a normal WooCommerce checkout.
+</Note>
+
 ```python
-# Update billing address
+# Billing only — shipping is mirrored from billing automatically
 response = client.cart().update_customer(
     billing={
         "first_name": "John",
@@ -257,8 +296,9 @@ response = client.cart().update_customer(
     }
 )
 
-# Update shipping address
+# Billing and a distinct shipping address (sets ship_to_different_address)
 response = client.cart().update_customer(
+    billing={"email": "john@example.com"},
     shipping={
         "first_name": "John",
         "last_name": "Doe",
@@ -267,13 +307,7 @@ response = client.cart().update_customer(
         "state": "CA",
         "postcode": "90001",
         "country": "US",
-    }
-)
-
-# Update both at once
-response = client.cart().update_customer(
-    billing={"email": "john@example.com"},
-    shipping={"address_1": "456 Oak Ave"},
+    },
 )
 ```
 
@@ -293,19 +327,31 @@ response = client.cart().get_shipping_methods()
 
 ### Set Shipping Method
 
+<Note>Requires the CoCart Plus plugin.</Note>
+
+Select a shipping rate for a package. Pass a `package_id` to restrict the selection to one package; omit it to apply the rate to every package.
+
 ```python
 response = client.cart().set_shipping_method("flat_rate:1")
+
+# Restrict to a specific package
+response = client.cart().set_shipping_method("flat_rate:1", package_id="0")
 ```
 
-### Calculate Shipping
+### Calculate Shipping (Deprecated)
+
+<Warning>
+  There is no address-taking shipping-calculation endpoint in the CoCart REST API. `calculate_shipping()` is deprecated — it ignores its `address` argument and simply delegates to `calculate()`. To calculate shipping for a destination, call `update_customer()` with that address first (the server recalculates totals as part of that request), then `calculate()` directly.
+</Warning>
 
 ```python
-response = client.cart().calculate_shipping({
+client.cart().update_customer(billing={
     "country": "US",
     "state": "CA",
     "postcode": "90001",
     "city": "Los Angeles",
 })
+response = client.cart().calculate()
 ```
 
 ## Fees
@@ -340,6 +386,20 @@ Get cross-sell product recommendations based on cart contents:
 response = client.cart().get_cross_sells()
 ```
 
+## Batch Requests
+
+<Note>Requires the CoCart Plus plugin.</Note>
+
+`client.batch()` dispatches multiple sub-requests in a single round trip via the `{namespace}/batch` endpoint. It returns one merged, up-to-date cart response with per-operation notices, instead of one response per request. `batch_update_items()` and `batch_remove_items()` (see above) build their requests through this method — call it directly for anything else you want to batch, e.g. mixing an add, a coupon, and a fee in one request:
+
+```python
+response = client.batch([
+    {"method": "POST", "path": "/cocart/v2/cart/add-item", "body": {"id": "123", "quantity": "2"}},
+    {"method": "POST", "path": "/cocart/v2/cart/apply-coupon", "body": {"coupon": "SUMMER20"}},
+    {"method": "DELETE", "path": "/cocart/v2/cart/item/abc123def456..."},
+])
+```
+
 ## Working with Responses
 
 All cart methods return a `Response` object with cart-specific helpers:
@@ -364,6 +424,11 @@ hash = response.get_cart_hash()
 
 # Notices
 notices = response.get_notices()
+
+# Tax lines (normalized to a flat list regardless of the server's shape)
+taxes = response.get_taxes()
+if response.has_taxes():
+    print(taxes)
 
 # Dot-notation access
 subtotal = response.get("totals.subtotal")

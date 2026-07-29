@@ -7,7 +7,7 @@ description: "Manage shopping carts with the CoCart TypeScript SDK — add items
 ---
 
 <Info>
-  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 28th, 2026.
 </Info>
 
 The Cart API handles all shopping cart operations — adding items, updating quantities, applying coupons, managing shipping, and more.
@@ -28,17 +28,17 @@ Create a new guest cart session without adding items. Only available for non-aut
 <Note>Requires CoCart Starter.</Note>
 
 ```ts
-const response = await client.cart().create();
+const response = await cart.create();
 console.log(response.get('cart_key')); // 'guest_abc123...'
 ```
 
 ## Get Cart
 
 ```ts
-const response = await client.cart().get();
+const response = await cart.get();
 
 // With parameters
-const response = await client.cart().get({
+const response = await cart.get({
   _fields: 'items,totals', // Limit returned fields
   thumb: 'true',           // Include product thumbnails
   default: 'true',         // Return default cart data
@@ -47,10 +47,10 @@ const response = await client.cart().get({
 
 ### Type-Safe Field Filtering
 
-`getFiltered()` tells the server to send back only the fields you list. Less data transferred and TypeScript compile-time safety for the returned type:
+`getFiltered()` tells the server to send back only the fields you list. Less data transferred and TypeScript compile-time safety for the returned type. It's still one normal cart request — this just adds `?_fields=items,totals` to the URL so the server trims its reply:
 
 ```ts
-const response = await client.cart().getFiltered(['items', 'totals']);
+const response = await cart.getFiltered(['items', 'totals']);
 const data = response.toObject();
 
 data.items;    // CartItem[]  ✓
@@ -66,7 +66,7 @@ The SDK validates inputs before sending anything to the server. Invalid product 
 import { ValidationError } from '@cocartheadless/sdk';
 
 try {
-  await client.cart().addItem(-1, 0);
+  await cart.addItem(-1, 0);
 } catch (e) {
   if (e instanceof ValidationError) {
     // e.message => "Product ID must be a positive integer"
@@ -75,22 +75,52 @@ try {
 }
 ```
 
+Validation rules:
+
+- **Product ID** — Must be a positive whole number, or a SKU like `'BLUE-SHIRT-L'` (`addItem`, `addVariation`, and the main product in `addItems`). A SKU gets checked by the store, not the SDK — the SDK only blocks input it already knows is wrong (empty, negative, zero, or not a whole number).
+- **Quantity** — Must be a positive number (`addItem`, `addVariation`). `updateItem()` also accepts `0`, which the server treats as removing the item.
+
+<Note>
+  This doesn't apply to the individual products inside an `addItems()` group — those must be numeric IDs, not SKUs.
+</Note>
+
+You can also use the validation functions directly:
+
+```ts
+import { validateProductId, validateQuantity, validateEmail } from '@cocartheadless/sdk';
+
+validateProductId(123);           // OK
+validateProductId('BLUE-SHIRT-L'); // OK — treated as a SKU, resolved server-side
+validateProductId(-1);            // throws ValidationError
+validateQuantity(2);              // OK
+validateQuantity(0);              // throws ValidationError
+validateEmail('user@example.com'); // OK
+validateEmail('not-an-email');     // throws ValidationError
+```
+
 ## Adding Items
+
+<Note>
+  Product ID and quantity are converted to text before being sent (e.g. `2` becomes `"2"`) — that's just how the SDK talks to the server, nothing you need to do yourself.
+</Note>
 
 ### Add a Simple Product
 
 ```ts
 // Product ID 123, quantity 2
-const response = await client.cart().addItem(123, 2);
+const response = await cart.addItem(123, 2);
 
 // Shorthand
-const response = await client.cart().add(123, 2);
+const response = await cart.add(123, 2);
+
+// A SKU also works — the server resolves it to a product ID
+const response2 = await cart.addItem('BLUE-SHIRT-L', 1);
 ```
 
 ### Add with Options
 
 ```ts
-const response = await client.cart().addItem(123, 1, {
+const response = await cart.addItem(123, 1, {
   item_data: {
     gift_message: 'Happy Birthday!',
     engraving: 'John',
@@ -103,13 +133,13 @@ const response = await client.cart().addItem(123, 1, {
 ### Add a Variable Product
 
 ```ts
-const response = await client.cart().addVariation(456, 1, {
+const response = await cart.addVariation(456, 1, {
   attribute_pa_color: 'blue',
   attribute_pa_size: 'large',
 });
 
 // Or using addItem with variation option
-const response = await client.cart().addItem(456, 1, {
+const response = await cart.addItem(456, 1, {
   variation: {
     attribute_pa_color: 'blue',
     attribute_pa_size: 'large',
@@ -117,42 +147,54 @@ const response = await client.cart().addItem(456, 1, {
 });
 ```
 
-### Add Multiple Items at Once
+### Add Multiple Children of a Grouped Product
+
+`addItems()` is specifically for adding multiple children of a WooCommerce **Grouped Product** to the cart in one request — not a generic "add several unrelated products" call. Pass the grouped product's own ID (a number or a SKU, same as `addItem()`), plus a map (or array) of its child product IDs to quantities. The child IDs must be numeric — they don't accept a SKU:
 
 ```ts
-const response = await client.cart().addItems([
-  { id: '123', quantity: '2' },
-  { id: '456', quantity: '1', variation: {
-    attribute_pa_color: 'red',
-  }},
-  { id: '789', quantity: '3' },
+// Shorthand: child product id => quantity
+const response = await cart.addItems(100, {
+  '101': 2,
+  '102': 1,
+});
+
+// Full array form
+const response = await cart.addItems(100, [
+  { id: 101, quantity: 2 },
+  { id: 102, quantity: 1 },
 ]);
 ```
+
+For adding several _unrelated_ products in one request, use [`client.batch()`](/sdk/typescript/extensions#batch-requests) instead — one `add-item` sub-request per product.
 
 ## Updating Items
 
 Every item in the cart has a unique **item key** — a long string like `abc123def456...` that identifies that specific item. You receive item keys in cart responses and use them to update or remove items.
 
 ```ts
-const response = await client.cart().updateItem('abc123def456...', 5);
+const response = await cart.updateItem('abc123def456...', 5);
 
 // With additional options
-const response = await client.cart().updateItem('abc123def456...', 3, {
+const response = await cart.updateItem('abc123def456...', 3, {
   item_data: { gift_wrap: true },
 });
 ```
 
 ### Update Multiple Items at Once
 
+<Note>
+  This issues one `item/{key}` request per entry, sequentially — not a single bulk round trip — and resolves with the response from the last request only. For a true single-request bulk update, see [Batch Requests](/sdk/typescript/extensions#batch-requests).
+</Note>
+
 ```ts
 // Shorthand: item_key => quantity
-const response = await client.cart().updateItems({
+const response = await cart.updateItems({
   'abc123def456...': 3,
   'def789ghi012...': 1,
 });
 
 // Full format with additional options
-const response = await client.cart().updateItems([
+const response = await cart.updateItems([
   { item_key: 'abc123def456...', quantity: 3 },
   { item_key: 'def789ghi012...', quantity: 1 },
 ]);
@@ -163,13 +205,17 @@ const response = await client.cart().updateItems([
 ### Remove an Item
 
 ```ts
-const response = await client.cart().removeItem('abc123def456...');
+const response = await cart.removeItem('abc123def456...');
 ```
 
 ### Remove Multiple Items at Once
 
+<Note>
+  Same as above — one sequential request per item key, not a single bulk round trip. See [Batch Requests](/sdk/typescript/extensions#batch-requests) for a single-request alternative.
+</Note>
+
 ```ts
-const response = await client.cart().removeItems([
+const response = await cart.removeItems([
   'abc123def456...',
   'def789ghi012...',
 ]);
@@ -178,13 +224,13 @@ const response = await client.cart().removeItems([
 ### Restore a Removed Item
 
 ```ts
-const response = await client.cart().restoreItem('abc123def456...');
+const response = await cart.restoreItem('abc123def456...');
 ```
 
 ### Get Removed Items
 
 ```ts
-const response = await client.cart().getRemovedItems();
+const response = await cart.getRemovedItems();
 ```
 
 ## Cart Management
@@ -192,22 +238,22 @@ const response = await client.cart().getRemovedItems();
 ### Clear Cart
 
 ```ts
-const response = await client.cart().clear();
+const response = await cart.clear();
 
 // Alias
-const response = await client.cart().empty();
+const response = await cart.empty();
 ```
 
 ### Calculate Totals
 
 ```ts
-const response = await client.cart().calculate();
+const response = await cart.calculate();
 ```
 
 ### Update Cart
 
 ```ts
-const response = await client.cart().update({
+const response = await cart.update({
   customer_note: 'Please gift wrap.',
 });
 ```
@@ -216,18 +262,26 @@ const response = await client.cart().update({
 
 ### Get Totals
 
+<Note>
+  `getTotals(true)` doesn't just format the numbers from a regular cart fetch — it's a separate request to its own totals endpoint, with `html=true` added to it.
+</Note>
+
 ```ts
 // Raw values
-const response = await client.cart().getTotals();
+const response = await cart.getTotals();
 
 // Formatted with currency (HTML)
-const response = await client.cart().getTotals(true);
+const response = await cart.getTotals(true);
 ```
 
 ### Get Item Count
 
+<Note>
+  `getItemCount()`, `getItems()`, and `getItem()` below each hit their own dedicated endpoint, so they're genuinely lighter than fetching the whole cart — unlike several of the "get" methods elsewhere on this page (`getCustomer()`, `getShippingMethods()`, `getFees()`, `getCrossSells()`, `getCoupons()`), which quietly fetch the entire cart and only keep one part of it. Those cost the same as a full `cart.get()`.
+</Note>
+
 ```ts
-const response = await client.cart().getItemCount();
+const response = await cart.getItemCount();
 ```
 
 ### Get Cart Items
@@ -235,13 +289,13 @@ const response = await client.cart().getItemCount();
 Get only the items in the cart (lighter than fetching the full cart):
 
 ```ts
-const response = await client.cart().getItems();
+const response = await cart.getItems();
 ```
 
 ### Get a Single Cart Item
 
 ```ts
-const response = await client.cart().getItem('abc123def456...');
+const response = await cart.getItem('abc123def456...');
 ```
 
 ## Coupons
@@ -250,35 +304,62 @@ const response = await client.cart().getItem('abc123def456...');
 
 ### Apply a Coupon
 
+<Note>
+  Applying and removing a coupon work a little differently under the hood: applying sends the code in the request body, while removing puts the code directly in the URL instead. Worth knowing if you're building either of these as a [batch request](#batch-requests) by hand.
+</Note>
+
 ```ts
-const response = await client.cart().applyCoupon('SUMMER20');
+const response = await cart.applyCoupon('SUMMER20');
 ```
 
 ### Remove a Coupon
 
 ```ts
-const response = await client.cart().removeCoupon('SUMMER20');
+const response = await cart.removeCoupon('SUMMER20');
 ```
 
 ### Get Applied Coupons
 
+<Note>
+  `getCoupons()` fetches the whole cart and keeps only the coupons — it costs the same as `cart.get()`, not less. See the note under [Get Item Count](#get-item-count) for which "get" methods on this page are actually lighter.
+</Note>
+
 ```ts
-const response = await client.cart().getCoupons();
+const response = await cart.getCoupons();
 ```
 
 ### Validate Applied Coupons
 
 ```ts
-const response = await client.cart().checkCoupons();
+const response = await cart.checkCoupons();
 ```
 
 ## Customer Details
 
 ### Update Customer
 
+<Note>
+  `billing` and `shipping` both use the same plain, unprefixed field names (`first_name`, `address_1`, ...) — the SDK adds the `s_` prefix (`s_first_name`, `s_address_1`, ...) that the server expects for shipping fields internally, so you never need to write it yourself.
+
+  `shipping` is optional. If you omit it, `billing` is mirrored into the shipping fields automatically — the same as leaving "Ship to a different address" unchecked at a normal WooCommerce checkout — so the destination country's required-field validation still passes. Pass `shipping` explicitly (with its own full address) to ship somewhere different than billing; this also sets `ship_to_different_address`.
+</Note>
+
 ```ts
-// Update billing address
-const response = await client.cart().updateCustomer(
+// Update billing address — shipping mirrors billing automatically
+const response = await cart.updateCustomer({
+  first_name: 'John',
+  last_name: 'Doe',
+  email: 'john@example.com',
+  phone: '+1234567890',
+  address_1: '123 Main St',
+  city: 'New York',
+  state: 'NY',
+  postcode: '10001',
+  country: 'US',
+});
+
+// Ship to a different address than billing
+const response = await cart.updateCustomer(
   {
     first_name: 'John',
     last_name: 'Doe',
@@ -290,47 +371,101 @@ const response = await client.cart().updateCustomer(
     postcode: '10001',
     country: 'US',
   },
-);
-
-// Update both billing and shipping at once
-const response = await client.cart().updateCustomer(
-  { email: 'john@example.com' },
-  { address_1: '456 Oak Ave' },
+  {
+    first_name: 'John',
+    last_name: 'Doe',
+    address_1: '456 Oak Ave',
+    city: 'Los Angeles',
+    state: 'CA',
+    postcode: '90001',
+    country: 'US',
+  },
 );
 ```
 
 ### Get Customer Details
 
+<Note>
+  This fetches the whole cart and keeps only the customer data — see the note under [Get Item Count](#get-item-count).
+</Note>
+
 ```ts
-const response = await client.cart().getCustomer();
+const response = await cart.getCustomer();
 ```
 
 ## Shipping
 
 ### Get Available Shipping Methods
 
+<Note>
+  This fetches the whole cart and keeps only the shipping data — see the note under [Get Item Count](#get-item-count).
+</Note>
+
 ```ts
-const response = await client.cart().getShippingMethods();
+const response = await cart.getShippingMethods();
 ```
 
 ### Set Shipping Method
 
 <Note>Requires the CoCart Plus plugin.</Note>
 
+<Note>
+  `rateId`/`packageId` get renamed before they're sent — the request actually goes out as `rate_id`/`package_id`. Worth knowing if you're building this as a [batch request](#batch-requests) by hand.
+</Note>
+
 ```ts
-const response = await client.cart().setShippingMethod('flat_rate:1');
+const response = await cart.setShippingMethod('flat_rate:1');
 ```
 
 ### Calculate Shipping
 
 ```ts
-const response = await client.cart().calculateShipping({
+await cart.updateCustomer({
   country: 'US',
   state: 'CA',
   postcode: '90001',
   city: 'Los Angeles',
 });
+const response = await cart.calculate();
 ```
+
+## Batch Requests
+
+<Note>Requires the CoCart Plus plugin.</Note>
+
+For a true single-request bulk operation — as opposed to `updateItems()`/`removeItems()`, which issue one sequential request per item (see above) — dispatch multiple sub-requests in one call via `client.batch()`. This can mix any operations, including adding items:
+
+```ts
+const response = await client.batch([
+  { method: 'POST', path: '/cocart/v2/cart/add-item', body: { id: '123', quantity: '2' } },
+  { method: 'POST', path: '/cocart/v2/cart/item/abc123def456...', body: { quantity: '3' } },
+  { method: 'DELETE', path: '/cocart/v2/cart/item/def789ghi012...' },
+]);
+```
+
+The server returns one merged, up-to-date cart response (if all sub-requests succeed) along with notices for each operation, instead of one response per request.
+
+<Note>
+  `addItems()` (see [Add Multiple Children of a Grouped Product](#add-multiple-children-of-a-grouped-product)) only handles adding children of one WooCommerce Grouped Product — it's not a general "add several unrelated products" call. For adding multiple unrelated products in a single request, use `client.batch()` with one `add-item` sub-request per product, as shown above.
+</Note>
+
+`Cart.batchUpdateItems()` and `Cart.batchRemoveItems()` are typed convenience wrappers over `client.batch()` for the common case of bulk item updates/removals, accepting the same shorthand/full formats as `updateItems()`/`removeItems()`:
+
+```ts
+// Update multiple items in one request
+const response = await cart.batchUpdateItems({
+  'abc123def456...': 3,
+  'def789ghi012...': 1,
+});
+
+// Remove multiple items in one request
+const response = await cart.batchRemoveItems([
+  'abc123def456...',
+  'def789ghi012...',
+]);
+```
+
+See [Extensions & Events](/sdk/typescript/extensions#batch-requests) for more on `client.batch()`.
 
 ## Fees
 
@@ -338,32 +473,40 @@ const response = await client.cart().calculateShipping({
 
 ### Get Cart Fees
 
+<Note>
+  This fetches the whole cart and keeps only the fees — see the note under [Get Item Count](#get-item-count).
+</Note>
+
 ```ts
-const response = await client.cart().getFees();
+const response = await cart.getFees();
 ```
 
 ### Add a Fee
 
 ```ts
 // Non-taxable fee
-const response = await client.cart().addFee('Rush Processing', 9.99);
+const response = await cart.addFee('Rush Processing', 9.99);
 
 // Taxable fee
-const response = await client.cart().addFee('Gift Wrapping', 4.99, true);
+const response = await cart.addFee('Gift Wrapping', 4.99, true);
 ```
 
 ### Remove All Fees
 
 ```ts
-const response = await client.cart().removeFees();
+const response = await cart.removeFees();
 ```
 
 ## Cross-Sells
 
 Get cross-sell product recommendations based on cart contents:
 
+<Note>
+  This fetches the whole cart and keeps only the cross-sells — see the note under [Get Item Count](#get-item-count).
+</Note>
+
 ```ts
-const response = await client.cart().getCrossSells();
+const response = await cart.getCrossSells();
 ```
 
 ## ETag / Conditional Requests
@@ -372,10 +515,10 @@ ETag support is **enabled by default**. The SDK sends a cached fingerprint with 
 
 ```ts
 // First request: full response with ETag
-const response = await client.cart().get();
+const response = await cart.get();
 
 // Second request: sends If-None-Match automatically
-const response2 = await client.cart().get();
+const response2 = await cart.get();
 if (response2.isNotModified()) {
   console.log('Cart has not changed');
 }
@@ -394,20 +537,27 @@ client.setETag(false);
 ### Clear ETag Cache
 
 ```ts
+// Force fresh responses on next request
 client.clearETagCache();
+```
+
+### Skip Cache for a Single Request
+
+```ts
+const response = await cart.get({ _skip_cache: 'true' });
 ```
 
 ### Cache Status
 
 ```ts
-const response = await client.cart().get();
+const response = await cart.get();
 console.log(response.getCacheStatus()); // 'HIT', 'MISS', or 'SKIP'
 ```
 
 ## Working with Responses
 
 ```ts
-const response = await client.cart().get();
+const response = await cart.get();
 
 // Cart items
 const items = response.getItems();
@@ -420,6 +570,18 @@ const count = response.getItemCount();
 
 // Cart key (from headers)
 const cartKey = response.getCartKey();
+
+// Cart hash
+const hash = response.getCartHash();
+
+// Notices
+const notices = response.getNotices();
+
+// Tax lines, normalized to a flat array regardless of the store's tax display setting
+const taxes = response.getTaxes();
+if (response.hasTaxes()) {
+  console.log(taxes[0].name, taxes[0].price);
+}
 
 // Dot-notation access
 const subtotal = response.get('totals.subtotal');

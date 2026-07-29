@@ -13,6 +13,10 @@ A cart drawer (also called a slide-out cart or cart sidebar) is the most common 
 
 This tutorial builds a fully functional cart drawer using vanilla JavaScript and the CoCart REST API. The patterns here translate directly to any framework (React, Vue, Svelte, etc.).
 
+<Tip>
+  Using Next.js? The [Next.js Cart Drawer tutorial](/tutorials/nextjs/cart-drawer) builds the same pattern with the TypeScript SDK's Next.js adapter and React Context — a more integrated starting point for that stack. It's narrower in scope though, so the double-click guard and optimistic-update patterns below are still worth applying there too.
+</Tip>
+
 ## Prerequisites
 
 - A WordPress site with WooCommerce and CoCart installed
@@ -468,7 +472,7 @@ const response = await client.cart().addItem(42, 1);
 const cart = response.toObject();
 
 // Update quantity
-const updated = await client.cart().updateItem('item_key_here', { quantity: 3 });
+const updated = await client.cart().updateItem('item_key_here', 3);
 
 // Remove item
 const afterRemove = await client.cart().removeItem('item_key_here');

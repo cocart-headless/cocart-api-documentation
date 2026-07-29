@@ -7,7 +7,7 @@ description: "Handle errors from the CoCart TypeScript SDK — exception hierarc
 ---
 
 <Info>
-  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 28th, 2026.
 </Info>
 
 ## Error Hierarchy
@@ -15,10 +15,11 @@ description: "Handle errors from the CoCart TypeScript SDK — exception hierarc
 The SDK uses three error classes organized in a hierarchy:
 
 ```
-CoCartError (base)           — any API error
-├── AuthenticationError      — login/permission problems (401, 403)
-├── ValidationError          — bad input (400)
-└── VersionError             — method requires CoCart Starter (legacy mode)
+CoCartError (base)                    — any API error
+├── AuthenticationError               — login/permission problems (401, 403)
+│   └── TwoFactorAuthRequiredError    — 2FA code required to complete login (401)
+├── ValidationError                   — bad input (400)
+└── VersionError                      — method requires CoCart Starter (legacy mode)
 ```
 
 All errors extend `CoCartError`, which extends JavaScript's built-in `Error`. This means you can use `instanceof` to check what kind of error was caught.
@@ -43,6 +44,7 @@ try {
   } else if (e instanceof AuthenticationError) {
     // 401 or 403 — invalid credentials, expired token, forbidden
     console.log('Auth Error:', e.message);
+    console.log('Error Code:', e.errorCode);    // e.g. 'cocart_authentication_error'
     console.log('HTTP Code:', e.httpCode);       // 401 or 403
   } else if (e instanceof CoCartError) {
     // Any other API error (404, 500, etc.)
@@ -119,6 +121,7 @@ See [Authentication](/sdk/typescript/authentication#auto-refresh) for details.
 |-------------|-------------|----------------|
 | 400 | `ValidationError` | Invalid product ID, out of stock, invalid quantity, missing required fields |
 | 401 | `AuthenticationError` | Missing or invalid credentials |
+| 401 | `TwoFactorAuthRequiredError` | Login succeeded but a 2FA code is required to complete authentication |
 | 403 | `AuthenticationError` | Expired JWT token, insufficient permissions |
 | 404 | `CoCartError` | Endpoint not found, item key not found |
 | 500 | `CoCartError` | Server error |
@@ -141,17 +144,25 @@ if (response.isSuccessful()) {
 }
 ```
 
-## Response State Helpers
+## Response Data Access
+
+The `Response` object supports **dot-notation access** — a way to reach nested values inside the response using a string path with dots. For example, instead of writing `response.data.items`, you write `response.get('items')`. For deeply nested data, use dots to drill down: `response.get('totals.subtotal')`.
 
 ```ts
 const response = await client.cart().get();
 
-// Cart state
+// Dot-notation access
+response.get('items');
+response.get('totals');
+response.get('currency');
+response.has('items');
+
+// Cart state helpers
 response.hasItems();    // true if cart has items
 response.isEmpty();     // true if cart is empty
 response.hasCoupons();  // true if coupons are applied
 
-// Pagination (for product listings)
+// Pagination helpers (for product listings)
 response.getTotalResults(); // total items across all pages
 response.getTotalPages();   // total number of pages
 ```
@@ -187,6 +198,8 @@ validateQuantity(-1);          // throws ValidationError
 validateEmail('not-an-email'); // throws ValidationError
 ```
 
+Error messages are in English (US) by default. See [Localization](/sdk/typescript/utilities#localization) to receive SDK messages in another language.
+
 ## Common Error Scenarios
 
 ### Product Not Found
@@ -214,7 +227,65 @@ try {
 }
 ```
 
+### Two Factor Authentication Required
+
+When a customer with 2FA enabled logs in, `JwtManager.login()` throws `TwoFactorAuthRequiredError`. This is a subclass of `AuthenticationError`, so it is also caught by `instanceof AuthenticationError` checks — check for the more specific type first:
+
+```ts
+import { TwoFactorAuthRequiredError, AuthenticationError } from '@cocartheadless/sdk';
+
+try {
+  await jwt.login('customer@email.com', 'password');
+} catch (e) {
+  if (e instanceof TwoFactorAuthRequiredError) {
+    // e.availableProviders => ['totp', 'email']
+    // e.defaultProvider    => 'totp'
+    // e.emailSent          => false
+    const code = await promptUserForCode();
+    await jwt.verifyTwoFactor('customer@email.com', 'password', code);
+  } else if (e instanceof AuthenticationError) {
+    // Wrong password, missing plugin, etc.
+    console.log('Auth failed:', e.message);
+  }
+}
+```
+
+See [Two Factor Authentication](/sdk/typescript/authentication#two-factor-authentication) for the full flow.
+
+### JWT Plugin Not Installed
+
+A correct login on a store without the CoCart JWT Authentication plugin still throws `AuthenticationError` — the same type as a wrong-password failure — but with a distinct `errorCode`:
+
+```ts
+try {
+  await client.login('customer@email.com', 'password');
+} catch (e) {
+  if (e instanceof AuthenticationError && e.errorCode === 'cocart_jwt_missing') {
+    // Credentials were valid; the store just doesn't have the plugin installed.
+  }
+}
+```
+
+See [Disambiguating a Failed Login](/sdk/typescript/authentication#disambiguating-a-failed-login) for the full explanation.
+
+### CoCart Plugin Required
+
+When calling methods that require a CoCart extension that isn't installed:
+
+```ts
+try {
+  await client.cart().applyCoupon('SAVE10');
+} catch (e) {
+  if (e instanceof CoCartError) {
+    // e.message   => 'This method is only available with another CoCart plugin...'
+    // e.errorCode => 'cocart_plugin_required'
+  }
+}
+```
+
 ### Legacy Plugin Version Guard
+
+When using the SDK with the CoCart Community plugin (`mainPlugin: 'legacy'`), methods that require CoCart Starter throw immediately:
 
 ```ts
 import { VersionError } from '@cocartheadless/sdk';
@@ -230,6 +301,8 @@ try {
   }
 }
 ```
+
+See [Legacy Plugin Support](/sdk/typescript#legacy-plugin-support) for the full list of Starter-only methods.
 
 ### Network / Timeout Errors
 

@@ -7,7 +7,7 @@ description: "Authenticate with the CoCart REST API using the TypeScript SDK —
 ---
 
 <Info>
-  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 28th, 2026.
 </Info>
 
 CoCart supports multiple authentication methods depending on the use case.
@@ -36,16 +36,19 @@ const cart = await client.cart().get();
 
 ### Restoring a Session
 
-If using async storage (like `EncryptedStorage`), call `restoreSession()` after construction to load the cart key from storage:
+In a browser, the cart key is automatically persisted to `localStorage` — it's restored synchronously on the next page load with no extra steps needed.
+
+If using `EncryptedStorage` (async), call `restoreSession()` once after construction to load the cart key:
 
 ```ts
 const client = new CoCart('https://your-store.com', {
-  storage: new EncryptedStorage('my-secret-key'),
+  encryptionKey: 'my-secret-key',
 });
 
 // Restore cart key from encrypted localStorage
 await client.restoreSession();
 
+// Now the client has the persisted cart key
 const cart = await client.cart().get();
 ```
 
@@ -97,6 +100,25 @@ console.log(response.get('user_id'));      // '123'
 
 // Subsequent requests automatically use the acquired credentials
 const cart = await client.cart().get();
+```
+
+### Disambiguating a Failed Login
+
+A failed `login()` throws `AuthenticationError` for two very different reasons that otherwise look identical: wrong credentials, or a correct login on a store that doesn't have the CoCart JWT Authentication plugin installed. The plugin-missing case has its own `errorCode` — check it to tell them apart:
+
+```ts
+import { AuthenticationError } from '@cocartheadless/sdk';
+
+try {
+  await client.login('customer@email.com', 'password');
+} catch (e) {
+  if (e instanceof AuthenticationError && e.errorCode === 'cocart_jwt_missing') {
+    // Credentials were valid — this store just doesn't have the CoCart JWT
+    // Authentication plugin installed. Fall back to Basic Auth via setAuth().
+  } else if (e instanceof AuthenticationError) {
+    // Wrong username/password
+  }
+}
 ```
 
 ### Logout
@@ -163,17 +185,18 @@ const cart = await client.cart().get();
 Pass a storage adapter to the JWT Manager for automatic persistence:
 
 ```ts
-import { CoCart, JwtManager, EncryptedStorage } from '@cocartheadless/sdk';
+import { CoCart, JwtManager } from '@cocartheadless/sdk';
 
-const storage = new EncryptedStorage('my-secret-key');
-const client = new CoCart('https://your-store.com', { storage });
-const jwt = new JwtManager(client, storage, { autoRefresh: true });
+const client = new CoCart('https://your-store.com', { encryptionKey: 'my-secret-key' });
+const jwt = new JwtManager(client, client.getStorage(), { autoRefresh: true });
 
 // Restore tokens from storage
 await jwt.restoreTokensFromStorage();
 
 // Tokens are saved to storage after login/refresh
 await jwt.login('user@example.com', 'password');
+
+// On next page load, tokens are restored from encrypted localStorage
 ```
 
 ### JWT Utility Methods
@@ -184,6 +207,84 @@ client.jwt().isTokenExpired();       // true if token is expired (local check)
 client.jwt().getTokenExpiry();       // unix timestamp of token expiry
 client.jwt().isAutoRefreshEnabled(); // check auto-refresh status
 client.jwt().setAutoRefresh(true);   // enable/disable at runtime
+```
+
+## Two Factor Authentication
+
+**Two Factor Authentication (2FA)** adds an extra layer of security to customer logins. After entering their username and password, the customer must also provide a time-based code from an authenticator app, a code sent via email, or a backup code.
+
+<Note>Requires the [WordPress Two Factor](https://wordpress.org/plugins/two-factor/) plugin, alongside CoCart Plus v1.6.0+.</Note>
+
+### The Two-Step Login Flow
+
+When a customer with 2FA enabled logs in, the server doesn't immediately issue a JWT token. Instead, it responds with a challenge — a notification that a verification code is required. The SDK translates this into a `TwoFactorAuthRequiredError`, which you catch and handle by prompting the customer for their code.
+
+```ts
+import { CoCart, JwtManager, TwoFactorAuthRequiredError } from '@cocartheadless/sdk';
+
+const client = new CoCart('https://your-store.com');
+const jwt = new JwtManager(client);
+
+try {
+  await jwt.login('customer@email.com', 'password');
+  // Login succeeded — no 2FA configured for this user
+} catch (e) {
+  if (e instanceof TwoFactorAuthRequiredError) {
+    // Server requires a 2FA code
+    console.log('Available providers:', e.availableProviders); // ['totp', 'email']
+    console.log('Default provider:', e.defaultProvider);       // 'totp'
+    console.log('Email already sent:', e.emailSent);           // false
+
+    // Prompt the customer for their verification code
+    const code = await promptUserForCode();
+
+    // Complete the login with the code
+    await jwt.verifyTwoFactor('customer@email.com', 'password', code);
+  } else {
+    throw e;
+  }
+}
+```
+
+### Specifying a Provider
+
+If the store supports multiple 2FA providers (e.g. TOTP and email), you can specify which one to use:
+
+```ts
+// Use email provider (server will send a code via email)
+await jwt.verifyTwoFactor('customer@email.com', 'password', code, 'email');
+
+// Use TOTP provider (code from authenticator app)
+await jwt.verifyTwoFactor('customer@email.com', 'password', code, 'totp');
+
+// Use a backup code
+await jwt.verifyTwoFactor('customer@email.com', 'password', backupCode, 'backup');
+```
+
+If no provider is specified, the server uses its configured default for the user.
+
+### TwoFactorAuthRequiredError Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `availableProviders` | `string[]` | Providers the user can choose from (e.g. `['totp', 'email']`) |
+| `defaultProvider` | `string \| null` | The provider the server will use by default |
+| `emailSent` | `boolean` | Whether the server has already sent a code via email |
+
+### Handling Invalid Codes
+
+If the customer enters a wrong code, `verifyTwoFactor()` throws an `AuthenticationError` with `errorCode === 'cocart_2fa_invalid_code'`:
+
+```ts
+import { AuthenticationError } from '@cocartheadless/sdk';
+
+try {
+  await jwt.verifyTwoFactor('customer@email.com', 'password', '000000');
+} catch (e) {
+  if (e instanceof AuthenticationError && e.errorCode === 'cocart_2fa_invalid_code') {
+    console.log('Invalid code — please try again');
+  }
+}
 ```
 
 ## Consumer Keys (Admin)

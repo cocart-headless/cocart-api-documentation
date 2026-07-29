@@ -1,0 +1,229 @@
+---
+title: "Swift SDK"
+sidebarTitle: "Overview"
+description: "Official Swift SDK for the CoCart REST API. Zero runtime dependencies, async/await concurrency, Keychain storage, and native iOS, macOS, and watchOS support."
+'og:title': "CoCart Swift SDK — Install, Configure & Connect to WooCommerce"
+'og:description': "Install and configure the CoCart Swift SDK. Swift Package Manager, configuration options, fluent setters, Keychain storage, event system, debug mode, and legacy plugin support."
+---
+
+<Info>
+  This guide was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
+</Info>
+
+The official Swift SDK for the CoCart REST API — a native Swift client for managing WooCommerce carts, products, and customer sessions. Requires Swift 5.10+.
+
+<Warning>
+  This SDK is still in active development and not yet ready for production use. The CHANGELOG only lists an `Unreleased` `1.0.0` entry — no stable version has shipped yet. Expect the API surface to change before the first tagged release.
+</Warning>
+
+## Requirements
+
+- Swift 5.10 or higher (Xcode 15.4+)
+- iOS 17+, macOS 14+, or watchOS 10+
+- CoCart plugin installed on your WooCommerce store
+- [CoCart JWT Authentication](https://wordpress.org/plugins/cocart-jwt-authentication/) plugin _(optional, for JWT features)_
+
+## Installation
+
+### Swift Package Manager
+
+Add the dependency to your `Package.swift`:
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/cocart-headless/cocart-swift-sdk.git", from: "1.0.0")
+]
+```
+
+Or in Xcode: **File > Add Package Dependencies** and paste the repository URL.
+
+The SDK has zero runtime dependencies — it uses native `URLSession` and the `Security` framework, so no additional packages are installed alongside it.
+
+## Quick Start
+
+```swift
+import CoCart
+
+// Create a client pointing to your WooCommerce store
+let client = CoCart("https://your-store.com")
+
+// Browse products (no auth required)
+let products = try await client.products().all(["per_page": "12"])
+
+// Add to cart (guest session created automatically)
+let response = try await client.cart().addItem(123, quantity: 2)
+
+// Get cart
+let cart = try await client.cart().get()
+print(cart.getItems())          // Array of items in the cart
+print(cart.get("totals.total")) // Reach into nested data with dot notation
+```
+
+<Note>
+  Code using `await` must be inside an `async` function or task. In SwiftUI, use `.task { }` modifiers. In a plain script or app delegate, wrap your code in a `Task`:
+
+  ```swift
+  Task {
+      let client = CoCart("https://your-store.com")
+      let cart = try await client.cart().get()
+      print(cart.getItems())
+  }
+  ```
+</Note>
+
+## Configuration Options
+
+The second argument to `CoCart()` is an optional `CoCartOptions` struct where you can set various options. You only need to include the ones relevant to your setup — everything has sensible defaults.
+
+```swift
+let client = CoCart("https://your-store.com", options: CoCartOptions(
+    // Guest session
+    cartKey: "existing_cart_key",
+
+    // Basic Auth
+    username: "customer@email.com",
+    password: "password",
+
+    // JWT Auth
+    jwtToken: "your-jwt-token",
+    jwtRefreshToken: "your-refresh-token",
+
+    // Admin (Sessions API)
+    consumerKey: "ck_xxxxx",
+    consumerSecret: "cs_xxxxx",
+
+    // HTTP settings
+    timeout: 30,           // seconds (default: 30)
+
+    // REST API prefix (default: "wp-json")
+    restPrefix: "wp-json",
+
+    // API namespace (default: "cocart")
+    namespace: "cocart",
+
+    // CoCart main plugin: .basic (default) or .legacy
+    mainPlugin: .basic,
+
+    // Retry transient failures (default: 2)
+    maxRetries: 2,
+
+    // Storage adapter — KeychainStorage by default, MemoryStorage for tests/previews
+    storage: MemoryStorage(),
+    storageKey: "cocart_cart_key",
+
+    // Custom auth header name (default: "Authorization")
+    // Useful when hosting strips the Authorization header
+    authHeaderName: "X-Auth-Token",
+
+    // Enable ETag conditional requests for reduced bandwidth (default: true)
+    etag: true,
+
+    // Enable debug logging (default: false)
+    debug: true
+))
+```
+
+### Fluent Configuration
+
+A **fluent API** (also called method chaining) lets you call multiple configuration methods in a single expression. Each method returns the client itself, so you can chain them with dots instead of writing separate statements:
+
+```swift
+let client = CoCart.create("https://your-store.com")
+    .setTimeout(60)
+    .setMaxRetries(2)
+    .setRestPrefix("api")
+    .setNamespace("mystore")
+    .addHeader("X-Custom-Header", value: "value")
+    .setAuthHeaderName("X-Auth-Token")
+    .setETag(true)
+    .setMainPlugin(.basic)
+    .setDebug(true)
+```
+
+## White-Labelling / Custom REST Prefix
+
+WordPress exposes its REST API at `/wp-json/` by default. The SDK builds URLs like `https://your-store.com/wp-json/cocart/v2/cart`. If your site or hosting changes this prefix, or if the CoCart plugin has been renamed (white-labelled), you can configure the SDK to match:
+
+```swift
+// Custom REST prefix (site uses /api/ instead of /wp-json/)
+let client = CoCart("https://your-store.com", options: CoCartOptions(
+    restPrefix: "api"
+))
+// Requests go to: https://your-store.com/api/cocart/v2/cart
+
+// White-labelled namespace
+let client2 = CoCart("https://your-store.com", options: CoCartOptions(
+    namespace: "mystore"
+))
+// Requests go to: https://your-store.com/wp-json/mystore/v2/cart
+
+// Both together
+let client3 = CoCart("https://your-store.com", options: CoCartOptions(
+    restPrefix: "api",
+    namespace: "mystore"
+))
+// Requests go to: https://your-store.com/api/mystore/v2/cart
+```
+
+## Legacy Plugin Support
+
+The SDK supports both **CoCart Starter** and the **CoCart Community plugin** (`cart-rest-api-for-woocommerce` v4.x). By default, the SDK targets CoCart Starter.
+
+To use the SDK with the legacy plugin, set `mainPlugin` to `.legacy`:
+
+```swift
+let client = CoCart("https://your-store.com", options: CoCartOptions(
+    mainPlugin: .legacy
+))
+
+// Or use the fluent setter
+client.setMainPlugin(.legacy)
+```
+
+### What changes in legacy mode
+
+**Field filtering uses `fields` instead of `_fields`.** The legacy plugin uses CoCart's custom `fields` query parameter, while CoCart Starter uses the WordPress standard `_fields`. The SDK handles this automatically — methods like `getFiltered()` will send the correct parameter based on the configured main plugin.
+
+## Key Features
+
+- **Zero runtime dependencies** — native `URLSession` and `Security` framework only
+- **Swift Package Manager** distribution
+- **`async/await`** with Swift Concurrency throughout
+- **Client-side input validation** — catches errors before network requests
+- **Currency formatting** utility
+- **Event system** for request/response lifecycle hooks
+- **Configurable auth header name** for proxies that strip `Authorization`
+- **Keychain storage** for secure session persistence
+- **JWT authentication** with auto-refresh
+- **Legacy plugin support** with version-aware field filtering
+- **ETag conditional requests** for reduced bandwidth
+
+## Documentation
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="lock" href="/sdk/swift/authentication">
+    Guest sessions, Basic Auth, JWT, consumer keys, and custom auth headers
+  </Card>
+  <Card title="Cart API" icon="cart-shopping" href="/sdk/swift/cart">
+    Add, update, remove items, coupons, shipping, fees, and ETag caching
+  </Card>
+  <Card title="Products API" icon="shirt" href="/sdk/swift/products">
+    Browse, filter, paginate products, variations, categories, and reviews
+  </Card>
+  <Card title="Account API" icon="user" href="/sdk/swift/account">
+    Customer profile, password, order history, downloads, and reviews
+  </Card>
+  <Card title="Sessions API" icon="database" href="/sdk/swift/sessions">
+    Admin sessions endpoint, storage adapters, and guest session lifecycle
+  </Card>
+  <Card title="Error Handling" icon="circle-exclamation" href="/sdk/swift/error-handling">
+    Error types, catching errors, and HTTP status code mapping
+  </Card>
+  <Card title="Utilities" icon="wrench" href="/sdk/swift/utilities">
+    Currency formatting, event system, and secure session storage
+  </Card>
+</CardGroup>
+
+## Source
+
+The SDK is open source. View the source and report issues on [GitHub](https://github.com/cocart-headless/cocart-swift-sdk).

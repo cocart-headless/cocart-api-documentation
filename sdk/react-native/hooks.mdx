@@ -1,0 +1,259 @@
+---
+title: "React Native SDK: Hooks Reference"
+sidebarTitle: "Hooks Reference"
+description: "Full reference for the CoCart React Native SDK hooks — useCoCart, useCart, useCartMutations, useProducts, and useAccount."
+'og:title': "Hooks Reference — CoCart React Native SDK"
+'og:description': "Props, return values, and behaviour for every CoCart React Native SDK hook, plus a pattern for building your own hooks on top of the client."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
+</Info>
+
+All hooks must be used inside a component wrapped by `<CoCartProvider>`.
+
+## useCoCart
+
+Returns the raw `CoCart` client instance. Use this when you need to call methods not covered by the other hooks.
+
+```tsx
+import { useCoCart } from '@cocartheadless/react-native-sdk';
+
+function MyComponent() {
+  const client = useCoCart();
+
+  async function handleAction() {
+    const response = await client.cart().applyCoupon('SAVE20');
+  }
+}
+```
+
+Throws `Error('useCoCart must be used within <CoCartProvider>')` if called outside the provider.
+
+## useCart
+
+Fetches the cart on mount and exposes current state plus a refresh function.
+
+```tsx
+const { cart, loading, error, refresh } = useCart();
+```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `cart` | `Response \| null` | Current cart response, or `null` if not yet loaded |
+| `loading` | `boolean` | `true` while fetching |
+| `error` | `Error \| null` | Error from the last fetch attempt, or `null` |
+| `refresh` | `() => Promise<void>` | Re-fetch the cart manually |
+
+### Behaviour
+
+- Fetches the cart once on mount.
+- Sets `loading: true` at the start of each fetch and `loading: false` when done.
+- On error, sets `error` and keeps `cart` as its last successful value (or `null` on first load).
+- Does not retry automatically on error — call `refresh()` to retry.
+
+### Example
+
+```tsx
+function CartScreen() {
+  const { cart, loading, error, refresh } = useCart();
+
+  if (loading) return <ActivityIndicator />;
+  if (error)   return <Button title="Retry" onPress={refresh} />;
+
+  return (
+    <View>
+      <Text>Items: {cart?.getItemCount()}</Text>
+      <Text>Total: {cart?.get('totals.total')}</Text>
+      <Button title="Refresh" onPress={refresh} />
+    </View>
+  );
+}
+```
+
+## useCartMutations
+
+Returns functions for modifying the cart. All functions return a Promise — `await` them or handle errors in a `try/catch`.
+
+```tsx
+const { addItem, removeItem, updateItem, clear } = useCartMutations();
+```
+
+### addItem
+
+```tsx
+addItem(productId: number, quantity: number, options?: Record<string, unknown>): Promise<Response>
+```
+
+```tsx
+await addItem(123, 2);
+await addItem(123, 1, { item_data: { gift_message: 'Happy Birthday!' } });
+```
+
+### removeItem
+
+```tsx
+removeItem(itemKey: string): Promise<Response>
+```
+
+```tsx
+await removeItem('abc123def456...');
+```
+
+`itemKey` is the `item_key` field from a cart item in the cart response.
+
+### updateItem
+
+```tsx
+updateItem(itemKey: string, quantity: number, options?: Record<string, unknown>): Promise<Response>
+```
+
+```tsx
+await updateItem('abc123def456...', 3);
+```
+
+### clear
+
+```tsx
+clear(): Promise<Response>
+```
+
+```tsx
+await clear();
+```
+
+### After Mutations
+
+Mutations do not automatically refresh the `useCart` state. Call `refresh()` from `useCart` after a mutation to keep the displayed cart in sync:
+
+```tsx
+function AddToCartButton({ productId }) {
+  const { addItem } = useCartMutations();
+  const { refresh } = useCart();
+
+  async function handlePress() {
+    await addItem(productId, 1);
+    refresh();
+  }
+
+  return <Button title="Add to Cart" onPress={handlePress} />;
+}
+```
+
+## useProducts
+
+Fetches products and exposes state plus a refresh function.
+
+```tsx
+const { products, loading, error, refresh } = useProducts(options?);
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `category` | `string` | — | Filter by category slug |
+| `tag` | `string` | — | Filter by tag slug |
+| `filters` | `Record<string, string>` | — | Extra query params for `products().all()` |
+| `autoFetch` | `boolean` | `true` | Fetch on mount |
+
+| Return Value | Type | Description |
+|-------------|------|-------------|
+| `products` | `Response \| null` | Product list response |
+| `loading` | `boolean` | `true` while fetching |
+| `error` | `Error \| null` | Error from last fetch, or `null` |
+| `refresh` | `() => Promise<void>` | Re-fetch manually |
+
+### Fetch Priority
+
+1. If `category` is set → calls `client.products().category(category)`
+2. Else if `tag` is set → calls `client.products().tag(tag)`
+3. Else → calls `client.products().all(filters)`
+
+### Examples
+
+```tsx
+// All products
+useProducts()
+
+// By category
+useProducts({ category: 'shirts' })
+
+// By tag
+useProducts({ tag: 'sale' })
+
+// Custom filters
+useProducts({ filters: { per_page: '24', orderby: 'price', order: 'asc' } })
+
+// Manual control
+const { products, refresh } = useProducts({ autoFetch: false });
+// fetch when ready:
+useEffect(() => { refresh(); }, [someCondition]);
+```
+
+## useAccount
+
+Returns stable callbacks for all customer account operations. Requires the customer to be authenticated.
+
+```tsx
+const {
+  getProfile,
+  updateProfile,
+  changePassword,
+  getOrders,
+  getOrder,
+  getGuestOrder,
+  getOrderDownloads,
+  getGuestOrderDownloads,
+  getDownloads,
+  getReviews,
+} = useAccount();
+```
+
+| Function | Signature | Description |
+|----------|-----------|--------------|
+| `getProfile` | `() => Promise<Response>` | Get the authenticated customer's profile |
+| `updateProfile` | `(data: AccountUpdateInput) => Promise<Response>` | Update profile fields |
+| `changePassword` | `(data: AccountChangePasswordInput) => Promise<Response>` | Change password |
+| `getOrders` | `(params?: AccountOrdersParams) => Promise<Response>` | List orders |
+| `getOrder` | `(id: number) => Promise<Response>` | Get a single order |
+| `getGuestOrder` | `(id: number, email: string) => Promise<Response>` | Get an order without authentication |
+| `getOrderDownloads` | `(id: number) => Promise<Response>` | Downloads for an order |
+| `getGuestOrderDownloads` | `(id: number, email: string) => Promise<Response>` | Downloads for a guest order |
+| `getDownloads` | `() => Promise<Response>` | All downloads for the customer |
+| `getReviews` | `() => Promise<Response>` | Reviews written by the customer |
+
+See the [Account API](/sdk/react-native/account) guide for full usage examples.
+
+## Adding Custom Hooks
+
+To build a hook on top of the SDK:
+
+```tsx
+// src/hooks/useOrders.ts (example)
+import { useCallback, useEffect, useState } from 'react';
+import type { Response } from '@cocartheadless/react-native-sdk';
+import { useCoCart } from '@cocartheadless/react-native-sdk';
+
+export function useOrders() {
+  const client = useCoCart();
+  const [orders, setOrders] = useState<Response | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const refresh = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await client.account().getOrders();
+      setOrders(response);
+    } catch (e) {
+      setError(e instanceof Error ? e : new Error(String(e)));
+    } finally {
+      setLoading(false);
+    }
+  }, [client]);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  return { orders, loading, error, refresh };
+}
+```

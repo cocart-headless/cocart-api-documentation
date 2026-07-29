@@ -1,0 +1,189 @@
+---
+title: "React Native SDK: Cart API"
+sidebarTitle: "Cart API"
+description: "Add, update, and remove cart items, apply coupons, calculate shipping, and read cart totals with the CoCart React Native SDK."
+'og:title': "Cart API — CoCart React Native SDK"
+'og:description': "Manage the shopping cart from React Native using useCart and useCartMutations — add items, coupons, shipping, ETag caching, and client-side validation."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
+</Info>
+
+The Cart API handles all shopping cart operations — adding items, updating quantities, applying coupons, and managing the cart state. Access it through the `useCart()` and `useCartMutations()` hooks, or directly via `useCoCart()`.
+
+## Hooks Overview
+
+```tsx
+import { useCart, useCartMutations, useCoCart } from '@cocartheadless/react-native-sdk';
+
+// Cart state
+const { cart, loading, error, refresh } = useCart();
+
+// Mutations
+const { addItem, removeItem, updateItem, clear } = useCartMutations();
+
+// Direct client access for everything else
+const client = useCoCart();
+```
+
+## useCart
+
+Fetches the cart on mount and exposes the current state.
+
+```tsx
+function CartScreen() {
+  const { cart, loading, error, refresh } = useCart();
+
+  if (loading) return <ActivityIndicator />;
+  if (error) return <Text>Error: {error.message}</Text>;
+
+  return (
+    <View>
+      <Text>Items: {cart?.getItemCount()}</Text>
+      <Text>Total: {cart?.get('totals.total')}</Text>
+      <Button title="Refresh" onPress={refresh} />
+    </View>
+  );
+}
+```
+
+## useCartMutations
+
+```tsx
+function ProductCard({ product }) {
+  const { addItem } = useCartMutations();
+  const { refresh } = useCart();
+
+  async function handleAdd() {
+    await addItem(product.id, 1);
+    refresh(); // re-fetch cart to show updated count
+  }
+
+  return <Button title="Add to Cart" onPress={handleAdd} />;
+}
+```
+
+### addItem
+
+```tsx
+const { addItem } = useCartMutations();
+
+// Simple product
+await addItem(123, 2);
+
+// With options
+await addItem(123, 1, {
+  item_data: { gift_message: 'Happy Birthday!' },
+});
+```
+
+### removeItem
+
+```tsx
+await removeItem('abc123def456...');
+```
+
+### updateItem
+
+```tsx
+await updateItem('abc123def456...', 3);
+```
+
+### clear
+
+```tsx
+await clear();
+```
+
+## Direct Client Access
+
+For operations not covered by the hooks, use `useCoCart()` to access the full Cart API:
+
+```tsx
+import { useCoCart } from '@cocartheadless/react-native-sdk';
+
+function CartScreen() {
+  const client = useCoCart();
+
+  // Add a variable product
+  await client.cart().addVariation(456, 1, {
+    attribute_pa_color: 'blue',
+    attribute_pa_size: 'large',
+  });
+
+  // Apply coupon
+  await client.cart().applyCoupon('SAVE20');
+
+  // Calculate shipping
+  await client.cart().calculateShipping({
+    country: 'US',
+    state: 'CA',
+    postcode: '90001',
+    city: 'Los Angeles',
+  });
+
+  // Get totals
+  const totals = await client.cart().getTotals();
+}
+```
+
+## Client-Side Validation
+
+The SDK validates inputs before making a network request:
+
+```tsx
+import { ValidationError } from '@cocartheadless/react-native-sdk';
+
+try {
+  await addItem(-1, 0);
+} catch (e) {
+  if (e instanceof ValidationError) {
+    // e.message => "Product ID must be a positive integer"
+    // No network request was made
+  }
+}
+```
+
+## Working with Cart Responses
+
+Every cart method returns a `Response` object. Access data with dot-notation or helper methods:
+
+```tsx
+const { cart } = useCart();
+
+if (cart) {
+  // Item count
+  const count = cart.getItemCount();       // number
+
+  // Dot-notation access
+  const total = cart.get('totals.total');          // e.g. '4599'
+  const subtotal = cart.get('totals.subtotal');
+  const firstItem = cart.get('items.0.name');
+
+  // Check state
+  cart.hasItems();    // true if items exist
+  cart.isEmpty();     // true if cart is empty
+  cart.hasCoupons();  // true if coupons are applied
+
+  // Raw object
+  const data = cart.toObject();
+}
+```
+
+## ETag / Conditional Requests
+
+The SDK sends `If-None-Match` headers automatically to avoid re-downloading unchanged cart data. ETag is enabled by default.
+
+```tsx
+// Disable for all requests
+<CoCartProvider siteURL="..." options={{ etag: false }}>
+
+// Check if response was unchanged
+const response = await client.cart().get();
+if (response.isNotModified()) {
+  console.log('Cart has not changed');
+}
+```
+
+See the full Cart API documentation for all available methods (coupons, shipping, fees, cross-sells, etc.) in the [TypeScript SDK docs](/sdk/typescript/cart).

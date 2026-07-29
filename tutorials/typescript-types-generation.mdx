@@ -7,7 +7,7 @@ tag: "NEW"
 ---
 
 <Info>
-  This tutorial was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 27th, 2026.
+  This tutorial was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
 </Info>
 
 <Info>
@@ -37,21 +37,38 @@ This tutorial shows you how to generate and use those types in your TypeScript p
 
 All official specs live in [`cocart-headless/cocart-openapi`](https://github.com/cocart-headless/cocart-openapi) and follow the OpenAPI 3.0.3 standard.
 
-### CoCart Starter (latest, v5.0.0)
+### CoCart Starter — API v2 (latest, v5.0.0)
 
 | Specification File | Covers |
 |-------------------|--------|
-| `basic/v2/openapi-cocart-v2-collection.yaml` | **All v2 endpoints combined** — cart, products, sessions, store, login/logout |
-| `basic/v2/openapi-cocart-cart-v2.yaml` | Cart endpoints only |
-| `basic/v2/openapi-cocart-products-v2.yaml` | Products endpoints only |
-| `basic/v2/openapi-cocart-sessions-v2.yaml` | Sessions endpoints only |
-| `basic/v2/openapi-cocart-others-v2.yaml` | Login, logout, and store endpoints |
+| `starter/v2/openapi-cocart-v2-collection.yaml` | **All v2 endpoints combined** — cart, products, sessions, store, login/logout |
+| `starter/v2/openapi-cocart-cart-v2.yaml` | Cart endpoints only |
+| `starter/v2/openapi-cocart-products-v2.yaml` | Products endpoints only |
+| `starter/v2/openapi-cocart-sessions-v2.yaml` | Sessions endpoints only |
+| `starter/v2/openapi-cocart-others-v2.yaml` | Login, logout, and store endpoints |
 
-### CoCart Community (v4.9.0)
+<Note>
+  `starter/v2/openapi-cocart-v2-sdk.yaml` also exists in the repo, but it's the spec used to generate the official SDKs' own code samples (it carries `x-codeSamples` for the TypeScript/PHP/Python/Go SDKs and formats example values to match SDK output). Use the collection spec above for generic type generation instead.
+</Note>
+
+### CoCart Community — API v2 (v4.9.0)
 
 | Specification File | Covers |
 |-------------------|--------|
-| `community/v2/openapi-cocart-v2-stable.yaml` | All community v2 endpoints combined |
+| `community/v2/openapi-cocart-v2-community.yaml` | All community v2 endpoints combined |
+| `community/v2/openapi-cocart-cart-v2.yaml` | Cart endpoints only |
+| `community/v2/openapi-cocart-products-v2.yaml` | Products endpoints only |
+| `community/v2/openapi-cocart-sessions-v2.yaml` | Sessions endpoints only |
+| `community/v2/openapi-cocart-others-v2.yaml` | Login, logout, and store endpoints |
+
+### CoCart Community — API v1 (legacy)
+
+<Note>
+  No longer supported. Only use these if you're stuck on an old CoCart version that hasn't migrated to v2.
+</Note>
+
+| Specification File | Covers |
+|-------------------|--------|
 | `community/v1/openapi-cocart-cart-v1.yaml` | Legacy v1 cart endpoints |
 | `community/v1/openapi-cocart-products-v1.yaml` | Legacy v1 product endpoints |
 
@@ -60,7 +77,8 @@ All official specs live in [`cocart-headless/cocart-openapi`](https://github.com
 | Specification File | Covers |
 |-------------------|--------|
 | `jwt-authentication/openapi-cocart-jwt-auth.yaml` | JWT token refresh and validation |
-| `plus/v1/openapi-cocart-plus-v1-collection.yaml` | CoCart Plus v1 — coupons, fees, shipping, and granular totals |
+| `plus/v1/openapi-cocart-plus-v1-collection.yaml` | CoCart Plus v1 — coupons, fees, shipping, payment methods, and granular totals |
+| `plus/v2/openapi-cocart-plus-v2-collection.yaml` | CoCart Plus v2 (in development) — cart, products, my account (excludes checkout, not yet published) |
 
 <Note>
   This tutorial focuses on **CoCart Starter API v2** (the collection spec), which is recommended for all new projects. The same approach works with any of the specs above.
@@ -390,7 +408,7 @@ You can generate types for different parts of the API separately, or include add
     "generate-types:v2": "openapi-typescript https://raw.githubusercontent.com/cocart-headless/cocart-openapi/main/starter/v2/openapi-cocart-v2-collection.yaml -o src/types/cocart-v2.ts",
     "generate-types:jwt": "openapi-typescript https://raw.githubusercontent.com/cocart-headless/cocart-openapi/main/jwt-authentication/openapi-cocart-jwt-auth.yaml -o src/types/cocart-jwt.ts",
     "generate-types:plus": "openapi-typescript https://raw.githubusercontent.com/cocart-headless/cocart-openapi/main/plus/v1/openapi-cocart-plus-v1-collection.yaml -o src/types/cocart-plus.ts",
-    "generate-types:all": "npm run generate-types:v2 && npm run generate-types:jwt"
+    "generate-types:all": "npm run generate-types:v2 && npm run generate-types:jwt && npm run generate-types:plus"
   }
 }
 ```

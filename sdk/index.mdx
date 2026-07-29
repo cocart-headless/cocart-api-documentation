@@ -6,7 +6,7 @@ robots: "noindex, follow"
 ---
 
 <Warning>
-  These SDKs are maintained by the CoCart team and are designed to provide a seamless integration experience with the CoCart API. They are open source and available on GitHub, where you can contribute or report issues.
+  Only the TypeScript SDK has a stable release. The rest — PHP, Python, Go, Flutter, Swift, React Native, and Kotlin — are still in active development and not yet recommended for production use.
 </Warning>
 
 ## Web & Server SDKs
@@ -56,7 +56,7 @@ robots: "noindex, follow"
     title="Flutter"
     icon="mobile"
     color="#54C5F8"
-    href="https://github.com/cocart-headless/cocart-flutter-sdk"
+    href="/sdk/flutter"
     >
       For Flutter applications — iOS and Android
   </Card>
@@ -65,7 +65,7 @@ robots: "noindex, follow"
     title="Swift"
     icon="apple"
     color="#F05138"
-    href="https://github.com/cocart-headless/cocart-swift-sdk"
+    href="/sdk/swift"
     >
       For native iOS, macOS, and watchOS applications
   </Card>
@@ -74,7 +74,7 @@ robots: "noindex, follow"
     title="React Native"
     icon="react"
     color="#61DAFB"
-    href="https://github.com/cocart-headless/cocart-react-native"
+    href="/sdk/react-native"
     >
       For cross-platform iOS and Android applications
   </Card>
@@ -83,9 +83,31 @@ robots: "noindex, follow"
     title="Kotlin"
     icon="android"
     color="#7F52FF"
-    href="https://github.com/cocart-headless/cocart-kotlin"
+    href="/sdk/kotlin"
     >
       For native Android applications
+  </Card>
+</CardGroup>
+
+## Hosted Platforms
+
+For no-code/low-code platforms where you just need a `<script>` tag — no build step required. Both load the TypeScript SDK from a CDN.
+
+<CardGroup cols={2}>
+  <Card
+    title="Framer"
+    icon="globe"
+    href="/sdk/typescript/frameworks/framer"
+    >
+      For Framer sites — CDN script, Code Overrides, product display
+  </Card>
+
+  <Card
+    title="Webflow"
+    icon="globe"
+    href="/sdk/typescript/frameworks/webflow"
+    >
+      For Webflow sites — CDN script, custom code, dynamic elements
   </Card>
 </CardGroup>
 

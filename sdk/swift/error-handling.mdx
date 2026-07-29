@@ -1,0 +1,232 @@
+---
+title: "Swift SDK: Error Handling"
+sidebarTitle: "Error Handling"
+description: "Error types, catching errors, and HTTP status code mapping in the CoCart Swift SDK."
+'og:title': "Error Handling — CoCart Swift SDK"
+'og:description': "The CoCartError enum, do/catch patterns, JWT expiry handling, client-side validation errors, and HTTP status code mapping in the CoCart Swift SDK."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
+</Info>
+
+When something goes wrong — a product doesn't exist, the customer isn't logged in, or the server has a problem — the SDK throws an **error**. Errors are Swift `Error` types that describe what went wrong. You catch them using `do/catch` blocks (shown below).
+
+## Error Types
+
+The SDK uses a single `CoCartError` enum with cases for different error categories:
+
+```text
+CoCartError
+├── .auth(String, code: String?)      — login/permission problems (401, 403)
+├── .forbidden(String)                — insufficient permissions (403)
+├── .notFound(String)                 — resource not found (404)
+├── .rateLimited(retryAfter: Int?)    — too many requests (429)
+├── .api(String, statusCode: Int, code: String?)  — other API errors
+├── .network(String)                  — connection/timeout failures
+├── .validation(String)               — bad input (client-side)
+└── .version(String)                  — method requires CoCart Starter
+```
+
+`CoCartError` conforms to `LocalizedError`, so you can use `error.localizedDescription` or `error.errorDescription` to get a human-readable message.
+
+## Catching Errors
+
+In Swift, `do/catch` lets you attempt an operation and handle any errors gracefully instead of crashing. Pattern matching on the error cases lets you respond differently to different problems:
+
+```swift
+import CoCart
+
+do {
+    let response = try await client.cart().addItem(999, quantity: 1)
+} catch let error as CoCartError {
+    switch error {
+    case .validation(let message):
+        // Bad input — product not found, out of stock, invalid quantity, etc.
+        print("Validation Error: \(message)")
+
+    case .auth(let message, let code):
+        // 401 — invalid credentials, expired token
+        print("Auth Error: \(message), code: \(code ?? "none")")
+
+    case .forbidden(let message):
+        // 403 — insufficient permissions
+        print("Forbidden: \(message)")
+
+    case .notFound(let message):
+        // 404 — endpoint or item not found
+        print("Not Found: \(message)")
+
+    case .rateLimited(let retryAfter):
+        // 429 — too many requests
+        print("Rate limited. Retry after: \(retryAfter ?? 0)s")
+
+    case .api(let message, let statusCode, let code):
+        // Any other API error (500, etc.)
+        print("API Error \(statusCode): \(message)")
+
+    case .network(let message):
+        // Connection failed, timeout, etc.
+        print("Network Error: \(message)")
+
+    case .version(let message):
+        // Method requires CoCart Starter
+        print("Version Error: \(message)")
+    }
+}
+```
+
+## JWT Token Expiry
+
+Check if a token is expired before making requests, or handle the error after:
+
+```swift
+let jwt = client.jwt()
+
+// Proactive check
+if jwt.isTokenExpired() {
+    try await jwt.refresh()
+}
+
+// Or handle the error
+do {
+    let cart = try await client.cart().get()
+} catch let error as CoCartError {
+    if case .auth = error, jwt.hasTokens() {
+        try await jwt.refresh()
+        let cart = try await client.cart().get() // Retry
+    } else {
+        throw error
+    }
+}
+```
+
+Or let the SDK handle it automatically:
+
+```swift
+let result = try await client.jwt().withAutoRefresh {
+    try await client.cart().get()
+}
+```
+
+See [Authentication](/sdk/swift/authentication#auto-refresh) for details.
+
+## HTTP Status Code Mapping
+
+Every HTTP response includes a **status code** — a number that tells you whether the request succeeded or failed, and why. Here's how the SDK maps them to error cases:
+
+| HTTP Status | Error Case | Typical Causes |
+|-------------|------------|----------------|
+| 400 | `.api` | Invalid request body, missing required fields |
+| 401 | `.auth` | Missing or invalid credentials, expired JWT token |
+| 403 | `.forbidden` | Insufficient permissions |
+| 404 | `.notFound` | Endpoint not found, item key not found |
+| 429 | `.rateLimited` | Too many requests |
+| 500+ | `.api` | Server error |
+
+## Client-Side Validation Errors
+
+The SDK validates certain inputs before making a network request. These throw `CoCartError.validation` immediately with no HTTP call:
+
+```swift
+do {
+    try await client.cart().addItem(-1, quantity: 0)
+} catch let error as CoCartError {
+    if case .validation(let message) = error {
+        // message => "Product ID must be a positive integer"
+        // No network request was made
+    }
+}
+```
+
+Client-side validation checks:
+
+| Method | Validation | Error Message |
+|--------|-----------|---------------|
+| `addItem(id, quantity:)` | `id` must be a positive integer | "Product ID must be a positive integer" |
+| `addItem(id, quantity:)` | `quantity` must be a positive number | "Quantity must be a positive number" |
+| `updateItem(key, quantity:)` | `quantity` must be a positive number | "Quantity must be a positive number" |
+
+Standalone validation functions are also available for use in your own code:
+
+```swift
+import CoCart
+
+try validateProductID(123)             // OK
+try validateProductID(-1)              // throws CoCartError.validation
+try validateQuantity(2)                // OK
+try validateQuantity(0)                // throws CoCartError.validation
+try validateEmail("user@example.com")  // OK
+try validateEmail("not-an-email")      // throws CoCartError.validation
+```
+
+## Common Error Scenarios
+
+### Product Not Found
+
+```swift
+do {
+    try await client.cart().addItem(999999, quantity: 1)
+} catch let error as CoCartError {
+    if case .api(let message, _, let code) = error {
+        // message => "Product not found"
+        // code    => Optional("cocart_product_not_found")
+    }
+}
+```
+
+### Out of Stock
+
+```swift
+do {
+    try await client.cart().addItem(123, quantity: 100)
+} catch let error as CoCartError {
+    if case .api(_, _, let code) = error {
+        // code => Optional("cocart_not_enough_in_stock")
+    }
+}
+```
+
+### Network / Timeout Errors
+
+A **timeout** occurs when the server takes too long to respond. The SDK cancels the request after the configured number of seconds. After exhausting retries, it throws a network error. This prevents your app from hanging indefinitely if the server is down or overloaded.
+
+```swift
+let client = CoCart("https://your-store.com", options: CoCartOptions(
+    timeout: 10 // 10 seconds
+))
+
+do {
+    try await client.cart().get()
+} catch let error as CoCartError {
+    if case .network(let message) = error {
+        print("Network failed: \(message)")
+    }
+}
+```
+
+## Response Data Access
+
+The `CoCartResponse` object supports **dot-notation access** — a way to reach nested values inside the response using a string path with dots. For example, instead of manually traversing dictionaries, you write `response.get("items")`. For deeply nested data, use dots to drill down: `response.get("totals.subtotal")`.
+
+```swift
+let response = try await client.cart().get()
+
+// Dot-notation access
+response.get("items")
+response.get("totals")
+response.get("currency")
+response.has("items")
+
+// Typed getters
+response.getString("totals.total")
+response.getInt("items_count")
+response.getDouble("totals.fee_total")
+response.getBool("needs_payment")
+
+// Cart state helpers
+response.getItems()      // [[String: Any]]
+response.getTotals()     // [String: Any]
+response.getItemCount()  // Int
+response.isNotModified() // Bool (304 response)
+```

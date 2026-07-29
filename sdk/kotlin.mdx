@@ -1,0 +1,279 @@
+---
+title: "Kotlin SDK"
+sidebarTitle: "Overview"
+description: "Official Kotlin SDK for Android. Coroutines, encrypted session storage, OkHttp, and a fluent configuration API for building headless WooCommerce storefronts."
+'og:title': "CoCart Kotlin SDK — Install, Configure & Connect to WooCommerce"
+'og:description': "Install and configure the CoCart Kotlin SDK for Android. Gradle dependency, all configuration options, fluent setters, encrypted session storage, debug mode, and legacy plugin support."
+---
+
+<Info>
+  This guide was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
+</Info>
+
+The official Android SDK for the CoCart REST API. Build headless WooCommerce storefronts on Android — your app talks to WooCommerce through the API, giving you full control over the shopping experience.
+
+<Warning>
+  This SDK is still under active development and hasn't had a stable release yet. Its changelog only lists an `[Unreleased]` section — the `1.0.0` version published to Maven Central and GitHub Packages is a publishing placeholder, not a tagged release. Expect the API surface to change before the first stable version ships.
+</Warning>
+
+## Requirements
+
+- Android API 26+ (Android 8.0 Oreo)
+- Kotlin 2.0+
+- CoCart plugin installed on your WooCommerce store
+- [CoCart JWT Authentication](https://wordpress.org/plugins/cocart-jwt-authentication/) plugin _(optional, for JWT features)_
+
+## Installation
+
+### Via Maven Central
+
+Add the dependency to your module's `build.gradle.kts`:
+
+```kotlin
+dependencies {
+    implementation("com.cocart:sdk:1.0.0")
+}
+```
+
+### Via GitHub Packages
+
+```kotlin
+repositories {
+    maven {
+        url = uri("https://maven.pkg.github.com/cocart-headless/cocart-kotlin-sdk")
+    }
+}
+
+dependencies {
+    implementation("com.cocart:sdk:1.0.0")
+}
+```
+
+## Configuration Options
+
+The second and third arguments to `CoCart()` are the Android `Context` and an optional `CoCartOptions` object. Only include the options relevant to your setup — everything has sensible defaults.
+
+```kotlin
+val client = CoCart(
+    context = this,
+    siteURL = "https://your-store.com",
+    options = CoCartOptions(
+        // Guest session
+        cartKey = "existing_cart_key",
+
+        // Basic Auth
+        username = "customer@email.com",
+        password = "password",
+
+        // JWT Auth
+        jwtToken = "your-jwt-token",
+        jwtRefreshToken = "your-refresh-token",
+
+        // Admin (Sessions API)
+        consumerKey = "ck_xxxxx",
+        consumerSecret = "cs_xxxxx",
+
+        // HTTP timeout in milliseconds (default: 30000)
+        timeout = 30_000L,
+
+        // REST API prefix (default: "wp-json")
+        restPrefix = "wp-json",
+
+        // API namespace (default: "cocart")
+        namespace = "cocart",
+
+        // CoCart main plugin: MainPlugin.BASIC (default) or MainPlugin.LEGACY
+        mainPlugin = MainPlugin.BASIC,
+
+        // Retry transient failures (default: 2)
+        maxRetries = 2,
+
+        // Storage adapter — defaults to EncryptedSharedPreferences when context is provided,
+        // MemoryStorage when context is null. Pass a custom adapter to override.
+        storage = null,
+        storageKey = "cocart_cart_key",
+
+        // Custom auth header name (default: "Authorization")
+        // Useful when hosting strips the Authorization header
+        authHeaderName = "X-Auth-Token",
+
+        // Transform every API response before it's returned
+        responseTransformer = null,
+
+        // Enable ETag conditional requests for reduced bandwidth (default: true)
+        etag = true,
+
+        // Enable debug logging to Logcat (default: false)
+        debug = true,
+    )
+)
+```
+
+### Fluent Configuration
+
+A fluent API lets you chain multiple configuration methods in a single expression. Each method returns the client itself, so you can keep adding calls with dots:
+
+```kotlin
+val client = CoCart(context, "https://your-store.com")
+    .setTimeout(60_000L)
+    .setMaxRetries(3)
+    .setRestPrefix("api")
+    .setNamespace("mystore")
+    .addHeader("X-Custom-Header", "value")
+    .setAuthHeaderName("X-Auth-Token")
+    .setETag(true)
+    .setMainPlugin(MainPlugin.BASIC)
+    .setDebug(true)
+```
+
+### No-Context Mode
+
+If you don't have an Android `Context` (e.g. in unit tests or a non-Android module), pass `null`. The SDK automatically falls back to `MemoryStorage` instead of `EncryptedSharedPreferences`:
+
+```kotlin
+// Tests / non-Android environment
+val client = CoCart(null, "https://your-store.com")
+```
+
+## White-Labelling / Custom REST Prefix
+
+WordPress exposes its REST API at `/wp-json/` by default. The SDK builds URLs like `https://your-store.com/wp-json/cocart/v2/cart`. If your site or hosting changes this prefix, or if the CoCart plugin has been renamed (white-labelled), configure the SDK to match:
+
+```kotlin
+// Custom REST prefix (site uses /api/ instead of /wp-json/)
+val client = CoCart(context, "https://your-store.com", CoCartOptions(
+    restPrefix = "api"
+))
+// Requests go to: https://your-store.com/api/cocart/v2/cart
+
+// White-labelled namespace
+val client2 = CoCart(context, "https://your-store.com", CoCartOptions(
+    namespace = "mystore"
+))
+// Requests go to: https://your-store.com/wp-json/mystore/v2/cart
+
+// Both together
+val client3 = CoCart(context, "https://your-store.com", CoCartOptions(
+    restPrefix = "api",
+    namespace = "mystore"
+))
+// Requests go to: https://your-store.com/api/mystore/v2/cart
+```
+
+## Legacy Plugin Support
+
+The SDK supports both **CoCart Starter** and the **CoCart Community plugin** (`cart-rest-api-for-woocommerce` v4.x). By default, the SDK targets CoCart Starter.
+
+To use the SDK with the legacy plugin, set `mainPlugin` to `MainPlugin.LEGACY`:
+
+```kotlin
+val client = CoCart(context, "https://your-store.com", CoCartOptions(
+    mainPlugin = MainPlugin.LEGACY
+))
+
+// Or use the fluent setter
+client.setMainPlugin(MainPlugin.LEGACY)
+```
+
+### What changes in legacy mode
+
+**Basic-only methods throw immediately.** Methods that require CoCart Starter will throw a `VersionException` before making any HTTP request:
+
+```kotlin
+import com.cocart.sdk.errors.VersionException
+
+val client = CoCart(context, "https://your-store.com", CoCartOptions(
+    mainPlugin = MainPlugin.LEGACY
+))
+
+try {
+    client.products().findBySlug("blue-hoodie")
+} catch (e: VersionException) {
+    // "findBySlug() requires CoCart Starter. Please upgrade..."
+}
+```
+
+Basic-only methods include:
+
+- `products().findBySlug()`
+- `products().variation()`, `category()`, `tag()`
+- `products().brands()`, `brand()`, `byBrand()`
+- `products().myReviews()`
+- `cart().getFees()`, `addFee()`, `removeFees()`
+
+<Note>
+  Field filtering also differs: the legacy plugin uses CoCart's custom `fields` query parameter, while CoCart Starter uses the WordPress standard `_fields`. The SDK handles this automatically — `cart().getFiltered()` sends the correct parameter based on the configured main plugin.
+</Note>
+
+## Quick Start
+
+All network methods are `suspend` functions and must be called from a coroutine scope. In Android, use `lifecycleScope` or `viewModelScope`:
+
+```kotlin
+import com.cocart.sdk.CoCart
+
+// Create a client pointing to your WooCommerce store
+val client = CoCart(context, "https://your-store.com")
+
+// Inside a coroutine (e.g. viewModelScope.launch { ... })
+
+// Browse products — no auth required
+val products = client.products().all(mapOf("per_page" to "12"))
+
+// Add to cart — guest session created automatically
+val response = client.cart().addItem(123, 2)
+
+// Get cart
+val cart = client.cart().get()
+println(cart.getItems())              // List of items in the cart
+println(cart.get("totals.total"))     // Dot-notation access to nested data
+```
+
+<Note>
+  `suspend` functions must be called from a coroutine. In an Activity or Fragment use `lifecycleScope.launch { }`. In a ViewModel use `viewModelScope.launch { }`.
+</Note>
+
+## Key Features
+
+- **OkHttp 5.x** — battle-tested Android HTTP client with connection pooling
+- **Coroutines** — all network calls are `suspend` functions; no callbacks or threading boilerplate
+- **Encrypted session storage** — cart keys and tokens persisted via `EncryptedSharedPreferences` (AES-256-GCM)
+- **Client-side input validation** — catches errors before network requests
+- **Currency formatting** — format prices with symbol, position, decimal and thousand separators
+- **Event system** for request/response/error lifecycle hooks
+- **Response transformer** for custom processing of every API response
+- **Configurable auth header name** — for proxies that strip `Authorization`
+- **JWT authentication** with auto-refresh and 2FA support
+- **ETag / conditional requests** for reduced bandwidth on repeat requests
+- **Retry with backoff** — configurable automatic retry on transient failures
+- **Legacy CoCart plugin support** — version-aware endpoint guards
+
+## Documentation
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="lock" href="/sdk/kotlin/authentication">
+    Guest sessions, Basic Auth, JWT, 2FA, consumer keys, and custom auth headers
+  </Card>
+  <Card title="Cart API" icon="cart-shopping" href="/sdk/kotlin/cart">
+    Add, update, remove items, coupons, shipping, fees, and ETag caching
+  </Card>
+  <Card title="Products API" icon="shirt" href="/sdk/kotlin/products">
+    Browse, filter, search products, variations, categories, tags, and brands
+  </Card>
+  <Card title="Account API" icon="user" href="/sdk/kotlin/account">
+    Customer profile, order history, downloads, and reviews
+  </Card>
+  <Card title="Sessions API" icon="database" href="/sdk/kotlin/sessions">
+    Admin sessions endpoint and storage adapters
+  </Card>
+  <Card title="Error Handling" icon="circle-exclamation" href="/sdk/kotlin/error-handling">
+    Exception hierarchy and HTTP status code mapping
+  </Card>
+  <Card title="Utilities" icon="wrench" href="/sdk/kotlin/utilities">
+    Currency formatting, response transformers, ETag cache, and debug logging
+  </Card>
+</CardGroup>
+
+## Source
+
+The SDK is open source. View the source and report issues on [GitHub](https://github.com/cocart-headless/cocart-kotlin-sdk).

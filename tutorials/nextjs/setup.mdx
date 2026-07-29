@@ -2,13 +2,7 @@
 title: "Setting Up Next.js"
 sidebarTitle: "Next.js Setup"
 description: "Learn how to set up a Next.js project for your headless WooCommerce store"
-tag: "WIP"
-robots: "noindex, follow"
 ---
-
-<Warning>
-    This tutorial was written by [Claude Code (an AI)](https://claude.com/product/claude-code) and has not yet been reviewed. Follow along with caution. If the tutorial was helpful or a specific part was not clear/correct, please provide feedback at the bottom of the page. Thank you.
-</Warning>
 
 # Introduction
 
@@ -62,6 +56,10 @@ Install the CoCart TypeScript SDK:
 npm install @cocartheadless/sdk
 ```
 
+<Tip>
+  The SDK ships a dedicated Next.js adapter (`@cocartheadless/sdk/nextjs`) with `createBrowserClient()` and `createServerClient()` helpers. It handles the split between Client and Server Components for you — no cookies required. See the [Next.js adapter guide](/sdk/typescript/frameworks/nextjs) for the full API.
+</Tip>
+
 ## Project Structure
 
 Your Next.js project will have this structure:
@@ -94,11 +92,15 @@ mkdir -p src/components src/lib
 Create a `.env.local` file in your project root:
 
 ```bash
-NEXT_PUBLIC_STORE_URL=https://yourstore.com
+COCART_STORE_URL=https://yourstore.com
+NEXT_PUBLIC_COCART_STORE_URL=https://yourstore.com
 ```
 
+- `COCART_STORE_URL` is read by Server Components and Route Handlers.
+- `NEXT_PUBLIC_COCART_STORE_URL` is the same value exposed to the browser client.
+
 <Note>
-  Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser. Server-only variables should not have this prefix.
+  Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser. Keep the server-only variable name without that prefix for anything that shouldn't reach the client bundle.
 </Note>
 
 Add `.env.local` to your `.gitignore` (it should already be there by default):
@@ -112,60 +114,61 @@ Create a `.env.example` for your team:
 
 ```bash
 # .env.example
-NEXT_PUBLIC_STORE_URL=https://yourstore.com
+COCART_STORE_URL=https://yourstore.com
+NEXT_PUBLIC_COCART_STORE_URL=https://yourstore.com
 ```
 
 ## Creating the CoCart API Client
 
-Install the CoCart TypeScript SDK and use the built-in Next.js adapter:
+Use the SDK's built-in Next.js adapter, which handles the split between Server Components (no cookies, reads the cart key from request headers) and Client Components (persists the cart key in `localStorage`).
 
 Create `src/lib/cocart.ts`:
 
 ```typescript
-import { CoCart } from '@cocartheadless/sdk';
+'use client';
 
-// Server-side client (used in Server Components, Route Handlers)
-export function createServerClient() {
-  return new CoCart(process.env.NEXT_PUBLIC_STORE_URL || 'https://yourstore.com');
-}
+import { createBrowserClient, attachCartKeyHeader } from '@cocartheadless/sdk/nextjs';
 
-// Browser client (used in Client Components)
-let browserClient: CoCart | null = null;
+let browserClient: ReturnType<typeof createBrowserClient> | null = null;
 
-export function createBrowserClient() {
+// Browser client (used in Client Components, e.g. "Add to Cart" buttons)
+export function getClient() {
   if (!browserClient) {
-    browserClient = new CoCart(process.env.NEXT_PUBLIC_STORE_URL || 'https://yourstore.com');
+    browserClient = createBrowserClient(process.env.NEXT_PUBLIC_COCART_STORE_URL!);
+    attachCartKeyHeader(browserClient);
   }
   return browserClient;
 }
 ```
 
 <Tip>
-  The SDK handles cart key persistence, authentication, and request formatting automatically. See the [Next.js adapter guide](/sdk/typescript/frameworks/nextjs) for advanced configuration including middleware-based cart key forwarding.
+  The SDK handles cart key persistence, authentication, and request formatting automatically. See the [Next.js adapter guide](/sdk/typescript/frameworks/nextjs) for advanced configuration, including encrypted storage, middleware-based cart key forwarding, and login/session merging.
 </Tip>
 
 ## Creating API Routes
 
-Next.js API routes allow you to create backend endpoints. Create an API route for cart operations.
+Next.js API routes (Route Handlers) allow you to create backend endpoints. Create one for adding items to the cart, using `createServerClient()` to read the cart key straight from the incoming request headers:
 
 Create `src/app/api/cart/add/route.ts`:
 
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/cocart';
+import { createServerClient } from '@cocartheadless/sdk/nextjs';
 
 export async function POST(request: NextRequest) {
+  const client = createServerClient(
+    process.env.COCART_STORE_URL!,
+    request.headers,
+  );
+
   try {
-    const body = await request.json();
-    const { id, quantity = 1, ...options } = body;
+    const { productId, quantity = 1 } = await request.json();
+    const response = await client.cart().addItem(productId, quantity);
 
-    const client = createServerClient();
-    const result = await client.cart().addItem(id, { quantity, ...options });
-
-    return NextResponse.json(result, { status: 200 });
-  } catch (error: any) {
+    return NextResponse.json(response.toObject(), { status: 200 });
+  } catch (error) {
     return NextResponse.json(
-      { error: error.message },
+      { error: (error as Error).message },
       { status: 500 }
     );
   }
@@ -205,14 +208,15 @@ export default function RootLayout({
 
 ## Testing Your Setup
 
-Update the homepage at `src/app/page.tsx`:
+Update the homepage at `src/app/page.tsx`. Products are public, so this uses the plain `CoCart` client directly rather than the Next.js adapter:
 
 ```typescript
-import { createServerClient } from '@/lib/cocart';
+import { CoCart } from '@cocartheadless/sdk';
 
 export default async function Home() {
-  const client = createServerClient();
-  const products = await client.products().list({ per_page: 3 });
+  const client = new CoCart(process.env.COCART_STORE_URL!);
+  const response = await client.products().all({ per_page: 3 });
+  const products = response.toObject() as any[];
 
   return (
     <main className="container mx-auto px-4 py-12">
@@ -221,11 +225,11 @@ export default async function Home() {
       </h1>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {products.map((product: any) => (
+        {products.map((product) => (
           <div key={product.id} className="border rounded-lg p-4">
             <h2 className="font-semibold">{product.name}</h2>
             <p className="text-zinc-600">
-              {product.prices.currency_symbol}{product.prices.price}
+              {product.prices.currency.currency_symbol}{product.prices.price}
             </p>
           </div>
         ))}
@@ -234,6 +238,10 @@ export default async function Home() {
   );
 }
 ```
+
+<Note>
+  CoCart returns prices as smallest-unit integers (e.g. `4599` for $45.99) alongside a `currency` object describing how to format them. The [TypeScript SDK utilities guide](/sdk/typescript/utilities) covers `CurrencyFormatter` for formatting these correctly.
+</Note>
 
 ## Running Your Project
 
@@ -267,10 +275,14 @@ Next.js offers several caching strategies for optimal performance:
 For pages that can be pre-rendered at build time:
 
 ```typescript
+import { CoCart } from '@cocartheadless/sdk';
+
 export const revalidate = 3600; // Revalidate every hour
 
 export default async function ProductsPage() {
-  const products = await getProducts();
+  const client = new CoCart(process.env.COCART_STORE_URL!);
+  const response = await client.products().all({ per_page: 12 });
+  const products = response.toObject() as any[];
   // ...
 }
 ```
@@ -279,25 +291,36 @@ export default async function ProductsPage() {
 For pages that need periodic updates:
 
 ```typescript
+import { CoCart } from '@cocartheadless/sdk';
+
 export async function generateStaticParams() {
-  const products = await getProducts({ per_page: 100 });
-  return products.map((product: any) => ({ id: String(product.id) }));
+  const client = new CoCart(process.env.COCART_STORE_URL!);
+  const response = await client.products().all({ per_page: 100 });
+  const products = response.toObject() as any[];
+  return products.map((product) => ({ id: String(product.id) }));
 }
 
 export default async function ProductPage({ params }: { params: { id: string } }) {
-  const product = await getProduct(params.id);
+  const client = new CoCart(process.env.COCART_STORE_URL!);
+  const response = await client.products().find(params.id);
+  const product = response.toObject();
   // ...
 }
 ```
 
 ### Server-Side Rendering (SSR)
-For dynamic pages that need fresh data:
+For dynamic pages that need fresh data, such as the cart, use `createServerClient()` so the cart key is read from the incoming request headers:
 
 ```typescript
+import { headers } from 'next/headers';
+import { createServerClient } from '@cocartheadless/sdk/nextjs';
+
 export const dynamic = 'force-dynamic';
 
 export default async function CartPage() {
-  const cart = await getCart();
+  const headersList = await headers();
+  const client = createServerClient(process.env.COCART_STORE_URL!, headersList);
+  const cart = await client.cart().get();
   // ...
 }
 ```
@@ -323,11 +346,12 @@ Next.js sites can be deployed to various platforms:
 
 Now that your Next.js project is set up with CoCart:
 
-1. Explore the [TypeScript SDK](/sdk/typescript) for full cart management, authentication, and more
-2. Implement checkout flow
-3. Add user authentication with JWT
-4. Optimize images with Next.js Image component
-5. Add loading states and error boundaries
+1. Read the [Next.js adapter guide](/sdk/typescript/frameworks/nextjs) for cart persistence, middleware, and guest-to-customer login merging
+2. Explore the [TypeScript SDK](/sdk/typescript) for full cart management, authentication, and more
+3. Implement a checkout flow
+4. Add user authentication with JWT
+5. Optimize images with Next.js Image component
+6. Add loading states and error boundaries
 
 ## Troubleshooting
 
@@ -337,7 +361,7 @@ If you encounter CORS errors, you may need to configure WordPress to allow cross
 
 ### API Connection Issues
 
-1. Verify your `NEXT_PUBLIC_STORE_URL` is correct in `.env.local`
+1. Verify `COCART_STORE_URL` and `NEXT_PUBLIC_COCART_STORE_URL` are correct in `.env.local`
 2. Ensure CoCart is installed and activated
 3. Check that WooCommerce is configured properly
 4. Test API endpoints directly in your browser or Postman

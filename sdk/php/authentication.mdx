@@ -7,7 +7,7 @@ description: "Authenticate with the CoCart REST API using the PHP SDK — guest 
 ---
 
 <Info>
-  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: March 16th, 2026.
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
 </Info>
 
 CoCart supports multiple authentication methods depending on the use case.
@@ -184,6 +184,88 @@ $client->jwt()->getTokenExpiry();       // unix timestamp of token expiry
 $client->jwt()->isAutoRefreshEnabled(); // check auto-refresh status
 $client->jwt()->setAutoRefresh(true);   // enable/disable at runtime
 ```
+
+## Two-Factor Authentication (2FA)
+
+If the [WordPress Two Factor plugin](https://wordpress.org/plugins/two-factor/) is installed and a user has 2FA enabled, the server returns a `401` challenge response on the first login attempt instead of tokens. CoCart Plus v1.6.0+ and CoCart Community v4.8+ are required.
+
+The SDK surfaces this as a `TwoFactorRequiredException`, which you catch and handle before completing login with the OTP code.
+
+### Basic Flow
+
+```php
+use CoCart\Exceptions\TwoFactorRequiredException;
+
+$client = new CoCart('https://your-store.com');
+
+try {
+    $response = $client->login('customer@email.com', 'password');
+    // No 2FA required — login complete
+} catch (TwoFactorRequiredException $e) {
+    // Prompt the user for their code, then complete login
+    $code = $_POST['2fa_code']; // e.g. '123456'
+
+    $response = $client->loginWith2fa('customer@email.com', 'password', $code);
+}
+
+echo $response->get('display_name'); // 'john'
+```
+
+### Inspecting the Challenge
+
+The exception carries metadata from the server about which 2FA providers are available:
+
+```php
+} catch (TwoFactorRequiredException $e) {
+    $providers = $e->getAvailableProviders(); // ['email', 'totp']
+    $default   = $e->getDefaultProvider();    // 'totp'
+    $emailSent = $e->isEmailSent();           // true if email code was auto-sent
+
+    // Ask the user which provider to use, then:
+    $response = $client->loginWith2fa('customer@email.com', 'password', $code, 'email');
+}
+```
+
+### Specifying a Provider
+
+Pass the provider name as the fourth argument to `loginWith2fa()`. If omitted, the server uses its default:
+
+```php
+// TOTP (authenticator app)
+$client->loginWith2fa($username, $password, $totpCode, 'totp');
+
+// Email
+$client->loginWith2fa($username, $password, $emailCode, 'email');
+
+// Backup code
+$client->loginWith2fa($username, $password, $backupCode, 'backup-codes');
+
+// Let server decide (uses last-used or primary provider)
+$client->loginWith2fa($username, $password, $code);
+```
+
+### With SessionManager (Cart Merge)
+
+If you are using `SessionManager` and want to merge a guest cart after login:
+
+```php
+use CoCart\Exceptions\TwoFactorRequiredException;
+
+try {
+    $response = $session->loginWithJwt($username, $password);
+} catch (TwoFactorRequiredException $e) {
+    $response = $session->loginWithJwt2fa($username, $password, $code);
+    // Guest cart is merged automatically
+}
+```
+
+### Supported 2FA Providers
+
+| Provider | Value | Notes |
+|---|---|---|
+| TOTP | `'totp'` | Authenticator apps (Google Authenticator, Authy). 6-digit code, 30-second window. |
+| Email | `'email'` | Code sent via email. When email is the default provider, the code is sent automatically on the first login attempt (`isEmailSent()` returns `true`). |
+| Backup Codes | `'backup-codes'` | Single-use static codes for account recovery. |
 
 ## Consumer Keys (Admin)
 

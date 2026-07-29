@@ -1,0 +1,141 @@
+---
+title: "Swift SDK: Utilities"
+sidebarTitle: "Utilities"
+description: "Currency formatting, event system, and secure session storage in the CoCart Swift SDK."
+'og:title': "Utilities — CoCart Swift SDK"
+'og:description': "Standalone helpers in the CoCart Swift SDK — the CurrencyFormatter for smallest-unit prices, a request/response event system, and Keychain-backed session storage."
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: July 29th, 2026.
+</Info>
+
+The SDK includes standalone utility types for common tasks in headless WooCommerce projects. These are optional — you can use them when you need them, and they don't affect the core SDK behavior.
+
+## Currency Formatter
+
+### Why do prices come back as integers?
+
+CoCart returns prices as **smallest-unit integers** — that means cents for USD, pence for GBP, or the smallest denomination for any currency. For example, `4599` means $45.99 (4599 cents). This is an industry-standard practice because floating-point numbers (like `45.99`) can cause rounding errors in calculations, while integers are always exact.
+
+The `CurrencyFormatter` struct converts these integers into human-readable price strings. It uses `NumberFormatter` — a built-in Foundation API that knows how to format numbers according to different currencies and locales.
+
+```swift
+import CoCart
+
+let fmt = CurrencyFormatter()
+```
+
+### Formatting Prices
+
+Use the currency dictionary from a cart response to format amounts:
+
+```swift
+let response = try await client.cart().get()
+let currency = response.getCurrency()!
+// currency => ["currency_symbol": "$", "currency_minor_unit": 2, ...]
+
+fmt.format(4599, currency: currency)        // "$45.99"
+fmt.format(100, currency: currency)         // "$1.00"
+fmt.format(0, currency: currency)           // "$0.00"
+```
+
+### Decimal String (No Symbol)
+
+```swift
+fmt.formatDecimal(4599, currency: currency) // "45.99"
+```
+
+### Different Currencies
+
+The formatter respects the `currency_symbol`, `currency_symbol_position`, `currency_minor_unit`, `currency_decimal_separator`, and `currency_thousand_separator` values from the API response:
+
+```swift
+// US Dollar
+let usd: [String: Any] = [
+    "currency_symbol": "$",
+    "currency_symbol_position": "left",
+    "currency_minor_unit": 2,
+    "currency_decimal_separator": ".",
+    "currency_thousand_separator": ","
+]
+fmt.format(4599, currency: usd)    // "$45.99"
+fmt.format(123456, currency: usd)  // "$1,234.56"
+
+// Euro (symbol on right, comma decimal)
+let eur: [String: Any] = [
+    "currency_symbol": "€",
+    "currency_symbol_position": "right",
+    "currency_minor_unit": 2,
+    "currency_decimal_separator": ",",
+    "currency_thousand_separator": "."
+]
+fmt.format(4599, currency: eur)  // "45,99€"
+```
+
+## Event System
+
+The SDK provides an event system for monitoring the request/response lifecycle. This is useful for logging, analytics, debugging, or showing network activity indicators in your UI.
+
+### Available Events
+
+| Event | Payload | When |
+|-------|---------|------|
+| `.request` | `method`, `url` | Before every HTTP request |
+| `.response` | `status`, `duration` | After every successful HTTP response |
+| `.error` | `error` | When a request fails |
+
+### Subscribing to Events
+
+```swift
+client.on(.request) { payload in
+    print("\(payload["method"]!) \(payload["url"]!)")
+}
+
+client.on(.response) { payload in
+    print("Status \(payload["status"]!) in \(payload["duration"]!)ms")
+}
+
+client.on(.error) { payload in
+    print("Error: \(payload["error"]!)")
+}
+```
+
+### Example: Network Activity Indicator
+
+```swift
+@MainActor
+class NetworkMonitor: ObservableObject {
+    @Published var isLoading = false
+
+    func attach(to client: CoCart) {
+        client.on(.request) { [weak self] _ in
+            Task { @MainActor in self?.isLoading = true }
+        }
+        client.on(.response) { [weak self] _ in
+            Task { @MainActor in self?.isLoading = false }
+        }
+        client.on(.error) { [weak self] _ in
+            Task { @MainActor in self?.isLoading = false }
+        }
+    }
+}
+```
+
+## Secure Session Storage
+
+Guest cart keys are persisted in the **Keychain** by default — Apple's built-in secure storage that encrypts data at rest. This ensures cart keys survive app restarts and are protected from unauthorized access.
+
+For tests and SwiftUI previews, use `MemoryStorage` instead:
+
+```swift
+// Production — Keychain (default, no configuration needed)
+let client = CoCart("https://your-store.com")
+
+// Tests / Previews — in-memory
+let client = CoCart("https://your-store.com", options: CoCartOptions(
+    storage: MemoryStorage()
+))
+```
+
+See [Sessions & Storage](/sdk/swift/sessions#storage-adapters) for details on custom storage adapters.
