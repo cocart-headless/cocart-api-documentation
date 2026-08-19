@@ -1,0 +1,14 @@
+---
+title: "Toggle Subscription Auto-Renewal"
+openapi: "../../openapi-cocart-plus-v2-collection.yaml POST /my-account/subscriptions/{id}/auto-renew"
+tag: "New"
+robots: "noindex, follow"
+---
+
+<Warning>
+    This API requires **CoCart Plus v2 or higher** to use.
+</Warning>
+
+<Info>
+    Enables or disables auto-renewal (manual renewal) via the `cocart_my_account_toggle_subscription_auto_renewal` filter. Not every subscription plugin exposes this to customers (e.g. Milo Subscriptions has no customer-facing auto-renewal toggle), in which case the request 404s rather than pretending to succeed.
+</Info>

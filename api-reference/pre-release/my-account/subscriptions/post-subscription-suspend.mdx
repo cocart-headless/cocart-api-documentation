@@ -1,0 +1,14 @@
+---
+title: "Suspend Subscription"
+openapi: "../../openapi-cocart-plus-v2-collection.yaml POST /my-account/subscriptions/{id}/suspend"
+tag: "New"
+robots: "noindex, follow"
+---
+
+<Warning>
+    This API requires **CoCart Plus v2 or higher** to use.
+</Warning>
+
+<Info>
+    Puts the subscription on hold via the `cocart_my_account_suspend_subscription` filter. Requires login - write actions never allow guest access by billing email. Whether a subscription can be suspended is decided entirely by the owning subscription plugin (e.g. [WooCommerce Subscriptions](https://woocommerce.com/products/woocommerce-subscriptions/), Milo Subscriptions), so the exact error code, message and status for a rejected suspension vary accordingly.
+</Info>

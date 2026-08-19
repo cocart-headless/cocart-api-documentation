@@ -1,10 +1,14 @@
 ---
 title: "Pay for Order"
-openapi: "../openapi-spec-preview.yaml POST /order-received/{order_id}/pay"
+openapi: "../openapi-cocart-plus-checkout-v2.yaml POST /order-received/{order_id}/pay"
 tag: "New"
 robots: "noindex, follow"
 ---
 
 <Warning>
-    This endpoint is currently shown as a preview of what's currently in development and is subject to change.
+    This API requires **CoCart Plus v2 or higher** to use.
 </Warning>
+
+<Info>
+    Use this endpoint to retry payment on an existing `pending` or `failed` order. Unlike `POST /checkout`, a payment failure here **does** raise a `400 cocart_payment_failed` error rather than being returned inline in the response body.
+</Info>

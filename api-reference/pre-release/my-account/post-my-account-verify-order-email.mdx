@@ -1,0 +1,15 @@
+---
+title: "My Account - Send Order Email Verification"
+sidebarTitle: "Send Email Verification"
+openapi: "../openapi-cocart-plus-v2-collection.yaml POST /my-account/verify-order-email"
+tag: "New"
+robots: "noindex, follow"
+---
+
+<Warning>
+    This API requires **CoCart Plus v2 or higher** to use.
+</Warning>
+
+<Info>
+    Requires WooCommerce 11.0+. Sends (or resends) a confirmation email to the authenticated customer's account email address, proving they own it so WooCommerce can link any past guest orders placed with the same billing email to the account. Resending is throttled to once every 60 seconds - a request within that window returns `status: throttled` rather than sending a new email.
+</Info>

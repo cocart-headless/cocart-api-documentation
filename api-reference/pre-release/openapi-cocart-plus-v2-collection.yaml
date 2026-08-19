@@ -5,7 +5,8 @@ info:
   description: |
     CoCart Plus extends the CoCart REST API v2 with additional cart endpoints (mini cart,
     coupons, fees, removing all items, setting shipping methods), product shipping rate
-    calculation, customer account endpoints and customer registration.
+    calculation, customer account endpoints (including orders and subscriptions) and
+    customer registration.
 
     Requires CoCart Starter v5.0+ to be installed and active.
 
@@ -49,7 +50,7 @@ tags:
   - name: products
     description: Operations for product shipping calculations
   - name: my-account
-    description: Operations for the customer account dashboard, downloads and orders
+    description: Operations for the customer account dashboard, downloads, orders and subscriptions
   - name: customers
     description: Operations for registering customers
 paths:
@@ -348,6 +349,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
+                coupons_not_enabled:
+                  summary: Coupons are not enabled for this store
+                  value:
+                    code: cocart_coupons_not_enabled
+                    message: Coupons are not enabled for this store!
+                    data:
+                      status: 404
+                code_required:
+                  summary: No coupon code provided
+                  value:
+                    code: cocart_coupon_code_required
+                    message: No coupon code provided!
+                    data:
+                      status: 404
                 not_exist:
                   summary: Coupon does not exist
                   value:
@@ -405,16 +420,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/CartV2'
         '404':
-          description: Not found - coupons are not enabled or the coupon is not applied to the cart.
+          description: Not found - coupons are not enabled, no code provided, or the coupon is not applied to the cart.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-              example:
-                code: cocart_coupons_not_enabled
-                message: Coupons are not enabled for this store!
-                data:
-                  status: 404
+              examples:
+                coupons_not_enabled:
+                  summary: Coupons are not enabled for this store
+                  value:
+                    code: cocart_coupons_not_enabled
+                    message: Coupons are not enabled for this store!
+                    data:
+                      status: 404
+                code_required:
+                  summary: No coupon code provided
+                  value:
+                    code: cocart_coupon_required
+                    message: No coupon code provided!
+                    data:
+                      status: 404
+                not_applied:
+                  summary: Coupon is not applied to the cart
+                  value:
+                    code: cocart_cart_coupon_invalid_code
+                    message: Coupon does not exist in the cart.
+                    data:
+                      status: 404
   /cart/add-fee:
     post:
       tags:
@@ -493,6 +525,13 @@ paths:
                     message: Name of fee is missing!
                     data:
                       status: 404
+                missing_amount:
+                  summary: Fee amount missing
+                  value:
+                    code: cocart_fee_missing_amount
+                    message: Fee amount is missing!
+                    data:
+                      status: 404
                 cannot_add:
                   summary: Cart is empty
                   value:
@@ -535,12 +574,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CartV2'
-        '404':
-          description: Not found - no fees have been added to the cart.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /cart/items:
     delete:
       tags:
@@ -589,12 +622,6 @@ paths:
               $ref: '#/components/headers/ETagHeader'
             CoCart-Cache:
               $ref: '#/components/headers/CoCartCacheHeader'
-        '404':
-          description: Not found - the cart has no items to remove.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /cart/set-shipping-method:
     post:
       tags:
@@ -654,11 +681,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/CartV2'
         '404':
-          description: Not found - shipping not available or invalid rate ID.
+          description: Not found - shipping is disabled, no rate ID provided, or shipping hasn't been calculated yet for the cart.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                shipping_disabled:
+                  summary: Shipping is disabled for this store
+                  value:
+                    code: cocart_shipping_disabled
+                    message: Shipping is disabled.
+                    data:
+                      status: 404
+                missing_rate_id:
+                  summary: No rate ID provided
+                  value:
+                    code: cocart_missing_rate_id
+                    message: Invalid Rate ID.
+                    data:
+                      status: 404
+                not_calculated:
+                  summary: Applying to all packages, but shipping hasn't been calculated yet
+                  value:
+                    code: cocart_shipping_not_calculated
+                    message: Customer has not calculated shipping.
+                    data:
+                      status: 404
   /products/{id}/shipping-rates:
     get:
       tags:
@@ -673,6 +722,8 @@ paths:
         because shipping rate calculation must not be associated with a specific cart.
 
         External and grouped product types cannot be calculated and return a 403 error.
+
+        The `id` may also be a SKU, resolved to a product ID first.
       parameters:
         - name: id
           in: path
@@ -755,17 +806,77 @@ paths:
                     message: This product is external, therefore it cannot be calculated for shipping rates.
                     data:
                       status: 403
+                grouped_denied:
+                  summary: Grouped product
+                  value:
+                    code: cocart_calculate_product_shipping_grouped_types_denied
+                    message: This product is a group of products, therefore it cannot be calculated for shipping rates.
+                    data:
+                      status: 403
         '404':
-          description: Not found - the product or variation is invalid.
+          description: Not found - the product ID, SKU or variation is invalid or missing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_product:
+                  summary: Product is invalid (unpublished, or has no valid ID)
+                  value:
+                    code: cocart_invalid_product
+                    message: This product is invalid.
+                    data:
+                      status: 404
+                invalid_variation:
+                  summary: Variation ID does not belong to the parent product
+                  value:
+                    code: cocart_variation_invalid_id
+                    message: Invalid variation ID.
+                    data:
+                      status: 404
+                product_id_required:
+                  summary: No product ID or SKU provided
+                  value:
+                    code: cocart_product_id_required
+                    message: Product ID number is required!
+                    data:
+                      status: 404
+                unknown_product_id:
+                  summary: Product ID or SKU does not match any product
+                  value:
+                    code: cocart_unknown_product_id
+                    message: Product does not exist! Check that you have submitted a product ID or SKU ID correctly for a product that exists.
+                    data:
+                      status: 404
+                not_loaded:
+                  summary: CoCart core is not active
+                  value:
+                    code: cocart_not_loaded
+                    message: Either the core of CoCart is not active or a specific class required does not exist.
+                    data:
+                      status: 404
+        '405':
+          description: Method not allowed - the resolved product ID is not numeric.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
-                code: cocart_invalid_product
-                message: This product is invalid.
+                code: cocart_product_id_not_numeric
+                message: Product ID must be numeric!
                 data:
-                  status: 404
+                  status: 405
+        '500':
+          description: Internal server error - the product could not be added to the shipping calculation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_calculate_product_shipping_rates_failed
+                message: Product could not be calculated!
+                data:
+                  status: 500
   /my-account:
     get:
       tags:
@@ -823,7 +934,20 @@ paths:
                 meta:
                   is_customer_outside_base: false
                   is_vat_exempt: false
-                extensions: {}
+                extensions:
+                  email_verification:
+                    verified: false
+        '400':
+          description: Bad request - the customer could not be retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_customer_error
+                message: Unable to retrieve customer.
+                data:
+                  status: 400
         '403':
           description: Forbidden - you need to be logged in to view the account.
           content:
@@ -889,12 +1013,22 @@ paths:
               account_email: john.doe@example.com
       responses:
         '200':
-          description: Account details updated successfully. Returns `true`.
+          description: Account details updated successfully.
           content:
             application/json:
               schema:
-                type: boolean
-              example: true
+                $ref: '#/components/schemas/AccountUpdateResult'
+              examples:
+                updated:
+                  summary: Updated immediately
+                  value:
+                    success: true
+                    email_verification_pending: false
+                pending_verification:
+                  summary: Email change pending verification
+                  value:
+                    success: true
+                    email_verification_pending: true
         '400':
           description: Bad request - missing required field, invalid email or password validation failed.
           content:
@@ -910,11 +1044,46 @@ paths:
                     data:
                       status: 400
                       id: account_first_name
+                invalid_email:
+                  summary: Invalid email address
+                  value:
+                    code: cocart_account_provide_valid_email
+                    message: Please provide a valid email address.
+                    data:
+                      status: 400
+                fill_all_password_fields:
+                  summary: Current password given but new password fields empty
+                  value:
+                    code: cocart_account_fill_all_password_fields
+                    message: Please fill out all password fields.
+                    data:
+                      status: 400
+                enter_current_password:
+                  summary: New password given without current password
+                  value:
+                    code: cocart_account_enter_current_password
+                    message: Please enter your current password.
+                    data:
+                      status: 400
+                reenter_password:
+                  summary: New password confirmation missing
+                  value:
+                    code: cocart_account_reenter_password
+                    message: Please re-enter your password a second time.
+                    data:
+                      status: 400
                 passwords_mismatch:
                   summary: New passwords do not match
                   value:
                     code: cocart_account_new_passwords_do_not_match
                     message: New passwords do not match.
+                    data:
+                      status: 400
+                incorrect_current_password:
+                  summary: Current password is incorrect
+                  value:
+                    code: cocart_account_incorrect_current_password
+                    message: Your current password is incorrect.
                     data:
                       status: 400
         '403':
@@ -923,9 +1092,127 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                not_logged_in:
+                  summary: Not logged in
+                  value:
+                    code: cocart_access_my_account_denied
+                    message: You need to be logged in to view account!
+                    data:
+                      status: 403
+                email_registered:
+                  summary: Email already registered to another account
+                  value:
+                    code: cocart_account_email_already_registered
+                    message: This email address is already registered.
+                    data:
+                      status: 403
+                display_name_is_email:
+                  summary: Display name set to an email address
+                  value:
+                    code: cocart_cannot_set_email_as_display_name
+                    message: Display name cannot be changed to email address due to privacy concern.
+                    data:
+                      status: 403
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+  /my-account/address:
+    patch:
+      tags:
+        - my-account
+      summary: Update account address
+      description: |
+        Updates the authenticated customer's saved billing and/or shipping address,
+        independently of checkout. Unlike checkout's address handling, billing and
+        shipping are updated independently - there is no "use shipping for billing"
+        copying, and no shipping packages are recalculated since there's no active
+        cart context involved. At least one of `billing_address` or
+        `shipping_address` must be provided. Only the fields included are updated;
+        omitted fields are left unchanged.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountAddressUpdateRequest'
+            example:
+              billing_address:
+                first_name: John
+                last_name: Doe
+                address_1: 123 Main Street
+                city: Beverly Hills
+                state: CA
+                postcode: '90210'
+                country: US
+      responses:
+        '200':
+          description: Address updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountAddressUpdateResult'
               example:
-                code: cocart_account_email_already_registered
-                message: This email address is already registered.
+                addresses:
+                  billing:
+                    first_name: John
+                    last_name: Doe
+                    company: ''
+                    address_1: 123 Main Street
+                    address_2: ''
+                    city: Beverly Hills
+                    state: CA
+                    postcode: '90210'
+                    country: US
+                    email: john.doe@example.com
+                    phone: +1-555-123-4567
+                  shipping:
+                    first_name: John
+                    last_name: Doe
+                    company: ''
+                    address_1: 123 Main Street
+                    address_2: ''
+                    city: Beverly Hills
+                    state: CA
+                    postcode: '90210'
+                    country: US
+        '400':
+          description: Bad request - no address data provided, or a field failed validation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                no_data:
+                  summary: No address data provided
+                  value:
+                    code: cocart_no_address_data
+                    message: No address data provided.
+                    data:
+                      status: 400
+                invalid_fields:
+                  summary: One or more fields failed validation
+                  value:
+                    code: cocart_invalid_address_fields
+                    message: Please provide a valid email address.
+                    data:
+                      status: 400
+                customer_error:
+                  summary: The customer could not be retrieved
+                  value:
+                    code: cocart_customer_error
+                    message: Unable to retrieve customer.
+                    data:
+                      status: 400
+        '403':
+          description: Forbidden - you need to be logged in to update the address.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_access_my_account_denied
+                message: You need to be logged in to view account!
                 data:
                   status: 403
       security:
@@ -966,6 +1253,17 @@ paths:
                 empty:
                   summary: No downloads available
                   value: No downloads available yet on this account.
+        '400':
+          description: Bad request - the customer could not be retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_customer_error
+                message: Unable to retrieve customer.
+                data:
+                  status: 400
         '403':
           description: Forbidden - you need to be logged in to view downloads.
           content:
@@ -991,20 +1289,22 @@ paths:
       parameters:
         - name: page
           in: query
-          description: The pagination of orders to return.
+          description: The pagination of orders to return. Clamped server-side to a maximum of 100.
           required: false
           schema:
             type: integer
             default: 1
+            minimum: 1
+            maximum: 100
         - name: per_page
           in: query
-          description: Limit amount of orders to return per page. Capped at 50 per request.
+          description: Limit amount of orders to return per page. Clamped server-side to a maximum of 50 per request, regardless of the value requested.
           required: false
           schema:
             type: integer
             default: 10
             minimum: 1
-            maximum: 100
+            maximum: 50
         - name: order
           in: query
           description: Order sort attribute ascending or descending.
@@ -1035,6 +1335,17 @@ paths:
                         label: View
                 pagination:
                   next: https://example-store.com/wp-json/cocart/v2/my-account/orders/?page=2&per_page=10
+        '400':
+          description: Bad request - the customer could not be retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_customer_error
+                message: Unable to retrieve customer.
+                data:
+                  status: 400
         '403':
           description: Forbidden - you need to be logged in to view orders.
           content:
@@ -1092,6 +1403,7 @@ paths:
                 $ref: '#/components/schemas/CustomerOrder'
               example:
                 order_id: 1234
+                order_key: wc_order_abc123
                 order_number: '1234'
                 order_parent: 0
                 order_date: March 12, 2026, 2:45 pm
@@ -1133,7 +1445,10 @@ paths:
                 order_note: ''
                 order_notes: []
                 downloads: []
-                order_actions: {}
+                order_actions:
+                  cancel:
+                    url: https://example-store.com/wp-json/cocart/v2/my-account/orders/1234/cancel
+                    label: Cancel
         '403':
           description: Forbidden - not logged in and no matching billing email provided.
           content:
@@ -1153,9 +1468,1070 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 code: cocart_order_does_not_exist
-                message: Order
+                message: Order #1234 does not exist.
                 data:
                   status: 404
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+  /my-account/orders/{id}/cancel:
+    post:
+      tags:
+        - my-account
+      summary: Cancel an order
+      description: |
+        Cancels a pending or failed order belonging to the authenticated customer.
+        Mirrors the classic My Account "Cancel order" action - order status is
+        validated, an order note is added, and the `woocommerce_cancelled_order`
+        action fires so stock restoration and any cancellation notifications hooked
+        onto that action behave the same as cancelling from the classic My Account
+        page. Only orders with a status of `pending` or `failed` can be cancelled
+        by default (filterable via
+        `cocart_get_account_orders_action_valid_statuses_for_cancel`).
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier for the order.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Order cancelled successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelOrderResult'
+              example:
+                success: true
+                order_id: 1234
+                order_status: Cancelled
+        '400':
+          description: Bad request - the order's current status does not allow cancellation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_order_cannot_be_cancelled
+                message: This order can no longer be cancelled. Please contact us if you need assistance.
+                data:
+                  status: 400
+        '403':
+          description: Forbidden - you need to be logged in to cancel an order.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_access_my_orders_denied
+                message: You are not logged in! Cannot cancel order.
+                data:
+                  status: 403
+        '404':
+          description: Not found - the order does not exist or does not belong to the authenticated customer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_order_does_not_exist
+                message: Order #1234 does not exist.
+                data:
+                  status: 404
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+  /my-account/subscriptions:
+    get:
+      tags:
+        - my-account
+      summary: Get customer subscriptions
+      description: |
+        Returns a paginated list of the authenticated customer's subscriptions.
+        Subscriptions are provided by whichever subscription-plugin extension is
+        active (WooCommerce Subscriptions, Milo Subscriptions, etc) via the
+        `cocart_my_account_get_subscriptions` filter, so results are the same
+        regardless of which subscription plugin the store runs. Requires a
+        subscription-plugin extension to be active; no subscriptions are
+        returned otherwise.
+      parameters:
+        - name: page
+          in: query
+          description: The pagination of subscriptions to return. Clamped server-side to a maximum of 100.
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+            maximum: 100
+        - name: per_page
+          in: query
+          description: Limit amount of subscriptions to return per page. Clamped server-side to a maximum of 50 per request, regardless of the value requested.
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 50
+        - name: order
+          in: query
+          description: Order sort attribute ascending or descending.
+          required: false
+          schema:
+            type: string
+            default: DESC
+            enum:
+              - ASC
+              - DESC
+      responses:
+        '200':
+          description: Subscriptions retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerSubscriptions'
+              example:
+                subscriptions:
+                  - subscription_id: 89
+                    subscription_number: '#89'
+                    subscription_status: Active
+                    next_payment: September 19, 2026
+                    subscription_total: $29.99 / month
+                    is_manual: false
+                    view: https://example-store.com/wp-json/cocart/v2/my-account/subscriptions/89
+                pagination:
+                  next: https://example-store.com/wp-json/cocart/v2/my-account/subscriptions/?page=2&per_page=10
+        '403':
+          description: Forbidden - you need to be logged in to view subscriptions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_access_my_account_denied
+                message: You need to be logged in to view account!
+                data:
+                  status: 403
+        '404':
+          description: Not found - no subscriptions found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_account_no_subscriptions
+                message: No subscriptions found.
+                data:
+                  status: 404
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+  /my-account/subscriptions/{id}:
+    get:
+      tags:
+        - my-account
+      summary: Get single subscription
+      description: |
+        Returns the details of a single subscription belonging to the
+        authenticated customer. Guests may also view a subscription by
+        providing the `email` query parameter matching the subscription's
+        billing email address. To avoid leaking which subscription IDs exist,
+        a non-existent subscription and one the requester doesn't own both
+        return the same 404 response.
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier for the subscription.
+          required: true
+          schema:
+            type: integer
+        - name: email
+          in: query
+          description: The subscription's billing email address. Allows guest access to the subscription when it matches.
+          required: false
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: Subscription retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerSubscription'
+              example:
+                subscription_id: 89
+                subscription_number: '#89'
+                parent_order: 1234
+                order: https://example-store.com/wp-json/cocart/v2/my-account/orders/1234
+                subscription_status: Active
+                subscription_total: $29.99 / month
+                is_manual: false
+                start_date:
+                  title: Start date
+                  value: August 19, 2026
+                next_payment:
+                  title: Next payment date
+                  value: September 19, 2026
+                end_date:
+                  title: End date
+                  value: ''
+                trial_end:
+                  title: Trial end date
+                  value: ''
+                payment:
+                  title: Payment
+                  value: Visa ending in 1234
+                billing_address: John Doe, 123 Main Street, Suite 100, Beverly Hills, CA 90210, United States (US)
+                shipping_address: John Doe, 123 Main Street, Suite 100, Beverly Hills, CA 90210, United States (US)
+                notes:
+                  - date: August 19th 2026, 02:45pm
+                    note: Payment received. Next payment scheduled for September 19, 2026.
+        '403':
+          description: Forbidden - not logged in and no matching billing email provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_access_my_account_denied
+                message: You need to be logged in to view account!
+                data:
+                  status: 403
+        '404':
+          description: Not found - the subscription does not exist or does not belong to the requester.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_subscription_does_not_exist
+                message: Subscription #89 does not exist.
+                data:
+                  status: 404
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+  /my-account/subscriptions/{id}/suspend:
+    post:
+      tags:
+        - my-account
+      summary: Suspend a subscription
+      description: |
+        Puts the authenticated customer's subscription on hold, via the
+        `cocart_my_account_suspend_subscription` filter. Requires login - unlike
+        the read-only single-subscription view, write actions never allow guest
+        access by billing email. Whether a subscription can be suspended (e.g.
+        suspension limits) is decided entirely by the owning subscription
+        plugin - the exact error code, message and status for a rejected
+        suspension vary accordingly (WooCommerce Subscriptions always uses the
+        codes shown below; Milo Subscriptions surfaces its own manager error
+        code, or a generic 400 when it declines without a specific reason).
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier for the subscription.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Subscription suspended successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionActionResult'
+              example:
+                subscription_id: 89
+                subscription_status: On hold
+        '400':
+          description: Bad request - the subscription plugin declined the action without a more specific reason (e.g. Milo Subscriptions).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_subscription_action_failed
+                message: This action could not be completed for this subscription.
+                data:
+                  status: 400
+        '403':
+          description: Forbidden - not logged in, or the subscription cannot be suspended.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                not_logged_in:
+                  summary: Not logged in
+                  value:
+                    code: cocart_access_my_account_denied
+                    message: You need to be logged in to manage your subscription!
+                    data:
+                      status: 403
+                cannot_suspend:
+                  summary: Subscription cannot be suspended (WooCommerce Subscriptions)
+                  value:
+                    code: cocart_subscription_cannot_suspend
+                    message: This subscription cannot be suspended.
+                    data:
+                      status: 403
+        '404':
+          description: Not found - the subscription does not exist or does not belong to the requester.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_subscription_does_not_exist
+                message: Subscription #89 does not exist.
+                data:
+                  status: 404
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+  /my-account/subscriptions/{id}/cancel:
+    post:
+      tags:
+        - my-account
+      summary: Cancel a subscription
+      description: |
+        Cancels the authenticated customer's subscription, via the
+        `cocart_my_account_cancel_subscription` filter. Requires login - unlike
+        the read-only single-subscription view, write actions never allow guest
+        access by billing email. The exact error code, message and status for a
+        rejected cancellation depend on the owning subscription plugin
+        (WooCommerce Subscriptions always uses the codes shown below; Milo
+        Subscriptions surfaces its own manager error code, or a generic 400
+        when it declines without a specific reason).
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier for the subscription.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Subscription cancelled successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionActionResult'
+              example:
+                subscription_id: 89
+                subscription_status: Cancelled
+        '400':
+          description: Bad request - the subscription plugin declined the action without a more specific reason (e.g. Milo Subscriptions).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_subscription_action_failed
+                message: This action could not be completed for this subscription.
+                data:
+                  status: 400
+        '403':
+          description: Forbidden - not logged in, or the subscription cannot be cancelled.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                not_logged_in:
+                  summary: Not logged in
+                  value:
+                    code: cocart_access_my_account_denied
+                    message: You need to be logged in to manage your subscription!
+                    data:
+                      status: 403
+                cannot_cancel:
+                  summary: Subscription cannot be cancelled (WooCommerce Subscriptions)
+                  value:
+                    code: cocart_subscription_cannot_cancel
+                    message: This subscription cannot be cancelled.
+                    data:
+                      status: 403
+        '404':
+          description: Not found - the subscription does not exist or does not belong to the requester.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_subscription_does_not_exist
+                message: Subscription #89 does not exist.
+                data:
+                  status: 404
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+  /my-account/subscriptions/{id}/reactivate:
+    post:
+      tags:
+        - my-account
+      summary: Reactivate a subscription
+      description: |
+        Reactivates the authenticated customer's subscription, via the
+        `cocart_my_account_reactivate_subscription` filter. Requires login -
+        unlike the read-only single-subscription view, write actions never
+        allow guest access by billing email. A subscription that needs a
+        renewal payment first is rejected rather than reactivated, matching
+        WooCommerce Subscriptions' own My Account behavior; other subscription
+        plugins may reject for different reasons (see the 400 and 403
+        examples below).
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier for the subscription.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Subscription reactivated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionActionResult'
+              example:
+                subscription_id: 89
+                subscription_status: Active
+        '400':
+          description: Bad request - the subscription cannot be reactivated as-is.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                needs_payment:
+                  summary: Needs a renewal payment first (WooCommerce Subscriptions)
+                  value:
+                    code: cocart_subscription_needs_payment
+                    message: This subscription needs a renewal payment before it can be reactivated.
+                    data:
+                      status: 400
+                action_failed:
+                  summary: Declined without a more specific reason (e.g. Milo Subscriptions)
+                  value:
+                    code: cocart_subscription_action_failed
+                    message: This action could not be completed for this subscription.
+                    data:
+                      status: 400
+        '403':
+          description: Forbidden - not logged in, or the subscription cannot be reactivated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                not_logged_in:
+                  summary: Not logged in
+                  value:
+                    code: cocart_access_my_account_denied
+                    message: You need to be logged in to manage your subscription!
+                    data:
+                      status: 403
+                cannot_reactivate:
+                  summary: Subscription cannot be reactivated (WooCommerce Subscriptions)
+                  value:
+                    code: cocart_subscription_cannot_reactivate
+                    message: This subscription cannot be reactivated.
+                    data:
+                      status: 403
+        '404':
+          description: Not found - the subscription does not exist or does not belong to the requester.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_subscription_does_not_exist
+                message: Subscription #89 does not exist.
+                data:
+                  status: 404
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+  /my-account/subscriptions/{id}/auto-renew:
+    post:
+      tags:
+        - my-account
+      summary: Toggle subscription auto-renewal
+      description: |
+        Enables or disables auto-renewal (manual renewal) for the authenticated
+        customer's subscription, via the
+        `cocart_my_account_toggle_subscription_auto_renewal` filter. Requires
+        login. Not every subscription plugin exposes this to customers (e.g.
+        Milo Subscriptions has no customer-facing auto-renewal toggle), in
+        which case the request 404s rather than pretending to succeed.
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier for the subscription.
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enabled:
+                  description: Whether auto-renewal should be enabled.
+                  type: boolean
+              required:
+                - enabled
+            example:
+              enabled: false
+      responses:
+        '200':
+          description: Auto-renewal setting updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionAutoRenewResult'
+              example:
+                subscription_id: 89
+                is_manual: true
+        '403':
+          description: Forbidden - not logged in, or auto-renewal cannot be changed for this subscription.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                not_logged_in:
+                  summary: Not logged in
+                  value:
+                    code: cocart_access_my_account_denied
+                    message: You need to be logged in to manage your subscription!
+                    data:
+                      status: 403
+                cannot_toggle:
+                  summary: Auto-renewal cannot be changed
+                  value:
+                    code: cocart_subscription_cannot_toggle_auto_renewal
+                    message: Auto-renewal cannot be changed for this subscription.
+                    data:
+                      status: 403
+        '404':
+          description: Not found - the subscription does not exist, does not belong to the requester, or the active subscription plugin does not support this action.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_subscription_does_not_exist
+                message: Subscription #89 does not exist.
+                data:
+                  status: 404
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+  /my-account/subscriptions/{id}/payment-method:
+    post:
+      tags:
+        - my-account
+      summary: Update subscription payment method
+      description: |
+        Changes the payment method for the authenticated customer's
+        subscription, via the
+        `cocart_my_account_update_subscription_payment_method` filter.
+        Requires login. What actually happens differs by subscription plugin -
+        WooCommerce Subscriptions accepts any valid gateway ID and runs a real
+        $0 validation charge against the new method before accepting it
+        (mirroring its own change-payment-method flow), while Milo
+        Subscriptions requires `token_id` (it identifies the gateway from the
+        saved token itself, so `payment_method` is otherwise unused) and does
+        a pure saved-token swap with no charge - it may also veto a token that
+        was never validated for off-session use.
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier for the subscription.
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payment_method:
+                  description: Payment method (gateway) ID.
+                  type: string
+                token_id:
+                  description: Saved payment token ID to use. Required for Milo Subscriptions; optional for WooCommerce Subscriptions.
+                  type: integer
+              required:
+                - payment_method
+            example:
+              payment_method: stripe
+              token_id: 42
+      responses:
+        '200':
+          description: Payment method updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionPaymentMethodResult'
+              example:
+                subscription_id: 89
+                payment_method: Visa ending in 1234
+                is_manual: false
+        '400':
+          description: Bad request - the payment method or saved token is invalid, disabled, unavailable, or unsupported for this subscription.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_payment_method:
+                  summary: Payment method does not exist (WooCommerce Subscriptions)
+                  value:
+                    code: cocart_invalid_payment_method
+                    message: Invalid payment method.
+                    data:
+                      status: 400
+                payment_method_disabled:
+                  summary: Payment method is disabled (WooCommerce Subscriptions)
+                  value:
+                    code: cocart_payment_method_disabled
+                    message: This payment method is currently disabled.
+                    data:
+                      status: 400
+                payment_method_no_subscription_support:
+                  summary: Payment method does not support subscriptions (WooCommerce Subscriptions)
+                  value:
+                    code: cocart_payment_method_no_subscription_support
+                    message: The payment method "Stripe" does not support subscriptions. Please choose a different payment method.
+                    data:
+                      status: 400
+                payment_method_not_available:
+                  summary: Payment method not available (WooCommerce Subscriptions)
+                  value:
+                    code: cocart_payment_method_not_available
+                    message: This payment method is not available for your order.
+                    data:
+                      status: 400
+                payment_method_not_supported:
+                  summary: Subscription plugin does not support changing payment method (WooCommerce Subscriptions)
+                  value:
+                    code: cocart_subscription_payment_method_not_supported
+                    message: Changing payment method is not supported for this subscription.
+                    data:
+                      status: 400
+                payment_token_required:
+                  summary: No saved token provided (Milo Subscriptions)
+                  value:
+                    code: cocart_subscription_payment_token_required
+                    message: A saved payment token is required to change this subscription's payment method.
+                    data:
+                      status: 400
+                invalid_payment_token:
+                  summary: Saved token does not exist or belongs to another customer (Milo Subscriptions)
+                  value:
+                    code: cocart_subscription_invalid_payment_token
+                    message: Invalid payment method.
+                    data:
+                      status: 400
+                payment_token_needs_confirmation:
+                  summary: Saved token needs re-confirmation before recurring use (Milo Subscriptions)
+                  value:
+                    code: cocart_subscription_payment_token_needs_confirmation
+                    message: This payment method needs to be re-confirmed before it can be used for recurring payments.
+                    data:
+                      status: 400
+        '402':
+          description: Payment required - the validation charge on the new payment method failed (WooCommerce Subscriptions only; Milo Subscriptions never charges to change payment method).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_payment_failed
+                message: Payment method could not be updated.
+                data:
+                  status: 402
+        '403':
+          description: Forbidden - you need to be logged in to manage your subscription.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_access_my_account_denied
+                message: You need to be logged in to manage your subscription!
+                data:
+                  status: 403
+        '404':
+          description: Not found - the subscription does not exist or does not belong to the requester.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_subscription_does_not_exist
+                message: Subscription #89 does not exist.
+                data:
+                  status: 404
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+  /my-account/subscriptions/{id}/resubscribe:
+    post:
+      tags:
+        - my-account
+      summary: Seed cart to resubscribe
+      description: |
+        Resubscribing isn't a single atomic action in either WooCommerce
+        Subscriptions or Milo Subscriptions - both re-add the old
+        subscription's items to the cart and send the customer through
+        checkout, where the plugin's own order-creation hooks link the new
+        order back to the old subscription. This endpoint only seeds the
+        active cart the same way, via the
+        `cocart_my_account_seed_resubscribe_cart` filter; the client then
+        completes the purchase through CoCart's existing checkout endpoints.
+        No payment is processed here. Seeding empties whatever the customer
+        already had in their cart, so a non-empty cart is snapshotted into the
+        session first - `DELETE` on this same route restores that snapshot and
+        discards the in-progress resubscribe attempt. Eligibility (e.g. only
+        cancelled/expired subscriptions) and the exact error message are
+        decided by the owning subscription plugin; the codes below are shared
+        by both providers, but message wording can differ.
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier for the subscription.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Cart seeded with the subscription's items successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResubscribeResult'
+              example:
+                subscription_id: 89
+                cart_items_added: 1
+                cart_item_count: 1
+                cart_total: $29.99
+                saved_cart_item_count: 2
+        '400':
+          description: Bad request - none of the subscription's items could be added to the cart (e.g. the products are no longer available).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_subscription_resubscribe_failed
+                message: None of this subscription's items could be added to the cart.
+                data:
+                  status: 400
+        '403':
+          description: Forbidden - not logged in, or you cannot resubscribe to this subscription.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                not_logged_in:
+                  summary: Not logged in
+                  value:
+                    code: cocart_access_my_account_denied
+                    message: You need to be logged in to manage your subscription!
+                    data:
+                      status: 403
+                cannot_resubscribe:
+                  summary: Cannot resubscribe to this subscription
+                  value:
+                    code: cocart_subscription_cannot_resubscribe
+                    message: You cannot resubscribe to this subscription.
+                    data:
+                      status: 403
+        '404':
+          description: Not found - the subscription does not exist or does not belong to the requester.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_subscription_does_not_exist
+                message: Subscription #89 does not exist.
+                data:
+                  status: 404
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+    delete:
+      tags:
+        - my-account
+      summary: Restore cart before resubscribing
+      description: |
+        Restores the cart snapshot taken before a `POST` to this same route,
+        discarding whatever resubscribe items are currently in the cart. Use
+        this to abandon an in-progress resubscribe attempt and give the
+        customer back what they had in their cart beforehand.
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier for the subscription.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Saved cart restored successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResubscribeRestoreResult'
+              example:
+                restored: true
+                cart_item_count: 2
+                restored_item_count: 2
+        '403':
+          description: Forbidden - you need to be logged in to manage your subscription.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_access_my_account_denied
+                message: You need to be logged in to manage your subscription!
+                data:
+                  status: 403
+        '404':
+          description: Not found - the subscription does not exist or does not belong to the requester, or there is no saved cart to restore.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                subscription_does_not_exist:
+                  summary: Subscription does not exist
+                  value:
+                    code: cocart_subscription_does_not_exist
+                    message: Subscription #89 does not exist.
+                    data:
+                      status: 404
+                no_saved_cart:
+                  summary: No saved cart to restore
+                  value:
+                    code: cocart_subscription_no_saved_cart
+                    message: There is no saved cart to restore.
+                    data:
+                      status: 404
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+  /my-account/verify-email:
+    get:
+      tags:
+        - my-account
+      summary: Verify pending email change
+      description: |
+        Confirms a pending email address change initiated via
+        `POST /my-account` and applies the new email to the user account and
+        billing address. This endpoint is intentionally public (no
+        authentication required) since the confirmation link is opened from an
+        email client that may not share a session with the requester -
+        possession of the emailed `key` is the proof of ownership. The link
+        expires after 24 hours by default.
+      parameters:
+        - name: key
+          in: query
+          description: The verification key sent to the pending new email address.
+          required: true
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          description: The user ID the pending email change belongs to.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Email address verified and updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyEmailResult'
+              example:
+                success: true
+                email: john.doe@example.com
+        '400':
+          description: Bad request - the verification key is invalid, expired, or does not match.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_invalid_or_expired_key
+                message: This confirmation link is invalid or has expired.
+                data:
+                  status: 400
+        '403':
+          description: Forbidden - the pending email address is already registered to a different user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_account_email_already_registered
+                message: This email address is already registered.
+                data:
+                  status: 403
+      security: []
+  /my-account/verify-order-email:
+    post:
+      tags:
+        - my-account
+      summary: Send order email verification
+      description: |
+        Sends (or resends) a confirmation email to the authenticated customer's
+        account email address, proving they own it so WooCommerce can link any
+        past guest orders placed with the same billing email to the account.
+        The customer confirms via `GET /my-account/verify-order-email`, using
+        the `key` and `user_id` carried in the emailed link. Resending is
+        throttled to once every 60 seconds - a request within that window
+        returns `status: throttled` rather than sending a new email or minting
+        a new key. Requires WooCommerce 11.0+.
+      responses:
+        '200':
+          description: Request processed. Check `status` to tell a new email from a throttled resend.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendOrderEmailVerificationResult'
+              examples:
+                sent:
+                  summary: Verification email sent
+                  value:
+                    success: true
+                    status: sent
+                throttled:
+                  summary: Resent within the 60 second rate limit
+                  value:
+                    success: true
+                    status: throttled
+        '400':
+          description: Bad request - the account email address is already verified.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_email_already_verified
+                message: Your account email address is already verified.
+                data:
+                  status: 400
+        '403':
+          description: Forbidden - you need to be logged in to verify your email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_access_my_account_denied
+                message: You need to be logged in to view account!
+                data:
+                  status: 403
+        '501':
+          description: Not implemented - requires WooCommerce 11.0 or higher.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_woocommerce_feature_unavailable
+                message: This feature requires WooCommerce 11.0 or higher.
+                data:
+                  status: 501
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+    get:
+      tags:
+        - my-account
+      summary: Confirm order email verification
+      description: |
+        Confirms the verification key emailed via
+        `POST /my-account/verify-order-email`, marking the account email
+        address verified and letting WooCommerce link any matching guest
+        orders to the account. Unlike `GET /my-account/verify-email`, this
+        endpoint requires the request be authenticated as the key's target
+        user - matching WooCommerce core's own rule that only a request
+        authenticated as the link's target user can complete verification, so
+        a leaked key with no session behind it (or a session for a different
+        account) can never link orders to the wrong customer. Requires
+        WooCommerce 11.0+.
+      parameters:
+        - name: key
+          in: query
+          description: The verification key emailed to confirm ownership of the account email address.
+          required: true
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          description: The WordPress user ID the verification belongs to.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Email address verified successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyOrderEmailResult'
+              example:
+                success: true
+                email: john.doe@example.com
+        '400':
+          description: Bad request - the verification key is invalid or has expired.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_invalid_or_expired_key
+                message: This confirmation link is invalid or has expired.
+                data:
+                  status: 400
+        '403':
+          description: Forbidden - not logged in, or logged in as a different account than the key's target user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_access_my_account_denied
+                message: You need to be logged in to view account!
+                data:
+                  status: 403
+        '501':
+          description: Not implemented - requires WooCommerce 11.0 or higher.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_woocommerce_feature_unavailable
+                message: This feature requires WooCommerce 11.0 or higher.
+                data:
+                  status: 501
       security:
         - basicAuth: []
         - bearerAuth: []
@@ -1174,6 +2550,19 @@ paths:
 
         A blocklist of reserved usernames (admin, root, support, etc.) cannot be
         registered (filterable via the `cocart_reserved_usernames` filter).
+
+        Passwords provided by the customer must be at least 8 characters
+        (filterable via `cocart_minimum_password_length`), must not match the
+        username or email address, must not be a common weak password
+        (filterable via `cocart_common_weak_passwords`), and must mix at
+        least three of: lowercase, uppercase, digit, symbol. This check is
+        skipped for a generated password.
+
+        The username/password fields are named `requested_username` /
+        `requested_password` rather than `username`/`password` deliberately:
+        CoCart Starter's authentication layer treats any request containing
+        non-empty `username`/`password` fields as a Basic Auth attempt, which
+        would collide with (and reject) this endpoint's own registration fields.
       requestBody:
         required: true
         content:
@@ -1185,18 +2574,18 @@ paths:
                   description: Customers email address. Required and must not already be registered.
                   type: string
                   format: email
-                username:
+                requested_username:
                   description: Customers requested username. Optional when WooCommerce is set to generate usernames from the email address.
                   type: string
-                password:
+                requested_password:
                   description: Customers requested password. Optional when WooCommerce is set to generate passwords automatically.
                   type: string
               required:
                 - email
             example:
               email: jane.doe@example.com
-              username: janedoe
-              password: hunter2-Str0ng!
+              requested_username: janedoe
+              requested_password: hunter2-Str0ng!
       responses:
         '200':
           description: Customer registered successfully.
@@ -1218,16 +2607,33 @@ paths:
                     username: janedoe
                     message: Your account was created successfully and a password has been sent to your email address.
         '400':
-          description: Bad request - reserved username or account creation failed.
+          description: Bad request - reserved username, weak password, or account creation failed.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-              example:
-                code: cocart_registration_error_reserved_username
-                message: This username cannot be registered. Please choose another.
-                data:
-                  status: 400
+              examples:
+                reserved_username:
+                  summary: Username is reserved
+                  value:
+                    code: cocart_registration_error_reserved_username
+                    message: This username cannot be registered. Please choose another.
+                    data:
+                      status: 400
+                weak_password:
+                  summary: Password is too weak
+                  value:
+                    code: cocart_registration_error_weak_password
+                    message: This password is too weak. Please choose a stronger password.
+                    data:
+                      status: 400
+                creation_failed:
+                  summary: Account creation failed (message varies)
+                  value:
+                    code: cocart_registration_error_failed_creation
+                    message: Registration is currently not allowed.
+                    data:
+                      status: 400
         '404':
           description: Not found - invalid email, invalid username or missing password.
           content:
@@ -1240,6 +2646,13 @@ paths:
                   value:
                     code: cocart_registration_invalid_email
                     message: A valid email address is required!
+                    data:
+                      status: 404
+                invalid_username:
+                  summary: Invalid username
+                  value:
+                    code: cocart_registration_error_invalid_username
+                    message: Please provide a valid username.
                     data:
                       status: 404
                 missing_password:
@@ -2098,8 +3511,74 @@ components:
               description: Whether the customer is VAT exempt.
         extensions:
           type: object
-          description: Additional data added by third-party extensions via the `cocart_get_account_extensions` filter.
+          description: |
+            Additional data added by third-party extensions via the
+            `cocart_get_account_extensions` filter. Includes
+            `email_verification.verified` (WooCommerce 11.0+ only) - whether
+            the account email address has been confirmed via
+            `POST /my-account/verify-order-email`.
           additionalProperties: true
+    AccountUpdateResult:
+      type: object
+      description: The result of updating the customer's account details.
+      properties:
+        success:
+          type: boolean
+          description: Whether the account details were saved.
+        email_verification_pending:
+          type: boolean
+          description: |
+            True when an email address change was requested and is awaiting
+            confirmation via `GET /my-account/verify-email` - the account's
+            email address has not changed yet. False when there was no email
+            change, or verification is disabled and the email updated immediately.
+      required:
+        - success
+        - email_verification_pending
+    VerifyEmailResult:
+      type: object
+      description: The result of confirming a pending email address change.
+      properties:
+        success:
+          type: boolean
+        email:
+          type: string
+          format: email
+          description: The email address that was applied to the account.
+      required:
+        - success
+        - email
+    SendOrderEmailVerificationResult:
+      type: object
+      description: The result of requesting an order email verification.
+      properties:
+        success:
+          type: boolean
+        status:
+          type: string
+          description: |
+            `sent` when a new verification email was minted and sent,
+            `throttled` when a resend was requested within the 60 second
+            rate-limit window and no new email was sent.
+          enum:
+            - sent
+            - throttled
+      required:
+        - success
+        - status
+    VerifyOrderEmailResult:
+      type: object
+      description: The result of confirming ownership of the account email address.
+      properties:
+        success:
+          type: boolean
+        email:
+          type: string
+          format: email
+          description: The account email address that was verified.
+      required:
+        - success
+        - email
     AccountAddress:
       type: object
       properties:
@@ -2137,6 +3616,49 @@ components:
         phone:
           type: string
           description: Phone number (billing only).
+    AccountAddressUpdateRequest:
+      type: object
+      description: |
+        At least one of `billing_address` or `shipping_address` must be provided.
+        Only the fields included in each address object are updated; omitted
+        fields are left unchanged.
+      properties:
+        billing_address:
+          type: object
+          description: Billing address fields to update.
+          additionalProperties: true
+        shipping_address:
+          type: object
+          description: Shipping address fields to update.
+          additionalProperties: true
+    AccountAddressUpdateResult:
+      type: object
+      description: The result of updating the customer's saved address(es).
+      properties:
+        addresses:
+          type: object
+          description: The customer addresses after the update.
+          additionalProperties:
+            $ref: '#/components/schemas/AccountAddress'
+      required:
+        - addresses
+    CancelOrderResult:
+      type: object
+      description: The result of cancelling an order.
+      properties:
+        success:
+          type: boolean
+          description: Whether the order was cancelled.
+        order_id:
+          type: integer
+          description: Unique identifier for the order.
+        order_status:
+          type: string
+          description: Order status after cancellation.
+      required:
+        - success
+        - order_id
+        - order_status
     CustomerDownload:
       type: object
       properties:
@@ -2215,6 +3737,9 @@ components:
         order_id:
           type: integer
           description: Unique identifier for the order.
+        order_key:
+          type: string
+          description: Order key for verification, required to pay for the order.
         order_number:
           type: string
           description: Order number.
@@ -2336,6 +3861,179 @@ components:
           type: string
           format: uri
           description: Link to the product endpoint. Empty when the product no longer exists.
+    CustomerSubscriptions:
+      type: object
+      description: Paginated list of customer subscriptions.
+      properties:
+        subscriptions:
+          type: array
+          description: List of customer subscriptions.
+          items:
+            type: object
+            properties:
+              subscription_id:
+                type: integer
+                description: Unique identifier for the subscription.
+              subscription_number:
+                type: string
+                description: Subscription number.
+              subscription_status:
+                type: string
+                description: Subscription status.
+              next_payment:
+                type: string
+                description: Next payment date. Empty when no future payment is scheduled.
+              subscription_total:
+                type: string
+                description: Subscription total, formatted without HTML.
+              is_manual:
+                type: boolean
+                description: Whether the subscription requires manual renewal.
+              view:
+                type: string
+                format: uri
+                description: Link to view the subscription.
+        pagination:
+          type: object
+          description: Pagination information. Links are only present when more pages are available.
+          properties:
+            previous:
+              type: string
+              format: uri
+              description: Link to previous page.
+            next:
+              type: string
+              format: uri
+              description: Link to next page.
+    CustomerSubscription:
+      type: object
+      description: A single customer subscription.
+      properties:
+        subscription_id:
+          type: integer
+          description: Unique identifier for the subscription.
+        subscription_number:
+          type: string
+          description: Subscription number.
+        parent_order:
+          type: integer
+          description: Parent order ID.
+        order:
+          type: string
+          format: uri
+          description: Link to the parent order.
+        subscription_status:
+          type: string
+          description: Subscription status.
+        subscription_total:
+          type: string
+          description: Subscription total, formatted without HTML.
+        is_manual:
+          type: boolean
+          description: Whether the subscription requires manual renewal.
+        start_date:
+          $ref: '#/components/schemas/SubscriptionTitledValue'
+        next_payment:
+          $ref: '#/components/schemas/SubscriptionTitledValue'
+        end_date:
+          $ref: '#/components/schemas/SubscriptionTitledValue'
+        trial_end:
+          $ref: '#/components/schemas/SubscriptionTitledValue'
+        payment:
+          $ref: '#/components/schemas/SubscriptionTitledValue'
+        billing_address:
+          type: string
+          description: Formatted billing address as a single line.
+        shipping_address:
+          type: string
+          description: Formatted shipping address as a single line.
+        notes:
+          type: array
+          description: Subscription notes shared with the customer.
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                description: Note date.
+              note:
+                type: string
+                description: Note content.
+    SubscriptionTitledValue:
+      type: object
+      description: A labelled subscription detail row, e.g. a date or the payment method.
+      properties:
+        title:
+          type: string
+          description: Field title.
+        value:
+          type: string
+          description: Field value. Empty when not applicable to this subscription.
+    SubscriptionActionResult:
+      type: object
+      description: Result of a subscription status action (suspend, cancel, reactivate).
+      properties:
+        subscription_id:
+          type: integer
+          description: Unique identifier for the subscription.
+        subscription_status:
+          type: string
+          description: Subscription status after the action.
+    SubscriptionAutoRenewResult:
+      type: object
+      description: Result of toggling subscription auto-renewal.
+      properties:
+        subscription_id:
+          type: integer
+          description: Unique identifier for the subscription.
+        is_manual:
+          type: boolean
+          description: Whether the subscription now requires manual renewal.
+    SubscriptionPaymentMethodResult:
+      type: object
+      description: Result of updating a subscription's payment method.
+      properties:
+        subscription_id:
+          type: integer
+          description: Unique identifier for the subscription.
+        payment_method:
+          type: string
+          description: Payment method display name after the change.
+        is_manual:
+          type: boolean
+          description: Whether the subscription requires manual renewal.
+    SubscriptionResubscribeResult:
+      type: object
+      description: Result of seeding the cart to resubscribe.
+      properties:
+        subscription_id:
+          type: integer
+          description: Unique identifier for the subscription.
+        cart_items_added:
+          type: integer
+          description: Number of line items added to the cart.
+        cart_item_count:
+          type: integer
+          description: Total items now in the cart.
+        cart_total:
+          type: string
+          description: Formatted cart total.
+        saved_cart_item_count:
+          type: integer
+          description: Number of items from the customer's previous cart that were snapshotted before it was replaced (0 if the cart was already empty).
+    SubscriptionResubscribeRestoreResult:
+      type: object
+      description: Result of restoring the cart snapshot taken before a resubscribe attempt.
+      properties:
+        restored:
+          type: boolean
+          description: Whether a saved cart snapshot was restored.
+        cart_item_count:
+          type: integer
+          description: Total items now in the cart.
+        restored_item_count:
+          type: integer
+          description: Number of items restored from the saved cart snapshot.
     RegisteredCustomer:
       type: object
       description: The newly registered customer.

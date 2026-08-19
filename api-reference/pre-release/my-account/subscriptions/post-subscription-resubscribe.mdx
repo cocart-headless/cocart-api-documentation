@@ -1,14 +1,17 @@
 ---
-title: "Resubscribe to Subscription"
-openapi: "../../openapi-spec-preview.yaml POST /my-account/subscriptions/{id}/resubscribe"
+title: "Seed Cart to Resubscribe"
+sidebarTitle: "Resubscribe"
+openapi: "../../openapi-cocart-plus-v2-collection.yaml POST /my-account/subscriptions/{id}/resubscribe"
 tag: "New"
 robots: "noindex, follow"
 ---
 
 <Warning>
-    This endpoint is currently shown as a preview of what's currently in development and is subject to change.
+    This API requires **CoCart Plus v2 or higher** to use.
 </Warning>
 
 <Info>
-    This endpoint supports only the official [WooCommerce Subscriptions](https://woocommerce.com/products/woocommerce-subscriptions/) extension.
+    Resubscribing isn't a single atomic action in either WooCommerce Subscriptions or Milo Subscriptions - both re-add the old subscription's items to the cart and send the customer through checkout, where the plugin's own order-creation hooks link the new order back to the old subscription. This endpoint only seeds the active cart the same way, via the `cocart_my_account_seed_resubscribe_cart` filter; the client then completes the purchase through CoCart's existing checkout endpoints. No payment is processed here.
+
+    Seeding empties whatever the customer already had in their cart, so a non-empty cart is snapshotted into the session first - `DELETE` on this same route restores that snapshot and discards the in-progress resubscribe attempt.
 </Info>

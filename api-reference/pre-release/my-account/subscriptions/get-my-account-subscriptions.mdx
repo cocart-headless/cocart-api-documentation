@@ -1,15 +1,15 @@
 ---
 title: "My Account - Get Subscriptions"
 sidebarTitle: "Subscriptions"
-openapi: "../../openapi-spec-preview.yaml GET /my-account/subscriptions"
+openapi: "../../openapi-cocart-plus-v2-collection.yaml GET /my-account/subscriptions"
 tag: "New"
 robots: "noindex, follow"
 ---
 
 <Warning>
-    This endpoint is currently shown as a preview of what's currently in development and is subject to change.
+    This API requires **CoCart Plus v2 or higher** to use.
 </Warning>
 
 <Info>
-    This endpoint supports only the official [WooCommerce Subscriptions](https://woocommerce.com/products/woocommerce-subscriptions/) extension.
+    Subscriptions are provided by whichever subscription-plugin extension is active (e.g. [WooCommerce Subscriptions](https://woocommerce.com/products/woocommerce-subscriptions/), Milo Subscriptions) via the `cocart_my_account_get_subscriptions` filter, so results are the same regardless of which subscription plugin the store runs. Requires a subscription-plugin extension to be active; no subscriptions are returned otherwise.
 </Info>

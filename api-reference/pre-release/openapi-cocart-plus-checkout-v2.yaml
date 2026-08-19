@@ -1,0 +1,2334 @@
+openapi: 3.0.3
+info:
+  title: CoCart Plus - Checkout API v2
+  version: 2.0.0
+  description: |
+    CoCart Plus extends the CoCart REST API v2 with a full headless checkout flow:
+    retrieving and updating checkout data (addresses, shipping/payment method, coupons,
+    currency), processing an order and its payment, retrieving checkout form
+    configuration, address autocomplete, order confirmation data, paying for an
+    existing order, and listing/selecting payment methods.
+
+    Requires CoCart Starter v5.0+ to be installed and active.
+
+    When the geolocation feature is enabled, responses include `Country`,
+    `Country-Code`, `Region` and `Timezone` headers.
+    When rate limiting is enabled, responses include `RateLimit-Limit`,
+    `RateLimit-Remaining` and `RateLimit-Reset` headers (plus `RateLimit-Retry-After`
+    on 429 responses).
+  termsOfService: https://cocartapi.com/terms-of-conditions-polar/
+  contact:
+    email: support@cocartapi.com
+  license:
+    name: GNU General Public License v3.0
+    url: http://www.gnu.org/licenses/gpl-3.0.html
+externalDocs:
+  description: Find out more about CoCart API
+  url: https://docs.cocartapi.com
+servers:
+  - url: '{protocol}://{host}/wp-json/cocart/v2'
+    description: API v2
+    variables:
+      protocol:
+        enum:
+          - http
+          - https
+        default: https
+      host:
+        default: example-store.com
+        description: Your store domain
+tags:
+  - name: checkout
+    description: Operations for retrieving/updating checkout data and processing orders
+  - name: payment
+    description: Operations for available payment methods
+  - name: orders
+    description: Operations for order confirmation and paying for existing orders
+  - name: addresses
+    description: Operations for address autocomplete search and lookup
+paths:
+  /checkout/config:
+    get:
+      tags:
+        - checkout
+      summary: Get checkout configuration
+      description: |
+        Returns the checkout form field configuration, locale settings, country/state
+        lists, shipping and account settings, store settings and client-side validation
+        rules used to build a checkout form. This endpoint is public and does not
+        require a cart session.
+      responses:
+        '200':
+          description: Checkout configuration retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckoutConfig'
+              example:
+                fields:
+                  billing:
+                    billing_first_name:
+                      type: text
+                      label: First name
+                      placeholder: ''
+                      required: true
+                      class: [form-row-first]
+                      autocomplete: given-name
+                      priority: 10
+                    billing_country:
+                      type: country
+                      label: Country / Region
+                      required: true
+                      class: [form-row-wide, address-field]
+                      priority: 40
+                      default: US
+                  shipping:
+                    shipping_first_name:
+                      type: text
+                      label: First name
+                      required: true
+                      class: [form-row-first]
+                      autocomplete: given-name
+                      priority: 10
+                  account:
+                    account_password:
+                      type: password
+                      label: Password
+                      required: false
+                      class: [form-row-wide]
+                      priority: 10
+                  order:
+                    order_comments:
+                      type: textarea
+                      label: Order notes
+                      placeholder: Notes about your order, e.g. special notes for delivery.
+                      required: false
+                      class: [notes]
+                      priority: 10
+                locale_settings:
+                  US:
+                    state:
+                      label: State
+                      required: true
+                countries:
+                  allowed_countries:
+                    US: United States (US)
+                    GB: United Kingdom (UK)
+                  shipping_countries:
+                    US: United States (US)
+                  states:
+                    US:
+                      CA: California
+                      NY: New York
+                  default_country: US
+                  eu_countries: [AT, BE, BG, HR, CY, CZ, DK, EE, FI, FR, DE, GR, HU, IE, IT, LV, LT, LU, MT, NL, PL, PT, RO, SK, SI, ES, SE]
+                shipping:
+                  enabled: true
+                  calc_shipping: true
+                  ship_to_countries: ''
+                  ship_to_billing_address: false
+                  shipping_cost_requires_address: false
+                account:
+                  allow_registration: true
+                  registration_generate_username: true
+                  registration_generate_password: false
+                  guest_checkout_enabled: true
+                  must_create_account: false
+                store:
+                  currency: USD
+                  currency_symbol: $
+                  currency_position: left
+                  price_decimal_sep: .
+                  price_thousand_sep: ','
+                  price_decimals: 2
+                  tax_enabled: true
+                  tax_display_cart: excl
+                  prices_include_tax: false
+                  coupons_enabled: true
+                  terms_page_id: 12
+                  privacy_page_id: 8
+                  store_address:
+                    address_1: 123 Main Street
+                    address_2: ''
+                    city: Beverly Hills
+                    postcode: '90210'
+                    country: US
+                    state: CA
+                  terms_text: I have read and agree to the website terms and conditions
+                validation:
+                  postcode:
+                    patterns:
+                      GB: ^([Gg][Ii][Rr] 0[Aa]{2})|((([A-Za-z][0-9]{1,2})|(([A-Za-z][A-Ha-hJ-Yj-y][0-9]{1,2})|(([A-Za-z][0-9][A-Za-z])|([A-Za-z][A-Ha-hJ-Yj-y][0-9][A-Za-z]?))))\s?[0-9][A-Za-z]{2})$
+                      US: ^\d{5}(-\d{4})?$
+                      CA: ^[A-Za-z]\d[A-Za-z][ ]?\d[A-Za-z]\d$
+                      DE: ^\d{5}$
+                  phone:
+                    enabled: true
+                  email:
+                    enabled: true
+  /address/search:
+    get:
+      tags:
+        - addresses
+      summary: Search addresses
+      description: |
+        Searches for address suggestions using the configured address autocomplete
+        provider (WooCommerce's `woocommerce_address_providers` filter merged with
+        CoCart's own `cocart_address_autocomplete_providers` filter). This endpoint
+        is public and does not require a cart session.
+      parameters:
+        - name: query
+          in: query
+          description: The search text. Must be at least 3 characters long.
+          required: true
+          schema:
+            type: string
+            minLength: 3
+        - name: country
+          in: query
+          description: |
+            Two-letter country code to scope the search to. Defaults to the
+            customer's existing address country, the session country, the store
+            base country, or `US` if none can be determined.
+          required: false
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 2
+        - name: type
+          in: query
+          description: Which address type the search is for.
+          required: false
+          schema:
+            type: string
+            enum:
+              - billing
+              - shipping
+            default: billing
+        - name: provider
+          in: query
+          description: Specific address provider ID to use. Defaults to the first available provider.
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Address suggestions retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressSearchResult'
+              example:
+                suggestions:
+                  - id: addr_12345
+                    label: 123 Main Street, Beverly Hills, CA 90210
+                    matched_substrings:
+                      - offset: 0
+                        length: 3
+                count: 1
+                provider:
+                  id: google_places
+                  name: Google Places
+                search_country: US
+                query: 123 Main
+        '400':
+          description: Bad request - invalid query or unsupported country.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_query:
+                  summary: Query too short
+                  value:
+                    code: cocart_address_search_invalid_query
+                    message: Query must be at least 3 characters.
+                    data:
+                      status: 400
+                country_not_supported:
+                  summary: Country not supported by provider
+                  value:
+                    code: cocart_address_search_country_not_supported
+                    message: 'Address search not supported for country: XX'
+                    data:
+                      status: 400
+        '500':
+          description: Server error - no provider available or the provider search failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                no_provider:
+                  summary: No provider available
+                  value:
+                    code: cocart_address_search_no_provider
+                    message: No address provider available.
+                    data:
+                      status: 500
+                search_error:
+                  summary: Provider search error
+                  value:
+                    code: cocart_address_search_error
+                    message: An error occurred while searching for addresses.
+                    data:
+                      status: 500
+  /address/details:
+    get:
+      tags:
+        - addresses
+      summary: Get address details
+      description: |
+        Resolves a suggestion ID returned by `/address/search` into full address
+        details using the same address autocomplete provider. This endpoint is
+        public and does not require a cart session.
+      parameters:
+        - name: address_id
+          in: query
+          description: The suggestion ID returned by `/address/search`.
+          required: true
+          schema:
+            type: string
+        - name: provider
+          in: query
+          description: The address provider ID that returned the suggestion.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Address details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressDetails'
+              example:
+                address:
+                  address_1: 123 Main Street
+                  address_2: Suite 100
+                  city: Beverly Hills
+                  state: CA
+                  postcode: '90210'
+                  country: US
+                provider:
+                  id: google_places
+                  name: Google Places
+        '400':
+          description: Bad request - the address ID is missing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_address_details_missing_id
+                message: Address ID is required.
+                data:
+                  status: 400
+        '404':
+          description: Not found - no address details found for the given ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_address_details_not_found
+                message: Address not found.
+                data:
+                  status: 404
+        '500':
+          description: Server error - no provider available, the resolved address was invalid, or the provider lookup failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                no_provider:
+                  summary: No provider available
+                  value:
+                    code: cocart_address_details_no_provider
+                    message: No address provider available.
+                    data:
+                      status: 500
+                invalid:
+                  summary: Resolved address missing required fields
+                  value:
+                    code: cocart_address_details_invalid
+                    message: 'Invalid address: missing address_1'
+                    data:
+                      status: 500
+                error:
+                  summary: Provider lookup error
+                  value:
+                    code: cocart_address_details_error
+                    message: An error occurred while retrieving address details.
+                    data:
+                      status: 500
+  /checkout:
+    get:
+      tags:
+        - checkout
+      summary: Get checkout data
+      description: |
+        Returns the current checkout data for the cart: customer addresses, cart
+        items, coupons, fees, shipping methods, chosen payment method and cart
+        totals. Requires an active cart session (guest with a valid cart key) or a
+        logged-in customer.
+      responses:
+        '200':
+          description: Checkout data retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckoutData'
+              example:
+                cart_hash: e629fa6598d732768f7c726b4b621285
+                cart_key: cb7a23af96a3f23af3c28a8b4b8c6d5e
+                currency:
+                  currency_code: USD
+                  currency_symbol: $
+                  currency_symbol_pos: left
+                  currency_minor_unit: 2
+                  currency_decimal_separator: .
+                  currency_thousand_separator: ','
+                  currency_prefix: $
+                  currency_suffix: ''
+                customer:
+                  customer_id: 0
+                  billing_address:
+                    first_name: John
+                    last_name: Doe
+                    company: ''
+                    address_1: 123 Main Street
+                    address_2: ''
+                    city: Beverly Hills
+                    state: CA
+                    postcode: '90210'
+                    country: US
+                    email: john.doe@example.com
+                    phone: +1-555-123-4567
+                  shipping_address:
+                    first_name: John
+                    last_name: Doe
+                    company: ''
+                    address_1: 123 Main Street
+                    address_2: ''
+                    city: Beverly Hills
+                    state: CA
+                    postcode: '90210'
+                    country: US
+                items:
+                  6364d3f0f495b6ab9dcf8d3b5c6e0b01:
+                    item_key: 6364d3f0f495b6ab9dcf8d3b5c6e0b01
+                    id: 123
+                    name: Premium Quality T-Shirt
+                    price: '1800'
+                    quantity:
+                      value: 2
+                      minimum: 1
+                      maximum: -1
+                      multiple_of: 1
+                      editable: true
+                    totals:
+                      subtotal: '3600'
+                      subtotal_tax: '0'
+                      total: '3600'
+                      tax: '0'
+                    slug: premium-quality-t-shirt
+                    meta:
+                      product_type: simple
+                      sku: TSHIRT-001
+                    backorders: ''
+                    cart_item_data: {}
+                    featured_image: https://example-store.com/wp-content/uploads/2024/03/tshirt.jpg
+                coupons: []
+                needs_payment: true
+                needs_shipping: true
+                shipping_methods:
+                  flat_rate:1:
+                    id: flat_rate:1
+                    label: Flat rate
+                    cost: '1000'
+                    method_id: flat_rate
+                    instance_id: 1
+                payment_method: stripe
+                fees: []
+                cart_totals:
+                  subtotal: '3600'
+                  subtotal_tax: '0'
+                  fee_total: '0'
+                  fee_tax: '0'
+                  discount_total: '0'
+                  discount_tax: '0'
+                  shipping_total: '1000'
+                  shipping_tax: '0'
+                  cart_contents_total: '3600'
+                  cart_contents_tax: '0'
+                  total: '4600'
+                  total_tax: '0'
+                message: ''
+        '401':
+          description: Unauthorized - no cart session and not logged in.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_rest_authentication_required
+                message: Authentication or valid cart key required.
+                data:
+                  status: 401
+    put:
+      tags:
+        - checkout
+      summary: Update checkout data
+      description: |
+        Updates checkout data: billing/shipping address, chosen payment method,
+        chosen shipping method, applied coupon, and/or currency. Address fields are
+        validated and saved atomically - if any field fails validation, nothing is
+        persisted. Recalculates cart totals and returns the updated checkout data
+        with `message` set to `"Checkout data updated."`. `PUT` and `PATCH` behave
+        identically. Requires an active cart session or a logged-in customer.
+      requestBody:
+        $ref: '#/components/requestBodies/CheckoutUpdateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/CheckoutUpdateResponse'
+        '400':
+          $ref: '#/components/responses/CheckoutUpdateBadRequest'
+        '401':
+          description: Unauthorized - no cart session and not logged in.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_rest_authentication_required
+                message: Authentication or valid cart key required.
+                data:
+                  status: 401
+    patch:
+      tags:
+        - checkout
+      summary: Update checkout data (partial)
+      description: |
+        Identical behavior to `PUT /checkout`. Updates checkout data: billing/shipping
+        address, chosen payment method, chosen shipping method, applied coupon,
+        and/or currency. Address fields are validated and saved atomically. Requires
+        an active cart session or a logged-in customer.
+      requestBody:
+        $ref: '#/components/requestBodies/CheckoutUpdateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/CheckoutUpdateResponse'
+        '400':
+          $ref: '#/components/responses/CheckoutUpdateBadRequest'
+        '401':
+          description: Unauthorized - no cart session and not logged in.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_rest_authentication_required
+                message: Authentication or valid cart key required.
+                data:
+                  status: 401
+    post:
+      tags:
+        - checkout
+      summary: Process checkout
+      description: |
+        Validates the cart and customer data, creates a WooCommerce order (reusing
+        a matching draft order for the same cart hash on retry to avoid duplicate
+        orders), processes the payment if the order needs payment, and empties the
+        cart on success. Requires an active cart session or a logged-in customer.
+
+        Unlike `POST /order-received/{order_id}/pay`, a payment failure here does
+        NOT raise an HTTP error - the order is still created and a `200` is returned
+        with `payment_result.payment_status` set to `"failed"`.
+
+        When the gateway requires further customer action before the payment can
+        complete (e.g. 3D Secure/SCA), `payment_result.payment_status` is
+        `"requires_action"` and `action_type`/`action_data` describe what the
+        client must do (gateway-specific - e.g. for Stripe, `action_data.client_secret`
+        to confirm client-side). In this case the transaction has NOT finished:
+        the draft order and cart session are deliberately left intact, and
+        `cocart_checkout_complete` does not fire. Once the client has completed
+        the action, call `POST /checkout` again with the same cart/session to
+        land on the same order rather than creating a duplicate.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckoutProcessRequest'
+            example:
+              billing_address:
+                first_name: John
+                last_name: Doe
+                address_1: 123 Main Street
+                city: Beverly Hills
+                state: CA
+                postcode: '90210'
+                country: US
+                email: john.doe@example.com
+                phone: +1-555-123-4567
+              use_different_billing: true
+              shipping_address:
+                first_name: John
+                last_name: Doe
+                address_1: 123 Main Street
+                city: Beverly Hills
+                state: CA
+                postcode: '90210'
+                country: US
+              payment_method: stripe
+              payment_data:
+                - key: paymentMethodID
+                  value: pm_1H8x2y2eZvKYlo2C
+              shipping_method: flat_rate:1
+              customer_note: Please leave at the front door.
+              create_account: false
+      responses:
+        '200':
+          description: Checkout processed. An order was created; see `payment_result` for the payment outcome.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckoutProcessResponse'
+              examples:
+                success:
+                  summary: Payment completed
+                  value:
+                    order_id: 1234
+                    status: pending
+                    order_key: wc_order_abc123
+                    order_number: '1234'
+                    payment_result:
+                      payment_status: success
+                      redirect_url: https://example-store.com/checkout/order-received/1234/?key=wc_order_abc123
+                      message: ''
+                    customer_id: 0
+                    billing_address:
+                      first_name: John
+                      last_name: Doe
+                      company: ''
+                      address_1: 123 Main Street
+                      address_2: ''
+                      city: Beverly Hills
+                      state: CA
+                      postcode: '90210'
+                      country: US
+                      email: john.doe@example.com
+                      phone: +1-555-123-4567
+                    shipping_address:
+                      first_name: John
+                      last_name: Doe
+                      company: ''
+                      address_1: 123 Main Street
+                      address_2: ''
+                      city: Beverly Hills
+                      state: CA
+                      postcode: '90210'
+                      country: US
+                requires_action:
+                  summary: Gateway requires further customer action (e.g. 3D Secure)
+                  value:
+                    order_id: 1234
+                    status: pending
+                    order_key: wc_order_abc123
+                    order_number: '1234'
+                    payment_result:
+                      payment_status: requires_action
+                      action_type: stripe_confirm_payment
+                      action_data:
+                        client_secret: pi_3H8x2y2eZvKYlo2C_secret_abc123
+                        intent_type: payment_intent
+                    customer_id: 0
+                    billing_address:
+                      first_name: John
+                      last_name: Doe
+                      company: ''
+                      address_1: 123 Main Street
+                      address_2: ''
+                      city: Beverly Hills
+                      state: CA
+                      postcode: '90210'
+                      country: US
+                      email: john.doe@example.com
+                      phone: +1-555-123-4567
+                    shipping_address:
+                      first_name: John
+                      last_name: Doe
+                      company: ''
+                      address_1: 123 Main Street
+                      address_2: ''
+                      city: Beverly Hills
+                      state: CA
+                      postcode: '90210'
+                      country: US
+        '400':
+          description: Bad request - cart/customer validation failed, or the order could not be processed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                empty_cart:
+                  summary: Cart is empty
+                  value:
+                    code: cocart_cant_checkout_empty_cart
+                    message: Cannot checkout with empty cart.
+                    data:
+                      status: 400
+                missing_field:
+                  summary: Required billing field missing
+                  value:
+                    code: cocart_address_field_required
+                    message: Address 1 is required.
+                    data:
+                      status: 400
+                invalid_email:
+                  summary: Invalid billing email
+                  value:
+                    code: cocart_invalid_email_address
+                    message: The email address "john.doe@example" is not valid.
+                    data:
+                      status: 400
+                invalid_phone:
+                  summary: Invalid billing phone
+                  value:
+                    code: cocart_invalid_phone_number
+                    message: The phone number "123" is not valid.
+                    data:
+                      status: 400
+                invalid_billing_country:
+                  summary: Invalid billing country code
+                  value:
+                    code: cocart_invalid_billing_country_code
+                    message: 'Invalid billing country: XX. Please select a valid country.'
+                    data:
+                      status: 400
+                invalid_billing_postcode:
+                  summary: Invalid billing postcode
+                  value:
+                    code: cocart_invalid_billing_postcode
+                    message: The postcode <strong>ABC</strong> is not valid for United States (US).
+                    data:
+                      status: 400
+                invalid_shipping_country:
+                  summary: Invalid shipping country code
+                  value:
+                    code: cocart_invalid_shipping_country_code
+                    message: 'Invalid shipping country: XX. Please select a valid country.'
+                    data:
+                      status: 400
+                invalid_shipping_postcode:
+                  summary: Invalid shipping postcode
+                  value:
+                    code: cocart_invalid_shipping_postcode
+                    message: The postcode <strong>ABC</strong> is not valid for United States (US).
+                    data:
+                      status: 400
+                product_not_exists:
+                  summary: A cart item no longer exists
+                  value:
+                    code: cocart_product_not_exists
+                    message: A product in your cart no longer exists and has been removed.
+                    data:
+                      status: 400
+                product_not_purchasable:
+                  summary: A cart item is not purchasable
+                  value:
+                    code: cocart_product_not_purchasable
+                    message: '"Premium Quality T-Shirt" is not available for purchase.'
+                    data:
+                      status: 400
+                product_out_of_stock:
+                  summary: A cart item is out of stock
+                  value:
+                    code: cocart_product_out_of_stock
+                    message: '"Premium Quality T-Shirt" is out of stock and cannot be purchased.'
+                    data:
+                      status: 400
+                insufficient_stock:
+                  summary: A cart item exceeds available stock
+                  value:
+                    code: cocart_insufficient_stock
+                    message: Insufficient stock for "Premium Quality T-Shirt". Only 1 remaining.
+                    data:
+                      status: 400
+                invalid_coupon:
+                  summary: An applied coupon is no longer valid
+                  value:
+                    code: cocart_invalid_coupon
+                    message: The coupon "summer10" is no longer valid and has been removed.
+                    data:
+                      status: 400
+                coupon_email_restricted:
+                  summary: Coupon restricted to certain emails
+                  value:
+                    code: cocart_coupon_email_restricted
+                    message: The coupon "summer10" is not valid for your email address and has been removed.
+                    data:
+                      status: 400
+                coupon_usage_limit:
+                  summary: Coupon usage limit reached
+                  value:
+                    code: cocart_coupon_usage_limit
+                    message: You have reached the usage limit for coupon "summer10".
+                    data:
+                      status: 400
+                no_shipping_method:
+                  summary: No shipping method chosen
+                  value:
+                    code: cocart_no_shipping_method
+                    message: Please select a shipping method.
+                    data:
+                      status: 400
+                invalid_shipping_method:
+                  summary: Chosen shipping method is not available
+                  value:
+                    code: cocart_invalid_shipping_method
+                    message: 'The shipping method "flat_rate:1" is not available.'
+                    data:
+                      status: 400
+                invalid_payment_method:
+                  summary: Payment method does not exist
+                  value:
+                    code: cocart_invalid_payment_method
+                    message: Invalid payment method.
+                    data:
+                      status: 400
+                payment_method_disabled:
+                  summary: Payment method is disabled
+                  value:
+                    code: cocart_payment_method_disabled
+                    message: This payment method is currently disabled.
+                    data:
+                      status: 400
+                payment_method_no_subscription_support:
+                  summary: Payment method does not support subscriptions in cart
+                  value:
+                    code: cocart_payment_method_no_subscription_support
+                    message: The payment method "Stripe" does not support subscriptions. Please choose a different payment method.
+                    data:
+                      status: 400
+                payment_method_not_available:
+                  summary: Payment method not available for this order
+                  value:
+                    code: cocart_payment_method_not_available
+                    message: This payment method is not available for your order.
+                    data:
+                      status: 400
+                account_creation_failed:
+                  summary: Guest account creation failed
+                  value:
+                    code: cocart_account_creation_failed
+                    message: An account with this email address already exists.
+                    data:
+                      status: 400
+        '401':
+          description: Unauthorized - no cart session and not logged in.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_rest_authentication_required
+                message: Authentication or valid cart key required.
+                data:
+                  status: 401
+  /checkout/payment-methods:
+    get:
+      tags:
+        - payment
+      summary: Get available payment methods
+      description: |
+        Returns the available payment gateways for the current cart, keyed by
+        gateway ID, including gateway configuration and any saved payment tokens
+        for the logged-in customer. Requires an active cart session or a logged-in
+        customer.
+      responses:
+        '200':
+          description: Available payment methods retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/PaymentMethod'
+              example:
+                stripe:
+                  id: stripe
+                  title: Credit Card (Stripe)
+                  description: Pay securely with your credit card via Stripe.
+                  supports: [products, refunds, tokenization]
+                  has_fields: true
+                  order_button_text: Place order
+                  method_title: Stripe
+                  method_description: Take payments via Stripe.
+                  config:
+                    test_mode: false
+                    is_connected: true
+                    supports_tokenization: true
+                    supports_refunds: true
+                    supports_subscriptions: false
+                    requires_billing_address: true
+                    restricted_to_shipping_methods: null
+                  saved_tokens:
+                    - id: '42'
+                      token: Visa ending in 4242
+                      type: CC
+                      gateway_id: stripe
+                      is_default: true
+                      expires: '08/2028'
+                  supports_save_payment: true
+                cod:
+                  id: cod
+                  title: Cash on delivery
+                  description: Pay with cash upon delivery.
+                  supports: [products]
+                  has_fields: false
+                  order_button_text: Place order
+                  method_title: Cash on Delivery
+                  method_description: Allows you to accept cash on delivery.
+                  config:
+                    test_mode: false
+                    is_connected: true
+                    supports_tokenization: false
+                    supports_refunds: false
+                    supports_subscriptions: false
+                    requires_billing_address: false
+                    restricted_to_shipping_methods: null
+                  saved_tokens: []
+                  supports_save_payment: false
+        '401':
+          description: Unauthorized - no cart session and not logged in.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_rest_authentication_required
+                message: Authentication or valid cart key required.
+                data:
+                  status: 401
+  /order-received/{order_id}:
+    get:
+      tags:
+        - orders
+      summary: Get order received data
+      description: |
+        Returns order confirmation data for the "order received" / thank-you page.
+        Access requires the `order_key` query parameter to match the order's key
+        (`hash_equals`); if the requester is logged in, the order must also belong
+        to that customer.
+      parameters:
+        - name: order_id
+          in: path
+          description: Unique identifier for the order. Must be numeric.
+          required: true
+          schema:
+            type: integer
+        - name: order_key
+          in: query
+          description: The order's key. Passed as a query parameter, not part of the path.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order received data retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderReceived'
+              example:
+                order_id: 1234
+                order_number: '1234'
+                order_key: wc_order_abc123
+                status: processing
+                status_name: Processing
+                date_created: '2026-03-12T14:45:00Z'
+                date_paid: '2026-03-12T14:45:05Z'
+                currency: USD
+                total: '4600'
+                subtotal: '3600'
+                tax_total: '0'
+                shipping_total: '1000'
+                discount_total: '0'
+                payment_method: stripe
+                payment_method_title: Credit Card (Stripe)
+                customer_id: 0
+                customer_note: Please leave at the front door.
+                billing_address:
+                  first_name: John
+                  last_name: Doe
+                  company: ''
+                  address_1: 123 Main Street
+                  address_2: ''
+                  city: Beverly Hills
+                  state: CA
+                  postcode: '90210'
+                  country: US
+                  email: john.doe@example.com
+                  phone: +1-555-123-4567
+                shipping_address:
+                  first_name: John
+                  last_name: Doe
+                  company: ''
+                  address_1: 123 Main Street
+                  address_2: ''
+                  city: Beverly Hills
+                  state: CA
+                  postcode: '90210'
+                  country: US
+                items:
+                  - item_id: 10
+                    product_id: 123
+                    variation_id: 0
+                    product_name: Premium Quality T-Shirt
+                    product_image: https://example-store.com/wp-content/uploads/2024/03/tshirt.jpg
+                    quantity: 2
+                    subtotal: '3600'
+                    total: '3600'
+                    meta_data: []
+                totals:
+                  - key: subtotal
+                    label: Subtotal
+                    value: $36.00
+                  - key: shipping
+                    label: Shipping
+                    value: $10.00
+                  - key: total
+                    label: Total
+                    value: $46.00
+                needs_payment: false
+                needs_shipping: true
+                has_downloads: false
+        '400':
+          description: Bad request - the order ID or order key parameter is missing or empty.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_order_invalid_params
+                message: Order ID and order key are required.
+                data:
+                  status: 400
+        '403':
+          description: Forbidden - the order key does not match, or a logged-in customer does not own this order.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_key:
+                  summary: Order key does not match
+                  value:
+                    code: cocart_order_invalid_key
+                    message: Invalid order key.
+                    data:
+                      status: 403
+                not_owned:
+                  summary: Logged-in customer does not own this order
+                  value:
+                    code: cocart_order_not_owned
+                    message: You do not have permission to access this order.
+                    data:
+                      status: 403
+        '404':
+          description: Not found - the order does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_order_not_found
+                message: Order not found.
+                data:
+                  status: 404
+  /order-received/{order_id}/pay:
+    post:
+      tags:
+        - orders
+      summary: Pay for an existing order
+      description: |
+        Processes payment for an existing `pending` or `failed` order, e.g. to
+        retry a failed payment. Access requires the `order_key` matching the order
+        (same rules as `GET /order-received/{order_id}`).
+
+        Unlike `POST /checkout`, a payment failure here DOES raise a `400`
+        `cocart_payment_failed` error rather than being returned inline.
+      parameters:
+        - name: order_id
+          in: path
+          description: Unique identifier for the order. Must be numeric.
+          required: true
+          schema:
+            type: integer
+        - name: order_key
+          in: query
+          description: The order's key. Passed as a query parameter, not part of the path.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payment_method:
+                  description: The payment gateway ID to process payment with.
+                  type: string
+                payment_data:
+                  description: Data to pass through to the payment method.
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/PaymentDataItem'
+              required:
+                - payment_method
+            example:
+              payment_method: stripe
+              payment_data:
+                - key: paymentMethodID
+                  value: pm_1H8x2y2eZvKYlo2C
+      responses:
+        '200':
+          description: Payment processed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayForOrderResponse'
+              example:
+                success: true
+                order_id: 1234
+                order_status: processing
+                redirect_url: https://example-store.com/checkout/order-received/1234/?key=wc_order_abc123
+        '400':
+          description: Bad request - the order ID or order key parameter is missing/empty, the order does not need payment, has an invalid status, the payment method is invalid, or the payment failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_params:
+                  summary: Order ID or order key missing
+                  value:
+                    code: cocart_order_invalid_params
+                    message: Order ID and order key are required.
+                    data:
+                      status: 400
+                no_payment_needed:
+                  summary: Order does not need payment
+                  value:
+                    code: cocart_order_no_payment_needed
+                    message: This order does not require payment.
+                    data:
+                      status: 400
+                invalid_status:
+                  summary: Order status does not allow payment
+                  value:
+                    code: cocart_order_invalid_status
+                    message: This order cannot be paid for.
+                    data:
+                      status: 400
+                invalid_payment_method:
+                  summary: Payment method does not exist
+                  value:
+                    code: cocart_invalid_payment_method
+                    message: Invalid payment method.
+                    data:
+                      status: 400
+                payment_method_disabled:
+                  summary: Payment method is disabled
+                  value:
+                    code: cocart_payment_method_disabled
+                    message: This payment method is currently disabled.
+                    data:
+                      status: 400
+                payment_method_no_subscription_support:
+                  summary: Payment method does not support subscriptions in the order
+                  value:
+                    code: cocart_payment_method_no_subscription_support
+                    message: The payment method "Stripe" does not support subscriptions. Please choose a different payment method.
+                    data:
+                      status: 400
+                payment_method_not_available:
+                  summary: Payment method not available for this order
+                  value:
+                    code: cocart_payment_method_not_available
+                    message: This payment method is not available for your order.
+                    data:
+                      status: 400
+                payment_failed:
+                  summary: Payment processing failed
+                  value:
+                    code: cocart_payment_failed
+                    message: Payment could not be processed. Please try again.
+                    data:
+                      status: 400
+        '403':
+          description: Forbidden - the order key does not match, or a logged-in customer does not own this order.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_key:
+                  summary: Order key does not match
+                  value:
+                    code: cocart_order_invalid_key
+                    message: Invalid order key.
+                    data:
+                      status: 403
+                not_owned:
+                  summary: Logged-in customer does not own this order
+                  value:
+                    code: cocart_order_not_owned
+                    message: You do not have permission to access this order.
+                    data:
+                      status: 403
+        '404':
+          description: Not found - the order does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_order_not_found
+                message: This order does not exist.
+                data:
+                  status: 404
+components:
+  requestBodies:
+    CheckoutUpdateRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CheckoutUpdateRequest'
+          example:
+            billing_address:
+              first_name: John
+              last_name: Doe
+              address_1: 123 Main Street
+              city: Beverly Hills
+              state: CA
+              postcode: '90210'
+              country: US
+              email: john.doe@example.com
+              phone: +1-555-123-4567
+            use_different_billing: true
+            shipping_method: flat_rate:1
+            payment_method: stripe
+            coupon_code: summer10
+            coupon_action: apply
+  responses:
+    CheckoutUpdateResponse:
+      description: Checkout data updated. Returns the updated checkout data.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CheckoutData'
+          example:
+            cart_hash: e629fa6598d732768f7c726b4b621285
+            cart_key: cb7a23af96a3f23af3c28a8b4b8c6d5e
+            currency:
+              currency_code: USD
+              currency_symbol: $
+              currency_symbol_pos: left
+              currency_minor_unit: 2
+              currency_decimal_separator: .
+              currency_thousand_separator: ','
+              currency_prefix: $
+              currency_suffix: ''
+            customer:
+              customer_id: 0
+              billing_address:
+                first_name: John
+                last_name: Doe
+                company: ''
+                address_1: 123 Main Street
+                address_2: ''
+                city: Beverly Hills
+                state: CA
+                postcode: '90210'
+                country: US
+                email: john.doe@example.com
+                phone: +1-555-123-4567
+              shipping_address:
+                first_name: John
+                last_name: Doe
+                company: ''
+                address_1: 123 Main Street
+                address_2: ''
+                city: Beverly Hills
+                state: CA
+                postcode: '90210'
+                country: US
+            items: {}
+            coupons:
+              - coupon: summer10
+                label: 'Coupon: summer10'
+                discount_type: percent
+                saving: $3.60
+                saving_html: '<span class="woocommerce-Price-amount amount">$3.60</span>'
+            needs_payment: true
+            needs_shipping: true
+            shipping_methods:
+              flat_rate:1:
+                id: flat_rate:1
+                label: Flat rate
+                cost: '1000'
+                method_id: flat_rate
+                instance_id: 1
+            payment_method: stripe
+            fees: []
+            cart_totals:
+              subtotal: '3600'
+              subtotal_tax: '0'
+              fee_total: '0'
+              fee_tax: '0'
+              discount_total: '360'
+              discount_tax: '0'
+              shipping_total: '1000'
+              shipping_tax: '0'
+              cart_contents_total: '3600'
+              cart_contents_tax: '0'
+              total: '4240'
+              total_tax: '0'
+            message: Checkout data updated.
+    CheckoutUpdateBadRequest:
+      description: |
+        Bad request - one or more address fields failed validation. Nothing is
+        persisted when validation fails. All field errors for a single request
+        are combined under one `cocart_invalid_address_fields` error code, with
+        the individual messages joined by spaces into `message`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            invalid_address_fields:
+              summary: One or more address fields failed validation
+              value:
+                code: cocart_invalid_address_fields
+                message: Please provide a valid email address. Please provide a valid phone number.
+                data:
+                  status: 400
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: |
+        Basic authentication with username and password.
+
+        Since CoCart v4.9.0, if an `X-HTTP-Method-Override` header is present, it is honored
+        when determining the request method during authentication (e.g. credentials sent in a
+        JSON body are still detected when the original method is tunneled through POST).
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Bearer token authentication (JWT). Optional for cart and checkout endpoints.
+        When provided by customers, enables enhanced functionality like persistent carts and user-specific data.
+  schemas:
+    CheckoutData:
+      type: object
+      description: The current checkout data for the cart.
+      properties:
+        cart_hash:
+          type: string
+          description: Unique hash of the cart contents.
+        cart_key:
+          type: string
+          description: The cart key identifying the cart in session.
+        currency:
+          $ref: '#/components/schemas/Currency'
+        customer:
+          type: object
+          properties:
+            customer_id:
+              type: integer
+              description: Customer user ID. 0 for guests.
+            billing_address:
+              $ref: '#/components/schemas/BillingAddress'
+            shipping_address:
+              $ref: '#/components/schemas/ShippingAddress'
+        items:
+          type: object
+          description: Cart items indexed by item key.
+          additionalProperties:
+            $ref: '#/components/schemas/CartItem'
+        coupons:
+          type: array
+          description: Applied coupons.
+          items:
+            $ref: '#/components/schemas/AppliedCoupon'
+        needs_payment:
+          type: boolean
+          description: Whether the cart needs payment.
+        needs_shipping:
+          type: boolean
+          description: Whether the cart needs shipping.
+        shipping_methods:
+          type: object
+          description: Available shipping methods keyed by rate ID. Empty when the cart does not need shipping.
+          additionalProperties:
+            $ref: '#/components/schemas/ShippingMethodOption'
+        payment_method:
+          type: string
+          description: The currently chosen payment gateway ID.
+        fees:
+          type: array
+          description: Cart fees.
+          items:
+            $ref: '#/components/schemas/CartFee'
+        cart_totals:
+          $ref: '#/components/schemas/CartTotals'
+        message:
+          type: string
+          description: Status message. Empty on `GET`, `"Checkout data updated."` after a successful `PUT`/`PATCH`.
+    CheckoutUpdateRequest:
+      type: object
+      description: Fields to update on the checkout. All fields are optional.
+      properties:
+        billing_address:
+          type: object
+          description: Billing address fields to update. Any subset of address fields may be provided.
+          additionalProperties: true
+        shipping_address:
+          type: object
+          description: Shipping address fields to update. Any subset of address fields may be provided.
+          additionalProperties: true
+        use_different_billing:
+          type: boolean
+          description: Whether the billing address differs from the shipping address. When false, billing email/phone are copied from the shipping address if present.
+          default: true
+        payment_method:
+          type: string
+          description: The payment gateway ID to set as chosen for the cart.
+        shipping_method:
+          type: string
+          description: The shipping rate ID to set as chosen for the cart.
+        currency:
+          type: string
+          description: Currency code for the checkout (e.g. USD, EUR, GBP). If not provided, the store default currency is used. This is a plain ISO code, distinct from the `currency` object returned in the response.
+        coupon_code:
+          type: string
+          description: A coupon code to apply or remove, depending on `coupon_action`.
+        coupon_action:
+          type: string
+          description: Whether `coupon_code` should be applied or removed.
+          enum:
+            - apply
+            - remove
+          default: apply
+    CheckoutProcessRequest:
+      type: object
+      description: Fields required to process the checkout and create an order.
+      properties:
+        billing_address:
+          $ref: '#/components/schemas/BillingAddress'
+        shipping_address:
+          type: object
+          description: Shipping address fields. Any subset of address fields may be provided.
+          additionalProperties: true
+        use_different_billing:
+          type: boolean
+          description: Whether the billing address differs from the shipping address.
+          default: true
+        payment_method:
+          type: string
+          description: The payment gateway ID to process payment with.
+        shipping_method:
+          type: string
+          description: The shipping rate ID chosen, required when the cart needs shipping.
+        currency:
+          type: string
+          description: Currency code for the order (e.g. USD, EUR, GBP). If not provided, the store default currency is used.
+        payment_data:
+          type: array
+          description: Data to pass through to the payment method.
+          items:
+            $ref: '#/components/schemas/PaymentDataItem'
+        create_account:
+          type: boolean
+          description: Whether to create a customer account for a guest checkout.
+          default: false
+        customer_password:
+          type: string
+          description: Password for the new customer account. Used when `create_account` is true.
+        customer_note:
+          type: string
+          description: Order notes from the customer.
+      required:
+        - billing_address
+    CheckoutProcessResponse:
+      type: object
+      description: The result of processing the checkout.
+      properties:
+        order_id:
+          type: integer
+          description: The created order's ID.
+        status:
+          type: string
+          description: The order's status after processing (e.g. `pending`, `processing`, `on-hold`).
+        order_key:
+          type: string
+          description: The order's unique key, used to authorize access to order confirmation endpoints.
+        order_number:
+          type: string
+          description: The order's display number.
+        payment_result:
+          $ref: '#/components/schemas/PaymentResult'
+        customer_id:
+          type: integer
+          description: Customer user ID associated with the order. 0 for guests.
+        billing_address:
+          $ref: '#/components/schemas/BillingAddress'
+        shipping_address:
+          $ref: '#/components/schemas/ShippingAddress'
+    PaymentResult:
+      type: object
+      description: |
+        The outcome of payment processing. The field set present depends on
+        `payment_status`: `success`/`no_payment_required` return `redirect_url`;
+        `failed` returns `message`; `requires_action` returns `action_type` and
+        `action_data` instead of either.
+      properties:
+        payment_status:
+          type: string
+          description: The outcome of payment processing.
+          enum:
+            - success
+            - failed
+            - no_payment_required
+            - requires_action
+        redirect_url:
+          type: string
+          format: uri
+          description: URL to redirect the customer to (typically the order-received page, or a gateway redirect for off-site payment methods). Present when `payment_status` is `success` or `no_payment_required`.
+        message:
+          type: string
+          description: Additional human-readable message about the payment result. Present when `payment_status` is `failed`.
+        action_type:
+          type: string
+          description: |
+            Identifies the kind of customer action required. Present only when
+            `payment_status` is `requires_action`. Gateway-specific
+            (e.g. `stripe_confirm_payment` for Stripe 3D Secure/SCA).
+        action_data:
+          type: object
+          description: |
+            Data the client needs to complete the required action. Present only
+            when `payment_status` is `requires_action`. Shape is gateway-specific
+            - for Stripe, includes `client_secret` and `intent_type`
+            (`payment_intent` or `setup_intent`).
+          additionalProperties: true
+    BillingAddress:
+      type: object
+      description: Billing address using unprefixed field names.
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        company:
+          type: string
+        address_1:
+          type: string
+        address_2:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        postcode:
+          type: string
+        country:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+      required:
+        - first_name
+        - last_name
+        - address_1
+        - city
+        - postcode
+        - country
+    ShippingAddress:
+      type: object
+      description: Shipping address using unprefixed field names.
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        company:
+          type: string
+        address_1:
+          type: string
+        address_2:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        postcode:
+          type: string
+        country:
+          type: string
+    Currency:
+      type: object
+      properties:
+        currency_code:
+          type: string
+          description: Currency code.
+        currency_symbol:
+          type: string
+          description: Currency symbol.
+        currency_symbol_pos:
+          type: string
+          description: Currency symbol position.
+        currency_minor_unit:
+          type: integer
+          description: Currency minor unit.
+        currency_decimal_separator:
+          type: string
+          description: Currency decimal separator.
+        currency_thousand_separator:
+          type: string
+          description: Currency thousand separator.
+        currency_prefix:
+          type: string
+          description: Currency prefix.
+        currency_suffix:
+          type: string
+          description: Currency suffix.
+    CartItem:
+      type: object
+      properties:
+        item_key:
+          type: string
+          description: Unique identifier for the item within the cart.
+        id:
+          type: integer
+          description: Product ID.
+        name:
+          type: string
+          description: Product name.
+        price:
+          type: string
+          description: Current product price as a raw numeric string (e.g. "1800").
+        quantity:
+          type: object
+          properties:
+            value:
+              type: number
+              description: Current quantity of the item in the cart.
+            minimum:
+              type: number
+              description: The minimum purchase amount required.
+            maximum:
+              type: number
+              description: The maximum purchase amount allowed. -1 means unlimited.
+            multiple_of:
+              type: number
+              description: The quantity must be a multiple of this value.
+            editable:
+              type: boolean
+              description: Whether the quantity of the item is editable.
+        totals:
+          type: object
+          description: Item totals as raw numeric strings.
+          properties:
+            subtotal:
+              type: string
+            subtotal_tax:
+              type: string
+            total:
+              type: string
+            tax:
+              type: string
+        slug:
+          type: string
+          description: Product slug.
+        meta:
+          type: object
+          properties:
+            product_type:
+              type: string
+            sku:
+              type: string
+          additionalProperties: true
+        backorders:
+          type: string
+          description: Backorder status.
+        cart_item_data:
+          type: object
+          additionalProperties: true
+        featured_image:
+          type: string
+          format: uri
+    AppliedCoupon:
+      type: object
+      properties:
+        coupon:
+          type: string
+          description: Coupon code.
+        label:
+          type: string
+          description: Human-readable coupon label.
+        discount_type:
+          type: string
+          description: Type of discount applied (e.g. percent, fixed_cart, fixed_product).
+        saving:
+          type: string
+          description: Amount saved by this coupon, formatted without HTML.
+        saving_html:
+          type: string
+          description: Amount saved by this coupon, formatted as HTML.
+    CartFee:
+      type: object
+      properties:
+        name:
+          type: string
+        amount:
+          type: number
+        taxable:
+          type: boolean
+        tax_class:
+          type: string
+        total:
+          type: number
+        tax:
+          type: number
+    ShippingMethodOption:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The shipping rate ID (e.g. "flat_rate:1").
+        label:
+          type: string
+          description: Shipping method label.
+        cost:
+          type: string
+          description: Shipping cost as a raw numeric string.
+        method_id:
+          type: string
+          description: Shipping method ID.
+        instance_id:
+          type: integer
+          description: Shipping method instance ID.
+    CartTotals:
+      type: object
+      description: All monetary values are raw numeric strings (e.g. "1800"). There is no `formatted` query parameter for checkout endpoints.
+      properties:
+        subtotal:
+          type: string
+        subtotal_tax:
+          type: string
+        fee_total:
+          type: string
+        fee_tax:
+          type: string
+        discount_total:
+          type: string
+        discount_tax:
+          type: string
+        shipping_total:
+          type: string
+          description: Shipping total. Returned as `"0"` if shipping has not yet been calculated.
+        shipping_tax:
+          type: string
+          description: Shipping tax. Returned as `"0"` if shipping has not yet been calculated.
+        cart_contents_total:
+          type: string
+        cart_contents_tax:
+          type: string
+        total:
+          type: string
+        total_tax:
+          type: string
+    PaymentDataItem:
+      type: object
+      description: A single key/value pair of data to pass through to the payment method.
+      properties:
+        key:
+          type: string
+        value:
+          description: The value for this payment data key.
+          oneOf:
+            - type: string
+            - type: boolean
+            - type: integer
+      required:
+        - key
+        - value
+    CheckoutConfig:
+      type: object
+      description: Checkout form field configuration, locale settings, countries, shipping/account/store settings and client-side validation rules.
+      properties:
+        fields:
+          type: object
+          properties:
+            billing:
+              type: object
+              additionalProperties:
+                $ref: '#/components/schemas/FieldDefinition'
+            shipping:
+              type: object
+              additionalProperties:
+                $ref: '#/components/schemas/FieldDefinition'
+            account:
+              type: object
+              additionalProperties:
+                $ref: '#/components/schemas/FieldDefinition'
+            order:
+              type: object
+              additionalProperties:
+                $ref: '#/components/schemas/FieldDefinition'
+        locale_settings:
+          $ref: '#/components/schemas/LocaleSettings'
+        countries:
+          $ref: '#/components/schemas/CountriesConfig'
+        shipping:
+          $ref: '#/components/schemas/ShippingConfig'
+        account:
+          $ref: '#/components/schemas/AccountConfig'
+        store:
+          $ref: '#/components/schemas/StoreConfig'
+        validation:
+          $ref: '#/components/schemas/ValidationConfig'
+    FieldDefinition:
+      type: object
+      description: A single checkout form field's configuration.
+      properties:
+        type:
+          type: string
+          description: Field input type (e.g. text, select, country, textarea, password).
+        label:
+          type: string
+        placeholder:
+          type: string
+        required:
+          type: boolean
+        class:
+          type: array
+          items:
+            type: string
+        autocomplete:
+          type: string
+        priority:
+          type: integer
+        validate:
+          type: array
+          items:
+            type: string
+        custom_attributes:
+          type: object
+          additionalProperties: true
+        options:
+          type: object
+          description: Available options for select-type fields, keyed by value.
+          additionalProperties:
+            type: string
+        default:
+          type: string
+        country_field:
+          type: string
+          description: The field name of the related country field, for state-type fields.
+        maxlength:
+          type: integer
+        input_class:
+          type: array
+          items:
+            type: string
+        label_class:
+          type: array
+          items:
+            type: string
+      additionalProperties: true
+    LocaleSettings:
+      type: object
+      description: Per-country locale overrides for address fields (label, required, etc.), from `WC_Countries::get_country_locale()`.
+      additionalProperties: true
+    CountriesConfig:
+      type: object
+      properties:
+        allowed_countries:
+          type: object
+          description: Countries the store sells to, keyed by country code.
+          additionalProperties:
+            type: string
+        shipping_countries:
+          type: object
+          description: Countries the store ships to, keyed by country code.
+          additionalProperties:
+            type: string
+        states:
+          type: object
+          description: States/provinces for each allowed country, keyed by country code then state code.
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: string
+        default_country:
+          type: string
+        eu_countries:
+          type: array
+          items:
+            type: string
+    ShippingConfig:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        calc_shipping:
+          type: boolean
+        ship_to_countries:
+          type: string
+        ship_to_billing_address:
+          type: boolean
+        shipping_cost_requires_address:
+          type: boolean
+    AccountConfig:
+      type: object
+      properties:
+        allow_registration:
+          type: boolean
+        registration_generate_username:
+          type: boolean
+        registration_generate_password:
+          type: boolean
+        guest_checkout_enabled:
+          type: boolean
+        must_create_account:
+          type: boolean
+    StoreConfig:
+      type: object
+      properties:
+        currency:
+          type: string
+        currency_symbol:
+          type: string
+        currency_position:
+          type: string
+        price_decimal_sep:
+          type: string
+        price_thousand_sep:
+          type: string
+        price_decimals:
+          type: integer
+        tax_enabled:
+          type: boolean
+        tax_display_cart:
+          type: string
+        prices_include_tax:
+          type: boolean
+        coupons_enabled:
+          type: boolean
+        terms_page_id:
+          type: integer
+          nullable: true
+        privacy_page_id:
+          type: integer
+          nullable: true
+        store_address:
+          type: object
+          properties:
+            address_1:
+              type: string
+            address_2:
+              type: string
+            city:
+              type: string
+            postcode:
+              type: string
+            country:
+              type: string
+            state:
+              type: string
+        terms_text:
+          type: string
+          description: Only present when a terms page is configured.
+    ValidationConfig:
+      type: object
+      properties:
+        postcode:
+          type: object
+          properties:
+            patterns:
+              type: object
+              description: |
+                Regex patterns keyed by two-letter country code, informational only.
+                Hardcoded for GB, US, CA, FR, DE, IT, ES, NL, AU, NZ, BR, JP, IN, CN.
+                Actual validation always happens server-side via WooCommerce.
+              additionalProperties:
+                type: string
+        phone:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+        email:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+    AddressSearchResult:
+      type: object
+      properties:
+        suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddressSuggestion'
+        count:
+          type: integer
+          description: Number of suggestions returned.
+        provider:
+          $ref: '#/components/schemas/Provider'
+        search_country:
+          type: string
+          description: The country the search was scoped to.
+        query:
+          type: string
+          description: The search query used. Present at runtime though not part of the formal WordPress schema definition.
+    AddressSuggestion:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Opaque suggestion ID, pass to `GET /address/details` to resolve the full address.
+        label:
+          type: string
+          description: Human-readable suggestion label.
+        matched_substrings:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchedSubstring'
+    MatchedSubstring:
+      type: object
+      properties:
+        offset:
+          type: integer
+        length:
+          type: integer
+    AddressDetails:
+      type: object
+      properties:
+        address:
+          type: object
+          properties:
+            address_1:
+              type: string
+            address_2:
+              type: string
+            city:
+              type: string
+            state:
+              type: string
+            postcode:
+              type: string
+            country:
+              type: string
+        provider:
+          $ref: '#/components/schemas/Provider'
+    Provider:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    OrderReceived:
+      type: object
+      description: Order confirmation data for the "order received" / thank-you page.
+      properties:
+        order_id:
+          type: integer
+        order_number:
+          type: string
+        order_key:
+          type: string
+        status:
+          type: string
+        status_name:
+          type: string
+          description: Human-readable order status.
+        date_created:
+          type: string
+          format: date-time
+        date_paid:
+          type: string
+          format: date-time
+          nullable: true
+        currency:
+          type: string
+        total:
+          type: string
+        subtotal:
+          type: string
+        tax_total:
+          type: string
+        shipping_total:
+          type: string
+        discount_total:
+          type: string
+        payment_method:
+          type: string
+        payment_method_title:
+          type: string
+        customer_id:
+          type: integer
+        customer_note:
+          type: string
+        billing_address:
+          $ref: '#/components/schemas/OrderBillingAddress'
+        shipping_address:
+          $ref: '#/components/schemas/OrderShippingAddress'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderLineItem'
+        totals:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderTotalLine'
+        needs_payment:
+          type: boolean
+        needs_shipping:
+          type: boolean
+        has_downloads:
+          type: boolean
+        download_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Link to the customer's downloads. Only present when `has_downloads` is true.
+        available_payment_methods:
+          type: array
+          description: Only present when `needs_payment` is true.
+          items:
+            $ref: '#/components/schemas/AvailablePaymentMethod'
+    OrderBillingAddress:
+      type: object
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        company:
+          type: string
+        address_1:
+          type: string
+        address_2:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        postcode:
+          type: string
+        country:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+    OrderShippingAddress:
+      type: object
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        company:
+          type: string
+        address_1:
+          type: string
+        address_2:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        postcode:
+          type: string
+        country:
+          type: string
+    OrderLineItem:
+      type: object
+      properties:
+        item_id:
+          type: integer
+        product_id:
+          type: integer
+        variation_id:
+          type: integer
+          description: 0 when the item is not a variation.
+        product_name:
+          type: string
+        product_image:
+          type: string
+          format: uri
+        quantity:
+          type: number
+        subtotal:
+          type: string
+        total:
+          type: string
+        meta_data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderLineItemMeta'
+    OrderLineItemMeta:
+      type: object
+      properties:
+        id:
+          type: integer
+        key:
+          type: string
+        display_key:
+          type: string
+        display_value:
+          type: string
+    OrderTotalLine:
+      type: object
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        value:
+          type: string
+    AvailablePaymentMethod:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        has_fields:
+          type: boolean
+    PayForOrderResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        order_id:
+          type: integer
+        order_status:
+          type: string
+        redirect_url:
+          type: string
+          format: uri
+    PaymentMethod:
+      type: object
+      description: A single available payment gateway, keyed by gateway ID in the response.
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        supports:
+          type: array
+          items:
+            type: string
+        has_fields:
+          type: boolean
+        order_button_text:
+          type: string
+        method_title:
+          type: string
+        method_description:
+          type: string
+        config:
+          $ref: '#/components/schemas/PaymentMethodConfig'
+        saved_tokens:
+          type: array
+          description: Only populated when the customer is logged in and the gateway supports tokenization.
+          items:
+            $ref: '#/components/schemas/PaymentToken'
+        supports_save_payment:
+          type: boolean
+    PaymentMethodConfig:
+      type: object
+      properties:
+        test_mode:
+          type: boolean
+        is_connected:
+          type: boolean
+        supports_tokenization:
+          type: boolean
+        supports_refunds:
+          type: boolean
+        supports_subscriptions:
+          type: boolean
+        requires_billing_address:
+          type: boolean
+        restricted_to_shipping_methods:
+          type: array
+          nullable: true
+          description: Shipping rate IDs the gateway is restricted to (e.g. via a "Enable for shipping methods" setting), or null if unrestricted.
+          items:
+            type: string
+    PaymentToken:
+      type: object
+      properties:
+        id:
+          type: string
+        token:
+          type: string
+          description: Display name for the saved payment token (e.g. "Visa ending in 4242").
+        type:
+          type: string
+        gateway_id:
+          type: string
+        is_default:
+          type: boolean
+        expires:
+          type: string
+          nullable: true
+          description: Expiration date as "MM/YYYY", or null if not applicable.
+    ErrorResponse:
+      type: object
+      description: Standard error response structure.
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code.
+          example: cocart_invalid_parameter
+        message:
+          type: string
+          description: Human-readable error message.
+          example: Invalid parameter provided.
+        data:
+          type: object
+          description: Additional error data.
+          properties:
+            status:
+              type: integer
+              description: HTTP status code.
+              example: 400
+          additionalProperties: true
+security:
+  - {}
+  - basicAuth: []
+  - bearerAuth: []

@@ -1,0 +1,15 @@
+---
+title: "Restore Cart Before Resubscribing"
+sidebarTitle: "Discard Resubscribe"
+openapi: "../../openapi-cocart-plus-v2-collection.yaml DELETE /my-account/subscriptions/{id}/resubscribe"
+tag: "New"
+robots: "noindex, follow"
+---
+
+<Warning>
+    This API requires **CoCart Plus v2 or higher** to use.
+</Warning>
+
+<Info>
+    Restores the cart snapshot taken before a `POST` to this same route, discarding whatever resubscribe items are currently in the cart. Use this to abandon an in-progress resubscribe attempt and give the customer back what they had in their cart beforehand.
+</Info>

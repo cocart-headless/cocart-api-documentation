@@ -1,0 +1,15 @@
+---
+title: "My Account - Confirm Order Email Verification"
+sidebarTitle: "Confirm Email Verification"
+openapi: "../openapi-cocart-plus-v2-collection.yaml GET /my-account/verify-order-email"
+tag: "New"
+robots: "noindex, follow"
+---
+
+<Warning>
+    This API requires **CoCart Plus v2 or higher** to use.
+</Warning>
+
+<Info>
+    Requires WooCommerce 11.0+. Unlike `GET /my-account/verify-email`, this endpoint requires the request be authenticated as the key's target user - matching WooCommerce core's own rule that only a request authenticated as the link's target user can complete verification, so a leaked key with no session behind it can never link orders to the wrong customer.
+</Info>

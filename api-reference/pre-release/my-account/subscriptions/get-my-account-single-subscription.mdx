@@ -1,15 +1,15 @@
 ---
 title: "My Account - Get Single Subscription"
 sidebarTitle: "Single Subscription"
-openapi: "../../openapi-spec-preview.yaml GET /my-account/subscriptions/{id}"
+openapi: "../../openapi-cocart-plus-v2-collection.yaml GET /my-account/subscriptions/{id}"
 tag: "New"
 robots: "noindex, follow"
 ---
 
 <Warning>
-    This endpoint is currently shown as a preview of what's currently in development and is subject to change.
+    This API requires **CoCart Plus v2 or higher** to use.
 </Warning>
 
 <Info>
-    This endpoint supports only the official [WooCommerce Subscriptions](https://woocommerce.com/products/woocommerce-subscriptions/) extension.
+    Guests may also view a subscription by providing the `email` query parameter matching the subscription's billing email address. To avoid leaking which subscription IDs exist, a non-existent subscription and one the requester doesn't own both return the same 404 response.
 </Info>

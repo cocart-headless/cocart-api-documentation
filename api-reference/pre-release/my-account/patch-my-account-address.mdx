@@ -1,0 +1,15 @@
+---
+title: "My Account - Update Address"
+sidebarTitle: "Update Address"
+openapi: "../openapi-cocart-plus-v2-collection.yaml PATCH /my-account/address"
+tag: "New"
+robots: "noindex, follow"
+---
+
+<Warning>
+    This API requires **CoCart Plus v2 or higher** to use.
+</Warning>
+
+<Info>
+    Unlike checkout's address handling, billing and shipping are updated independently - there is no "use shipping for billing" copying, and no shipping packages are recalculated since there's no active cart context involved.
+</Info>

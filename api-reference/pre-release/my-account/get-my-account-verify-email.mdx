@@ -1,0 +1,15 @@
+---
+title: "My Account - Verify Email"
+sidebarTitle: "Verify Email"
+openapi: "../openapi-cocart-plus-v2-collection.yaml GET /my-account/verify-email"
+tag: "New"
+robots: "noindex, follow"
+---
+
+<Warning>
+    This API requires **CoCart Plus v2 or higher** to use.
+</Warning>
+
+<Info>
+    This endpoint is intentionally public and requires no authentication, since the confirmation link is opened from an email client that may not share a session with the requester - possession of the emailed `key` is the proof of ownership. The link expires after 24 hours by default.
+</Info>

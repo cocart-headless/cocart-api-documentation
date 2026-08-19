@@ -1,14 +1,14 @@
 ---
 title: "Cancel Subscription"
-openapi: "../../openapi-spec-preview.yaml POST /my-account/subscriptions/{id}/cancel"
+openapi: "../../openapi-cocart-plus-v2-collection.yaml POST /my-account/subscriptions/{id}/cancel"
 tag: "New"
 robots: "noindex, follow"
 ---
 
 <Warning>
-    This endpoint is currently shown as a preview of what's currently in development and is subject to change.
+    This API requires **CoCart Plus v2 or higher** to use.
 </Warning>
 
 <Info>
-    This endpoint supports only the official [WooCommerce Subscriptions](https://woocommerce.com/products/woocommerce-subscriptions/) extension.
+    Cancels the subscription via the `cocart_my_account_cancel_subscription` filter. Requires login - write actions never allow guest access by billing email. The exact error code, message and status for a rejected cancellation depend on the owning subscription plugin (e.g. [WooCommerce Subscriptions](https://woocommerce.com/products/woocommerce-subscriptions/), Milo Subscriptions).
 </Info>
