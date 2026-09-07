@@ -6,6 +6,10 @@ robots: "noindex, follow"
 'og:title': "Breaking changes in CoCart Starter"
 ---
 
+## Requirements
+
+* WooCommerce 10.1 is now the minimum required version. The quantity limits utility relies on `wc_get_quantity_input_args()`, which is only available since WooCommerce 10.1.
+
 ## REST API
 
 <Tip>
@@ -26,6 +30,7 @@ robots: "noindex, follow"
 * Product Categories `image_src` changed from a single thumbnail to return all available image sizes.
 * Product reviews updated to support better query parameters. Affects both API versions.
 * New product reviews are set to `hold` status by default.
+* Cart `taxes` field is now always a list of `{ key, name, price }` objects. Previously it was an object keyed by the WooCommerce tax rate code (e.g. `GB-VAT-1`) when itemized, or a `label`/`total` object when not itemized. When the store's tax display setting is not itemized, a single synthetic entry keyed `total` is returned instead, keeping the shape consistent regardless of the setting.
 
 ### Quantity Parameter Changes
 
@@ -124,7 +129,7 @@ Additionally, `$variation_id` and `$variation` parameters have been replaced wit
 
 ## Plugin
 
-* The text domain (plugin slug) has changed from `cart-rest-api-for-woocommerce` to `cocart-basic`. This affects all translations including custom ones. If you have a custom translation, rename the text domain to match.
+* The text domain (plugin slug) has changed from `cart-rest-api-for-woocommerce` to `cocart-starter`. This affects all translations including custom ones. If you have a custom translation, rename the text domain to match.
 
 * The plugin will automatically deactivate the community edition if detected. We recommend deleting the community version after upgrading.
 

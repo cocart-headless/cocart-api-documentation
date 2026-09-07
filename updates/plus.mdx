@@ -14,7 +14,59 @@ Stay up to date with the latest releases and improvements to CoCart Plus. Each u
 
 ---
 
-<Update label="?? ??, 2026" description="v1.6.0">
+<Update label="Coming Soon" description="v2.0.0 (Beta)">
+
+## Full Headless Checkout
+
+<Info>
+  CoCart Plus v2.0.0 is currently in beta and hasn't been released yet. This preview describes what's coming so you can plan ahead — details may change before the stable release.
+</Info>
+
+<Warning>
+  v2.0.0 will require CoCart Starter v5, WordPress v6.8, and PHP 8.2 as minimum requirements. Update CoCart Starter to v5 before upgrading CoCart Plus once it's released, to prevent fatal errors.
+</Warning>
+
+The headline feature is a full headless checkout flow on API v2 — reading and updating the checkout session (address, payment/shipping method, coupons), listing available payment gateways and saved payment tokens, handling client-side payment handshakes, and placing the order, all without an account. A companion `/checkout/config` endpoint returns cacheable form-building metadata (fields, countries/states, store settings), and new `/order-received/{order_id}` endpoints power a headless "thank you" page and let a customer retry payment on a pending or failed order from any device.
+
+Beyond checkout, this release adds headless My Account endpoints (profile, downloads, order history, email verification), address autocomplete, multi-currency checkout support, order attribution tracking, and a shared `cart_key` across batch sub-requests. Coupon and Fee endpoints are also moving to API v2.
+
+CoCart Plus is also gaining native support for over 20 popular WooCommerce extensions, including Subscriptions add-ons, Bookings, Product Bundles, Composite Products, and Product Add-Ons.
+
+Full documentation, including the complete list of new endpoints, hooks, and filters, will be published when v2.0.0 is released.
+
+</Update>
+
+<Update label="August 31, 2026" description="v1.6.3">
+
+## Release Channels & Updates Page Polish
+
+You can now choose a release channel for plugin updates, and clicking on a new version tag on the Updates page shows the full update details without leaving the dashboard.
+
+We've also made several style tweaks to the Updates page to make version details clearer to read.
+
+</Update>
+
+<Update label="August 30, 2026" description="v1.6.2">
+
+## Automatic Update Fix
+
+**Bug fix:** The package URL wasn't returning correctly for automatic plugin updates, which could prevent WordPress from installing updates automatically.
+
+</Update>
+
+<Update label="August 24, 2026" description="v1.6.1">
+
+## PHP 7.4 Support Restored
+
+<Note>
+  PHP 7.4 is once again the minimum requirement to install and use CoCart. While PHP 7.4, 8.0, and 8.1 are past end-of-life, we recognize many hosts still run them and don't want that to be a barrier to using CoCart. For the best performance and security, we still recommend PHP 8.2 or later.
+</Note>
+
+Following feedback after v1.6.0, we've reverted the PHP minimum requirement back down to 7.4.
+
+</Update>
+
+<Update label="August 23, 2026" description="v1.6.0">
 
 ## Coupons on Add, Rate Limiting in Config & Polar Licensing
 
@@ -22,15 +74,27 @@ Stay up to date with the latest releases and improvements to CoCart Plus. Each u
   PHP 8.2 is now the minimum required version. PHP 7.4, 8.0, and 8.1 have all reached end-of-life and are no longer tested. Upgrading to PHP 8.2 not only keeps your store secure but also improves API performance.
 </Warning>
 
+<Info>
+  This requirement was reverted back to PHP 7.4 the following day in v1.6.1, above.
+</Info>
+
 You can now apply a coupon to the cart at the same time as adding an item — one less request for your frontend. The global rate limit can also now be configured directly in `wp-config.php` rather than through the dashboard. See the [Rate Limiting guide](/rate-limiting) for details.
 
 License key activation has been updated to support customers exclusively via [Polar](https://polar.sh). WordPress updates can now be temporarily paused for a set period — useful for locking your environment during critical sale periods — and translation updates are now delivered automatically.
 
 Advanced Custom Fields (ACF) field values are now returned for all products in the Products API.
 
-**Bug fix:** Updating a customer's shipping country, postcode, or phone would silently revert to the previous value when the new input wasn't valid. This now surfaces a proper error response.
+**Plugin:** CoCart branding and admin page styling have been refreshed for a more consistent look across WordPress and WooCommerce pages, and semantic markup was overhauled for better screen reader support. REST API requests also get a small performance boost by no longer loading admin-only content in the background.
 
-**Plugin:** CoCart branding and admin page styling have been refreshed for a more consistent look across WordPress and WooCommerce pages.
+**Bug fixes:**
+- The `/customer` endpoint has existed since v1.0.0 but was never registered with the REST API, so it 404'd on every request. It's now properly registered.
+- `POST /calculate?return=true` returned cart totals double-wrapped inside another response object instead of a flat object.
+- `/totals/tax` had no callback method defined and errored on every request.
+- Updating a customer's shipping country, postcode, or phone would silently revert to the previous value when the new input wasn't valid. This now surfaces a proper error response.
+- Shipping address fields were left blank after submitting billing-only details. Billing fields now mirror to shipping when `ship_to_different_address` isn't set, matching WooCommerce's own checkout behavior.
+- Cross-sell products with no thumbnail image could trigger a PHP warning.
+- Setting a payment method could trigger a PHP warning due to a missing argument type in the request schema.
+- A fatal error could occur if `override_totals()` was called before `WC()->cart` was initialized.
 
 **Two-Factor Authentication:** 2FA is now supported during login. Requires CoCart Community v4.8+. [See documentation →](/integrations/two-factor-authentication)
 

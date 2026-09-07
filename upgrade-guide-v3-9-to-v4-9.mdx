@@ -11,10 +11,10 @@ icon: "arrow-up"
 |---|---|---|
 | WordPress | 6.7 | [v4.9.0](/updates/community#april-15-2025) |
 | WooCommerce | 9.0 | [v4.6.2](/updates/community#july-25-2025) |
-| PHP | 8.2 | [v4.9.0](/updates/community#april-15-2025) |
+| PHP | 7.4 | [v4.9.4](/updates/community) |
 
 <Warning>
-  **PHP 8.2 is now required.** CoCart [v4.9.0](/updates/community#april-15-2025) dropped support for PHP 7.4, 8.0, and 8.1. If your server runs an older PHP version, you must upgrade PHP before updating CoCart to v4.9.
+  **PHP 7.4 is required.** CoCart [v4.9.0](/updates/community#april-15-2025) briefly raised the minimum to PHP 8.2, dropping support for PHP 7.4, 8.0, and 8.1 - this was reverted in [v4.9.4](/updates/community), which restored PHP 7.4 as the minimum. If your server runs PHP 7.3 or older, you must upgrade PHP before updating CoCart to v4.9.
 </Warning>
 
 ---
@@ -52,7 +52,7 @@ icon: "arrow-up"
   </Step>
 
   <Step title="Check Compatibility">
-    - Verify your server is running **PHP 8.2 or higher**. CoCart v4.9 will not activate on older PHP versions.
+    - Verify your server is running **PHP 7.4 or higher**. CoCart v4.9 will not activate on older PHP versions.
     - Ensure your theme and other plugins are compatible with the new minimum requirements.
     - If you use custom API integrations, review the API changes (notably cart session, product filtering, and shipping logic).
   </Step>
@@ -76,8 +76,8 @@ icon: "arrow-up"
 ## 4. **Notable Breaking/Behavioral Changes**
 
 <AccordionGroup>
-  <Accordion title="PHP 8.2 Minimum (v4.9.0)">
-    PHP 7.4, 8.0, and 8.1 are no longer supported. You must upgrade your server's PHP version before updating. See [what's new in v4.9.0](/updates/community#april-15-2025).
+  <Accordion title="PHP 7.4 Minimum (v4.9.4)">
+    CoCart v4.9.0 briefly required PHP 8.2, dropping support for PHP 7.4, 8.0, and 8.1 - [v4.9.4](/updates/community) reverted this, restoring PHP 7.4 as the minimum. You must be running PHP 7.4 or higher before updating.
   </Accordion>
 
   <Accordion title="WooCommerce v10.6 Minimum (v4.9.0)">
@@ -188,4 +188,4 @@ CoCart [v4.2](/updates/community#major-session-handler-refresh) introduced a sig
 ---
 
 **Summary:**
-Upgrading from v3.9 to v4.9 brings improved API consistency, better session handling, [ETag-based caching](/etag-cache-support), enhanced [authentication](/authentication) and proxy support, and new developer hooks. The most significant breaking change is the PHP 8.2 minimum requirement in [v4.9](/updates/community#april-15-2025) — verify your server's PHP version before upgrading. Review session handling, authentication, caching behavior, and custom code for deprecated filters.
+Upgrading from v3.9 to v4.9 brings improved API consistency, better session handling, [ETag-based caching](/etag-cache-support), enhanced [authentication](/authentication) and proxy support, and new developer hooks. The most significant breaking change is the PHP 7.4 minimum requirement (raised to 8.2 in v4.9.0, then reverted back to 7.4 in [v4.9.4](/updates/community)) — verify your server's PHP version before upgrading. Review session handling, authentication, caching behavior, and custom code for deprecated filters.

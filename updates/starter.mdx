@@ -24,6 +24,10 @@ CoCart Starter is the next chapter for CoCart, starting at version 5.0.0 to prov
   This release includes breaking changes if you have been using CoCart Community plugin. Please review the [full breaking changes guide](/breaking-changes/starter-v5) before upgrading.
 </Warning>
 
+<Warning>
+  WooCommerce 10.1 is now the minimum required version, as the quantity limits utility relies on `wc_get_quantity_input_args()`, only available since that release.
+</Warning>
+
 ### Batch Requests for All Endpoints
 
 [Batch requests](/batch-requests) are no longer limited to cart mutations. Every `GET` endpoint (except logout) now supports batching, so you can fetch products, cart data, and customer details in a single request—dramatically reducing round trips for complex page loads.
@@ -37,6 +41,8 @@ The Products API now gives you much more control over what you query. Filter pro
 Product variations can now be updated directly using the existing update item endpoint (`cocart/v2/cart/item/{item_key}`)—no need to remove and re-add. [See how to use](/api-reference/v2/working-with-variations#updating-variation-items-in-the-cart)
 
 You can also now [create an empty cart](/api-reference/v2/cart/post-create-cart) for guest customers with a simple POST request, which returns the cart key immediately. This is especially useful if you're not using one of our [SDKs](/sdk).
+
+Cart items now also return `regular_price` and `on_sale` alongside `price`, so you can display the original price of a discounted item without a separate products lookup.
 
 ### Your Own Product Reviews
 
@@ -77,9 +83,11 @@ Two new [WP-CLI](/wp-cli) commands help you manage sessions from the command lin
 - `wp cocart status` — view the status of all carts in session
 - `wp cocart sessions` — inspect session details and check if specific sessions exist
 
-### Plugin Integrity & Management
+### Plugin Integrity, Updates & Licensing
 
 CoCart Starter performs an integrity check on all files within the plugin. If any files have been modified from the official release, you'll see a warning in your WordPress dashboard and error log. This helps ensure your installation is secure and functioning as intended.
+
+The setup wizard now includes a License step as the first step, letting you activate your license key before completing setup. On the **CoCart → Updates** page, each licensed CoCart plugin can select a release channel—Stable, Release Candidate, Beta, or Nightly—and can be rolled back to a previous version directly from that page, with the date of the last update or rollback shown for reference.
 
 If the community edition is detected, CoCart Starter will automatically deactivate it to prevent conflicts. We recommend deleting the community version after upgrading.
 
@@ -117,7 +125,7 @@ We've also optimized the add-to-cart flow for smoother validation and broader Wo
 
 ### Breaking Changes Summary
 
-This release includes significant breaking changes to response structures, headers, hooks, and function names. Key changes include renamed response headers (`CoCart-API-Cart-Key` → `Cart-Key`), restructured quantity objects, updated product category image responses, and a new plugin text domain (`cocart-basic`).
+This release includes significant breaking changes to response structures, headers, hooks, and function names. Key changes include renamed response headers (`CoCart-API-Cart-Key` → `Cart-Key`), restructured quantity objects, a restructured cart `taxes` field, updated product category image responses, and a new plugin text domain (`cocart-starter`).
 
 [View the complete breaking changes guide →](/breaking-changes/starter-v5)
 

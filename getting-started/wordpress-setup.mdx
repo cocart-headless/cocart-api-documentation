@@ -16,7 +16,7 @@ In a headless setup, WordPress is an API server. The factors that matter are dif
 - **PHP workers** — each API request uses a PHP worker. Concurrent shoppers need concurrent workers. Look for hosting that offers 4+ PHP workers minimum.
 - **Object caching** — Redis or Memcached drastically reduces database queries for cart sessions and product data.
 - **Low latency** — host your WordPress backend in the same region as your frontend deployment.
-- **PHP 8.2+** — required by CoCart, and newer PHP versions are measurably faster.
+- **PHP 7.4+** — required by CoCart, and newer PHP versions are measurably faster.
 
 **What matters less:**
 - Page caching plugins (Varnish, WP Super Cache) — your frontend doesn't serve WordPress pages.

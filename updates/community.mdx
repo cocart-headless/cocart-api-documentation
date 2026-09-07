@@ -14,7 +14,59 @@ For complete technical details, visit the [full changelog on GitHub](https://git
 
 ---
 
-<Update label="June 15, 2026" description="v4.9.0">
+<Update label="September 1, 2026" description="v4.9.5">
+
+## Security Patch: Cart Key Validation
+
+**Security update:** We've hardened how the session handler validates a requested cart key—whether it's supplied as a request parameter or via a header—ensuring a cart can only be loaded by the account it actually belongs to. We recommend updating to this release as soon as possible.
+
+</Update>
+
+<Update label="August 24, 2026" description="v4.9.4">
+
+## PHP 7.4 Minimum Restored
+
+<Note>
+  PHP 7.4 is once again the minimum required version to install and use CoCart. We recognize many hosts still run PHP 7.4, 8.0, or 8.1 even though they've reached end-of-life, and we don't want that to be a barrier to using CoCart. For the best performance and security, we still recommend running PHP 8.2 or later.
+</Note>
+
+</Update>
+
+<Update label="August 20, 2026" description="v4.9.3">
+
+## Password-Protected Product Detection
+
+CoCart now checks a product's password directly instead of relying on WordPress's `post_password_required()` function, making password-protection detection more reliable.
+
+**Compatibility:** WordPress v7.1
+
+</Update>
+
+<Update label="August 12, 2026" description="v4.9.2">
+
+## Password-Protected Products Fix
+
+Fixed an issue where password-protected products were still accessible through the API. These products now correctly return as an invalid ID when requested directly and are excluded from product listing results.
+
+**Compatibility:** WooCommerce v11
+
+</Update>
+
+<Update label="July 20, 2026" description="v4.9.1">
+
+## Stock Validation Fixes
+
+Fixed two stock validation gaps that could let a cart exceed available stock: adding an item already in the cart wasn't checking stock for the combined quantity, and the "Update Cart" callback wasn't checking stock before applying a new quantity.
+
+"Not enough stock" error messages are now standardized across both the v1 and v2 cart controllers.
+
+We've also fixed the `cocart_update_plugin_suggestions` scheduled action never running via WP-Cron or WP-CLI—it was only ever registered on `admin_init`, so Action Scheduler could never find it to reschedule.
+
+**Compatibility:** Admin styling updated to match the floating admin header WooCommerce refreshed in v10.9.
+
+</Update>
+
+<Update label="July 12, 2026" description="v4.9.0">
 
 ## ETag Caching & Session Reliability
 
@@ -28,7 +80,7 @@ CoCart now supports ETag-based conditional requests across all cart and product 
 
 A new `CoCart-Cache` response header tells you whether a response was served from cache (`HIT`), freshly generated (`MISS`), or intentionally bypassed (`SKIP`). You can bypass caching on any request by adding `_skip_cache` as a query parameter. Product routes also benefit from `stale-while-revalidate` for even faster responses.
 
-In your WordPress Dashboard, we added an integrations page that lets you control which supported plugins are active during CoCart requests.
+In your WordPress Dashboard, we added an integrations page that lets you control which supported plugins are active during CoCart requests, plus a new settings page for controlling CORS and allowed origins, the authorization header server variable, guest and logged-in session expiration, "Load Cart from Session", and "Name Your Price"—all without touching code. Settings show a locked state when controlled by an external filter, with a link explaining what and where.
 
 Under the hood, the session handler received significant reliability improvements. Stale object cache entries are now properly overwritten, cache expiration is correctly initialized on frontend requests, and the object cache stays in sync after database writes.
 
@@ -44,14 +96,17 @@ Unauthenticated access to registered user carts is now permanently enforced—th
 **Compatibility**
 
 * WordPress v7.0
-* WooCommerce v10.8
+* WooCommerce v10.9
 
 <Danger>
   **Bug fixes**
 
-  * Slugs and permalinks containing non-ASCII characters (such as Chinese or Arabic) are now returned decoded instead of URL-encoded.
+  * Requests made via the WordPress REST API batch endpoint weren't recognized and caused a fatal error when adding items.
+  * Shipping address fields were left blank after submitting billing-only details—billing fields now mirror to shipping when `ship_to_different_address` isn't set, matching WooCommerce checkout behavior. Shipping packages now also return correctly after a complete address is saved.
+  * Slugs, permalinks, and attribute names containing non-ASCII characters (such as Chinese or Arabic) are now returned decoded instead of URL-encoded.
   * An authentication timing issue that caused duplicate guest sessions when using a custom `rest_url_prefix` has been resolved.
   * A fatal error when adding invalid products through the v2 controller is fixed, and the `Last-Modified` header now correctly returns GMT time per the HTTP spec.
+  * Fixed `cocart_deprecated_filter()` returning `null` when the debug log was active, which caused callers to receive no value from the deprecation wrapper.
   * Several PHP 8.2+ warnings have been eliminated — including undefined array key warnings in the v1 controller, session handler warnings for undefined keys in cart hash generation, and a deprecated `${var}` string interpolation syntax.
 </Danger>
 
@@ -81,6 +136,20 @@ Also, log entries now include the calling class, method, file, and line number f
 
   The 30-day maximum expiration limit has been removed. You can now freely adjust session lifetimes via the `cocart_cart_expiring` and `cocart_cart_expiration` filters. Note: a warning will still appear if sessions are kept longer than the recommended threshold.
 </Note>
+
+</Update>
+
+<Update label="April 21, 2026" description="v4.8.4">
+
+## Load Cart & Admin Fixes
+
+Fixed a fatal error caused by a `sprint_f()` typo in the database update scheduler (should have been `sprintf`), and corrected the `Access-Control-Allow-Credentials` header so it's applied properly.
+
+"Load Cart from Session" now only triggers its warning when the `cocart_load_cart_override` hook is actually used, and no longer throws an uncaught type error when merging an empty cart value.
+
+We've also fixed an HTML issue in the WooCommerce admin bar title.
+
+**Compatibility:** WooCommerce v10.7
 
 </Update>
 
