@@ -5,8 +5,8 @@ info:
   description: |
     CoCart Plus extends the CoCart REST API v2 with additional cart endpoints (mini cart,
     coupons, fees, removing all items, setting shipping methods), product shipping rate
-    calculation, customer account endpoints (including orders and subscriptions) and
-    customer registration.
+    calculation, customer account endpoints (including orders and subscriptions),
+    customer registration and a public order withdrawal request endpoint.
 
     Requires CoCart Starter v5.0+ to be installed and active.
 
@@ -53,6 +53,8 @@ tags:
     description: Operations for the customer account dashboard, downloads, orders and subscriptions
   - name: customers
     description: Operations for registering customers
+  - name: orders
+    description: Operations for submitting order withdrawal requests
 paths:
   /cart/mini:
     get:
@@ -2683,6 +2685,178 @@ paths:
                     message: An account is already registered with that username. Please choose another.
                     data:
                       status: 405
+  /order-withdrawal:
+    post:
+      tags:
+        - orders
+      summary: Submit order withdrawal request
+      description: |
+        Submits a public, no-login order withdrawal (right-of-withdrawal)
+        request, matched by `order_number` and `email`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  description: First name of the person requesting the withdrawal.
+                  type: string
+                last_name:
+                  description: Last name of the person requesting the withdrawal.
+                  type: string
+                email:
+                  description: Email address to match against the order and to send the acknowledgement to.
+                  type: string
+                  format: email
+                email_confirmation:
+                  description: Confirmation of the email address. Must match the `email` field.
+                  type: string
+                  format: email
+                order_number:
+                  description: The order number to withdraw from.
+                  type: string
+                withdrawal_type:
+                  description: Whether to withdraw the full order or specific items only.
+                  type: string
+                  enum:
+                    - full_order
+                    - specific_items_only
+                  default: full_order
+                additional_details:
+                  description: Additional details about the withdrawal. Required when `withdrawal_type` is `specific_items_only`.
+                  type: string
+              required:
+                - first_name
+                - last_name
+                - email
+                - email_confirmation
+                - order_number
+            example:
+              first_name: Jane
+              last_name: Doe
+              email: jane.doe@example.com
+              email_confirmation: jane.doe@example.com
+              order_number: '1234'
+              withdrawal_type: full_order
+      responses:
+        '200':
+          description: Withdrawal request submitted. Returned identically whether or not a matching order was found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderWithdrawalResult'
+              example:
+                success: true
+                email: jane.doe@example.com
+        '400':
+          description: Bad request - a required field is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_first_name:
+                  summary: First name missing
+                  value:
+                    code: cocart_order_withdrawal_missing_first_name
+                    message: First name is required.
+                    data:
+                      status: 400
+                missing_last_name:
+                  summary: Last name missing
+                  value:
+                    code: cocart_order_withdrawal_missing_last_name
+                    message: Last name is required.
+                    data:
+                      status: 400
+                invalid_email:
+                  summary: Email missing or invalid
+                  value:
+                    code: cocart_order_withdrawal_invalid_email
+                    message: Please enter a valid email address.
+                    data:
+                      status: 400
+                missing_email_confirmation:
+                  summary: Email confirmation missing
+                  value:
+                    code: cocart_order_withdrawal_missing_email_confirmation
+                    message: Please confirm your email address.
+                    data:
+                      status: 400
+                email_mismatch:
+                  summary: Email and confirmation do not match
+                  value:
+                    code: cocart_order_withdrawal_email_mismatch
+                    message: Email addresses do not match.
+                    data:
+                      status: 400
+                missing_order_number:
+                  summary: Order number missing
+                  value:
+                    code: cocart_order_withdrawal_missing_order_number
+                    message: Order number is required.
+                    data:
+                      status: 400
+                invalid_type:
+                  summary: Withdrawal type is not one of the accepted values
+                  value:
+                    code: cocart_order_withdrawal_invalid_type
+                    message: Choose what you want to withdraw.
+                    data:
+                      status: 400
+                missing_additional_details:
+                  summary: Additional details missing for a specific-items withdrawal
+                  value:
+                    code: cocart_order_withdrawal_missing_additional_details
+                    message: Please list the specific items you want to withdraw.
+                    data:
+                      status: 400
+        '404':
+          description: Not found - order withdrawal is not available on this store.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_order_withdrawal_unavailable
+                message: Order withdrawal is not available on this store.
+                data:
+                  status: 404
+        '409':
+          description: Conflict - a withdrawal request has already been submitted for the matched order.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_order_withdrawal_already_requested
+                message: A withdrawal request has already been submitted for this order. Please contact us if you need help or want to make changes.
+                data:
+                  status: 409
+        '429':
+          description: Too Many Requests - rate limited by IP address or email address.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_order_withdrawal_rate_limited
+                message: Please wait before submitting another withdrawal request.
+                data:
+                  status: 429
+        '500':
+          description: Internal server error - the rate limit could not be applied, or the notification emails could not be sent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_order_withdrawal_failed
+                message: We could not submit your withdrawal request. Please try again or contact us if the problem continues.
+                data:
+                  status: 500
 components:
   headers:
     ETagHeader:
@@ -4047,6 +4221,19 @@ components:
         message:
           type: string
           description: Human-readable confirmation message.
+    OrderWithdrawalResult:
+      type: object
+      description: |
+        The result of submitting an order withdrawal request. Returned
+        identically whether or not the request matched an existing order.
+      properties:
+        success:
+          type: boolean
+          description: Whether the withdrawal request was submitted.
+        email:
+          type: string
+          format: email
+          description: The email address the acknowledgement was sent to.
 security:
   - {}
   - basicAuth: []

@@ -681,6 +681,27 @@ paths:
                     message: Cannot checkout with empty cart.
                     data:
                       status: 400
+                invalid_currency:
+                  summary: Invalid currency code
+                  value:
+                    code: cocart_invalid_currency
+                    message: 'Invalid currency code: XX'
+                    data:
+                      status: 400
+                customer_error:
+                  summary: The customer could not be retrieved
+                  value:
+                    code: cocart_customer_error
+                    message: Unable to retrieve customer.
+                    data:
+                      status: 400
+                invalid_address_fields:
+                  summary: One or more address fields failed validation while syncing the customer's address
+                  value:
+                    code: cocart_invalid_address_fields
+                    message: Please provide a valid email address. Please provide a valid phone number.
+                    data:
+                      status: 400
                 missing_field:
                   summary: Required billing field missing
                   value:
@@ -784,6 +805,13 @@ paths:
                   value:
                     code: cocart_no_shipping_method
                     message: Please select a shipping method.
+                    data:
+                      status: 400
+                no_shipping_method_for_package:
+                  summary: No shipping method chosen for one of several shipping packages
+                  value:
+                    code: cocart_no_shipping_method
+                    message: Please select a shipping method for all packages.
                     data:
                       status: 400
                 invalid_shipping_method:
@@ -1201,7 +1229,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 code: cocart_order_not_found
-                message: This order does not exist.
+                message: Order not found.
                 data:
                   status: 404
 components:
