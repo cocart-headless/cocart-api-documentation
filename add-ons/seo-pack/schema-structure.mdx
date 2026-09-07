@@ -1,0 +1,202 @@
+---
+title: "Schema Structure"
+sidebarTitle: "Schema Structure"
+description: "The shape of the Schema.org structured data CoCart SEO Pack returns for a product."
+robots: "noindex, follow"
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: September 7th, 2026.
+</Info>
+
+The `schema` field returned by the [product SEO endpoint](/api-reference/pre-release/products/get-product-seo) follows the [Schema.org](https://schema.org) `Product` type, in a structure that stays consistent regardless of which SEO plugin is active.
+
+## Base schema structure
+
+```json
+{
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  "name": "Product Name",
+  "description": "Product Description",
+  "brand": {
+    "@type": "Brand",
+    "name": "Brand Name"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "99.99",
+    "priceCurrency": "USD",
+    "availability": "https://schema.org/InStock",
+    "url": "https://example.com/product",
+    "priceValidUntil": "2024-12-31"
+  },
+  "sku": "PROD123",
+  "gtin": "1234567890123",
+  "mpn": "MPN123",
+  "isbn": "978-3-16-148410-0",
+  "category": "Category Name",
+  "image": {
+    "@type": "ImageObject",
+    "url": "https://example.com/image.jpg",
+    "width": 800,
+    "height": 600
+  },
+  "itemCondition": "https://schema.org/NewCondition",
+  "review": [
+    {
+      "@type": "Review",
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": "5",
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Reviewer Name"
+      },
+      "reviewBody": "Review content",
+      "datePublished": "2024-03-13T12:00:00Z"
+    }
+  ],
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.5",
+    "reviewCount": "100"
+  }
+}
+```
+
+`sku`, `gtin`, `mpn`, `isbn`, and `category` are omitted entirely when empty, rather than returned as empty strings.
+
+## Property reference
+
+| Property | Notes |
+|---|---|
+| `@context` | Always `https://schema.org/`. |
+| `@type` | Always `Product`. |
+| `name` | Product name. |
+| `description` | Product description, stripped of HTML tags. |
+| `brand` | Resolved from a brand attribute, a brand meta field, or a manufacturer meta field (falls back to `Organization` type), in that order. |
+| `offers` | See [Schema Standardization](/add-ons/seo-pack/schema-standardization) for the full offer shape, including taxes and subscriptions. |
+| `sku` / `gtin` / `mpn` / `isbn` | Product identifiers. |
+| `image` | `url`, `width`, and `height` of the product's featured image. |
+| `review` / `aggregateRating` | Only included when the product has actual reviews — see [Schema Standardization](/add-ons/seo-pack/schema-standardization#reviews-and-ratings). |
+
+## Variable products
+
+Variable products add a `hasVariant` property:
+
+```json
+{
+  "hasVariant": [
+    {
+      "@type": "Product",
+      "name": "Variant Name",
+      "sku": "VAR123",
+      "description": "Variant Description",
+      "offers": {
+        "@type": "Offer",
+        "price": "89.99",
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock"
+      }
+    }
+  ]
+}
+```
+
+Other product types (grouped, subscription, bundle, composite, bookable) extend the base schema similarly — see [Extending Product Types](/add-ons/seo-pack/extending-product-types) for how each is implemented.
+
+## Plugin-specific schema data
+
+Some SEO plugins contribute additional Schema.org-valid properties (for example, enhanced review markup). This data is merged directly into `schema` as standard Schema.org properties rather than under a separate namespace, keeping the JSON-LD output strictly Schema.org-compliant.
+
+Non-Schema.org SEO plugin metadata (focus keywords, content analysis scores, and similar) is returned separately under `meta_data.seo_extensions` instead — see [Schema Standardization](/add-ons/seo-pack/schema-standardization#provider-seo-metadata).
+
+## Implementation
+
+The schema structure is produced by:
+
+1. `CoCart\SEOPack\REST\Providers\Provider_Interface` — the provider contract.
+2. `CoCart\SEOPack\REST\Providers\Provider_Base` — abstract base class with shared functionality.
+3. `CoCart\SEOPack\REST\Providers\Provider_Default` — the default provider, using WordPress core meta.
+4. `CoCart\SEOPack\REST\Providers\Schema_Standardizer` — ensures a consistent schema format across providers.
+5. Plugin-specific providers — add their own enhancements on top.
+
+## Filters
+
+| Filter | Purpose |
+|---|---|
+| `cocart_rest_product_seo_data` | Modify the complete SEO data (meta data and schema together). |
+| `cocart_rest_product_schema_data` | Modify just the `schema` portion. |
+| `cocart_rest_product_structured_data` | Modify the final structured data output. |
+
+## Best practices
+
+1. Validate schema against the [Schema.org](https://schema.org) specification — see [Schema Validation](/add-ons/seo-pack/schema-validation).
+2. Ensure all required properties (`@context`, `@type`, `name`) are present.
+3. Strip HTML from text content.
+4. Use absolute URLs for images and links.
+5. Use proper ISO 4217 currency codes and ISO 8601 dates.
+6. Use official Schema.org URLs for `availability` and `itemCondition`.
+
+## Caching
+
+Schema data is cached through the `Schema_Cache` trait (`includes/classes/traits/trait-cocart-schema-cache.php`), shared across all SEO providers.
+
+- **Cache key**: `cocart_product_schema_{product_id}`
+- **Cache group**: `cocart_product_schema`
+- **Default duration**: `HOUR_IN_SECONDS` (3600 seconds)
+
+The cache is invalidated automatically on product updates, deletions, and variation changes; on new, updated, or deleted reviews; and when Rank Math, Yoast SEO, AIOSEO, or SEOPress update their own schema metadata for the product.
+
+### Using the trait in a custom provider
+
+```php
+namespace MyPlugin\SEO;
+
+use CoCart\SEOPack\REST\Providers\Provider_Interface;
+use CoCart\SEOPack\REST\Traits\Schema_Cache;
+
+class Your_SEO_Provider implements Provider_Interface {
+    use Schema_Cache;
+
+    public function __construct() {
+        $this->setup_cache_hooks();
+    }
+
+    public function get_schema_data( $product ) {
+        $post_id = $product->get_id();
+
+        $schema = $this->get_cached_schema( $post_id );
+        if ( false !== $schema ) {
+            return $schema;
+        }
+
+        $schema = $this->get_structured_data( $product );
+        $this->cache_schema( $post_id, $schema, $product );
+
+        return $schema;
+    }
+}
+```
+
+### Customizing cache duration
+
+```php
+add_filter( 'cocart_rest_api_product_schema_cache_duration',
+    function( $duration, $schema, $product, $provider ) {
+        // Cache variable products for longer.
+        if ( $product->is_type( 'variable' ) ) {
+            return 4 * HOUR_IN_SECONDS;
+        }
+        return $duration;
+    }, 10, 4
+);
+```
+
+<Note>
+  When `WP_DEBUG` is enabled, the trait logs cache hits, misses, storage operations, and invalidation events, prefixed with `[CoCart Schema Cache]`.
+</Note>

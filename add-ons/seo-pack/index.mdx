@@ -1,0 +1,52 @@
+---
+title: "CoCart SEO Pack"
+sidebarTitle: "Overview"
+description: "Exposes SEO meta data and Schema.org structured data for products, sourced from your active SEO plugin."
+robots: "noindex, follow"
+---
+
+<Info>
+  This guide was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: September 7th, 2026.
+</Info>
+
+CoCart SEO Pack adds a product SEO endpoint that returns meta data and Schema.org structured data sourced from your active SEO plugin — Rank Math, SEOPress, The SEO Framework, All in One SEO, or Yoast SEO (last active plugin wins) — falling back to a built-in provider when none of those are active.
+
+<Warning>
+  CoCart SEO Pack is a separate plugin and requires its own license key. See [License Activation](/getting-started/license-activation) for setup.
+</Warning>
+
+## Endpoints
+
+<CardGroup cols={2}>
+  <Card title="Get Product SEO Data" icon="magnifying-glass" href="/api-reference/pre-release/products/get-product-seo">
+    Retrieve SEO data and structured data for a product by ID.
+  </Card>
+  <Card title="Get Product SEO Data by Slug" icon="magnifying-glass" href="/api-reference/pre-release/products/get-product-seo-by-slug">
+    Retrieve SEO data and structured data for a product by slug.
+  </Card>
+</CardGroup>
+
+## Extending
+
+<CardGroup cols={2}>
+  <Card title="Extending SEO Providers" icon="plug" href="/add-ons/seo-pack/extending-providers">
+    Add support for an SEO plugin CoCart doesn't cover out of the box, or override the built-in provider logic.
+  </Card>
+  <Card title="Extending Product Types" icon="shirt" href="/add-ons/seo-pack/extending-product-types">
+    Add Schema.org support for a custom or third-party WooCommerce product type.
+  </Card>
+</CardGroup>
+
+## Schema reference
+
+<CardGroup cols={2}>
+  <Card title="Schema Structure" icon="sitemap" href="/add-ons/seo-pack/schema-structure">
+    The shape of the Schema.org structured data returned for a product.
+  </Card>
+  <Card title="Schema Standardization" icon="scale-balanced" href="/add-ons/seo-pack/schema-standardization">
+    How output is kept consistent across different SEO plugins, and where plugin-specific data goes.
+  </Card>
+  <Card title="Schema Validation" icon="circle-check" href="/add-ons/seo-pack/schema-validation">
+    How CoCart validates structured data against Schema.org specifications during development.
+  </Card>
+</CardGroup>

@@ -1,0 +1,46 @@
+---
+title: "Registering an Agent"
+sidebarTitle: "Registering an Agent"
+description: "How a store admin registers an agent in CoCart AI before any customer can issue it a token."
+robots: "noindex, follow"
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: September 7th, 2026.
+</Info>
+
+<Warning>
+  Internal build (`1.0.0`) — not yet public. Endpoint paths and field names may change before release.
+</Warning>
+
+<Tip>
+  See the [How It Works overview](/ai-agents/how-it-works) for all sections, or [CoCart AI](/ai-agents) for the big picture.
+</Tip>
+
+Before any customer can issue a token, a store admin registers the agent itself. Registration is a one-time setup step per agent, not per customer.
+
+<Note>
+  `POST /wp-json/cocart/ai/v1/agent/register` — requires the `manage_woocommerce` capability.
+</Note>
+
+<ParamField body="agent_id" type="string" required>
+  Unique slug for the agent, e.g. `my-shopping-bot`.
+</ParamField>
+<ParamField body="agent_name" type="string" required>
+  Human-readable name shown in emails and admin.
+</ParamField>
+<ParamField body="description" type="string">
+  Optional description shown in the admin agent list.
+</ParamField>
+<ParamField body="allowed_scopes" type="string[]" required>
+  Scopes users may grant this agent when issuing a token.
+</ParamField>
+<ParamField body="webhook_url" type="string">
+  URL to POST lifecycle events to.
+</ParamField>
+<ParamField body="default_checkout_mode" type="string" default="payment_token">
+  `payment_token` or `approval_only`.
+</ParamField>
+<ParamField body="require_identity_verification" type="boolean" default="true">
+  Require email verification before token activation for account-holder tokens. Guest tokens always require it, regardless of this setting.
+</ParamField>

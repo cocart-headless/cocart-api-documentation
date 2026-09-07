@@ -1,0 +1,43 @@
+---
+title: "Token Scopes"
+sidebarTitle: "Token Scopes"
+description: "The scopes available for a CoCart AI agent token, and what each one grants."
+robots: "noindex, follow"
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: September 7th, 2026.
+</Info>
+
+<Warning>
+  Internal build (`1.0.0`) — not yet public. Endpoint paths and field names may change before release.
+</Warning>
+
+<Tip>
+  See the [How It Works overview](/ai-agents/how-it-works) for all sections, or [CoCart AI](/ai-agents) for the big picture.
+</Tip>
+
+<AccordionGroup>
+  <Accordion title="cart:read" icon="eye">
+    Read current cart contents and totals.
+  </Accordion>
+  <Accordion title="cart:write" icon="pen">
+    Add, update, and remove cart items.
+  </Accordion>
+  <Accordion title="cart:gift_card" icon="gift">
+    Apply gift card codes to the cart via [POST /agent/cart/gift-card](/ai-agents/how-it-works/applying-a-gift-card) (requires WooCommerce Gift Cards).
+  </Accordion>
+  <Accordion title="checkout:read" icon="eye">
+    Read checkout data, including available shipping rates.
+  </Accordion>
+  <Accordion title="checkout:execute" icon="bolt">
+    Trigger checkout, subject to the [approval flow](/ai-agents/how-it-works/approval-flow).
+  </Accordion>
+  <Accordion title="subscription:execute" icon="rotate">
+    Place orders containing subscription products (requires WooCommerce Subscriptions).
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  Integration plugins can add further scopes via the `cocart_agent_available_scopes` filter — [contact support](mailto:support@cocartapi.com) if you have a use case that needs a custom one.
+</Tip>

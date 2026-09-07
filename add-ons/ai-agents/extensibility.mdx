@@ -1,0 +1,59 @@
+---
+title: "Extensibility"
+sidebarTitle: "Extensibility"
+description: "Filters, actions, and other extension points for customizing CoCart AI."
+robots: "noindex, follow"
+---
+
+<Info>
+  This guide was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: September 7th, 2026.
+</Info>
+
+<Warning>
+  Internal build (`1.0.0`) — not yet public. Endpoint paths and field names may change before release.
+</Warning>
+
+<Tip>
+  See the [How It Works overview](/ai-agents/how-it-works) for all sections, or [CoCart AI](/ai-agents) for the big picture.
+</Tip>
+
+<AccordionGroup>
+  <Accordion title="Custom scopes" icon="key">
+    Add a scope with the `cocart_agent_available_scopes` filter, then gate the relevant operation with `cocart_agent_checkout_scope_check`.
+  </Accordion>
+  <Accordion title="Custom checkout gates" icon="shield-halved">
+    `cocart_agent_checkout_scope_check` also covers gates unrelated to scope — return a `WP_Error` to block checkout on any condition, e.g. requiring a scope only when the cart contains a specific product type.
+  </Accordion>
+  <Accordion title="Payment method labels & validation" icon="credit-card">
+    `cocart_agent_payment_method_label` supplies richer, human-readable labels (e.g. "Visa ending 4242"). `cocart_agent_payment_token_valid` lets a gateway invalidate a saved token before checkout — e.g. a PayPal billing agreement cancelled on PayPal's side.
+  </Accordion>
+  <Accordion title="Order summary lines" icon="list">
+    `cocart_agent_order_summary` appends extra lines to the summary shown in `202` responses and approval emails — e.g. a gift card discount.
+  </Accordion>
+  <Accordion title="Manifest capabilities & MCP tools" icon="list-check">
+    `cocart_agent_manifest_capabilities` adds a flag to the public manifest. `cocart_agent_manifest_mcp_tools` populates the WP 7.0+ `mcp_tools` list — though registering abilities directly (below) is usually simpler.
+  </Accordion>
+  <Accordion title="Discovery page content" icon="file-lines">
+    `cocart_agent_llms_txt` filters the plain-text content of `/cocart-ai-llms.txt`; `cocart_agent_skill_md` filters the Markdown content of `/cocart-ai-skill.md` (passed the current scopes and MCP tools as extra arguments). See [Virtual discovery pages](/ai-agents/how-it-works/agent-discovery#virtual-discovery-pages).
+  </Accordion>
+  <Accordion title="Guest token toggle" icon="user-slash">
+    `cocart_agent_allow_guest_tokens` disables unauthenticated `approval_only` token issuance store-wide (default `true`). See [Guest tokens](/ai-agents/how-it-works/issuing-a-token#guest-tokens).
+  </Accordion>
+  <Accordion title="Webhook delivery" icon="tower-broadcast">
+    `cocart_agent_dispatch_webhook` fires for every outbound event — hook in to add logging, custom auth headers, or a secondary delivery target, ahead of or instead of the default Action Scheduler delivery.
+  </Accordion>
+  <Accordion title="Email templates" icon="envelope">
+    Override the six approval/verification/failure email templates by copying them from the plugin's `templates/emails/` directory into your active theme's `woocommerce/emails/` directory. Subject and heading fields support placeholders like `{agent_name}`, `{order_total}`, `{approve_url}`, and `{reject_url}`.
+  </Accordion>
+  <Accordion title="WP 7.0 abilities" icon="diagram-project">
+    Register new agent operations in the `cocart-agent` ability category via `wp_abilities_api_init`, and they surface in the WooCommerce MCP server automatically — no separate MCP-facing work needed.
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  These filter and action names are stable within the current internal build, but the build itself hasn't shipped — treat them as a strong signal of the design, not a committed public API yet. [Contact support](mailto:support@cocartapi.com) if you're building against them.
+</Tip>
+
+<Note>
+  Extending the plugin with a coding agent (Claude Code or similar)? The plugin's own repo includes a `SKILL.md` at its root — distinct from the site-published `/cocart-ai-skill.md` above — that orients a coding agent to the codebase before it writes any code: the three actor roles, the `payment_token`/`approval_only` fork, and which `docs/` file answers which question.
+</Note>

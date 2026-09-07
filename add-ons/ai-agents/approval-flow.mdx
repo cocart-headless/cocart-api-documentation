@@ -1,0 +1,99 @@
+---
+title: "The Approval Flow"
+sidebarTitle: "Approval Flow"
+description: "How a customer approves or rejects a pending agent order by email in CoCart AI."
+robots: "noindex, follow"
+---
+
+<Info>
+  This guide was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: September 7th, 2026.
+</Info>
+
+<Warning>
+  Internal build (`1.0.0`) — not yet public. Endpoint paths and field names may change before release.
+</Warning>
+
+<Tip>
+  See the [How It Works overview](/ai-agents/how-it-works) for all sections, or [CoCart AI](/ai-agents) for the big picture.
+</Tip>
+
+When an order needs approval, the customer gets an email with one-click Approve/Reject links (and CoCart AI can use WordPress 7.0's AI Client to summarize the cart in plain English rather than a raw items table).
+
+<Warning>
+  Clicking a link is a `GET` request, and it only ever renders a confirmation page — it executes nothing. This protects against email security scanners that pre-fetch links, which would otherwise silently approve or reject a real, paid order before the customer ever opens the email. The confirmation page's own form then `POST`s back to the same URL (tagged `via=confirmation_page`) to actually approve or reject; a script or API calling `POST` directly, without that param, gets the exact same JSON response described below.
+</Warning>
+
+<Tabs>
+  <Tab title="payment_token mode">
+    The agent uses a saved WooCommerce payment method (e.g. a Stripe card on file). On approval, CoCart AI restores the cart from its snapshot — via WooCommerce's own `get_cart_from_session()`, so items are properly hydrated with their `WC_Product` object — and delegates order creation and payment to [CoCart Plus's checkout engine](https://cocartapi.com).
+
+    <Steps>
+      <Step title="Customer submits the confirmation page">
+        `POST /agent/approve/{key}`
+      </Step>
+      <Step title="Order created, payment charged">
+        The saved payment token is re-validated (cards can be deleted between issuance and approval) and charged via the gateway. The order is tagged as agent-placed with an order note plus `_cocart_agent_id` / `_cocart_agent_token_id` meta.
+      </Step>
+      <Step title="Success, further action, or failure">
+        <CodeGroup>
+          ```json Success — 200 OK
+          {
+            "order_id": 1047,
+            "order_url": "https://my-store.com/my-account/orders/1047",
+            "status": "processing",
+            "payment_result": {
+              "payment_status": "success",
+              "redirect_url": "https://my-store.com/checkout/order-received/1047/"
+            }
+          }
+          ```
+          ```json Requires further action — 200 OK
+          {
+            "status": "requires_action",
+            "order_id": 1047,
+            "payment_result": {
+              "payment_status": "requires_action",
+              "action_type": "stripe_confirm_payment",
+              "action_data": { "client_secret": "...", "intent_type": "payment_intent" }
+            }
+          }
+          ```
+          ```json Failure — 402 Payment Required
+          {
+            "code": "payment_failed",
+            "message": "The saved payment method could not be charged.",
+            "data": { "status": 402 }
+          }
+          ```
+        </CodeGroup>
+        `status` reflects the real WooCommerce order status — usually `processing`/`completed`, but `on-hold` is also a valid success outcome (e.g. a fraud-review hold or a bank-transfer gateway awaiting funds) and still returns `200 OK` with an `order_id`.
+
+        `requires_action` covers things like 3D Secure or an off-site redirect — something an autonomous agent generally can't finish on its own. The pending order is marked `requires_action` and the customer is emailed a "Complete Verification" link (built from `action_data.redirect` when the gateway provides one) so they can finish it themselves.
+
+        On failure, `do_action( 'cocart_agent_payment_failed', $pending_order )` fires, the pending order is marked `payment_failed`, and the customer is notified.
+      </Step>
+    </Steps>
+
+    <Note>Requires `wc_payment_token_id` at token issuance, and a gateway that supports server-side charging via a saved token.</Note>
+  </Tab>
+  <Tab title="approval_only mode">
+    No saved payment method is needed. On approval, CoCart AI restores the cart from its snapshot and hands the customer a pre-filled checkout link to complete payment themselves — no order exists yet, WooCommerce's own checkout creates it once payment is entered.
+
+    <Steps>
+      <Step title="Customer submits the confirmation page">
+        `POST /agent/approve/{key}`
+      </Step>
+      <Step title="Redirect generated">
+        ```json 200 OK
+        {
+          "redirect_url": "https://my-store.com/checkout?cart_key=xxx"
+        }
+        ```
+      </Step>
+    </Steps>
+
+    <Note>No payment is processed by CoCart AI — it only coordinates cart state. Works with any gateway, and suits guests or customers who prefer to handle payment themselves.</Note>
+  </Tab>
+</Tabs>
+
+Rejecting follows the same confirmation-page pattern in both modes: the `GET` link renders a confirmation page, and its form `POST`s to `/agent/reject/{key}`, which marks the pending order `rejected`, fires `cocart_agent_order_rejected`, notifies any registered webhooks, and returns `200 OK { "status": "rejected" }`.

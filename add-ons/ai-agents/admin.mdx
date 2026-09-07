@@ -1,0 +1,39 @@
+---
+title: "Admin"
+sidebarTitle: "Admin"
+description: "The Agents, Tokens, Pending Orders, and Settings screens CoCart AI adds for store admins."
+robots: "noindex, follow"
+---
+
+<Info>
+  This guide was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: September 7th, 2026.
+</Info>
+
+<Warning>
+  Internal build (`1.0.0`) — not yet public. Endpoint paths and field names may change before release.
+</Warning>
+
+<Tip>
+  See the [How It Works overview](/ai-agents/how-it-works) for all sections, or [CoCart AI](/ai-agents) for the big picture.
+</Tip>
+
+Store admins get an Agents / Tokens / Pending Orders / Settings set of tabs under CoCart's own admin menu:
+
+<AccordionGroup>
+  <Accordion title="Agents" icon="robot">
+    Register new agents and edit existing ones — allowed scopes, default checkout mode, webhook URL, identity verification requirement.
+  </Accordion>
+  <Accordion title="Tokens" icon="key">
+    View and revoke issued tokens.
+  </Accordion>
+  <Accordion title="Pending Orders" icon="clock">
+    Review orders awaiting customer approval. Admins can reject a pending order here, but approval is reserved for the customer's own signed email link — an admin can't approve on the customer's behalf.
+  </Accordion>
+  <Accordion title="Settings" icon="gear">
+    Store-wide defaults and toggles — including independent on/off switches for the [`/cocart-ai-llms.txt` and `/cocart-ai-skill.md`](/ai-agents/how-it-works/agent-discovery#virtual-discovery-pages) discovery pages (both default on) — plus the three plugin emails (also configurable under WooCommerce → Settings → Emails).
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  WordPress Site Health includes a check for Abilities API / MCP connectivity, so a store admin can confirm agent operations are actually surfacing in the WooCommerce MCP server.
+</Tip>

@@ -1,0 +1,30 @@
+---
+title: "Applying a Gift Card"
+sidebarTitle: "Gift Cards"
+description: "How an AI agent applies a gift card code to the cart on a customer's behalf in CoCart AI."
+robots: "noindex, follow"
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: September 7th, 2026.
+</Info>
+
+<Warning>
+  Internal build (`1.0.0`) — not yet public. Endpoint paths and field names may change before release.
+</Warning>
+
+<Tip>
+  See the [How It Works overview](/ai-agents/how-it-works) for all sections, or [CoCart AI](/ai-agents) for the big picture.
+</Tip>
+
+Agents with the `cart:gift_card` scope can apply a gift card code directly, when WooCommerce Gift Cards is active.
+
+<Note>
+  `POST /wp-json/cocart/ai/v1/agent/cart/gift-card` — requires an agent token with `cart:gift_card` scope.
+</Note>
+
+<ParamField body="code" type="string" required>
+  The gift card code to apply, e.g. `GIFT-ABCD-1234`.
+</ParamField>
+
+**Response:** `200 OK` with the updated cart summary, or `422 Unprocessable Entity` for an invalid code. Applied gift cards also appear as a redacted line in the `order_summary` shown in `202` responses and approval emails.

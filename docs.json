@@ -1788,6 +1788,53 @@
                 ]
               },
               {
+                "tab": "Add-ons",
+                "icon": "cubes",
+                "groups": [
+                  {
+                    "group": "Overview",
+                    "pages": [
+                      "add-ons/index"
+                    ]
+                  },
+                  {
+                    "group": "CoCart SEO Pack",
+                    "icon": "magnifying-glass",
+                    "tag": "BETA",
+                    "pages": [
+                      "add-ons/seo-pack/index",
+                      "add-ons/seo-pack/extending-providers",
+                      "add-ons/seo-pack/extending-product-types",
+                      "add-ons/seo-pack/schema-structure",
+                      "add-ons/seo-pack/schema-standardization",
+                      "add-ons/seo-pack/schema-validation"
+                    ]
+                  },
+                  {
+                    "group": "CoCart AI Agents",
+                    "icon": "robot",
+                    "tag": "WIP",
+                    "pages": [
+                      "add-ons/ai-agents/index",
+                      "add-ons/ai-agents/how-it-works",
+                      "add-ons/ai-agents/agent-discovery",
+                      "add-ons/ai-agents/registering-an-agent",
+                      "add-ons/ai-agents/issuing-a-token",
+                      "add-ons/ai-agents/checkout-interception",
+                      "add-ons/ai-agents/approval-flow",
+                      "add-ons/ai-agents/spend-tracking",
+                      "add-ons/ai-agents/applying-a-gift-card",
+                      "add-ons/ai-agents/webhooks",
+                      "add-ons/ai-agents/token-scopes",
+                      "add-ons/ai-agents/error-responses",
+                      "add-ons/ai-agents/admin",
+                      "add-ons/ai-agents/extensibility",
+                      "add-ons/ai-agents/questions"
+                    ]
+                  }
+                ]
+              },
+              {
                 "tab": "CLI Reference",
                 "icon": "terminal",
                 "groups": [
@@ -1960,19 +2007,6 @@
                     "pages": [
                       "sdk/typescript/frameworks/framer",
                       "sdk/typescript/frameworks/webflow"
-                    ]
-                  }
-                ]
-              },
-              {
-                "tab": "AI Agents",
-                "icon": "robot",
-                "groups": [
-                  {
-                    "group": "AI Agents",
-                    "pages": [
-                      "ai-agents/index",
-                      "ai-agents/how-it-works"
                     ]
                   }
                 ]

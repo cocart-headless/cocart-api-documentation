@@ -1,0 +1,39 @@
+---
+title: "Webhooks"
+sidebarTitle: "Webhooks"
+description: "Outbound webhook events CoCart AI fires for agent and integration consumers, like Zapier."
+robots: "noindex, follow"
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: September 7th, 2026.
+</Info>
+
+<Warning>
+  Internal build (`1.0.0`) — not yet public. Endpoint paths and field names may change before release.
+</Warning>
+
+<Tip>
+  See the [How It Works overview](/ai-agents/how-it-works) for all sections, or [CoCart AI](/ai-agents) for the big picture.
+</Tip>
+
+Agents (and integrations like Zapier) can be notified of lifecycle events via outbound webhooks, delivered asynchronously with automatic retries when Action Scheduler is available.
+
+<AccordionGroup>
+  <Accordion title="token_activated" icon="key">
+    Fires when a customer completes identity verification and the token moves to `active`.
+  </Accordion>
+  <Accordion title="order.approved" icon="check">
+    Fires when a pending order is approved and payment succeeds (or handed off to the customer in `approval_only` mode).
+  </Accordion>
+  <Accordion title="order.rejected" icon="xmark">
+    Fires when a customer rejects a pending order.
+  </Accordion>
+  <Accordion title="payment.failed" icon="triangle-exclamation">
+    Fires when payment processing fails after an order was approved.
+  </Accordion>
+</AccordionGroup>
+
+<Note>
+  If an agent's webhook endpoint returns a non-2xx response or times out (10s), Action Scheduler automatically retries delivery.
+</Note>

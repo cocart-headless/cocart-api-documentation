@@ -1,0 +1,32 @@
+---
+title: "Error Responses"
+sidebarTitle: "Error Responses"
+description: "The full CoCart AI REST API error code reference."
+robots: "noindex, follow"
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: September 7th, 2026.
+</Info>
+
+<Warning>
+  Internal build (`1.0.0`) — not yet public. Endpoint paths and field names may change before release.
+</Warning>
+
+<Tip>
+  See the [How It Works overview](/ai-agents/how-it-works) for all sections, or [CoCart AI](/ai-agents) for the big picture.
+</Tip>
+
+All errors follow the standard WordPress REST API shape: `{ "code", "message", "data": { "status" } }`.
+
+| Code | HTTP | Description |
+|---|---|---|
+| `invalid_agent_token` | 401 | Token missing, malformed, expired, or revoked |
+| `insufficient_scope` | 403 | Token lacks the required scope for this operation |
+| `agent_token_pending_identity` | 403 | Token awaiting email identity verification |
+| `spend_limit_exceeded` | 402 | Order would exceed the token's `max_spend` |
+| `no_payment_token` | 422 | No saved payment method associated with token |
+| `invalid_payment_token` | 422 | Saved payment method is invalid or was deleted |
+| `subscription_scope_required` | 403 | Cart contains a subscription; token needs `subscription:execute` |
+| `identity_email_mismatch` | 422 | `identity_email` does not match the user's account |
+| `invalid_verify_key` | 410 | Verification link is invalid or has expired |

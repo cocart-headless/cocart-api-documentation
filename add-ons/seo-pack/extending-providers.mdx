@@ -1,0 +1,187 @@
+---
+title: "Extending SEO Providers"
+sidebarTitle: "Extending Providers"
+description: "Add support for an SEO plugin CoCart SEO Pack doesn't cover out of the box, or override the built-in provider logic."
+robots: "noindex, follow"
+---
+
+<Info>
+  This guide was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: September 7th, 2026.
+</Info>
+
+CoCart SEO Pack's provider system is designed to be extensible, allowing you to:
+
+- Add support for an SEO plugin that isn't covered out of the box
+- Override the SEO data returned by an existing provider
+- Implement fully custom SEO logic
+- Modify the structure of the SEO data returned
+
+## Architecture
+
+The provider system consists of four components:
+
+1. **Provider Interface** (`CoCart\SEOPack\REST\Providers\Provider_Interface`) — defines the contract every SEO provider must implement: `is_active()`, `get_seo_data()`, `get_schema_data()`, `get_structured_data()`.
+2. **Base Provider** (`CoCart\SEOPack\REST\Providers\Provider_Base`) — an abstract base class providing common functionality. All providers extend this class.
+3. **Default Provider** (`CoCart\SEOPack\REST\Providers\Provider_Default`) — a concrete implementation using WordPress core meta, used as the fallback when no supported SEO plugin is active.
+4. **Provider Factory** (`CoCart\SEOPack\REST\Providers\Provider_Factory`) — manages provider registration and determines which provider is active.
+
+## Creating a custom provider
+
+Create a class that implements `CoCart\SEOPack\REST\Providers\Provider_Interface`:
+
+```php
+namespace MyPlugin\SEO;
+
+use CoCart\SEOPack\REST\Providers\Provider_Interface;
+
+class My_Custom_SEO_Provider implements Provider_Interface {
+
+    public function is_active() {
+        // Return true if your provider should be used.
+        return defined( 'MY_SEO_PLUGIN_VERSION' );
+    }
+
+    public function get_seo_data( $product ) {
+        return array(
+            'meta_title'       => /* Your implementation */,
+            'meta_description' => /* Your implementation */,
+            'meta_keywords'    => /* Your implementation */,
+            'opengraph'        => array(
+                'title'       => /* Your implementation */,
+                'description' => /* Your implementation */,
+                'image'       => /* Your implementation */,
+            ),
+            'twitter'          => array(
+                'title'       => /* Your implementation */,
+                'description' => /* Your implementation */,
+                'image'       => /* Your implementation */,
+            ),
+            'canonical_url'    => /* Your implementation */,
+            'robots'           => /* Your implementation */,
+        );
+    }
+
+    public function get_schema_data( $product ) {
+        return array(
+            'product_type' => /* Your implementation */,
+            'brand'        => /* Your implementation */,
+            'price'        => array(
+                'currency' => /* Your implementation */,
+                'amount'   => /* Your implementation */,
+            ),
+            'availability' => /* Your implementation */,
+            'sku'          => /* Your implementation */,
+        );
+    }
+
+    public function get_structured_data( $product ) {
+        return array(
+            '@context' => 'https://schema.org/',
+            '@type'    => 'Product',
+            // Your implementation.
+        );
+    }
+}
+```
+
+## Registering your provider
+
+There are two ways to register a provider.
+
+### Using the `cocart_rest_seo_providers` filter
+
+```php
+add_filter( 'cocart_rest_seo_providers', function( $providers ) {
+    $providers[] = new My_Custom_SEO_Provider();
+    return $providers;
+} );
+```
+
+### Using the factory directly
+
+```php
+use CoCart\SEOPack\REST\Providers\Provider_Factory;
+use MyPlugin\SEO\My_Custom_SEO_Provider;
+
+function register_my_seo_provider() {
+    $factory = new Provider_Factory();
+    $factory->register_provider( new My_Custom_SEO_Provider() );
+}
+add_action( 'init', 'register_my_seo_provider' );
+```
+
+## Available filters
+
+### `cocart_rest_seo_providers`
+
+Modify the list of registered providers — add or remove providers, or change provider order. The last registered provider takes priority.
+
+```php
+add_filter( 'cocart_rest_seo_providers', function( $providers ) {
+    // Add or modify providers.
+    return $providers;
+} );
+```
+
+### `cocart_rest_product_seo_data`
+
+Modify the SEO data for a specific product — add or remove fields, or transform the data structure.
+
+```php
+add_filter( 'cocart_rest_product_seo_data', function( $seo_data, $product ) {
+    // Modify SEO data.
+    return $seo_data;
+}, 10, 2 );
+```
+
+## Examples
+
+### Adding support for another SEO plugin
+
+```php
+namespace CoCart\SEOPack\REST\Providers;
+
+class Provider_AIOSEO implements Provider_Interface {
+    public function is_active() {
+        return defined( 'AIOSEO_VERSION' );
+    }
+
+    public function get_seo_data( $product ) {
+        return array(
+            'meta_title'       => get_post_meta( $product->get_id(), '_aioseo_title', true ),
+            'meta_description' => get_post_meta( $product->get_id(), '_aioseo_description', true ),
+            // ... implementation details.
+        );
+    }
+    // ... other method implementations.
+}
+```
+
+### Adding custom meta fields
+
+```php
+add_filter( 'cocart_rest_product_seo_data', function( $seo_data, $product ) {
+    $seo_data['custom_fields'] = array(
+        'custom_meta_1' => get_post_meta( $product->get_id(), '_custom_meta_1', true ),
+        'custom_meta_2' => get_post_meta( $product->get_id(), '_custom_meta_2', true ),
+    );
+    return $seo_data;
+}, 10, 2 );
+```
+
+### Modifying schema data
+
+```php
+add_filter( 'cocart_rest_product_seo_data', function( $seo_data, $product ) {
+    // Add additional schema properties.
+    $seo_data['schema']['manufacturer'] = array(
+        '@type' => 'Organization',
+        'name'  => get_post_meta( $product->get_id(), '_manufacturer', true ),
+    );
+    return $seo_data;
+}, 10, 2 );
+```
+
+<Tip>
+  See [Schema Standardization](/add-ons/seo-pack/schema-standardization) for how raw provider output gets normalized into the final `schema` response, and where plugin-specific, non-Schema.org data ends up.
+</Tip>

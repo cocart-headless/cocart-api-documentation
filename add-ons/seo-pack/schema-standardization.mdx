@@ -1,0 +1,184 @@
+---
+title: "Schema Standardization"
+sidebarTitle: "Schema Standardization"
+description: "How CoCart SEO Pack keeps schema output consistent across different SEO plugins, and where plugin-specific data goes."
+robots: "noindex, follow"
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: September 7th, 2026.
+</Info>
+
+CoCart SEO Pack standardizes the schema data returned across every supported SEO plugin, while still preserving each plugin's own enhancements. This page covers the parts of the [base schema structure](/add-ons/seo-pack/schema-structure) that need extra explanation: offers, subscriptions, reviews, and where non-Schema.org plugin metadata ends up.
+
+## Offers
+
+When taxes are enabled in WooCommerce, `offers.priceSpecification` is included as a `UnitPriceSpecification`, declaring whether the price includes VAT and whether it represents a list or sale price:
+
+```json
+{
+  "offers": {
+    "@type": "Offer",
+    "price": "99.99",
+    "priceCurrency": "USD",
+    "availability": "https://schema.org/InStock",
+    "url": "https://example.com/product",
+    "priceSpecification": {
+      "@type": "UnitPriceSpecification",
+      "price": "99.99",
+      "priceCurrency": "USD",
+      "valueAddedTaxIncluded": false,
+      "priceType": "https://schema.org/ListPrice"
+    }
+  }
+}
+```
+
+`priceType` is `https://schema.org/SalePrice` when the product has an active sale price, otherwise `https://schema.org/ListPrice`.
+
+### Multiple offers
+
+A product can expose more than one purchasing option (for example, licence tiers or subscription plans) via the `cocart_rest_seo_product_offers` filter:
+
+```php
+add_filter( 'cocart_rest_seo_product_offers', function( $offers, $post_id, $product ) {
+    $offers[] = array(
+        '@type'         => 'Offer',
+        'name'          => 'CoCart Plus',
+        'price'         => '99.00',
+        'priceCurrency' => 'USD',
+        'url'           => home_url( '/pricing/' ),
+        'availability'  => 'https://schema.org/InStock',
+    );
+
+    return $offers;
+}, 10, 3 );
+```
+
+If the filter returns a single offer (the default), `schema.offers` stays a single `Offer` object. If it returns multiple offers, `schema.offers` becomes a JSON array of `Offer` objects — valid per Schema.org's `Product.offers` property.
+
+### Subscriptions
+
+Subscription products (WooCommerce Subscriptions or Milo Subscriptions) keep `offers['@type']` as `Offer` — `Subscription` isn't an official Schema.org type. The recurring charge is described via `offers.priceSpecification` as a `UnitPriceSpecification`, using `billingDuration` (an ISO 8601 duration, e.g. `"P1M"` for monthly, `"P1Y"` for yearly) for how often it recurs. A trial period, if any, is added as an additional zero-price `UnitPriceSpecification` entry:
+
+```json
+{
+  "offers": {
+    "@type": "Offer",
+    "price": "9.99",
+    "priceCurrency": "USD",
+    "availability": "https://schema.org/InStock",
+    "priceSpecification": [
+      {
+        "@type": "UnitPriceSpecification",
+        "price": 0,
+        "priceCurrency": "USD",
+        "billingDuration": "P14D"
+      },
+      {
+        "@type": "UnitPriceSpecification",
+        "price": "9.99",
+        "priceCurrency": "USD",
+        "billingDuration": "P1M"
+      }
+    ]
+  }
+}
+```
+
+`priceSpecification` is a single object when there's only a recurring charge and no trial, or an array when a trial period is also present.
+
+<Note>
+  Sign-up fee and total subscription length have no official Schema.org property to map to, so they're deliberately not emitted rather than inventing non-standard ones.
+</Note>
+
+## Reviews and ratings
+
+`review` and `aggregateRating` are only included when the product has actual reviews. Per Google's structured data guidelines, these properties must not be present with empty or placeholder values:
+
+```json
+{
+  "review": {
+    "@type": "Review",
+    "reviewRating": {
+      "@type": "Rating",
+      "ratingValue": "4.5",
+      "bestRating": "5",
+      "worstRating": "1"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "Reviewer Name"
+    }
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.5",
+    "reviewCount": "100"
+  }
+}
+```
+
+### Provider schema extensions
+
+Some SEO plugins contribute additional Schema.org-valid data (for example, enhanced review markup). This is merged directly into `schema` as standard Schema.org properties, rather than nested under a separate non-standard key — keeping the JSON-LD output strictly Schema.org-compliant.
+
+For example, when Yoast SEO has product reviews, `review` is populated directly:
+
+```json
+{
+  "review": [
+    {
+      "@type": "Review",
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": "5",
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Reviewer Name"
+      },
+      "reviewBody": "...",
+      "datePublished": "2024-01-01T00:00:00+00:00"
+    }
+  ]
+}
+```
+
+## Provider SEO metadata
+
+Data that's specific to an SEO plugin but isn't valid Schema.org vocabulary (focus keywords, content analysis scores, primary category, and similar) is returned separately in `meta_data.seo_extensions`, alongside `schema` rather than inside it:
+
+```json
+{
+  "provider": "rankmath",
+  "meta_data": {
+    "seo_extensions": {
+      "primary_category": "Software",
+      "focus_keywords": "headless commerce"
+    }
+  },
+  "schema": {
+    "@context": "https://schema.org/",
+    "@type": "Product"
+  }
+}
+```
+
+The active provider is already identified by the top-level `provider` field, so `seo_extensions` isn't nested under another provider key.
+
+```php
+// Standard data (always available).
+$product_name  = $schema['name'];
+$product_price = $schema['offers']['price'];
+
+// Plugin-specific SEO metadata (may not be available).
+$focus_keywords = $meta_data['seo_extensions']['focus_keywords'] ?? null;
+```
+
+## Best practices
+
+1. Use the standard schema properties first — they contain all essential product information regardless of which SEO plugin is active.
+2. Always check `meta_data['seo_extensions']` exists before reading from it — it's only present when the active provider supplies plugin-specific metadata.

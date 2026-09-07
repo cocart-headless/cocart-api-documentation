@@ -1,0 +1,61 @@
+---
+title: "How CoCart AI Works"
+sidebarTitle: "How it Works"
+description: "A conceptual walkthrough of agent tokens, the approval flow, and checkout interception in CoCart AI's current internal build."
+robots: "noindex, follow"
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: September 7th, 2026.
+</Info>
+
+<Warning>
+  This walkthrough describes the internal build of CoCart AI (currently versioned `1.0.0`) as it exists today, during development and review. Endpoint paths, field names, and behavior may all change before public release. Nothing here is a committed API contract — if you're building against it, [talk to support](mailto:support@cocartapi.com) first.
+</Warning>
+
+This section walks through the moving parts behind [CoCart AI](/ai-agents): how an agent gets a token, what happens at checkout, how the approval flow protects the customer, and how a store admin can review activity.
+
+## Sections
+
+<CardGroup cols={2}>
+  <Card title="Agent Discovery" icon="compass" href="/ai-agents/how-it-works/agent-discovery">
+    The public manifest endpoint agents use to discover what a store supports.
+  </Card>
+  <Card title="Registering an Agent" icon="clipboard-list" href="/ai-agents/how-it-works/registering-an-agent">
+    How a store admin registers an agent before any customer can issue it a token.
+  </Card>
+  <Card title="Issuing a Token" icon="key" href="/ai-agents/how-it-works/issuing-a-token">
+    How a customer — or, in approval_only mode, a guest — issues a scoped agent token.
+  </Card>
+  <Card title="Checkout Interception" icon="shield-halved" href="/ai-agents/how-it-works/checkout-interception">
+    How CoCart AI intercepts checkout to enforce scope, spend limits, and approval.
+  </Card>
+  <Card title="The Approval Flow" icon="envelope-circle-check" href="/ai-agents/how-it-works/approval-flow">
+    How a customer approves or rejects a pending agent order by email.
+  </Card>
+  <Card title="Spend Tracking" icon="gauge-high" href="/ai-agents/how-it-works/spend-tracking">
+    How CoCart AI tracks and enforces a token's spend limit.
+  </Card>
+  <Card title="Applying a Gift Card" icon="gift" href="/ai-agents/how-it-works/applying-a-gift-card">
+    How an agent applies a gift card code to the cart on a customer's behalf.
+  </Card>
+  <Card title="Webhooks" icon="tower-broadcast" href="/ai-agents/how-it-works/webhooks">
+    Outbound webhook events CoCart AI fires for agent and integration consumers.
+  </Card>
+  <Card title="Token Scopes" icon="list-check" href="/ai-agents/how-it-works/token-scopes">
+    The scopes available for an agent token, and what each one grants.
+  </Card>
+  <Card title="Error Responses" icon="triangle-exclamation" href="/ai-agents/how-it-works/error-responses">
+    The full CoCart AI REST API error code reference.
+  </Card>
+  <Card title="Admin" icon="table-columns" href="/ai-agents/how-it-works/admin">
+    The Agents, Tokens, Pending Orders, and Settings screens store admins use.
+  </Card>
+  <Card title="Extensibility" icon="puzzle-piece" href="/ai-agents/how-it-works/extensibility">
+    Filters, actions, and other extension points for customizing CoCart AI.
+  </Card>
+</CardGroup>
+
+<Card title="Questions? →" icon="circle-question" href="/ai-agents/how-it-works/questions">
+  Where to go next, or how to get in touch about CoCart AI.
+</Card>

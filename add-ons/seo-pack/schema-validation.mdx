@@ -1,0 +1,137 @@
+---
+title: "Schema Validation"
+sidebarTitle: "Schema Validation"
+description: "How CoCart SEO Pack validates structured data against Schema.org specifications during development."
+robots: "noindex, follow"
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: September 7th, 2026.
+</Info>
+
+CoCart SEO Pack includes automatic schema validation to help catch structured data that doesn't meet Schema.org specifications.
+
+## How it works
+
+Validation runs automatically when `WP_DEBUG` is enabled (the default behavior), or when the `cocart_rest_seo_validate_schema` filter returns `true`. Results are logged to the debug log when `WP_DEBUG_LOG` is enabled.
+
+### Enabling or disabling validation
+
+```php
+// Enable in production.
+add_filter( 'cocart_rest_seo_validate_schema', '__return_true' );
+
+// Disable in development.
+add_filter( 'cocart_rest_seo_validate_schema', '__return_false' );
+
+// Conditional — only validate specific products.
+add_filter( 'cocart_rest_seo_validate_schema', function( $validate, $post_id ) {
+    return in_array( $post_id, array( 123, 456, 789 ) );
+}, 10, 2 );
+```
+
+## What gets validated
+
+| Area | Checks |
+|---|---|
+| Required fields | `@context` is a valid Schema.org URL; `@type` is a recognized Schema.org type; `name` is not empty. |
+| Product fields | `sku` under 100 characters; `gtin` is 8–14 digits; `isbn` is valid ISBN-10 or ISBN-13. |
+| Offers | `@type` must be `Offer` or `AggregateOffer` — `Subscription` is rejected as an error, since it isn't an official Schema.org type (see [Schema Standardization](/add-ons/seo-pack/schema-standardization#subscriptions)); `price` is numeric and non-negative; `priceCurrency` is a 3-letter ISO 4217 code; `availability` is a valid Schema.org URL; `url` is a valid URL. |
+| Aggregate offers | `lowPrice` is numeric; `highPrice` is numeric and greater than `lowPrice`. |
+| Image | `@type` should be `ImageObject`; `url` is valid; `width`/`height` are positive numbers. |
+| Brand | `@type` should be `Brand`; `name` is not empty. |
+
+Errors indicate critical Schema.org violations and are logged with `error_log()`. Warnings indicate recommendations that don't fail validation but are logged alongside errors.
+
+## Hooking into validation results
+
+```php
+add_action( 'cocart_rest_seo_schema_validated', function( $is_valid, $schema, $validator, $post_id ) {
+    if ( ! $is_valid ) {
+        $errors   = $validator->get_errors();
+        $warnings = $validator->get_warnings();
+
+        foreach ( $errors as $error ) {
+            // Log or handle error.
+        }
+
+        foreach ( $warnings as $warning ) {
+            // Log or handle warning.
+        }
+    }
+}, 10, 4 );
+```
+
+## Manual validation
+
+```php
+use CoCart\SEOPack\REST\Providers\Schema_Validator;
+
+$validator = new Schema_Validator();
+
+$schema = array(
+    '@context' => 'https://schema.org/',
+    '@type'    => 'Product',
+    'name'     => 'Example Product',
+    // ... rest of schema.
+);
+
+$is_valid = $validator->validate( $schema );
+
+if ( ! $is_valid ) {
+    print_r( $validator->get_errors() );
+    print_r( $validator->get_warnings() );
+}
+
+// Get formatted results.
+$results = $validator->get_results();
+/*
+array(
+    'valid'   => false,
+    'summary' => array(
+        'valid'    => false,
+        'errors'   => 2,
+        'warnings' => 3,
+    ),
+    'errors'   => array( ... ),
+    'warnings' => array( ... ),
+)
+*/
+```
+
+## Debugging
+
+Enable debugging in `wp-config.php`:
+
+```php
+define( 'WP_DEBUG', true );
+define( 'WP_DEBUG_LOG', true );
+define( 'WP_DEBUG_DISPLAY', false );
+```
+
+Then check `wp-content/debug.log` for entries like:
+
+```
+CoCart SEO Pack: Schema validation errors for product 123: Required field "name" is missing or empty; Offer price must be numeric
+CoCart SEO Pack: Schema validation warnings for product 123: SKU is longer than recommended (100 characters)
+```
+
+## Common validation errors
+
+| Error | Solution |
+|---|---|
+| `Required field "@context" is missing or empty` / `Required field "name" is missing or empty` | Ensure all required fields are populated in your provider. |
+| `Offer price must be numeric` | Ensure product price is returned as a numeric value, not a string. |
+| `Image URL is not valid` | Verify image URLs are complete and valid. |
+| `GTIN should be 8-14 digits` / `ISBN format may be invalid` | Validate product identifier formats before saving. |
+
+## Performance considerations
+
+Validation only runs when enabled (debug mode by default), and results are cached alongside the schema data itself, so the performance impact in production with validation disabled is negligible. Consider disabling it explicitly for high-traffic sites in production even if `WP_DEBUG` is on.
+
+## External validation tools
+
+After fixing validation errors, cross-check with:
+
+- [Google Rich Results Test](https://search.google.com/test/rich-results)
+- [Schema.org Validator](https://validator.schema.org/)

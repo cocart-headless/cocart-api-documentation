@@ -1,0 +1,140 @@
+---
+title: "Issuing a Token"
+sidebarTitle: "Issuing a Token"
+description: "How a customer, or a guest in approval_only mode, issues a scoped agent token in CoCart AI."
+robots: "noindex, follow"
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: September 7th, 2026.
+</Info>
+
+<Warning>
+  Internal build (`1.0.0`) — not yet public. Endpoint paths and field names may change before release.
+</Warning>
+
+<Tip>
+  See the [How It Works overview](/ai-agents/how-it-works) for all sections, or [CoCart AI](/ai-agents) for the big picture.
+</Tip>
+
+A logged-in customer — never the agent itself — issues a scoped token for a registered agent. The plain token (`act_...`) is returned exactly once; only its SHA-256 hash is stored, so it can never be recovered from the database afterward.
+
+<Note>
+  `POST /wp-json/cocart/ai/v1/agent/token` — requires an authenticated WordPress user, except for guest issuance in `approval_only` mode — see [Guest tokens](#guest-tokens) below.
+</Note>
+
+<ParamField body="agent_id" type="string" required>
+  Must match a registered agent.
+</ParamField>
+<ParamField body="scope" type="string[]" required>
+  Subset of the agent's `allowed_scopes`.
+</ParamField>
+<ParamField body="max_spend" type="number">
+  Maximum spend in `currency`. Omit for no limit.
+</ParamField>
+<ParamField body="currency" type="string">
+  ISO 4217 currency code for `max_spend`. Defaults to the store's currency.
+</ParamField>
+<ParamField body="expires_in" type="integer" default="3600">
+  Seconds until expiry. Maximum 86400 (24 hours).
+</ParamField>
+<ParamField body="requires_approval" type="boolean" default="true">
+  Require approval before checkout.
+</ParamField>
+<ParamField body="approval_threshold" type="number">
+  Only require approval when the order total is at or above this amount.
+</ParamField>
+<ParamField body="checkout_mode" type="string">
+  `payment_token` or `approval_only`.
+</ParamField>
+<ParamField body="wc_payment_token_id" type="integer">
+  Required when `checkout_mode` is `payment_token`. Must belong to the authenticated user.
+</ParamField>
+<ParamField body="identity_email" type="string">
+  Required when the agent has `require_identity_verification: true`. Must match the user's WordPress or WooCommerce billing email.
+</ParamField>
+<ParamField body="guest_email" type="string">
+  Guest issuance only — see [Guest tokens](#guest-tokens) below.
+</ParamField>
+
+<Tabs>
+  <Tab title="Identity verification required">
+    <Steps>
+      <Step title="Token created as pending_identity">
+        The `202 Accepted` response tells the agent to wait: `{ "status": "pending_identity" }`. The plain token is returned now too — it's otherwise unrecoverable — but it's inert for checkout until verified.
+      </Step>
+      <Step title="Verification email sent">
+        A 15-minute signed link goes to the customer's email.
+      </Step>
+      <Step title="Customer clicks the link">
+        `GET /agent/verify-identity/{key}` confirms the request.
+      </Step>
+      <Step title="Token activates">
+        Status flips to `active`, and a `token_activated` webhook fires to the agent.
+        <Check>While pending, the token can still browse, add to cart, and read the checkout session — only `checkout:execute` operations are blocked.</Check>
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="No verification required">
+    <Steps>
+      <Step title="Token created as active">
+        The `201 Created` response returns the plain token immediately — no email round-trip needed.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+<ResponseField name="token" type="string">
+  The plain `act_` token — shown once, never stored.
+</ResponseField>
+<ResponseField name="checkout_mode" type="string">
+  Echoes back `payment_token` or `approval_only` for this token.
+</ResponseField>
+<ResponseField name="payment_method_label" type="string">
+  Resolved at response time (e.g. "Visa ending 4242") and never stored — filtered by gateway integrations.
+</ResponseField>
+<ResponseField name="spent_total" type="number">
+  Running total deducted as orders are approved. Starts at `0`.
+</ResponseField>
+<ResponseField name="expires_at" type="string">
+  ISO 8601 expiry timestamp.
+</ResponseField>
+
+## Guest tokens
+
+`approval_only` mode also accepts unauthenticated (guest) token issuance, since nothing needs to be saved to a WooCommerce payment method:
+
+```json Guest token request
+{
+  "agent_id": "my-shopping-bot",
+  "scope": ["cart:write", "checkout:execute"],
+  "checkout_mode": "approval_only",
+  "guest_email": "shopper@example.com"
+}
+```
+
+<Check>
+  Identity verification is always required for a guest token, regardless of the agent's `require_identity_verification` setting — it's the only thing standing between an agent and spamming an arbitrary stranger's inbox with real approval-request emails.
+</Check>
+
+For a guest token, verification proves something slightly different than for an account holder: there's no WordPress account to match `identity_email` against, so it just confirms the supplied `guest_email` is real and reachable.
+
+A guest token's `user_id` is stored as `NULL`. Attempting to issue a `payment_token`-mode token (or the agent's default) while logged out fails with `401 rest_not_logged_in` — that mode always requires a real account, since WooCommerce's saved payment tokens are inherently user-scoped.
+
+A store can disable guest tokens entirely with the `cocart_agent_allow_guest_tokens` filter (default `true`).
+
+## Token fields at a glance
+
+<Accordion title="What's stored on a token record">
+  | Field | Description |
+  |---|---|
+  | `token_hash` | SHA-256 of the plain token — the plain value is never stored |
+  | `user_id` | WP user ID, or `NULL` for a guest token (`approval_only` mode only) |
+  | `identity_email` | Account holder's supplied email, or the guest's `guest_email` |
+  | `scope` | JSON array of granted scopes |
+  | `max_spend` / `spent_total` | Spend cap and running total deducted, both in `currency` |
+  | `checkout_mode` | `payment_token` or `approval_only` |
+  | `wc_payment_token_id` | Foreign key into WooCommerce's payment tokens table |
+  | `status` | `pending_identity` → `active` → `revoked` / `expired` |
+  | `expires_at` | UTC datetime, or `NULL` for no expiry |
+</Accordion>

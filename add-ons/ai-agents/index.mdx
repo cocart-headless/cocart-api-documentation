@@ -1,0 +1,160 @@
+---
+title: "CoCart AI"
+sidebarTitle: "Overview"
+description: "Let AI agents shop your WooCommerce store safely — scoped tokens, spend limits, and user-approval flows. Currently in development."
+robots: "noindex, follow"
+---
+
+<Info>
+  This page was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: September 7th, 2026.
+</Info>
+
+<Warning>
+  **CoCart AI is still in development and not yet publicly available.** A working internal build (currently versioned `1.0.0`) exists and is documented below, but it hasn't shipped — endpoints, scopes, and response shapes can still change before public release. Nothing on this page should be treated as a stable API. If you're interested in early access or want to shape the direction of this feature, [get in touch with support](mailto:support@cocartapi.com).
+</Warning>
+
+## What is CoCart AI?
+
+CoCart AI is a WooCommerce plugin, currently in development, that lets store owners safely expose their store to AI shopping agents — the customer-facing counterpart to WooCommerce's own MCP server for store admins. Instead of an AI assistant managing products and orders, this is about an AI agent shopping *on a customer's behalf*: browsing the catalog, building a cart, and checking out, all within limits the customer explicitly grants.
+
+It's inspired by patterns like Stripe's Agentic Commerce Suite and Link's agent wallet, adapted to CoCart's existing REST API. It's built as an add-on to [CoCart Plus](https://cocartapi.com) — a hard dependency, since `payment_token` checkout is delegated to CoCart Plus's own checkout engine.
+
+<CardGroup cols={2}>
+  <Card title="Store management" icon="user-tie">
+    Products, orders, and admin tasks — handled by **WooCommerce MCP (native)**, authenticated with a WC API key (`ck_`/`cs_`).
+  </Card>
+  <Card title="Shopper-side" icon="cart-shopping">
+    Cart and checkout on a customer's behalf — handled by **CoCart AI**, authenticated with a scoped agent token (`act_`).
+  </Card>
+</CardGroup>
+
+The two systems are designed to share the same <Tooltip tip="A WordPress 7.0+ standard for registering typed, permission-checked actions AI agents and other tools can call">WordPress Abilities API</Tooltip> infrastructure without overlapping in auth or permissions.
+
+### Requirements
+
+<CardGroup cols={2}>
+  <Card title="WordPress 6.8+" icon="wordpress">
+    Progressively enhances on WordPress 7.0+ to register with the Abilities API and use the WP AI Client for cart summaries.
+  </Card>
+  <Card title="WooCommerce 8.0+" icon="cart-shopping">
+    Standard WooCommerce carts, orders, and saved payment tokens.
+  </Card>
+  <Card title="CoCart Plus" icon="plug" href="https://cocartapi.com">
+    A hard dependency — `payment_token` checkout is delegated to its checkout engine.
+  </Card>
+  <Card title="PHP 7.4+" icon="php">
+    Required by the current internal build.
+  </Card>
+</CardGroup>
+
+## The problem it solves
+
+Letting an AI agent complete a purchase on your behalf raises the obvious question: how much do you trust it? CoCart AI's design centers on answering that with structure rather than blind trust.
+
+<CardGroup cols={2}>
+  <Card title="Scoped tokens" icon="key">
+    An agent only gets the permissions (`cart:write`, `checkout:execute`, etc.) a user explicitly grants.
+  </Card>
+  <Card title="Spend limits" icon="sack-dollar">
+    Every token has a maximum spend, tracked in real time and enforced before checkout.
+  </Card>
+  <Card title="Approval flow" icon="envelope-circle-check">
+    Orders above a threshold pause for explicit user approval via email. The link opens a confirmation page first — nothing is charged until the customer submits it.
+  </Card>
+  <Card title="Identity verification" icon="shield-check">
+    An email confirmation gate before a token can be used at checkout — optional for account holders, always on for guests.
+  </Card>
+</CardGroup>
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Agent tokens" icon="key">
+    Scoped, time-limited `act_` tokens issued by an authenticated user — or, in `approval_only` mode, by an unauthenticated guest — on behalf of an agent. Hashed (SHA-256) in storage, returned once at issuance.
+  </Card>
+  <Card title="Spend limits" icon="gauge-high">
+    Per-token maximum spend with running-total tracking, checked before every checkout attempt.
+  </Card>
+  <Card title="Approval flow" icon="envelope-open-text">
+    A `202 Accepted` with approve/reject links before an order is placed. Clicking a link renders a confirmation page first and executes nothing — protection against email security scanners that pre-fetch links.
+  </Card>
+  <Card title="Identity verification" icon="user-check">
+    Optional email gate before a token activates for account holders; always required for guest tokens, via a short-lived signed link.
+  </Card>
+  <Card title="Two checkout modes" icon="credit-card">
+    `payment_token` (agent charges a saved card on approval, account holders only) or `approval_only` (user completes payment themselves — the only mode that supports guest tokens).
+  </Card>
+  <Card title="AI discoverability" icon="magnifying-glass">
+    A public manifest plus auto-published `/cocart-ai-llms.txt` and `/cocart-ai-skill.md` pages, so any agent can discover a store's shopping capability — and learn how to drive its checkout flow — from the domain name alone.
+  </Card>
+  <Card title="Admin UI" icon="table-columns">
+    Agents, Tokens, Pending Orders, and Settings tabs in CoCart's own admin menu — register agents, issue and revoke tokens, and review (but not approve on the customer's behalf) pending orders.
+  </Card>
+  <Card title="Abilities API / MCP" icon="diagram-project">
+    On WP 7.0+, agent operations register as abilities and surface automatically in the WooCommerce MCP server, plus a Site Health check for connectivity.
+  </Card>
+  <Card title="AI cart summaries" icon="sparkles">
+    Plain-English cart descriptions in approval emails via WP 7.0's AI Client, falling back to a plain table.
+  </Card>
+</CardGroup>
+
+### Integrations
+
+<CardGroup cols={3}>
+  <Card title="Stripe" icon="stripe">
+    Readable payment labels (e.g. "Visa ending 4242") in tokens and approval emails.
+  </Card>
+  <Card title="PayPal" icon="paypal">
+    Billing agreement labels and live status validation before charging.
+  </Card>
+  <Card title="Subscriptions" icon="rotate">
+    A dedicated `subscription:execute` scope gate so subscription orders can't be placed silently.
+  </Card>
+  <Card title="Gift Cards" icon="gift">
+    A `cart:gift_card` scope and a dedicated endpoint for applying gift card codes, surfaced in approval emails.
+  </Card>
+  <Card title="Zapier" icon="bolt">
+    Outbound webhooks for token-activated, order approved/rejected, and payment-failed events.
+  </Card>
+  <Card title="Action Scheduler" icon="clock-rotate-left">
+    Reliable, retried async delivery for all outbound webhooks.
+  </Card>
+</CardGroup>
+
+## How it fits together, conceptually
+
+<Steps>
+  <Step title="Register an agent">
+    A store owner registers an agent — its allowed scopes, checkout mode, and webhook URL — as a one-time setup step.
+  </Step>
+  <Step title="Issue a token">
+    A logged-in customer issues a scoped, spend-limited token for that agent. In `approval_only` mode, an unauthenticated guest can issue one too, by supplying an email. The agent never creates its own tokens.
+  </Step>
+  <Step title="Agent shops">
+    The agent uses the token to browse and build a cart via CoCart's existing endpoints, within its granted scopes.
+  </Step>
+  <Step title="Checkout is intercepted">
+    CoCart AI checks scope and spend limits. If the order needs approval, it pauses with a `202 Accepted` instead of placing it.
+    <Check>Nothing is charged until every check passes.</Check>
+  </Step>
+  <Step title="Customer approves or rejects">
+    The customer opens a confirmation page from the email and submits it; only then does an order actually get created (or, in `payment_token` mode, paid).
+  </Step>
+</Steps>
+
+<Card title="How It Works →" icon="diagram-project" href="/ai-agents/how-it-works">
+  See the full walkthrough — token lifecycle, checkout interception, and the approval flow — grounded in the current internal build.
+</Card>
+
+## Interested?
+
+Since this is still under review, there's no installation step or public changelog yet.
+
+<CardGroup cols={2}>
+  <Card title="Contact support" icon="envelope" href="mailto:support@cocartapi.com">
+    Ask about early access, request a scope or checkout mode, or share feedback on the design.
+  </Card>
+  <Card title="Read the FAQ" icon="circle-question" href="/api-reference/faq">
+    Check whether your question about CoCart's roadmap is already answered.
+  </Card>
+</CardGroup>

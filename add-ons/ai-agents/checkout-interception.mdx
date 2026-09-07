@@ -1,0 +1,78 @@
+---
+title: "Checkout Interception"
+sidebarTitle: "Checkout Interception"
+description: "How CoCart AI intercepts checkout to enforce token scope, spend limits, and the approval flow."
+robots: "noindex, follow"
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: September 7th, 2026.
+</Info>
+
+<Warning>
+  Internal build (`1.0.0`) — not yet public. Endpoint paths and field names may change before release.
+</Warning>
+
+<Tip>
+  See the [How It Works overview](/ai-agents/how-it-works) for all sections, or [CoCart AI](/ai-agents) for the big picture.
+</Tip>
+
+The agent shops using CoCart's normal cart endpoints with `Authorization: Bearer act_...`. The interesting part happens at checkout — CoCart AI intercepts `POST /cocart/v2/checkout` before CoCart's own logic runs.
+
+<Steps>
+  <Step title="Token is valid">
+    Active, not expired, not revoked. <Badge color="red">401 invalid_agent_token</Badge> otherwise.
+  </Step>
+  <Step title="Not pending identity">
+    <Badge color="red">403 agent_token_pending_identity</Badge> if the customer hasn't verified yet. This gate applies to any `checkout:execute`-scoped route — placing an order, mutating the checkout session, or paying an existing unpaid order via `POST /order-received/{id}/pay` — not just this one endpoint.
+  </Step>
+  <Step title="Has checkout:execute scope">
+    <Badge color="red">403 insufficient_scope</Badge> otherwise.
+  </Step>
+  <Step title="Passes extension scope gates">
+    E.g. `subscription:execute` when the cart contains a subscription product, via the `cocart_agent_checkout_scope_check` filter.
+  </Step>
+  <Step title="Stays within max_spend">
+    <Badge color="red">402 spend_limit_exceeded</Badge> if the order would exceed the token's remaining limit (`max_spend - spent_total`).
+  </Step>
+  <Step title="Payment token still valid (payment_token mode)">
+    <Badge color="red">422 invalid_payment_token</Badge> if the saved payment method fails re-validation.
+  </Step>
+  <Step title="Decide: approval needed?">
+    <Tabs>
+      <Tab title="Total ≥ approval_threshold">
+        Cart snapshot saved, pending order created (1-hour expiry), approval email sent.
+        <Check>Returns `202 Accepted` — nothing is placed yet.</Check>
+      </Tab>
+      <Tab title="Below threshold">
+        Checkout proceeds immediately via CoCart Plus's checkout engine.
+        <Check>Returns `200 OK` with order details — or `requires_action` if the gateway needs further customer action. See [The approval flow](/ai-agents/how-it-works/approval-flow) for what that response shape looks like.</Check>
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>
+
+Any failed check returns immediately with a specific error — an expired token, insufficient scope, or a spend limit that would be exceeded never reaches the point of creating a pending order.
+
+## Shipping method
+
+If the cart needs shipping, you may include a `shipping_method` field (a rate ID) directly in the body of your `POST /cocart/v2/checkout` request — discover available rate IDs beforehand with `GET /cocart/v2/checkout` (only needs `checkout:read`). If you don't specify one, the cheapest available rate is selected automatically.
+
+**202 response:**
+```json
+{
+  "status": "pending_approval",
+  "message": "This order requires your approval before it is placed.",
+  "approval_key": "appr_xxxxxxxxxxxx",
+  "order_summary": {
+    "items": [],
+    "total": "49.99",
+    "currency": "GBP",
+    "payment_method": "Visa ending 4242",
+    "checkout_mode": "payment_token"
+  },
+  "approve_url": "https://my-store.com/wp-json/cocart/ai/v1/agent/approve/appr_xxx",
+  "reject_url": "https://my-store.com/wp-json/cocart/ai/v1/agent/reject/appr_xxx",
+  "expires_at": "2026-05-20T15:00:00Z"
+}
+```

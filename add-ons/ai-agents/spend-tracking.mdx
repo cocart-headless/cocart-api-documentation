@@ -1,0 +1,28 @@
+---
+title: "Spend Tracking"
+sidebarTitle: "Spend Tracking"
+description: "How CoCart AI tracks and enforces an agent token's spend limit."
+robots: "noindex, follow"
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: September 7th, 2026.
+</Info>
+
+<Warning>
+  Internal build (`1.0.0`) — not yet public. Endpoint paths and field names may change before release.
+</Warning>
+
+<Tip>
+  See the [How It Works overview](/ai-agents/how-it-works) for all sections, or [CoCart AI](/ai-agents) for the big picture.
+</Tip>
+
+Every approved order deducts its total from the token's running `spent_total` — in the same database transaction as order creation (`payment_token` mode) or at the point the redirect is generated (`approval_only` mode).
+
+<Check>
+  If a pending order would push spending past `max_spend`, checkout is blocked with a spend-limit error **before** any approval email goes out — a customer never gets asked to approve something already destined to fail on spend grounds.
+</Check>
+
+<Note>
+  `max_spend` is denominated in the `currency` set at token issuance. CoCart AI does not perform currency conversion when checking spend limits, so multi-currency stores should keep that in mind.
+</Note>

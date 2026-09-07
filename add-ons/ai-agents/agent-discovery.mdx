@@ -1,0 +1,119 @@
+---
+title: "Agent Discovery"
+sidebarTitle: "Agent Discovery"
+description: "The public manifest endpoint AI agents use to discover what a CoCart AI store supports."
+robots: "noindex, follow"
+---
+
+<Info>
+  This reference was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: September 7th, 2026.
+</Info>
+
+<Warning>
+  Internal build (`1.0.0`) — not yet public. Endpoint paths and field names may change before release.
+</Warning>
+
+<Tip>
+  See the [How It Works overview](/ai-agents/how-it-works) for all sections, or [CoCart AI](/ai-agents) for the big picture.
+</Tip>
+
+Everything starts with a manifest — a public, unauthenticated endpoint an agent can fetch to learn what a store supports.
+
+<Note>
+  `GET /wp-json/cocart/ai/v1/agent/manifest` — public, no authentication required.
+</Note>
+
+```json Manifest response
+{
+  "store": "My Store",
+  "url": "https://my-store.com",
+  "currency": "GBP",
+  "currency_symbol": "£",
+  "capabilities": {
+    "catalog": true,
+    "cart": true,
+    "checkout": true,
+    "agent_tokens": true
+  },
+  "endpoints": {
+    "products": "/wp-json/cocart/v2/products",
+    "add_to_cart": "/wp-json/cocart/v2/cart/add-item",
+    "cart": "/wp-json/cocart/v2/cart",
+    "checkout": "/wp-json/cocart/v2/checkout",
+    "token_issue": "/wp-json/cocart/ai/v1/agent/token",
+    "approve": "/wp-json/cocart/ai/v1/agent/approve/{key}",
+    "reject": "/wp-json/cocart/ai/v1/agent/reject/{key}"
+  },
+  "token_scopes_available": ["cart:read", "cart:write", "checkout:read", "checkout:execute"],
+  "spend_limits_supported": true,
+  "approval_flow_supported": true,
+  "llms_txt": "https://my-store.com/cocart-ai-llms.txt",
+  "skill_md_url": "https://my-store.com/cocart-ai-skill.md"
+}
+```
+
+<Note>
+  The manifest response is cached for 5 minutes and invalidated whenever a new agent is registered, so a manifest-affecting change made elsewhere may take up to 5 minutes to appear.
+</Note>
+
+On WordPress 7.0+ with the Abilities API active, the response also includes:
+
+```json WordPress 7.0+ additions
+{
+  "abilities_api": "/wp-json/wp-abilities/v1/abilities?category=cocart-agent",
+  "mcp_tools": [
+    {
+      "name": "cocart-agent__browse-catalog",
+      "description": "Search and list products available in the store.",
+      "inputSchema": { "type": "object", "properties": {} }
+    }
+  ]
+}
+```
+
+<ResponseField name="capabilities" type="object">
+  Which store features are enabled.
+  <Expandable title="capabilities properties">
+    <ResponseField name="catalog" type="boolean">Whether product browsing is available.</ResponseField>
+    <ResponseField name="cart" type="boolean">Whether cart operations are available.</ResponseField>
+    <ResponseField name="checkout" type="boolean">Whether checkout is available.</ResponseField>
+    <ResponseField name="agent_tokens" type="boolean">Whether this store issues agent tokens at all.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="token_scopes_available" type="string[]">
+  The full set of scopes a customer can grant when issuing a token. See [Token scopes](/ai-agents/how-it-works/token-scopes).
+</ResponseField>
+
+<ResponseField name="llms_txt" type="string">
+  URL of the store's auto-published `/cocart-ai-llms.txt`. Omitted if that page's Settings-tab toggle is off.
+</ResponseField>
+
+<ResponseField name="skill_md_url" type="string">
+  URL of the store's auto-published `/cocart-ai-skill.md`. Omitted if that page's Settings-tab toggle is off.
+</ResponseField>
+
+<ResponseField name="mcp_tools" type="array">
+  Only present on WordPress 7.0+ with the <Tooltip tip="A WordPress 7.0+ standard for registering typed, permission-checked actions AI agents and other tools can call">Abilities API</Tooltip> active — the <Tooltip tip="Model Context Protocol — a standard way for AI clients like Claude to discover and call tools">MCP</Tooltip> tool definitions an agent can call directly, reachable from Claude Code, Claude Desktop, or any MCP-connected client.
+</ResponseField>
+
+Capabilities and available scopes are extensible via filters — see [Extensibility](/ai-agents/how-it-works/extensibility).
+
+## Virtual discovery pages
+
+Besides the manifest, two namespaced, always-virtual pages are published at the site root (no `/wp-json/` prefix), so an agent that only knows your domain — not the REST namespace — can still find its way in:
+
+<CardGroup cols={2}>
+  <Card title="/cocart-ai-llms.txt" icon="file-lines">
+    Plain text. Points at the manifest URL (and the SKILL.md URL, if that's also enabled).
+  </Card>
+  <Card title="/cocart-ai-skill.md" icon="file-lines">
+    Markdown with YAML frontmatter, in the spirit of Stripe's `link-cli` SKILL.md — instructs a *live* AI shopping agent how to actually drive this store's token, checkout, and approval flow, not just what the store supports.
+  </Card>
+</CardGroup>
+
+<Note>
+  Both are namespaced (`cocart-ai-*`) rather than the generic `/llms.txt` convention, so they can never collide with a physical file or another plugin/theme's own virtual route on the same site. Each can be turned off independently from the Settings tab (both default on) — see [Admin](/ai-agents/how-it-works/admin).
+</Note>
+
+Both files' content is filterable — `cocart_agent_llms_txt` and `cocart_agent_skill_md` respectively — see [Extensibility](/ai-agents/how-it-works/extensibility).

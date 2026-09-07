@@ -1,0 +1,237 @@
+---
+title: "Extending Product Types"
+sidebarTitle: "Extending Product Types"
+description: "Add Schema.org support for a custom or third-party WooCommerce product type in CoCart SEO Pack."
+robots: "noindex, follow"
+---
+
+<Info>
+  This guide was written by [Claude Code (an AI)](https://claude.com/product/claude-code). Last updated: September 7th, 2026.
+</Info>
+
+CoCart SEO Pack uses a modular extension system to add Schema.org support for different WooCommerce product types. Each product type (variable, grouped, subscription, bundle, and so on) has its own extension class that adds type-specific schema data.
+
+## Architecture
+
+The extension system consists of four components:
+
+1. **Interface** (`Product_Type_Extension_Interface`) — defines the contract for extensions.
+2. **Base Class** (`Product_Type_Extension_Base`) — provides common functionality.
+3. **Concrete Extensions** — individual classes for each product type.
+4. **Registry** (`Extension_Registry`) — manages and applies all extensions.
+
+### Built-in extensions
+
+**Core WooCommerce**
+- `Variable_Extension` — variable products with variations
+- `Grouped_Extension` — grouped products with child products
+
+**WooCommerce extensions**
+- `Subscriptions_Extension` — WooCommerce Subscriptions and Milo Subscriptions, covering both the `subscription` and `variable-subscription` product types
+- `Bundles_Extension` — WooCommerce Product Bundles
+- `Composite_Extension` — WooCommerce Composite Products
+- `Bookings_Extension` — WooCommerce Bookings
+
+## Creating a custom extension
+
+### Step 1: Create the extension class
+
+```php
+<?php
+namespace CoCart\SEOPack\REST\Extensions;
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+class My_Custom_Extension extends Product_Type_Extension_Base {
+
+    /**
+     * Get the product types this extension supports.
+     *
+     * @return array Product type slugs.
+     */
+    public function get_supported_types() {
+        return array( 'my_custom_type' );
+    }
+
+    /**
+     * Check if the extension's plugin is available.
+     *
+     * @return bool
+     */
+    public function is_available() {
+        return class_exists( 'WC_Product_My_Custom_Type' );
+    }
+
+    /**
+     * Add custom schema data.
+     *
+     * @param array       $schema  Existing schema data.
+     * @param \WC_Product $product Product object.
+     * @return array Modified schema data.
+     */
+    protected function add_type_specific_schema( $schema, $product ) {
+        $schema['customProperty'] = $this->get_product_property(
+            $product,
+            'get_custom_field',
+            'default_value'
+        );
+
+        return $schema;
+    }
+}
+```
+
+### Step 2: Register the extension
+
+```php
+add_action( 'rest_api_init', function() {
+    \CoCart\SEOPack\REST\Extensions\Extension_Registry::instance()->register(
+        new \CoCart\SEOPack\REST\Extensions\My_Custom_Extension()
+    );
+}, 5 ); // Priority 5, to run after the registry is initialized.
+```
+
+## Helper methods
+
+`Product_Type_Extension_Base` provides:
+
+### `get_product_property()`
+
+Safely get a property from a product object:
+
+```php
+$value = $this->get_product_property(
+    $product,
+    'get_custom_field', // Method name.
+    'default'           // Default value if the method doesn't exist.
+);
+```
+
+### `is_supported_type()`
+
+Check if a product matches the supported types:
+
+```php
+if ( $this->is_supported_type( $product ) ) {
+    // Add schema data.
+}
+```
+
+## Registry methods
+
+```php
+// Register a new extension.
+Extension_Registry::instance()->register( $extension );
+
+// Remove an extension.
+Extension_Registry::instance()->unregister( 'Fully\\Qualified\\Class\\Name' );
+
+// Get all registered extensions.
+$extensions = Extension_Registry::instance()->get_extensions();
+
+// Get extensions for a specific product type.
+$extensions = Extension_Registry::instance()->get_extensions_for_type( 'variable' );
+```
+
+## Filtering schema data directly
+
+You can also modify schema for a product type without registering a full extension, using the `cocart_rest_seo_product_type_schema` filter:
+
+```php
+add_filter( 'cocart_rest_seo_product_type_schema', function( $schema, $product ) {
+    if ( $product->is_type( 'my_custom_type' ) ) {
+        $schema['customField'] = 'custom value';
+    }
+    return $schema;
+}, 10, 2 );
+```
+
+## Schema.org best practices
+
+When adding schema data, follow the [Schema.org Product](https://schema.org/Product) specification:
+
+**Common properties** — `@type`, `name`, `sku`, `offers`, `description`
+
+**Relationships** — `hasPart` (product contains other products, e.g. bundles), `isPartOf` (product is part of a collection, e.g. grouped), `hasVariant` (product has variations, e.g. variable)
+
+```json
+{
+  "@type": "Product",
+  "name": "My Product",
+  "sku": "PROD-123",
+  "offers": {
+    "@type": "Offer",
+    "price": "29.99",
+    "priceCurrency": "USD",
+    "availability": "https://schema.org/InStock"
+  },
+  "customProperty": "custom value"
+}
+```
+
+## Example: memberships extension
+
+```php
+<?php
+namespace CoCart\SEOPack\REST\Extensions;
+
+class Memberships_Extension extends Product_Type_Extension_Base {
+
+    public function get_supported_types() {
+        return array( 'membership' );
+    }
+
+    public function is_available() {
+        return class_exists( 'WC_Memberships' );
+    }
+
+    protected function add_type_specific_schema( $schema, $product ) {
+        if ( ! isset( $schema['offers'] ) ) {
+            $schema['offers'] = array();
+        }
+
+        $schema['offers']['@type'] = 'Membership';
+
+        $access_length = $this->get_product_property( $product, 'get_access_length' );
+        $access_period = $this->get_product_property( $product, 'get_access_period' );
+
+        if ( $access_length && $access_period ) {
+            $schema['membershipDuration'] = array(
+                '@type' => 'Duration',
+                'value' => $access_length,
+                'unit'  => $access_period,
+            );
+        }
+
+        return $schema;
+    }
+}
+```
+
+## Testing your extension
+
+1. Ensure the required plugin is active.
+2. Create a product of the custom type.
+3. Query the SEO endpoint: `/wp-json/cocart/v2/products/{id}/seo`.
+4. Verify your custom schema properties appear in the response.
+
+<Note>
+  If your schema properties don't appear, confirm `is_available()` returns `true`, that `get_supported_types()` includes your product type, and that the extension is registered before `rest_api_init` priority 10.
+</Note>
+
+## File locations
+
+| Purpose | Location |
+|---|---|
+| Extensions | `includes/classes/rest-api/extensions/` |
+| Interface | `includes/classes/rest-api/extensions/interface-cocart-product-type-extension.php` |
+| Base class | `includes/classes/rest-api/extensions/abstract-cocart-product-type-extension.php` |
+| Registry | `includes/classes/rest-api/extensions/class-cocart-extension-registry.php` |
+
+## Further reading
+
+- [Schema.org Product documentation](https://schema.org/Product)
+- [Google Merchant Center structured data](https://developers.google.com/search/docs/data-types/product)
+- [WooCommerce product types](https://woocommerce.com/document/managing-products/)
