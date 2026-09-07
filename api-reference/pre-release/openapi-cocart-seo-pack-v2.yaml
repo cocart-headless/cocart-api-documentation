@@ -1,0 +1,1137 @@
+openapi: 3.0.3
+info:
+  title: CoCart SEO Pack - API v2
+  version: 1.0.0-beta.2
+  description: |
+    CoCart SEO Pack extends the CoCart REST API v2 with SEO metadata and Schema.org
+    structured data for products, sourced from your active SEO plugin.
+
+    The active SEO provider is auto-detected in this order (last active wins):
+    Rank Math, SEOPress, The SEO Framework, All in One SEO, Yoast SEO, falling back
+    to a built-in provider that reads WordPress core meta and product data when no
+    supported SEO plugin is active.
+
+    Both endpoints return the same response shape and accept the same parameters -
+    one resolves the product by numeric ID, the other by slug (slugs containing only
+    digits are routed to the by-ID endpoint instead).
+
+    Use the standard `_fields` parameter to limit the response to `provider`,
+    `meta_data`, and/or `schema`.
+
+    These endpoints are public and do not require authentication.
+
+    The `schema` field is extended based on the product's type. Supported types:
+    - **Simple** and **downloadable/virtual** products (core WooCommerce)
+    - **Variable** products, including their variations (core WooCommerce)
+    - **Grouped** products, including their child products (core WooCommerce)
+    - **Subscription** and **variable subscription** products (WooCommerce Subscriptions or Milo Subscriptions)
+    - **Bookable** products (WooCommerce Bookings)
+    - **Bundle** products (WooCommerce Product Bundles)
+    - **Composite** products (WooCommerce Composite Products)
+
+    Requires CoCart Starter v5.0+ to be installed and active.
+  termsOfService: https://cocartapi.com/terms-of-conditions-polar/
+  contact:
+    email: support@cocartapi.com
+  license:
+    name: GNU General Public License v3.0
+    url: http://www.gnu.org/licenses/gpl-3.0.html
+externalDocs:
+  description: Find out more about CoCart API
+  url: https://docs.cocartapi.com
+servers:
+- url: '{protocol}://{host}/wp-json/cocart/v2'
+  description: API v2
+  variables:
+    protocol:
+      enum:
+      - http
+      - https
+      default: https
+    host:
+      default: example-store.com
+      description: Your store domain
+tags:
+- name: products
+  description: SEO metadata and structured data endpoints for products
+paths:
+  /products/{id}/seo:
+    get:
+      tags:
+      - products
+      summary: Get product SEO data by ID
+      description: |
+        Returns SEO meta data and Schema.org structured data for a single product,
+        identified by its numeric product ID.
+      parameters:
+      - name: id
+        in: path
+        description: Unique identifier for the product.
+        required: true
+        schema:
+          type: string
+      - name: _fields
+        in: query
+        description: Limit response to a comma-separated list of fields (`provider`, `meta_data`, `schema`).
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: SEO data retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SEOData'
+              examples:
+                Simple product:
+                  $ref: '#/components/examples/SimpleProduct'
+                Variable product:
+                  $ref: '#/components/examples/VariableProduct'
+                Grouped product:
+                  $ref: '#/components/examples/GroupedProduct'
+                Downloadable product:
+                  $ref: '#/components/examples/DownloadableProduct'
+                Subscription product:
+                  $ref: '#/components/examples/SubscriptionProduct'
+                Booking product:
+                  $ref: '#/components/examples/BookingProduct'
+                Bundle product:
+                  $ref: '#/components/examples/BundleProduct'
+                Composite product:
+                  $ref: '#/components/examples/CompositeProduct'
+        '404':
+          description: Not found - the product ID is invalid, unpublished, or password protected without permission.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_product_invalid_id
+                message: Invalid ID.
+                data:
+                  status: 404
+  /products/{slug}/seo:
+    get:
+      tags:
+      - products
+      summary: Get product SEO data by slug
+      description: |
+        Returns SEO meta data and Schema.org structured data for a single product,
+        identified by its slug. Slugs consisting only of digits are matched by the
+        by-ID endpoint instead.
+      parameters:
+      - name: slug
+        in: path
+        description: Slug of the product.
+        required: true
+        schema:
+          type: string
+      - name: _fields
+        in: query
+        description: Limit response to a comma-separated list of fields (`provider`, `meta_data`, `schema`).
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: SEO data retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SEOData'
+              examples:
+                Simple product:
+                  $ref: '#/components/examples/SimpleProduct'
+                Variable product:
+                  $ref: '#/components/examples/VariableProduct'
+                Grouped product:
+                  $ref: '#/components/examples/GroupedProduct'
+                Downloadable product:
+                  $ref: '#/components/examples/DownloadableProduct'
+                Subscription product:
+                  $ref: '#/components/examples/SubscriptionProduct'
+                Booking product:
+                  $ref: '#/components/examples/BookingProduct'
+                Bundle product:
+                  $ref: '#/components/examples/BundleProduct'
+                Composite product:
+                  $ref: '#/components/examples/CompositeProduct'
+        '404':
+          description: Not found - no product or variation matches the slug, or it is password protected without permission.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: cocart_product_invalid_slug
+                message: Invalid product slug.
+                data:
+                  status: 404
+components:
+  schemas:
+    SEOData:
+      type: object
+      description: SEO meta information for the product.
+      properties:
+        provider:
+          type: string
+          description: The active SEO provider that generated this data.
+          enum:
+          - default
+          - yoast
+          - aioseo
+          - tsf
+          - rankmath
+          - seopress
+          readOnly: true
+        meta_data:
+          allOf:
+          - $ref: '#/components/schemas/SEOMetaData'
+          readOnly: true
+        schema:
+          allOf:
+          - $ref: '#/components/schemas/ProductSchema'
+          readOnly: true
+    SEOMetaData:
+      type: object
+      description: |
+        SEO meta data for the product. Values fall back to WordPress core meta and
+        product data (name, short description, featured image) when the SEO plugin
+        has no value set.
+      properties:
+        meta_title:
+          type: string
+          description: SEO meta title. Falls back to the product name.
+        meta_description:
+          type: string
+          description: SEO meta description. Falls back to the short description, then the trimmed full description.
+        meta_keywords:
+          type: string
+          description: SEO meta keywords.
+        opengraph:
+          $ref: '#/components/schemas/OpenGraphData'
+        twitter:
+          $ref: '#/components/schemas/TwitterData'
+        canonical_url:
+          type: string
+          format: uri
+          description: Canonical URL for the product. Falls back to the product permalink.
+        robots:
+          $ref: '#/components/schemas/RobotsData'
+        seo_extensions:
+          type: object
+          description: |
+            Provider-specific SEO metadata not part of Schema.org structured data
+            (e.g. focus keyphrase, readability/content analysis). Shape varies by
+            active provider and is only present when the provider exposes it.
+          additionalProperties: true
+    OpenGraphData:
+      type: object
+      description: OpenGraph meta data.
+      properties:
+        title:
+          type: string
+          description: OpenGraph title. Falls back to the product name.
+        description:
+          type: string
+          description: OpenGraph description. Falls back to the product description.
+        image:
+          type: string
+          description: OpenGraph image URL. Falls back to the product featured image.
+        type:
+          type: string
+          description: OpenGraph type.
+          example: product
+    TwitterData:
+      type: object
+      description: Twitter Card meta data.
+      properties:
+        title:
+          type: string
+          description: Twitter title. Falls back to the product name.
+        description:
+          type: string
+          description: Twitter description. Falls back to the product description.
+        image:
+          type: string
+          description: Twitter image URL. Falls back to the product featured image.
+        card:
+          type: string
+          description: Twitter card type.
+          example: summary_large_image
+    RobotsData:
+      type: object
+      description: Robots meta directives.
+      properties:
+        index:
+          type: boolean
+          description: Whether the product should be indexed.
+        follow:
+          type: boolean
+          description: Whether links on the product page should be followed.
+        advanced:
+          type: array
+          description: Additional advanced robots directives (e.g. `noimageindex`, `noarchive`), when set by the SEO plugin.
+          items:
+            type: string
+    ProductSchema:
+      type: object
+      description: |
+        Schema.org JSON-LD structured data for the product, standardized across
+        providers and extended based on the product's type. Validated against
+        Schema.org vocabulary when `WP_DEBUG` is enabled.
+      properties:
+        '@context':
+          type: string
+          example: https://schema.org/
+        '@type':
+          type: string
+          description: |
+            Schema.org type. `Product` by default, `DigitalDocument` for downloadable
+            products, or `Service` for bookable products.
+          example: Product
+        name:
+          type: string
+          description: Product name.
+        description:
+          type: string
+          description: Plain-text product description.
+        brand:
+          type: object
+          description: Brand of the product. Uses the product brand taxonomy term when available, otherwise the site name.
+          properties:
+            '@type':
+              type: string
+              example: Brand
+            name:
+              type: string
+        offers:
+          description: |
+            Offer(s) for the product:
+            - A single Offer for simple, downloadable, bookable, and subscription products.
+            - An array of Offer objects when the `cocart_rest_seo_product_offers`
+              filter returns more than one (e.g. licence tiers, subscription plans).
+            - An AggregateOffer for variable products, summarizing the price range
+              across all variations.
+          oneOf:
+          - $ref: '#/components/schemas/ProductOffer'
+          - type: array
+            items:
+              $ref: '#/components/schemas/ProductOffer'
+          - $ref: '#/components/schemas/AggregateOffer'
+        sku:
+          type: string
+          description: Product SKU.
+        gtin:
+          type: string
+          description: Global Trade Item Number, from product meta `_gtin`, when set.
+        mpn:
+          type: string
+          description: Manufacturer Part Number, from product meta `_mpn`, when set.
+        isbn:
+          type: string
+          description: ISBN, from product meta `_isbn`, when set.
+        category:
+          type: string
+          description: Comma-separated product category names.
+        image:
+          type: object
+          description: Featured image, empty object if the product has none.
+          properties:
+            '@type':
+              type: string
+              example: ImageObject
+            url:
+              type: string
+              format: uri
+            width:
+              type: integer
+            height:
+              type: integer
+        url:
+          type: string
+          format: uri
+          description: Product permalink.
+        weight:
+          type: object
+          description: Present only when the product has a weight set.
+          properties:
+            '@type':
+              type: string
+              example: QuantitativeValue
+            value:
+              type: string
+            unitCode:
+              type: string
+              example: kg
+        depth:
+          $ref: '#/components/schemas/QuantitativeValue'
+        width:
+          $ref: '#/components/schemas/QuantitativeValue'
+        height:
+          $ref: '#/components/schemas/QuantitativeValue'
+        color:
+          type: string
+          description: Present only when the product has a "Color"/"Colour" attribute set.
+        size:
+          type: string
+          description: Present only when the product has a "Size" attribute set.
+        material:
+          type: string
+          description: Present only when the product has a "Material" attribute set.
+        manufacturer:
+          type: object
+          description: Present only when product meta `_manufacturer` is set.
+          properties:
+            '@type':
+              type: string
+              example: Organization
+            name:
+              type: string
+        itemCondition:
+          type: string
+          description: Present only when product meta `_condition` is set (e.g. `https://schema.org/NewCondition`).
+        keywords:
+          type: string
+          description: Comma-separated product tags, present only when the product has tags.
+        review:
+          type: array
+          description: Present only when the product has approved reviews.
+          items:
+            $ref: '#/components/schemas/ProductReview'
+        aggregateRating:
+          type: object
+          description: Present only when the product has approved reviews.
+          properties:
+            '@type':
+              type: string
+              example: AggregateRating
+            ratingValue:
+              type: number
+            reviewCount:
+              type: integer
+        hasVariant:
+          type: array
+          description: Present only for **variable** products - one entry per available variation.
+          items:
+            $ref: '#/components/schemas/ProductVariant'
+        hasPart:
+          type: array
+          description: Present only for **bundle** products (WooCommerce Product Bundles) - one entry per bundled product.
+          items:
+            $ref: '#/components/schemas/BundlePart'
+        isPartOf:
+          description: |
+            Present for **grouped** products (a single ItemList of the child products)
+            and for **composite** products (an array of ItemList entries, one per
+            component the customer chooses from).
+          oneOf:
+          - $ref: '#/components/schemas/GroupedItemList'
+          - type: array
+            items:
+              $ref: '#/components/schemas/CompositeComponent'
+        bookingDuration:
+          type: object
+          description: Present only for **bookable** products (WooCommerce Bookings).
+          properties:
+            '@type':
+              type: string
+              example: Duration
+            durationType:
+              type: string
+              description: Booking duration type (e.g. `fixed`, `customer`).
+            value:
+              type: string
+            unit:
+              type: string
+              description: Duration unit (e.g. `hour`, `day`), when applicable.
+      additionalProperties: true
+    ProductOffer:
+      type: object
+      properties:
+        '@type':
+          type: string
+          example: Offer
+        price:
+          type: string
+        priceCurrency:
+          type: string
+          example: USD
+        availability:
+          type: string
+          enum:
+          - https://schema.org/InStock
+          - https://schema.org/OutOfStock
+          - https://schema.org/LimitedAvailability
+        url:
+          type: string
+          format: uri
+        validFrom:
+          type: string
+          format: date-time
+          description: Present only for **bookable** products with a defined availability start date.
+        validThrough:
+          type: string
+          format: date-time
+          description: Present only for **bookable** products with a defined availability end date.
+        priceSpecification:
+          description: |
+            Present when the store has taxes enabled (a single UnitPriceSpecification),
+            or for **subscription** products (one entry for the recurring charge and,
+            if a free trial is configured, a second zero-price entry for the trial).
+          oneOf:
+          - $ref: '#/components/schemas/PriceSpecification'
+          - type: array
+            items:
+              $ref: '#/components/schemas/PriceSpecification'
+    AggregateOffer:
+      type: object
+      description: Summarizes the price range across all variations of a variable product.
+      properties:
+        '@type':
+          type: string
+          example: AggregateOffer
+        lowPrice:
+          type: string
+        highPrice:
+          type: string
+        priceCurrency:
+          type: string
+          example: USD
+        availability:
+          type: string
+          enum:
+          - https://schema.org/InStock
+          - https://schema.org/OutOfStock
+        url:
+          type: string
+          format: uri
+    PriceSpecification:
+      type: object
+      properties:
+        '@type':
+          type: string
+          example: UnitPriceSpecification
+        price:
+          type: string
+        priceCurrency:
+          type: string
+        valueAddedTaxIncluded:
+          type: boolean
+          description: Present only on the tax-inclusive/exclusive variant used when the store has taxes enabled.
+        priceType:
+          type: string
+          description: Present only on the tax variant used when the store has taxes enabled.
+          enum:
+          - https://schema.org/SalePrice
+          - https://schema.org/ListPrice
+        billingDuration:
+          type: string
+          description: ISO 8601 duration (e.g. `P1M`, `P2W`). Present only on the subscription variant.
+    ProductVariant:
+      type: object
+      description: A single variation of a variable product.
+      properties:
+        '@type':
+          type: string
+          example: ProductModel
+        name:
+          type: string
+        sku:
+          type: string
+        offers:
+          $ref: '#/components/schemas/ProductOffer'
+        additionalProperty:
+          type: array
+          description: Variation attributes (e.g. Size, Color).
+          items:
+            type: object
+            properties:
+              '@type':
+                type: string
+                example: PropertyValue
+              name:
+                type: string
+              value:
+                type: string
+    BundlePart:
+      type: object
+      description: A single product included in a bundle.
+      properties:
+        '@type':
+          type: string
+          example: Product
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+        sku:
+          type: string
+          description: Present only when the bundled product has a SKU.
+        quantity:
+          type: integer
+          description: Present only when the bundled item exposes a quantity.
+    GroupedItemList:
+      type: object
+      description: The list of child products belonging to a grouped product.
+      properties:
+        '@type':
+          type: string
+          example: ItemList
+        itemListElement:
+          type: array
+          items:
+            type: object
+            properties:
+              '@type':
+                type: string
+                example: ListItem
+              position:
+                type: integer
+              item:
+                type: object
+                properties:
+                  '@type':
+                    type: string
+                    example: Product
+                  name:
+                    type: string
+                  url:
+                    type: string
+                    format: uri
+                  sku:
+                    type: string
+                    description: Present only when the child product has a SKU.
+                  offers:
+                    type: object
+                    description: Present only when the child product has a price.
+                    properties:
+                      '@type':
+                        type: string
+                        example: Offer
+                      price:
+                        type: string
+                      priceCurrency:
+                        type: string
+    CompositeComponent:
+      type: object
+      description: A single component (choice) a customer selects from on a composite product.
+      properties:
+        '@type':
+          type: string
+          example: ItemList
+        name:
+          type: string
+          description: Component title.
+        description:
+          type: string
+          description: Present only when the component has a description.
+        numberOfItems:
+          type: integer
+          description: Number of options available for this component, present only when the component exposes options.
+    QuantitativeValue:
+      type: object
+      description: Present only when the product has dimensions set.
+      properties:
+        '@type':
+          type: string
+          example: QuantitativeValue
+        value:
+          type: string
+        unitCode:
+          type: string
+          example: cm
+    ProductReview:
+      type: object
+      properties:
+        '@type':
+          type: string
+          example: Review
+        reviewRating:
+          type: object
+          properties:
+            '@type':
+              type: string
+              example: Rating
+            ratingValue:
+              type: string
+        author:
+          type: object
+          properties:
+            '@type':
+              type: string
+              example: Person
+            name:
+              type: string
+        reviewBody:
+          type: string
+        datePublished:
+          type: string
+    ErrorResponse:
+      type: object
+      description: Standard error response structure.
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code.
+          example: cocart_product_invalid_id
+        message:
+          type: string
+          description: Human-readable error message.
+          example: Invalid ID.
+        data:
+          type: object
+          description: Additional error data.
+          properties:
+            status:
+              type: integer
+              description: HTTP status code.
+              example: 404
+          additionalProperties: true
+  examples:
+    SimpleProduct:
+      summary: Simple product
+      value:
+        provider: yoast
+        meta_data:
+          meta_title: Premium Quality T-Shirt - Example Store
+          meta_description: Soft, breathable, and built to last - the Premium Quality T-Shirt.
+          meta_keywords: t-shirt, apparel, cotton
+          opengraph:
+            title: Premium Quality T-Shirt
+            description: Soft, breathable, and built to last.
+            image: https://example-store.com/wp-content/uploads/tshirt.jpg
+            type: product
+          twitter:
+            title: Premium Quality T-Shirt
+            description: Soft, breathable, and built to last.
+            image: https://example-store.com/wp-content/uploads/tshirt.jpg
+            card: summary_large_image
+          canonical_url: https://example-store.com/product/premium-quality-t-shirt/
+          robots:
+            index: true
+            follow: true
+        schema:
+          '@context': https://schema.org/
+          '@type': Product
+          name: Premium Quality T-Shirt
+          description: Soft, breathable, and built to last.
+          brand:
+            '@type': Brand
+            name: Example Store
+          offers:
+            '@type': Offer
+            price: '19.99'
+            priceCurrency: USD
+            availability: https://schema.org/InStock
+            url: https://example-store.com/product/premium-quality-t-shirt/
+          sku: TSHIRT-001
+          category: Apparel
+          image:
+            '@type': ImageObject
+            url: https://example-store.com/wp-content/uploads/tshirt.jpg
+            width: 800
+            height: 800
+          url: https://example-store.com/product/premium-quality-t-shirt/
+    VariableProduct:
+      summary: Variable product (with variations)
+      value:
+        provider: rankmath
+        meta_data:
+          meta_title: Classic Hoodie - Example Store
+          meta_description: A cozy classic hoodie available in multiple sizes and colors.
+          meta_keywords: hoodie, apparel, cotton
+          opengraph:
+            title: Classic Hoodie
+            description: A cozy classic hoodie available in multiple sizes and colors.
+            image: https://example-store.com/wp-content/uploads/hoodie.jpg
+            type: product
+          twitter:
+            title: Classic Hoodie
+            description: A cozy classic hoodie available in multiple sizes and colors.
+            image: https://example-store.com/wp-content/uploads/hoodie.jpg
+            card: summary_large_image
+          canonical_url: https://example-store.com/product/classic-hoodie/
+          robots:
+            index: true
+            follow: true
+        schema:
+          '@context': https://schema.org/
+          '@type': Product
+          name: Classic Hoodie
+          description: A cozy classic hoodie available in multiple sizes and colors.
+          brand:
+            '@type': Brand
+            name: Example Store
+          offers:
+            '@type': AggregateOffer
+            lowPrice: '29.99'
+            highPrice: '34.99'
+            priceCurrency: USD
+            availability: https://schema.org/InStock
+            url: https://example-store.com/product/classic-hoodie/
+          sku: HOODIE-VAR
+          category: Apparel
+          image:
+            '@type': ImageObject
+            url: https://example-store.com/wp-content/uploads/hoodie.jpg
+            width: 800
+            height: 800
+          url: https://example-store.com/product/classic-hoodie/
+          hasVariant:
+          - '@type': ProductModel
+            name: Classic Hoodie - Small, Black
+            sku: HOODIE-VAR-S-BLK
+            offers:
+              '@type': Offer
+              price: '29.99'
+              priceCurrency: USD
+              availability: https://schema.org/InStock
+            additionalProperty:
+            - '@type': PropertyValue
+              name: Size
+              value: Small
+            - '@type': PropertyValue
+              name: Color
+              value: Black
+          - '@type': ProductModel
+            name: Classic Hoodie - Large, Grey
+            sku: HOODIE-VAR-L-GRY
+            offers:
+              '@type': Offer
+              price: '34.99'
+              priceCurrency: USD
+              availability: https://schema.org/InStock
+            additionalProperty:
+            - '@type': PropertyValue
+              name: Size
+              value: Large
+            - '@type': PropertyValue
+              name: Color
+              value: Grey
+    GroupedProduct:
+      summary: Grouped product (with child products)
+      value:
+        provider: default
+        meta_data:
+          meta_title: Kitchen Starter Set - Example Store
+          meta_description: Everything you need to get started, sold as individual pieces.
+          meta_keywords: kitchen, starter set, cookware
+          opengraph:
+            title: Kitchen Starter Set
+            description: Everything you need to get started, sold as individual pieces.
+            image: https://example-store.com/wp-content/uploads/kitchen-set.jpg
+            type: product
+          twitter:
+            title: Kitchen Starter Set
+            description: Everything you need to get started, sold as individual pieces.
+            image: https://example-store.com/wp-content/uploads/kitchen-set.jpg
+            card: summary_large_image
+          canonical_url: https://example-store.com/product/kitchen-starter-set/
+          robots:
+            index: true
+            follow: true
+        schema:
+          '@context': https://schema.org/
+          '@type': Product
+          name: Kitchen Starter Set
+          description: Everything you need to get started, sold as individual pieces.
+          brand:
+            '@type': Brand
+            name: Example Store
+          offers:
+            '@type': Offer
+            price: ''
+            priceCurrency: USD
+            availability: https://schema.org/InStock
+            url: https://example-store.com/product/kitchen-starter-set/
+          sku: KITCHEN-SET
+          category: Kitchen
+          image:
+            '@type': ImageObject
+            url: https://example-store.com/wp-content/uploads/kitchen-set.jpg
+            width: 800
+            height: 800
+          url: https://example-store.com/product/kitchen-starter-set/
+          isPartOf:
+            '@type': ItemList
+            itemListElement:
+            - '@type': ListItem
+              position: 1
+              item:
+                '@type': Product
+                name: Non-Stick Frying Pan
+                url: https://example-store.com/product/non-stick-frying-pan/
+                sku: PAN-001
+                offers:
+                  '@type': Offer
+                  price: '24.99'
+                  priceCurrency: USD
+            - '@type': ListItem
+              position: 2
+              item:
+                '@type': Product
+                name: Stainless Steel Saucepan
+                url: https://example-store.com/product/stainless-steel-saucepan/
+                sku: PAN-002
+                offers:
+                  '@type': Offer
+                  price: '29.99'
+                  priceCurrency: USD
+    DownloadableProduct:
+      summary: Downloadable/digital product
+      value:
+        provider: seopress
+        meta_data:
+          meta_title: The Complete Gardening Guide (eBook) - Example Store
+          meta_description: A complete digital guide to growing your own vegetables at home.
+          meta_keywords: ebook, gardening, guide
+          opengraph:
+            title: The Complete Gardening Guide (eBook)
+            description: A complete digital guide to growing your own vegetables at home.
+            image: https://example-store.com/wp-content/uploads/gardening-guide.jpg
+            type: product
+          twitter:
+            title: The Complete Gardening Guide (eBook)
+            description: A complete digital guide to growing your own vegetables at home.
+            image: https://example-store.com/wp-content/uploads/gardening-guide.jpg
+            card: summary_large_image
+          canonical_url: https://example-store.com/product/the-complete-gardening-guide-ebook/
+          robots:
+            index: true
+            follow: true
+        schema:
+          '@context': https://schema.org/
+          '@type': DigitalDocument
+          name: The Complete Gardening Guide (eBook)
+          description: A complete digital guide to growing your own vegetables at home.
+          brand:
+            '@type': Brand
+            name: Example Store
+          offers:
+            '@type': Offer
+            price: '9.99'
+            priceCurrency: USD
+            availability: https://schema.org/InStock
+            url: https://example-store.com/product/the-complete-gardening-guide-ebook/
+          sku: EBOOK-GARDEN
+          category: eBooks
+          image:
+            '@type': ImageObject
+            url: https://example-store.com/wp-content/uploads/gardening-guide.jpg
+            width: 800
+            height: 800
+          url: https://example-store.com/product/the-complete-gardening-guide-ebook/
+    SubscriptionProduct:
+      summary: Subscription product (with free trial)
+      value:
+        provider: aioseo
+        meta_data:
+          meta_title: Monthly Coffee Box - Example Store
+          meta_description: A curated box of specialty coffee, delivered every month.
+          meta_keywords: coffee, subscription, monthly box
+          opengraph:
+            title: Monthly Coffee Box
+            description: A curated box of specialty coffee, delivered every month.
+            image: https://example-store.com/wp-content/uploads/coffee-box.jpg
+            type: product
+          twitter:
+            title: Monthly Coffee Box
+            description: A curated box of specialty coffee, delivered every month.
+            image: https://example-store.com/wp-content/uploads/coffee-box.jpg
+            card: summary_large_image
+          canonical_url: https://example-store.com/product/monthly-coffee-box/
+          robots:
+            index: true
+            follow: true
+        schema:
+          '@context': https://schema.org/
+          '@type': Product
+          name: Monthly Coffee Box
+          description: A curated box of specialty coffee, delivered every month.
+          brand:
+            '@type': Brand
+            name: Example Store
+          offers:
+            '@type': Offer
+            price: '24.99'
+            priceCurrency: USD
+            availability: https://schema.org/InStock
+            url: https://example-store.com/product/monthly-coffee-box/
+            priceSpecification:
+            - '@type': UnitPriceSpecification
+              price: '24.99'
+              priceCurrency: USD
+              billingDuration: P1M
+            - '@type': UnitPriceSpecification
+              price: 0
+              priceCurrency: USD
+              billingDuration: P14D
+          sku: COFFEE-SUB
+          category: Subscriptions
+          image:
+            '@type': ImageObject
+            url: https://example-store.com/wp-content/uploads/coffee-box.jpg
+            width: 800
+            height: 800
+          url: https://example-store.com/product/monthly-coffee-box/
+    BookingProduct:
+      summary: Bookable product (WooCommerce Bookings)
+      value:
+        provider: tsf
+        meta_data:
+          meta_title: 1-Hour Photography Session - Example Store
+          meta_description: Book a private 1-hour photography session with our studio team.
+          meta_keywords: photography, session, booking
+          opengraph:
+            title: 1-Hour Photography Session
+            description: Book a private 1-hour photography session with our studio team.
+            image: https://example-store.com/wp-content/uploads/photo-session.jpg
+            type: product
+          twitter:
+            title: 1-Hour Photography Session
+            description: Book a private 1-hour photography session with our studio team.
+            image: https://example-store.com/wp-content/uploads/photo-session.jpg
+            card: summary_large_image
+          canonical_url: https://example-store.com/product/1-hour-photography-session/
+          robots:
+            index: true
+            follow: true
+        schema:
+          '@context': https://schema.org/
+          '@type': Service
+          name: 1-Hour Photography Session
+          description: Book a private 1-hour photography session with our studio team.
+          brand:
+            '@type': Brand
+            name: Example Store
+          offers:
+            '@type': Offer
+            price: '75.00'
+            priceCurrency: USD
+            availability: https://schema.org/LimitedAvailability
+            url: https://example-store.com/product/1-hour-photography-session/
+            validFrom: '2026-01-01T00:00:00+00:00'
+            validThrough: '2026-12-31T23:59:59+00:00'
+          sku: BOOKING-PHOTO-1HR
+          category: Services
+          image:
+            '@type': ImageObject
+            url: https://example-store.com/wp-content/uploads/photo-session.jpg
+            width: 800
+            height: 800
+          url: https://example-store.com/product/1-hour-photography-session/
+          bookingDuration:
+            '@type': Duration
+            durationType: fixed
+            value: '1'
+            unit: hour
+    BundleProduct:
+      summary: Bundle product (WooCommerce Product Bundles)
+      value:
+        provider: yoast
+        meta_data:
+          meta_title: Starter Photography Kit - Example Store
+          meta_description: Everything a beginner photographer needs in one bundle.
+          meta_keywords: photography, kit, bundle
+          opengraph:
+            title: Starter Photography Kit
+            description: Everything a beginner photographer needs in one bundle.
+            image: https://example-store.com/wp-content/uploads/photo-kit.jpg
+            type: product
+          twitter:
+            title: Starter Photography Kit
+            description: Everything a beginner photographer needs in one bundle.
+            image: https://example-store.com/wp-content/uploads/photo-kit.jpg
+            card: summary_large_image
+          canonical_url: https://example-store.com/product/starter-photography-kit/
+          robots:
+            index: true
+            follow: true
+        schema:
+          '@context': https://schema.org/
+          '@type': Product
+          name: Starter Photography Kit
+          description: Everything a beginner photographer needs in one bundle.
+          brand:
+            '@type': Brand
+            name: Example Store
+          offers:
+            '@type': Offer
+            price: '149.99'
+            priceCurrency: USD
+            availability: https://schema.org/InStock
+            url: https://example-store.com/product/starter-photography-kit/
+          sku: PHOTO-KIT-BUNDLE
+          category: Photography
+          image:
+            '@type': ImageObject
+            url: https://example-store.com/wp-content/uploads/photo-kit.jpg
+            width: 800
+            height: 800
+          url: https://example-store.com/product/starter-photography-kit/
+          hasPart:
+          - '@type': Product
+            name: Camera Strap
+            url: https://example-store.com/product/camera-strap/
+            sku: CAM-STRAP
+            quantity: 1
+          - '@type': Product
+            name: Lens Cleaning Kit
+            url: https://example-store.com/product/lens-cleaning-kit/
+            sku: LENS-CLEAN
+            quantity: 1
+    CompositeProduct:
+      summary: Composite product (WooCommerce Composite Products)
+      value:
+        provider: rankmath
+        meta_data:
+          meta_title: Build Your Own Gift Box - Example Store
+          meta_description: Choose your own candle and wrap to build a custom gift box.
+          meta_keywords: gift box, custom, build your own
+          opengraph:
+            title: Build Your Own Gift Box
+            description: Choose your own candle and wrap to build a custom gift box.
+            image: https://example-store.com/wp-content/uploads/gift-box.jpg
+            type: product
+          twitter:
+            title: Build Your Own Gift Box
+            description: Choose your own candle and wrap to build a custom gift box.
+            image: https://example-store.com/wp-content/uploads/gift-box.jpg
+            card: summary_large_image
+          canonical_url: https://example-store.com/product/build-your-own-gift-box/
+          robots:
+            index: true
+            follow: true
+        schema:
+          '@context': https://schema.org/
+          '@type': Product
+          name: Build Your Own Gift Box
+          description: Choose your own candle and wrap to build a custom gift box.
+          brand:
+            '@type': Brand
+            name: Example Store
+          offers:
+            '@type': Offer
+            price: '39.99'
+            priceCurrency: USD
+            availability: https://schema.org/InStock
+            url: https://example-store.com/product/build-your-own-gift-box/
+          sku: GIFT-BOX-COMPOSITE
+          category: Gifts
+          image:
+            '@type': ImageObject
+            url: https://example-store.com/wp-content/uploads/gift-box.jpg
+            width: 800
+            height: 800
+          url: https://example-store.com/product/build-your-own-gift-box/
+          isPartOf:
+          - '@type': ItemList
+            name: Choose a Candle
+            description: Select one scented candle for your gift box.
+            numberOfItems: 4
+          - '@type': ItemList
+            name: Choose a Wrap
+            numberOfItems: 3

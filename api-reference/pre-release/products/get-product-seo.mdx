@@ -1,0 +1,22 @@
+---
+title: "Get Product SEO Data"
+sidebarTitle: "SEO Data"
+openapi: "../openapi-cocart-seo-pack-v2.yaml GET /products/{id}/seo"
+tag: "New"
+robots: "noindex, follow"
+---
+
+<Warning>
+    This API requires **CoCart SEO Pack** add-on to use.
+</Warning>
+
+Structured data is sourced from your active SEO WordPress plugin:
+ 1. Rank Math
+ 2. SEOPress
+ 3. The SEO Framework
+ 4. All in One SEO
+ 5. Yoast SEO
+
+The last active wins, falling back to a built-in provider when none of them are active.
+
+The `schema` field is extended based on the product's type, including variable, grouped, subscription, bookable, bundle, and composite products. Use `_fields` to limit the response to `provider`, `meta_data`, and/or `schema`.

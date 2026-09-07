@@ -1644,6 +1644,8 @@
                           "api-reference/v2/products/get-product-variations",
                           "api-reference/v2/products/get-product-variation",
                           "api-reference/pre-release/products/get-product-shipping-rates",
+                          "api-reference/pre-release/products/get-product-seo",
+                          "api-reference/pre-release/products/get-product-seo-by-slug",
                           "api-reference/v2/products/get-product-categories",
                           "api-reference/v2/products/get-product-category-by-id",
                           "api-reference/v2/products/get-product-tags",
